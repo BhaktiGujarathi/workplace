@@ -1,0 +1,556 @@
+<apex:page showHeader="false" sidebar="false" renderAs="pdf"  standardController="Opportunity" extensions="NAC_pageExt" standardStylesheets="false">
+<div style="page-break-after: always">
+    <table border="1" width="100%" style = "border-collapse: collapse;border: 1px solid black !important;font-family: sans-serif;">
+        <tr style = "background : #DBE5F1; height : 30px">
+            <td colspan="12"   align="center" >
+                <span style="font-size:16px;"><b>Foundations Recovery Network</b></span>
+                    <br />
+                <span style="font-size:14px;"><i>New Arrival Checklist</i></span>
+            </td>
+        </tr>
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td  Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Patient  Name</b></span></td>
+            <td width="20%" Style = "padding-left: 5px;">{!opp.Contact__r.Salutation} {!opp.Contact__r.FirstName} {!opp.Contact__r.LastName}</td>
+            <td width="5%" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>DOB</b></td>
+            <td width="15%" Style = "padding-left: 5px;">
+            <apex:outputField value="{!opp.Contact__r.Birthdate}"/>
+            </td>
+            
+            <td width="15%"></td>
+           
+            <td width="15%" Style = "background-color: #C6D9F1; padding-left: 5px;"><span><b>TIER  ID#</b></span></td>
+            <td colspan="2" Style = "padding-left: 5px;">{!opp.Contact__r.TIER_ID__c}</td>
+            
+        </tr>
+        
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td  Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Gender</b></span></td>
+            <td width="20%" Style = "padding-left: 5px;">{!opp.Contact__r.Gender__c}</td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Identified Gender</b></td>
+            <td width="15%" Style = "padding-left: 5px;">
+            {!opp.Contact__r.Identified_Gender__c}
+            </td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>
+                Referred by High Priority Referral ? 
+            </b></span></td>
+            <td width="20%" Style = "padding-left: 5px;">
+                <apex:image url="{!$Resource.TrueCheckBox}" width="15" height="15" rendered="{!IF(opp.High_Priority__c==true, true, false)}"/>
+                <apex:image url="{!$Resource.FalseCheckBox}" width="15" height="15" rendered="{!IF(opp.High_Priority__c==false, true, false)}"/>
+            </td>
+        </tr>
+       
+       
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Admis. Coordinator</b></span></td>
+            <td Style = "padding-left: 5px;">{!opp.Owner.Name}</td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>PT Phone</b></td>
+            <td Style = "padding-left: 5px;">{!opp.Contact__r.Phone}</td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Date Subm</b></td>
+            <td Style = "padding-left: 5px;">
+            <apex:outputText value="{0,date,MM/dd/yyyy}">
+                 <apex:param value="{!TODAY()}" />
+            </apex:outputText></td>
+        </tr>
+        
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Admitting Facility</b></span></td>
+            <td Style = "padding-left: 5px;">{!opp.FRN_Facility_Selected__r.Name}</td>
+            <td width="8%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b></b></td>
+            <td width="20%" Style = "background-color: #C6D9F1; padding-left: 5px;"></td>
+            <td width="8%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b></b></td>
+            <td width="20%" Style = "background-color: #C6D9F1; padding-left: 5px;"></td>
+        </tr>
+        <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Guarantor Name</b></span></td>
+            <td>
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> -->
+                    <apex:outputText escape="false" rendered="{!IF(opp.Guarantor__r.First_Name__c != null && opp.Guarantor__r.First_Name__c != '' && opp.Guarantor_is_Self__c == false, true, false)}">
+                    &nbsp;{!opp.Guarantor__r.First_Name__c}
+                    </apex:outputText>
+                    
+                    <apex:outputText rendered="{!IF(opp.Guarantor__r.Last_Name__c != null && opp.Guarantor__r.Last_Name__c != '' && opp.Guarantor_is_Self__c == false, true, false)}">
+                    &nbsp;{!opp.Guarantor__r.Last_Name__c}
+                    </apex:outputText>
+                    <apex:outputText rendered="{!IF(opp.Guarantor_is_Self__c == true, true, false)}">
+                    &nbsp;Self
+                    </apex:outputText>                    
+                <!-- </apex:repeat>    -->
+            </td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Relationship to Pt.</b></td>
+            <td Style = "padding-left: 5px;">
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> -->
+                    <apex:outputText value="{!opp.Guarantor__r.Relationship__c}" />
+                <!-- </apex:repeat> -->
+            </td>
+            <td colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Phone</b></td>
+            <td Style = "padding-left: 5px;">
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> -->
+                    <apex:outputText value="{!opp.Guarantor__r.Phone__c}" />
+                <!-- </apex:repeat> -->
+            </td>
+        </tr>
+        <tr style="font-size:11px; height : 25px;vertical-align: bottom;">
+            <td width="15%" Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>Insurance Co Name</b></span></td>
+           
+            <td  width="20%" Style = "padding-left: 5px;" >
+               <!--  
+                <apex:repeat value="{!patInsurance}" var="p">
+                    <apex:outputText value="{!p.Insurance_Company__r.Name}"/>
+                </apex:repeat>  
+                -->        
+                 {!qte.Insurance_Company__r.name}
+                 
+            </td>
+            
+            <td width="20%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>INSR Co State</b></td>
+            <td width="15%">
+                <apex:repeat value="{!patInsurance}" var="p">
+                    <apex:outputText Style="padding-left: 5px;" value="{!p.State_of_Origination__c}"/>
+                </apex:repeat>          
+            </td>
+            <td width="8%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b></b></td>
+            <td width="20%" Style = "background-color: #C6D9F1; padding-left: 5px;">
+                         
+            </td>           
+        </tr>
+        <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td width="15%" Style = "background-color: #C6D9F1; padding-left: 5px;"><span ><b>INSR Subscriber</b></span></td>
+            <td width="20%">
+                <apex:outputText Style="padding-left: 5px;" value="{!INSRSubscriber}"/>
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> 
+                    <apex:outputText escape="false" rendered="{!IF(p.Subscriber__r.First_Name__c != null && p.Subscriber__r.First_Name__c != '' , true, false)}">
+                    &nbsp;{!p.Subscriber__r.First_Name__c}
+                    </apex:outputText>
+                    
+                    <apex:outputText rendered="{!IF(p.Subscriber__r.Last_Name__c != null && p.Subscriber__r.Last_Name__c!= '', true, false)}">
+                    &nbsp;{!p.Subscriber__r.Last_Name__c}
+                    </apex:outputText>
+                    
+                </apex:repeat>  -->
+            </td>           
+            <td width="20%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Relationship to Patient</b></td>
+            <td width="15%">
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> -->
+                    <apex:outputText Style="padding-left: 5px;" value="{!RelationshiptoPatient}"/>
+                <!-- </apex:repeat>  -->
+            </td>                   
+            <td width="8%" colspan="2" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Phone</b></td>
+            <td width="20%">
+                <!-- <apex:repeat value="{!patInsurance}" var="p"> -->
+                    <apex:outputText Style="padding-left: 5px;" value="{!INSRPhone}"/>
+                <!-- </apex:repeat> -->
+            </td>                   
+        </tr>
+     
+    </table>
+    <table border="1" width="100%" style = "border-collapse: collapse; border: 1px solid black;font-family: sans-serif;">
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <!-- <td width="25%" colspan="1" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Private Pay Financial Agreement Terms</b></span></td>
+            <td width="45%"  colspan="4">&nbsp; </td> -->
+            <!-- Subscriber.COB Needed-->
+            <td width="12%" colspan="1" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b>COB Needed</b></td>
+            <td width="13%" colspan="7">
+                <apex:repeat value="{!patInsurance}" var="p">
+                    <apex:outputText rendered="{!IF(p.COB_Needed__c == 'Yes' , True, False)}">
+                        &nbsp;<img src="/resource/1470255633000/checked_radio" width="8" height="8"/> Yes
+                        <img src="/resource/1470255498000/unchecked_radio" width="8" height="8"/>  No
+                    </apex:outputText>
+                    <apex:outputText rendered="{!IF(p.COB_Needed__c == 'No' , True, False)}">
+                        &nbsp;<img src="/resource/1470255498000/unchecked_radio" width="8" height="8"/> Yes
+                        <img src="/resource/1470255633000/checked_radio" width="8" height="8"/> No
+                    </apex:outputText>
+                </apex:repeat>  
+                <apex:repeat value="{!patInsurance}" var="p">
+                    <apex:outputText rendered="{!IF(p.COB_Needed__c == null, True, False)}">
+                        &nbsp;<img src="/resource/1470255498000/unchecked_radio" width="8" height="8"/> Yes
+                        <img src="/resource/1470255498000/unchecked_radio" width="8" height="8"/> No
+                    </apex:outputText>                  
+                </apex:repeat>  
+            </td>
+        </tr>
+     
+        <!-- <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td width="25%" colspan="1" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Prior Pending Financial Issues</b></span></td>
+            <td width="75%"  colspan="7">{!opp.Prior_Pending_Financial_Issues__c}</td>
+        </tr> -->
+        
+         <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td width="25%" colspan="1" Style ="background-color: #C6D9F1;padding-left: 5px;"><span ><b>Pre-Screening Source</b></span></td>
+            <td width="50%"  colspan="4" Style = "padding-left: 5px;">
+                
+                {!opp.LeadSource}
+
+            </td>
+            <td width="25%" colspan="3" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b></b></td>
+        </tr>
+        
+        <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td width="25%" colspan="1" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Primary Referral Source</b></span></td>
+            <td width="50%"  colspan="4" Style = "padding-left: 5px;">
+                <apex:repeat value="{!referList}" var="r">
+                    <apex:outputText value="{!r.Account__r.name}" rendered="{!IF(r.Referral_Rank__c =='Primary',true,false)}"/>
+                </apex:repeat>
+            </td>
+            <td width="25%" colspan="3" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b></b></td>
+        </tr>
+        
+        <tr style="font-size:11px; height : 25px;vertical-align: bottom;">
+            <td width="25%"  Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Secondary Referral Source</b></span></td>
+            <td width="50%"  colspan="4" Style = "padding-left: 5px;">
+                <apex:repeat value="{!referList}" var="r">
+                    <apex:outputText value="{!r.Account__r.name}" rendered="{!IF(r.Referral_Rank__c =='Secondary',true,false)}"/>
+                </apex:repeat>
+            </td>
+            <td width="25%" colspan="3" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b></b></td>
+        </tr>
+        
+        <tr style="font-size:11px; height : 25px;vertical-align: bottom;">
+            <td width="25%"  Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Tertiary Referral Source</b></span></td>
+            <td width="50%"  colspan="4" Style = "padding-left: 5px;">
+                <apex:repeat value="{!referList}" var="r">
+                    <apex:outputText value="{!r.Account__r.name}" rendered="{!IF(r.Referral_Rank__c =='Tertiary',true,false)}"/>
+                </apex:repeat>
+            </td>
+            <td width="25%" colspan="3" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b></b></td>
+        </tr>
+        <!-- <tr style="font-size:11px; height : 25px;vertical-align: bottom;">
+            <td width="25%" colspan="1" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Primary Referral Source</b></span></td>
+            <td width="50%"  colspan="4" Style = "background-color: #C6D9F1; padding-left: 5px;">
+                <apex:repeat value="{!referList}" var="r">
+                    <apex:outputText value="{!r.Account__r.name}" />
+                </apex:repeat>
+            </td>
+            <td width="15%" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b>Contact Upon Admission?</b></td>
+            <td width="8%" colspan="2" Style = "padding-left: 5px;"> <img src="/resource/1470254445000/unchecked_checkbox" width="8" height="8"/> Yes</td>
+        </tr> -->
+        <tr style="font-size:11px; height : 25px;vertical-align: bottom;">
+            <td width="25%"  Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Business Development Rep</b></span></td>
+            <td width="50%"  colspan="4" Style = "padding-left: 5px;">
+                <apex:repeat value="{!referList}" var="r">
+                    <apex:outputText value="{!r.Account__r.owner.Name}" rendered="{!IF(r.Referral_Rank__c =='Primary',true,false)}"/>
+                </apex:repeat>
+            </td>
+            <td width="25%" colspan="3" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b>(ALWAYS CALL UPON ADMISSION)</b></td>
+        </tr>
+        <!-- <tr style="font-size:11px; height : 15px;vertical-align: bottom;">
+            <td width="25%"  Style = "background-color: #C6D9F1;  padding-left: 5px;"><span> <b>Inbound Travel Information</b></span></td>
+            <td width="75%"  colspan="7">&nbsp;</td>
+        </tr> -->
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="25%" colspan="2" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>PT Cell Phone Number</b></span></td>
+            <td width="15%" Style = "padding-left: 5px;">{!opp.Contact__r.MobilePhone}</td>
+            <td width="18%" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b>Patient Description</b></td>
+            <td width="32%" colspan="4" Style = "padding-left: 5px;">{!opp.Physical_Description_of_Patient__c}</td>
+        </tr>
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="40%" colspan="3" Style = "background-color: #C6D9F1;"></td>
+            <td width="18%" Style = "background-color: #C6D9F1;  padding-left: 5px;"><b>Estimated Date and Time of Arrival</b></td>
+            <td width="32%" colspan="4" Style = "padding-left: 5px;"><apex:outputfield value="{!opp.Estimated_Date_and_Time_of_Arrival__c}"/></td>
+        </tr>
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="25%" colspan="2" Style = "background-color: #C6D9F1;  padding-left: 5px;"><span ><b>Secondary Travel Contact Name</b></span></td>
+            <td width="15%" >
+                <apex:outputText escape="false" rendered="{!IF(opp.Secondary_Travel_Contact__r.First_Name__c != null && opp.Secondary_Travel_Contact__r.First_Name__c != '', true, false)}">
+                &nbsp;{!opp.Secondary_Travel_Contact__r.First_Name__c}
+                </apex:outputText>
+                    
+                <apex:outputText rendered="{!IF(opp.Secondary_Travel_Contact__r.Last_Name__c != null && opp.Secondary_Travel_Contact__r.Last_Name__c != '', true, false)}">
+                &nbsp;{!opp.Secondary_Travel_Contact__r.Last_Name__c}
+                </apex:outputText>
+            </td> 
+            
+            <td width="25%" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Secondary Contact Relation</b></td>
+            <td width="35%" colspan="4" Style = "padding-left: 5px;">{!opp.Secondary_Travel_Contact__r.Relationship__c}</td>
+        </tr>
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="40%" colspan="3" Style = "background-color: #C6D9F1;"></td>
+            <td width="25%" colspan="1" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Secondary Contact Cell</b></td>
+            <td width="35%" colspan="4" Style = "padding-left: 5px;">{!opp.Secondary_Travel_Contact__r.Mobile_Phone__c}</td>
+        </tr>
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="100%" colspan="24" Style = "background-color: #DBE5F1;">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>Additional Trip Details:</b>
+                    {!opp.Additional_Trip_Details__c}
+                </span>
+            </td>
+        </tr>   
+    </table>
+    
+    <br/><br/> 
+    
+    <table border="1"  width="100%" style = "border-collapse: collapse;border: 1px solid black;font-family: sans-serif;">
+        <tr style="font-size:11px; height : 22px;vertical-align: bottom;">
+            <td width="40%" colspan="3" Style = "background-color: #C6D9F1;"></td>
+            <td width="25%" colspan="1" Style = "background-color: #C6D9F1; padding-left: 5px;"><b>Previous FRN facility</b></td>
+            <td width="35%" colspan="4" Style = "padding-left: 5px;">{!opp.Most_Recent_FRN_Facility__r.name}</td>
+        </tr>
+        <!-- <tr style="font-size:11px; height : 35px;vertical-align: bottom;">
+            <td width="20%"  Style = "background-color: #C6D9F1; padding-left: 8px;"><b>Notes/Additional<br/>Information</b></td>
+            <td width="80%" colspan="7"><b>&nbsp;</b></td>
+        </tr> -->
+        <!-- <tr style="font-size:11px; height : 25px;vertical-align: bottom;"> -->
+            <!-- <!-- <td width="25%" colspan="2" Style = "background-color: #DBE5F1; padding-left: 8px;"><span ><b>Readmit cleared?</b></span></td> -->
+            <!-- <td width="15%"  colspan="1">&nbsp;</td> -->
+            <!-- <td width="20%" Style = "background-color: #DBE5F1; padding-left: 8px;"><b>Previous FRN facility<br/>(IOP/Res)</b></td> -->
+            <!-- <td width="80%" colspan="4">&nbsp;{!opp.Most_Recent_FRN_Facility__r.name}</td> -->
+ 
+<!-- As per FRN, this section is NO longer needed.  SBLAU 9/10/2016
+
+        <tr style="font-size:12px; height : 155px; vertical-align: top;">
+            <td width="15%"  Style = "background-color: #C6D9F1; padding-left: 8px;"><b>Admissions Center Contacts</b></td>
+            <td colspan="7" Style = "padding-left: 7px;">
+                <apex:repeat value="{!NACPDFCS}" var="pdfCon">
+                    {!pdfCon.name}, {!pdfCon.Position__c} {!pdfCon.Phone__c},<span Style ="color: blue;"> {!pdfCon.Email__c}<br/></span >
+                </apex:repeat>
+            </td>
+        </tr>
+***  End commenting out Admission Center Contacts section -->        
+        
+    </table>    
+<!-- Trip Information & Associated Reservations --> 
+<apex:repeat value="{!tripId}" var="tId">    
+    <table border="1"  width="100%" style = "border-collapse: collapse;border: 1px solid black;font-family: sans-serif;">
+            <tr style = "background : #DBE5F1; height : 25px; font-size:14px" align="center">
+                    <td colspan="24">
+                        <span style ="font face: Tw Cen MT Condensed">
+                            <b>Trip Information</b>
+                        </span>
+                    </td>
+            </tr>
+        <!-- <apex:repeat value="{!tripId}" var="tId">     -->       
+           <!--  <tr style="font-size:11px; height : 22px; ">          
+                <td width="16%" colspan="4" Style = "background-color: #B6D9F1;"><b>Trip Name</b></td>
+                <td width="24%" colspan="5" Style = "background-color: #B6D9F1;"><b>Modified (Date/Time)</b></td>       
+                <td width="12%" colspan="4" Style = "background-color: #B6D9F1;"><b>Start Date</b></td>
+                <td width="12%" colspan="4" Style = "background-color: #B6D9F1;"><b>End Date</b></td>
+                <td width="36%" colspan="7" Style = "background-color: #B6D9F1;"><b>Description</b></td>
+            </tr>  --> 
+            <tr style="font-size:11px; height : 22px; ">
+            <td colspan="24" Style = "padding-left: 5px;">{!tripMap[tId].Name} ({!tripMap[tId].Start_Date__c} to {!tripMap[tId].End_Date__c}) - {!tripMap[tId].Description__c} 
+            </td>
+              </tr>           
+               <!--  <td width="16%" colspan="4">
+                 
+                </td>
+                <td width="24%" colspan="5">
+                    <apex:outputText value="{0,date,MM/dd/yyyy HH:MM a}"><apex:param value="{!tripMap[tId].Modified_Date_Time__c}" /> </apex:outputText>
+                </td>
+                <td width="12%" colspan="4">
+                    <apex:outputText value="{!tripMap[tId].Start_Date__c}"/>
+                </td>       
+                <td width="12%" colspan="4">
+                    <apex:outputText value="{!tripMap[tId].End_Date__c}"/>
+                </td>           
+                <td width="36%" colspan="7">
+                    <apex:outputText value="{!tripMap[tId].Description__c}" escape="false"/>
+                </td> -->
+           
+            <tr style = "background : #DBE5F1; height : 25px; font-size:12px" align="center">
+                     <td colspan="24">
+                        <span style ="font face: Tw Cen MT Condensed">
+                            <b>Associated Reservations</b>
+                        </span>
+                    </td>
+            </tr>
+            <!--<tr style="font-size:10px; height : 22px; ">          
+                <td width="20%" colspan="4" Style = "background-color: #C6D9F1;"><b>Reservation Type</b></td>
+                <td width="20%" colspan="5" Style = "background-color: #C6D9F1;"><b>Ticket Number</b></td>
+                <td width="20%" colspan="5" Style = "background-color: #C6D9F1;"><b>Arrival Date / Time</b></td>        
+                <td width="20%" colspan="5" Style = "background-color: #C6D9F1;"><b>Departure Date / Time</b></td>      
+                <td width="20%" colspan="5" Style = "background-color: #C6D9F1;"><b>Status</b></td>
+            </tr>-->
+            <apex:outputText rendered="{!ResFlagMap[tId]}">
+                <apex:repeat value="{!TripReservationMap[tId]}" var="resv">
+                    <!--<tr style="font-size:10px; height : 22px; ">          
+                        <td width="20%" colspan="4">
+                            {!resv.RecordType.Name}
+                        </td>
+                        <td width="20%" colspan="5">
+                            <apex:outputText value="{!resv.Ticket_Number__c}"/>
+                        </td>       
+                        <td width="20%" colspan="5">
+                            <apex:outputText value="{0,date,MM/dd/yyyy HH:MM a}">
+                                <apex:param value="{!resv.Arrival_Date_Time__c}" />
+                            </apex:outputText>                  
+                        </td>
+                        <td width="20%" colspan="5">
+                            <apex:outputText value="{0,date,MM/dd/yyyy HH:MM a}">
+                                <apex:param value="{!resv.Departure_Date_Time__c}" />
+                            </apex:outputText>                  
+                        </td>                   
+                        <td width="20%" colspan="5">
+                            <apex:outputText value="{!resv.Status__c}" escape="false"/>
+                        </td>
+                    </tr>-->
+                    
+
+                        <tr style="font-size:10px; height : 22px; ">      
+                        <td Style = "padding-left: 5px;" width="8%"> 
+                            {!resv.RecordType.Name }
+                        </td>
+                        <td colspan="23"  width="90%">
+                           <apex:outputPanel rendered="{!IF(resv.RecordType.Name == 'Airfare', true,false)}">
+                            <table border="0" width="100%" style="width:100%">
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"> <b>Ticket Number </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Ticket_Number__c}"/></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"> <b>Airline </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Airline__c}"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Confirmation Number </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.confirmation_Number__c}" /></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Flight Number </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Flight_Number__c}" /></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"> <b>Cabin </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Cabin__c}" /></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"> <b>Status </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Status__c}" escape="false"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Info / Warnings </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Info_Warnings__c}" /></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Total Amount Charged </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Total_Amount_Charged__c}"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Departure (Date/Time)  </b></td>
+                                    <td  width="20%"> 
+                                        <apex:outputField value="{!resv.Departure_Date_Time__c}"/>
+                                    </td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Arrival (Date/Time)  </b></td>
+                                    <td  width="20%">    
+                                        <apex:outputField value="{!resv.Arrival_Date_Time__c}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Departure Airport </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Departure_Airport__c}"/></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="30%"><b> Arrival Airport </b></td>
+                                    <td  width="14%">  <apex:outputText value="{!resv.Arrival_Airport__c}"/> </td>
+                                </tr>
+                            </table>
+                         </apex:outputPanel>
+                        
+                         <!-- record type : CarService -->
+                        
+                          <apex:outputPanel rendered="{!IF(resv.RecordType.Name == 'Car Service', true,false)}">
+                            <table border="0" width="100%" style="width:100%">
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"> <b>Car Service Company Name </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Car_Service_Company_Name__c}"/></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"> <b>Car Service Company Phone </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Car_Service_Company_Phone__c}"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Pickup (Date/Time) </b></td>
+                                    <td  width="20%"> 
+                                        <apex:outputField value="{!resv.Pickup_Date_Time__c}"/>
+                                    </td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="23%"><b> Drop Off (Date/Time) </b></td>
+                                    <td  width="24%"> 
+                                        <apex:outputField value="{!resv.Drop_Off_Date_Time__c}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"> <b>Pickup Location Type </b></td>
+                                    <td  width="20%"> <apex:outputText value="{!resv.Pickup_Location_Type__c}" /></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="30%"> <b>Drop-off at same location as Pickup </b></td>
+                                    <td  width="14%"> <apex:outputText value="{!IF(resv.Drop_off_at_same_location_as_Pickup__c == true, 'Yes', 'No')}"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b>Pickup Airport </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Pickup_Airport__c}" /></td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Drop-off Location Type </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Drop_off_Location_Type__c}"/></td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Pickup FRN Facility    </b></td>
+                                    <td  width="20%"> 
+                                        <apex:outputText value="{!resv.Pickup_FRN_Facility__r.Name}" />
+                                        
+                                    </td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Drop-off Airport   </b></td>
+                                    <td  width="20%">                                   
+                                    <apex:outputText value="{!resv.Drop_off_Airport__c}" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b> Rate </b></td>
+                                    <td  width="20%">  
+                                        <apex:outputText value="{!resv.Rate__c}" />
+                                    </td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b> Drop-off FRN Facility   </b></td>
+                                    <td  width="20%">  <apex:outputText value="{!resv.Drop_off_FRN_Facility__r.name}"/> </td>
+                                </tr>
+                                <tr>
+                                    <td  width="3%"> &nbsp;</td>
+                                    <td  width="23%"><b style=""> Pickup Address </b></td>
+                                    <td  width="20%">  
+                                        {!IF(resv.Pickup_Address__c !='', "<br/>"+resv.Pickup_Address__c, '')}
+                                        {!IF(resv.Pickup_City__c !='', "<br/>"+resv.Pickup_City__c, '')}
+                                        {!IF(resv.Pickup_State_Province_Region__c !='', "<br/>"+resv.Pickup_State_Province_Region__c, '')}
+                                        {!IF(resv.Pickup_Zip_Postal_Code__c !='', "<br/>"+resv.Pickup_Zip_Postal_Code__c, '')}
+                                        {!IF(resv.Pickup_Country__c !='', "<br/>"+resv.Pickup_Country__c, '')}
+
+                                    </td>
+                                    <td  width="8%"> &nbsp;</td>
+                                    <td  width="24%"><b style=""> Drop-off Address </b></td>
+                                    <td  width="20%">
+                                        {!IF(resv.Drop_off_Address__c !='', "<br/>"+resv.Drop_off_Address__c, '')}
+                                        {!IF(resv.Drop_off_City__c !='', "<br/>"+resv.Drop_off_City__c, '')}
+                                        {!IF(resv.Drop_off_State_Province_Region__c !='', "<br/>"+resv.Drop_off_State_Province_Region__c, '')}
+                                        {!IF(resv.Drop_off_Zip_Postal_Code__c !='', "<br/>"+resv.Drop_off_Zip_Postal_Code__c, '')}
+                                        {!IF(resv.Drop_off_Country__c !='', "<br/>"+resv.Drop_off_Country__c, '')}
+
+                                    </td>
+                                </tr>
+                            </table>
+                         </apex:outputPanel>
+                        
+                        
+                        </td>
+
+                    </tr>
+
+                    
+                </apex:repeat>
+            </apex:outputText>            
+        <!-- </apex:repeat> --> 
+    </table> 
+</apex:repeat>
+</div>
+    <div style="page-break-after: always"> 
+        <apex:outputPanel rendered="{!IF(opp.Referral_Instruction__c != null, true, false)}">
+            <h4> Special Instructions for High Referrals </h4>
+            <apex:outputField value="{!opp.Referral_Instruction__c}"/>
+        </apex:outputPanel>
+    </div>
+</apex:page>

@@ -1,0 +1,1790 @@
+<!--
+CreateOpportunityRTOutTreat
+Reord Type: OutPatient Treatment
+-->
+<apex:page standardController="Opportunity" extensions="CreateOpportunityExt" tabstyle="Opportunity">
+    <apex:sectionHeader title="Screening Edit" subtitle="New Screening"/>
+<!--     <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js" />
+    <apex:styleSheet value="http://ajax.googleapis.com/ajax/libs
+    /jqueryui/1.8.21/themes/smoothness/jquery-ui.css" /> -->
+
+    <apex:styleSheet value="{!$Resource.spinner_css}" />
+
+    <script type="text/javascript">
+        function Callmefunc(id) {
+            var type = document.getElementById(id).value;
+            check(type);
+        }
+    </script>
+    <script>
+    $(function (){
+           frn.initializeFieldSecurity();
+        }
+    )
+</script>
+
+    <style>
+        .tblCls tr:nth-child(even) {
+            background-color: #ddd;
+        }
+       .displayNone {
+            display:none;
+        }
+        .displayBlock {
+            display:block;
+        }
+        .ui-autocomplete-loading {
+            background: white url(/img/loading32.gif) right center no-repeat;
+            background-size:15px 15px;
+        }
+        .placeHolder {
+            font-style: italic;
+        }
+        .ui-autocomplete{
+            height:150px;
+            overflow:auto;
+            width:190px !important;
+            background-color: lightgray;
+        }
+        ul li, ol li {
+            margin-left: -1.5em;
+            padding-left: 0;
+            list-style:none;
+            padding:3px;
+            font-famil:Arial;
+            font-size:14px;
+        }
+        .requiredLegend {
+            padding: 0 2px;
+            background-color: #fff;
+            font-weight: normal;
+            color: #000;
+            display: none;
+        }
+        select.myMultiClass{ width: 200px !important;}
+       .apexp .detailList .list td {
+            border-bottom: none !important;
+        }
+
+        .col1{
+            width:75% !important;
+        }
+        .col2{
+             width:25% !important;
+        }
+
+    .customPopup {
+        background-color: white;
+        border-style: solid;
+        border-width: 2px;
+        left: 30%;
+        padding: 10px;
+        position: absolute;
+        z-index: 100;
+
+        width: 400px;
+        top: 3%;
+    }
+
+    .disabledTextBox {
+        background-color: white;
+        border: 1px solid;
+        color: black;
+        cursor: default;
+        width: 90px;
+        display: table;
+        padding: 2px 1px;
+        text-align:right;
+    }
+
+    .closeButton {
+        float: right;
+    }
+    .overlayStatus {
+        position:fixed;
+        left:0;
+        top:0;
+        width:100%;
+        height:100%;
+        text-align:center;
+        vertical-align: middle;
+        background-color: #dcdcdc;
+        opacity:0.6;
+        filter:alpha(opacity=60);
+        z-index: 20 ;
+    }
+    .loadIMG {
+        position : absolute;
+        width:30px;
+        height:30px;
+        left:50%;
+        top:50%;
+        margin-left:-100px;
+        margin-top:-60px;
+    }
+    .loadLabel {
+        position : absolute;
+        font-weight:bold;
+        font-size:14px;
+        left:50%;
+        top:50%;
+        margin-left:-100px;
+        margin-top:-30px;
+        color:black;
+        align:center;
+    }
+</style>
+    <apex:form >
+        <apex:actionfunction name="showPopupFunction" action="{!showPopup}" rerender="popup,popup1" status="actStatusId"/>
+        <apex:outputPanel id="popup">
+            <apex:outputPanel id="popInnerOutputPnl" styleClass="customPopup" layout="block" rendered="{!displayPopup}">
+                <apex:pageBlock mode="maindetail" >
+                     <apex:commandButton value="X" title="Close the popup" action="{!closePopup}" styleClass="closeButton" rerender="popup, p1">
+                     </apex:commandButton>
+                     <apex:pageblockSection >
+                         <apex:pageblockSectionItem >
+                          <apex:outputLabel value="Owner" for="address" html-apiName="OwnerId"></apex:outputLabel>
+                             <apex:inputField id="address" value="{!opp.ownerId}"/>
+                         </apex:pageblockSectionItem>
+                     </apex:pageblockSection>
+
+                      <apex:commandButton value="Ok" title="Close the popup" action="{!closePopup}" styleClass="closeButton" rerender="popup,pBlockRefresh">
+                     </apex:commandButton>
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:form>
+
+    <apex:form id="theForm" styleClass="create-opportunity-form iop-form">
+        <apex:actionStatus id="actStatusId" layout="block">
+            <apex:facet name="start" >
+            <apex:outputpanel Styleclass="overlayStatus">
+                <!-- <img src="/img/loading32.gif"  Class="loadIMG"/> -->
+
+                <div class="sk-fading-circle">
+                    <div>Loading</div>
+                    <div class="sk-circle1 sk-circle"></div>
+                    <div class="sk-circle2 sk-circle"></div>
+                    <div class="sk-circle3 sk-circle"></div>
+                    <div class="sk-circle4 sk-circle"></div>
+                    <div class="sk-circle5 sk-circle"></div>
+                    <div class="sk-circle6 sk-circle"></div>
+                    <div class="sk-circle7 sk-circle"></div>
+                    <div class="sk-circle8 sk-circle"></div>
+                    <div class="sk-circle9 sk-circle"></div>
+                    <div class="sk-circle10 sk-circle"></div>
+                    <div class="sk-circle11 sk-circle"></div>
+                    <div class="sk-circle12 sk-circle"></div>
+                </div>
+
+            </apex:outputpanel>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:outputPanel id="ErrorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+
+        <apex:pageBlock mode="maindetail" >
+            <apex:actionfunction name="CallApexMethod" action="{!selectedvalue}" rerender="PosHead,accPickList,conPickList,ramAssign,ErrorMessage" status="actStatusId"/>
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="Save" action="{!saveOppInfo}" styleClass="oppSaveBtn save-button" status="myStatus" />
+                <apex:CommandButton value="Cancel" action="{!cancel}" />
+            </apex:pageBlockButtons>
+
+            <apex:panelGrid columns="2" id="theGrid" columnClasses="col1, col2" width="100%">
+                <apex:outputPanel >
+                    <apex:pageBlockSection title="Screening Stage" collapsible="false" columns="1" rendered="{!IF( oppInEditMode ,true,false)}">
+                        <!-- @LigthningFixHere 100% => 75% -->
+                        <apex:iframe src="/apex/OpportunityStagePage?id={!opp.id}" width="75%" height="160"/>
+                    </apex:pageBlockSection>
+
+                    <!--Opportunity Detail Section-->
+                    <apex:pageBlockSection title="Opportunity Information" collapsible="false" columns="2" id="conInfo" rendered="{!IF(oppInEditMode ,true,false)}">
+                    <!-- <apex:iframe src="/apex/Opp_vfpage?id={!opp.id}" width="100%" height="60"/>                      -->
+                        <apex:pageBlockSectionItem >
+                            <apex:outputPanel style="width:100%;height:60">
+                                <apex:commandLink value="{!finalName}" onclick="window.open('/{!opp.Contact__c}')" style="font-size: 20px;font-weight: bold;color: #1797C0;" rendered="{!IF(opp.Contact__r.LastName !=NULL || opp.Contact__r.FirstName !=NULL, True, False)}"/>
+                                <br/>
+                                <apex:outputText style="font-size: 20px;font-weight: bold;color: #1797C0;" value="DOB: {0,date,MM/dd/yyyy}" >
+                                    <apex:param value="{!opp.Contact__r.Birthdate}" />
+                                </apex:outputText><br/><br/>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Stage"/>
+                            <apex:outputText value="{!stageValue}"/>
+                            <!-- <apex:outputPanel>                 -->
+                                <!-- <apex:actionRegion > -->
+                                    <!-- <apex:selectList value="{!stageValue}" size="1" tabindex="10"> -->
+                                        <!-- <apex:selectOptions value="{!Stages}"/> -->
+                                        <!-- <apex:actionSupport event="onchange" action="{!changeStageName}" rerender="probability,referout,leadSrc,messages" status="counterStatus"/> -->
+                                    <!-- </apex:selectList> -->
+                                <!-- </apex:actionRegion> -->
+                                <!-- <apex:actionStatus startText="Fetching Probability %..." stopText=" " id="counterStatus" style="color:red;"/> -->
+                            <!-- </apex:outputPanel> -->
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Screening Name" html-apiName="Contact__r.FirstName"/>
+                            <apex:outputText value="{!opp.name}" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:outputField value="{!opp.Probability}"  id="probability" styleClass="fieldRef1"/>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputtext value="Screening Age" html-apiName="Opportunity_Age__c"/>
+                            <apex:outputtext value="{!opp.Opportunity_Age__c}" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Close Date" html-apiName="CloseDate"/>
+                            <apex:outputField value="{!opp.CloseDate}" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem />
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Benefits Status" html-apiName="Benefits_Status__c"/>
+                            <apex:inputField value="{!opp.Benefits_Status__c}" tabOrderHint="3" styleClass="fieldRef newBnftStatusFld"/>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Close Reason" html-apiName="Close_Reason__c"/>
+                            <apex:inputField value="{!opp.Close_Reason__c}" tabOrderHint="3" styleClass="fieldRef1 newCloseReasonFld" onchange="changeClosedReason()"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Close_Reason__c =='',false,true)}" id="CRD1">
+                            <apex:outputText value="Close Reason Description" html-apiName="Close_Reason_Description__c"/>
+                            <apex:inputField value="{!opp.Close_Reason_Description__c}" tabOrderHint="3" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+                    <apex:actionfunction name="changeClosedReason" action="{!renderedSection}" rerender="conInfoVOB,conInfo" status="actStatusId"/>
+                <!--- Benefits_Status/ RAM_Status/ Close_Reason for NEW_mode -->
+                    <apex:pageBlockSection title="Opportunity Information" collapsible="false" columns="2" id="conInfoVOB" rendered="{!IF(!oppInEditMode,true,false)}" >
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Benefits Status" html-apiName="Benefits_Status__c"/>
+                            <apex:inputField value="{!opp.Benefits_Status__c}" tabOrderHint="3" styleClass="fieldRef"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Close Reason" html-apiName="Close_Reason__c"/>
+                            <apex:inputField value="{!opp.Close_Reason__c}" tabOrderHint="3" styleClass="fieldRef1" onchange="changeClosedReason()"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Close_Reason__c =='',false, true)}"  id="CRD2">
+                            <apex:outputText value="Close Reason Description" html-apiName="Close_Reason_Description__c"/>
+                            <apex:inputField value="{!opp.Close_Reason_Description__c}" tabOrderHint="3" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection>
+
+            <!---Shift Assign Information -->
+            <apex:pageBlockSection title="Shift Assign Information"  columns="2" id="pBlockRefresh">
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Screening Owner" html-apiName="OwnerId"/>
+                    <apex:outputPanel >
+                        <apex:outputField value="{!opp.ownerId}" styleClass="fieldRef1"/>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageblockSectionItem >
+                    <apex:outputtext value="AC Assigned" html-apiName="AC_Assigned__c"/>
+                    <apex:inputfield value="{!opp.AC_Assigned__c}" tabOrderHint="5" styleClass="fieldRef1 acAssingedField"/>
+                </apex:pageblockSectionItem>
+
+                <apex:pageblockSectionItem >
+                    <apex:outputtext value="Original Lead Owner" html-apiName="Original_Lead_Owner__c"/>
+                    <apex:outputField value="{!opp.Original_Lead_Owner__c}"/>
+                </apex:pageblockSectionItem>
+
+                <!-- <apex:pageblockSectionItem >
+                    <apex:outputtext value="VOB Assigned"/>
+                    <apex:inputfield value="{!opp.VOB_Assigned__c}" tabOrderHint="6" styleClass="fieldRef1 vobAssingedField"/>
+                </apex:pageblockSectionItem>  -->
+
+            </apex:pageBlockSection>
+
+
+             <!-- RAM Information-->
+            <apex:pageBlockSection title="RAM Information" collapsible="false" columns="2" >
+               <!-- <apex:pageBlockSectionItem >
+                    <apex:outputText value="RAM Assigned"/>
+                    <apex:inputField value="{!opp.RAM_Assigned__c}" tabOrderHint="7" styleClass="fieldRef1 ramAssingedField"/>
+                </apex:pageBlockSectionItem> -->
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="RAM Status" html-apiName="RAM_Status__c"/>
+                    <apex:inputField value="{!opp.RAM_Status__c}" tabOrderHint="7" styleClass="fieldRef1 ramStatusField"/>
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>
+
+            <!--FRN Facility Information-->
+            <apex:actionfunction name="changeRead" action="{!renderedSection}" rerender="FFI" status="actStatusId"/>
+
+            <apex:outputPanel html-class="frn-facility-information section qlt_frn_facility_information_score__c" id="FFI">
+                <apex:pageBlockSection title="FRN Facility Information" collapsible="false" columns="2">
+
+                    <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.Readmit__c.InlineHelpText}" >
+                        <apex:outputtext value="Readmit" html-apiName="Readmit__c"/>
+                        <apex:inputfield value="{!opp.Readmit__c}" onchange="changeRead()" tabOrderHint="9" styleClass="fieldRef1 readmitField"/>
+                    </apex:pageblockSectionItem>
+
+                     <apex:pageblockSectionItem rendered="{!If(opp.Readmit__c !='Yes',true,false)}">
+                            <apex:outputtext value="" />
+                            <apex:outputtext value="" />
+                            <!-- <apex:outputtext value="FRN Facility of Interest" />
+                            <apex:inputfield value="{!opp.FRN_Facility_of_Interest__c}" tabOrderHint="10" styleClass="fieldRef1"/>-->
+                    </apex:pageblockSectionItem>
+
+                    <!-- Removed As Part Of IOP -->
+                    <!-- <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.Currently_Enrolled_at_FRN_IOP_Facility__c.InlineHelpText}" >
+                        <apex:outputtext value="Currently Enrolled at FRN IOP Facility"/>
+                        <apex:inputfield value="{!opp.Currently_Enrolled_at_FRN_IOP_Facility__c}" tabOrderHint="13" styleClass="fieldRef1 currentlyEnrolledFcltyField"/>
+                    </apex:pageblockSectionItem> -->
+
+                        <apex:pageblockSectionItem rendered="{!If(opp.Readmit__c =='Yes',true,false)}">
+                            <apex:outputtext value="Most Recent FRN Facility" html-apiName="Most_Recent_FRN_Facility__c"/>
+                            <apex:selectList value="{!fRNFacilityValue}" size="1" id="values" tabindex="100" styleClass="fieldRef1 recentFcltyField">
+                                <apex:selectOptions value="{!FRNFacilities}"/>
+                            </apex:selectList>
+                        </apex:pageblockSectionItem>
+
+                        <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.Step_Down__c.InlineHelpText}" >
+                            <apex:outputtext value="{!$ObjectType.Opportunity.fields.Step_Down__c.Label}" html-apiName="Step_Down__c"/>
+                            <apex:inputfield value="{!opp.Step_Down__c}" onchange="changeRead()" tabOrderHint="11" styleClass="fieldRef1"/>
+                        </apex:pageblockSectionItem>
+
+                        <apex:pageblockSectionItem rendered="{!If(opp.Step_Down__c == false ,true,false)}">
+                            <apex:outputtext value=""/>
+                            <!-- <apex:inputfield value="{!opp.Relapse_Date__c}" onchange="changeRead()" tabOrderHint="12" styleClass="fieldRef1"/> -->
+                        </apex:pageblockSectionItem>
+
+                        <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.Transferring_Facility__c.InlineHelpText}" rendered="{!If(opp.Step_Down__c == true ,true,false)}">
+                            <apex:outputtext value="{!$ObjectType.Opportunity.fields.Transferring_Facility__c.Label}" html-apiName="Transferring_Facility__c"/>
+                            <apex:inputfield value="{!opp.Transferring_Facility__c}" tabOrderHint="13" styleClass="fieldRef1"/>
+                        </apex:pageblockSectionItem>
+
+
+                        <!-- <apex:pageblockSectionItem >
+                            <apex:outputtext value="Current FRN IOP Facility"/>
+                            <apex:inputfield value="{!opp.Current_FRN_IOP_Facility__c}" tabOrderHint="14" styleClass="fieldRef1 currentFRNFcltyField"/>
+                        </apex:pageblockSectionItem> -->
+
+                        <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.Relapse_Date__c.InlineHelpText}" >
+                            <apex:outputtext value="Relapse Date" html-apiName="Relapse_Date__c"/>
+                            <apex:inputfield value="{!opp.Relapse_Date__c}" tabOrderHint="11" styleClass="fieldRef1"/>
+                        </apex:pageblockSectionItem>
+
+                        <!-- <apex:pageblockSectionItem helpText="{!$ObjectType.Opportunity.fields.IOP_Staff_Referred_to_Admissions_Center__c.InlineHelpText}" >
+                            <apex:outputtext value="IOP Staff Referred to Admissions Center"/>
+                            <apex:inputfield value="{!opp.IOP_Staff_Referred_to_Admissions_Center__c}" tabOrderHint="15" styleClass="fieldRef1"/>
+                        </apex:pageblockSectionItem> -->
+
+                        <apex:pageblockSectionItem >
+                            <apex:outputtext value="FRN Facility of Interest" html-apiName="FRN_Facility_of_Interest__c"/>
+                            <apex:inputfield value="{!opp.FRN_Facility_of_Interest__c}" tabOrderHint="11" styleClass="fieldRef1 frnFcltyOfInterestField"/>
+                        </apex:pageblockSectionItem>
+            </apex:pageBlockSection>
+
+            </apex:outputPanel>
+              <!--Marketing Information -->
+            <apex:pageBlockSection html-class="marketing-information section qlt_marketing_section_score__c" title="Marketing Information" collapsible="false" columns="2" id="leadSrc">
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Caller Id" html-apiName="Caller_Id__c"/>
+                    <apex:inputField value="{!opp.Caller_Id__c}" tabOrderHint="16" styleClass="fieldRef1 callerIdField"/>
+                </apex:pageBlockSectionItem>
+
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Referral Source is RAM Account" html-apiName="Referral_Source_is_RAM_Account__c"/>
+                    <apex:inputField value="{!opp.Referral_Source_is_RAM_Account__c}" tabOrderHint="8" styleClass="fieldRef1 referalSourceIsRamAccField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Call in Code" html-apiName="Call_in_Code__c"/>
+                    <apex:inputField value="{!opp.Call_in_Code__c}" tabOrderHint="17" styleClass="fieldRef1 callinCodeField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="pre-screening source"/>
+                    <apex:outputPanel >
+                        <apex:outputPanel layout="block" styleClass="requiredInput leadSrcField">
+                            <apex:outputpanel layout="block" styleClass="requiredBlock">
+                            </apex:outputpanel>
+                            <apex:inputField value="{!opp.LeadSource}" tabOrderHint="18" required="false" styleClass="fieldRef1 iopLeadSourceFld">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs" status="actStatusId" />
+                            </apex:inputField>
+                        </apex:outputpanel>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+                <!-- <apex:pageBlockSectionItem >
+                    <apex:outputText value="Pre-Screening Source"/>
+                    <apex:outputPanel >
+                            <apex:inputField value="{!opp.LeadSource}" tabOrderHint="18" required="true" styleClass="fieldRef1">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+                            </apex:inputField>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>  -->
+
+            </apex:pageBlockSection>
+            <br/>
+                    <apex:outputPanel id="pbs">
+                        <apex:pageBlockSection rendered="{!rend4}" collapsible="false">
+                            <apex:pageblocksectionItem >
+                                <apex:outputLabel value="Pre-Screenings Source is FRN Alumni" html-apiName="Lead_Source_is_FRN_Alumni__c"/>
+                                <apex:inputField value="{!opp.Lead_Source_is_FRN_Alumni__c}" styleClass="fieldRef1">
+                                    <apex:actionSupport event="onchange" action="{!rendSection}" rerender="AlumniReferral,pbs"/>
+                                </apex:inputField>
+                            </apex:pageblocksectionItem>
+                            <apex:pageblocksectionItem id="AlumniReferral">
+                                <apex:outputText value="Alumni Referral Source" rendered="{!if(opp.Lead_Source_is_FRN_Alumni__c=='Yes', true, false)}" styleClass="fieldRef1" html-apiName="Alumni_Referral_Source__c"/>
+                                <apex:inputField value="{!opp.Alumni_Referral_Source__c}" rendered="{!if(opp.Lead_Source_is_FRN_Alumni__c=='Yes', true, false)}" styleClass="fieldRef1">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+                                </apex:inputField>
+                            </apex:pageblocksectionItem>
+                        </apex:pageBlockSection>
+
+                         <apex:actionfunction name="check" action="{!toldYouAbout}" reRender="refresh,referalSUD" status="actStatusId">
+                            <apex:param name="about" value="" />
+                        </apex:actionFunction>
+
+                        <apex:outputPanel id="referalSUD" >
+                            <apex:pageBlockSection columns="2" rendered="{!rend5}" collapsible="false">
+                                <apex:pageBlockSectionItem >
+                                    <apex:outputText value="Online Search Term" html-apiName="Online_Search_Term__c"/>
+                                    <apex:inputField value="{!opp.Online_Search_Term__c}" Style="width: 120%; height: 50px;" id="check" onmouseOut="Callmefunc('{!$Component.check}');" tabOrderHint="19" styleClass="fieldRef1"/>
+                                </apex:pageBlockSectionItem>
+                                <apex:pageblocksectionItem />
+                                <apex:outputPanel id="refresh" >
+                                    <apex:pageblocksectionItem rendered="{!IF(searchTerm != null && searchTerm != '', true, false)}">
+                                        <apex:outputText style="margin-left:150px; color:red; font-weight:bold;" value="Who told you about {!searchTerm}?" escape="false" styleClass="fieldRef1"/>
+                                    </apex:pageblocksectionItem>
+                                </apex:outputPanel>
+                            </apex:pageBlockSection>
+
+                            <apex:pageBlockSection rendered="{!rend6}" collapsible="false">
+                                <apex:pageblocksectionItem >
+                                    <apex:outputLabel value="Referral Source<br/>Unknown Details" escape="false" style="width: 31.99%;" html-apiName="Referral_Source_Unknown_Details__c"/>
+                                    <apex:inputTextArea value="{!opp.Referral_Source_Unknown_Details__c}" style="width: 229%;height: 75px;" tabindex="260" styleClass="fieldRef1"/>
+                                </apex:pageblocksectionItem>
+                            </apex:pageBlockSection>
+                        </apex:outputPanel>
+                        <apex:outputPanel id="alumni">
+                             <apex:pageBlockSection rendered="{!rend7}" collapsible="false">
+                                <apex:pageblocksectionItem >
+                                    <apex:outputLabel value="Alumni Name" html-apiName="Alumni_Name__c"/>
+                                    <apex:inputField value="{!opp.Alumni_Name__c}" tabOrderHint="27" styleClass="fieldRef1 alumniNameField"/>
+                                </apex:pageblocksectionItem>
+                                <apex:pageblocksectionItem >
+                                    <apex:outputLabel value="Alumni FRN Facility" html-apiName="Alumni_FRN_Facility__c"/>
+                                    <apex:inputField value="{!opp.Alumni_FRN_Facility__c}" tabOrderHint="28" styleClass="fieldRef1 alumniFRNFcltyField"/>
+                                </apex:pageblocksectionItem>
+                            </apex:pageBlockSection>
+                        </apex:outputPanel>
+
+                    <apex:outputPanel id="PosHead" style="width:100%;" styleClass="fieldRef1">
+                            <apex:outputPanel rendered="{!rend3}">
+                                <apex:variable value="{!0}" var="rowNum"/>
+                                <apex:pageBlockTable value="{!ReferWrpList}" var="eachRecord">
+                                    <apex:column >
+                                        <apex:outputPanel rendered="{!ReferWrpList.size>1}">
+                                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRow}" onclick="if(!confirm('Are you sure?')){return};" rerender="PosHead,ErrorMessage" tabIndex="200">
+                                                <apex:param value="{!eachRecord.index}" name="rowToRemove" assignTo="{!rowToRemove}" />
+                                            </apex:commandLink>
+                                        </apex:outputPanel>
+                                    </apex:column>
+
+                                    <apex:column headerValue="Search" style="width:30%;" >
+                                        <apex:inputText id="accId" value="{!eachRecord.selectedKeyWrp}" style="width:220px;" styleClass="placeHolder-{!eachRecord.index}" onkeypress="doWhateverUneed({!eachRecord.index})" html-placeholder="Enter Search Keyword" tabindex="200">
+                                            <apex:inputHidden id="searchPos" value="{!searchPosition}" />
+                                            <apex:inputHidden id="searchAccountId" value="{!eachRecord.searchKeyWord}" />
+                                        </apex:inputText>
+                                    </apex:column>
+
+                                    <apex:column headerValue="Referral Source" id="accPickList" style="width:10%;" headerClass="Account__c">
+                                    <apex:outputPanel layout="block" styleClass="requiredInput" >
+                                        <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                                        <apex:selectList value="{!eachRecord.cmpM.Account__c}" size="1" tabindex="200">
+                                            <apex:selectOptions value="{!eachRecord.referralSourceList}"/>
+                                        </apex:selectList>
+                                    </apex:outputpanel>
+                                    </apex:column>
+
+                                    <apex:column headerValue="Referral Source Contact" id="conPickList" style=" width: 15%;" headerClass="Consentor__c">
+                                        <apex:selectList value="{!eachRecord.cmpM.Consentor__c}" size="1" tabindex="200">
+                                            <apex:selectOptions value="{!eachRecord.referralSourceConList}"/>
+                                        </apex:selectList>
+                                    </apex:column>
+
+                                    <apex:column headerValue="Referral Order" id="refOrd" style=" width: 20%;" headerClass="Referral_Rank__c">
+                                        <apex:selectList value="{!eachRecord.cmpM.Referral_Rank__c}" size="1" style=" width: 90px;" tabindex="200" styleClass="fieldRef1">
+                                            <apex:selectOptions value="{!eachRecord.refOrders}" />
+                                            <apex:actionSupport event="onchange" action="{!referlist}" rerender="ErrorMessage,PosHead" />
+                                        </apex:selectList>
+                                    </apex:column>
+
+                                    <apex:column headerValue="RAM assigned to Account" id="ramAssign" style=" width: 15%;" headerClass="RAM_Lookup__c">
+                                        <apex:outputText value="{!eachRecord.cmpM.RAM_Lookup__c}" styleClass="fieldRef1"/>
+                                        <apex:outputText value="{!eachRecord.RAMName}" styleClass="fieldRef1" />
+                                    </apex:column>
+
+                                    <apex:column style=" width: 10%;">
+                                        <apex:outputPanel rendered="{!if((ReferWrpList.size)-1 ==rowNum && ReferWrpList.size != 4 ,true,false)}">
+                                            <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewRow}" rerender="ErrorMessage,PosHead" Status="status" tabindex="200">
+                                            </apex:commandLink>
+                                        </apex:outputPanel>
+                                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                                    </apex:column>
+                                </apex:pageBlockTable>
+                                <script type="text/javascript">
+                                function doWhateverUneed(index){
+                                    var movieObjects1;
+                                    var queryTerm1;
+                                    $('.placeHolder-'+index).autocomplete({
+                                        minLength: 2,
+                                        source: function(request, response) {
+                                            queryTerm1 = request.term;
+                                            CreateOpportunityExt.getSearchResult(request.term, function(result, event){
+                                                if(event.type == 'exception') {
+                                                      alert(event.message);
+                                                } else {
+                                                    movieObjects1 = result;
+                                                    if(movieObjects1=='null' || movieObjects1==''){
+                                                        $('.error-'+index).show();
+                                                        response([]);
+                                                    } else {
+                                                        $('.error-'+index).hide();
+                                                        response(movieObjects1);
+                                                    }
+                                                }
+                                            });
+                                        },
+                                        focus: function( event, ui ) {
+                                            var aa = ui.item.label;
+                                            var varTitle = $('<textarea />').html(aa).text();
+                                            $('.placeHolder-'+index).val( varTitle );
+                                            return false;
+                                        },
+                                        select: function( event, ui ) {
+                                            var aa = ui.item.label;
+                                            var varTitle = $('<textarea />').html(aa).text();
+                                            $('.placeHolder-'+index).val( varTitle );
+                                            $('[id$=searchAccountId]').val( ui.item.id );
+                                            $('[id$=searchPos]').val( index );
+                                            CallApexMethod();
+                                            return false;
+                                        },
+                                    })
+                                    .data( "autocomplete" )._renderItem = function( ul, item ) {
+                                        var entry = "";
+                                        if(item.label=='Referral Source' || item.label=='Referral Source Contact'){
+                                            entry = "<br/><b>"+item.label+"</b><br/>";
+
+                                        } else if (item.label=='--No Matches--'){
+                                            entry = item.label;
+
+                                        } else {
+                                            entry = "<a>"+item.label+"</a>";
+
+                                        }
+                                        //var entry = "<a>" + item.label;
+                                        //entry = entry + "</a>";
+                                        //entry = entry.replace(queryTerm1, "<b>" + queryTerm1 + "</b>");
+                                        return $( "<li></li>" )
+                                            .data( "item.autocomplete", item )
+                                            .append( entry )
+                                            .appendTo( ul );
+                                            alert(ul);
+                                    };
+
+                                    // Add or remove placeholder values
+                                    $('.placeHolder-'+index).val(PLACEHOLDER1);
+                                    $('.placeHolder-'+index).on("focus",  function(event){
+                                        $tgt = $(event.target);
+                                        if($tgt.val() === PLACEHOLDER1 ){
+                                            $tgt.val('');
+                                            $tgt.removeClass('placeHolder');
+                                        }
+                                    });
+                                    $('.placeHolder-'+index).on( "blur",  function(event){
+                                        $tgt = $(event.target);
+                                        if($tgt.val() === '' ){
+                                            $('[id$=searchAccountId]').val('');
+                                            $('[id$=searchPos]').val(index);
+                                            CallApexMethod();
+                                        }
+                                    });
+                                }
+                            </script>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    </apex:outputPanel>
+            <br/>
+
+            <!-- Patient Contacts RelatedList -->
+            <apex:pageBlock title="Patient Contacts">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="New Patient Contact" action="{!patientcontact}" tabindex="290" styleClass="fieldRef1 newBtn"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="False" id="PCHead" columns="1" >
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!pcWrpList}" var="eachPC" width="60%">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink value="Del"  action="{!removeRowToPCList}" styleClass="fieldRef1 actLink" onclick="if(!confirm('Are you sure?')){return};" rerender="PCHead" tabindex="300" >
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink value="Edit"  action="{!patientcontactEdit}" tabindex="300" styleClass="fieldRef1 actLink">
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}" id="myBtn" />
+                            </apex:commandLink>
+                        </apex:column>
+                        <apex:column headerValue="First Name" headerClass="First_Name__c">
+                            <apex:outputText value="{!eachPC.record.First_Name__c}" style="width:100px"/>
+                        </apex:column>
+                        <apex:column headerValue="Last Name" headerClass="Last_Name__c">
+                            <apex:outputText value="{!eachPC.record.Last_Name__c}" style="width:100px"/>
+                        </apex:column>
+                        <apex:column headerValue="Preferred Contact Method" headerClass="Preferred_Contact_Method__c">
+                            <apex:outputText value="{!eachPC.record.Preferred_Contact_Method__c}" />
+                        </apex:column>
+                        <apex:column headerValue="Relationship" headerClass="Relationship__c">
+                            <apex:outputText value="{!eachPC.record.Relationship__c}" style="width:100px"/>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <apex:outputPanel >
+            <br/>
+                <hr color="#ddb929"></hr>
+                <center>
+                    <br/><apex:outputText value="Talk Track Questions" style="color:blue;font-size:18px;" />
+                </center>
+            </apex:outputPanel>
+            <apex:pageBlockSection title="Situational Questions" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Description of Average Day" html-apiName="Description_of_Average_Day__c"/>
+                    <apex:inputField value="{!opp.Description_of_Average_Day__c}" tabOrderHint="30" styleClass="fieldRef1 avgDayDescField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Relationship to Patient" html-apiName="Relationship_to_Patient__c"/>
+                    <apex:inputField value="{!opp.Relationship_to_Patient__c}" tabOrderHint="31" styleClass="fieldRef1 relationwithPatientField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Impact Questions" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Timeframe of Impact" html-apiName="Timeframe_of_Impact__c"/>
+                    <apex:inputField value="{!opp.Timeframe_of_Impact__c}" tabOrderHint="32" styleClass="fieldRef1 timeFrameImpactField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Impact on Job" html-apiName="Impact_on_Job__c"/>
+                    <apex:inputField value="{!opp.Impact_on_Job__c}" tabOrderHint="35" styleClass="fieldRef1 jobImpactField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="What Prompted Call" html-apiName="What_Prompted_Call__c"/>
+                    <apex:inputField value="{!opp.What_Prompted_Call__c}" tabOrderHint="33" styleClass="fieldRef1 whtPromptedCallField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Impact on Relationships" html-apiName="Impact_on_Relationships__c"/>
+                    <apex:inputField value="{!opp.Impact_on_Relationships__c}" tabOrderHint="35" styleClass="fieldRef1 replationshipImpactField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Patient Currently Working" html-apiName="Patient_Currently_Working__c"/>
+                    <apex:inputField value="{!opp.Patient_Currently_Working__c}" tabOrderHint="34" styleClass="fieldRef1 patientCurrentlyWrkingField"/>
+                </apex:pageBlockSectionItem>
+               <!--  <apex:pageBlockSectionItem >
+                    <apex:outputText value="Type"/>
+                    <apex:inputField value="{!opp.Type__c}" tabOrderHint="36"/>
+                </apex:pageBlockSectionItem> -->
+            </apex:pageBlockSection>
+
+             <!--Cause Questions -->
+             <apex:pageBlockSection title="Cause Questions" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Trigger" html-apiName="Trigger__c"/>
+                    <apex:inputField value="{!opp.Trigger__c}" tabOrderHint="37" styleClass="fieldRef1 triggerField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Contributing Factors" html-apiName="Contributing_Factors__c"/>
+                    <apex:inputField value="{!opp.Contributing_Factors__c}" tabOrderHint="38" styleClass="fieldRef1 contributingFactorField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!--Qualifying Questions-->
+             <apex:pageBlockSection title="Qualifying Questions" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Diagnosed with Psychiatric Condition" html-apiName="Diagnosed_with_Psychiatric_Condition__c"/>
+                    <apex:inputField value="{!opp.Diagnosed_with_Psychiatric_Condition__c}" tabOrderHint="39" styleClass="fieldRef1 PsychiatricCondnField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Payment" html-apiName="Payment__c"/>
+                    <apex:inputField value="{!opp.Payment__c}" tabOrderHint="41" styleClass="fieldRef1 paymntField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Prior Treatment" html-apiName="Prior_Treatment__c"/>
+                    <apex:inputField value="{!opp.Prior_Treatment__c}" tabOrderHint="40" styleClass="fieldRef1 priorTreatmntField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!--- Commitment Questions -->
+
+            <!--
+            <apex:pageBlockSection title="Commitment Questions" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Vision of Future without Treatment"/>
+                    <apex:inputField value="{!opp.Vision_of_Future_without_Treatment__c}" tabOrderHint="42" styleClass="fieldRef1 futureVisionWithoutTreatmntField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Ready to Make Commitment"/>
+                    <apex:inputField value="{!opp.Ready_to_Make_Commitment__c}" tabOrderHint="45" styleClass="fieldRef1 makeCommitmentField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Happiness Scale"/>
+                    <apex:inputField value="{!opp.Happiness_Scale__c}" tabOrderHint="43" styleClass="fieldRef1 happinessScaleField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Needs Assessment"/>
+                    <apex:inputField value="{!opp.Needs_Assessment__c}" tabOrderHint="46" styleClass="fieldRef1 needsAssessmentField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Patient Willing to Receive Treatment"/>
+                    <apex:inputField value="{!opp.Patient_Willing_to_Receive_Treatment__c}" tabOrderHint="44" styleClass="fieldRef1 receiveTreatmentField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection> -->
+
+            <!-- ="Chat / Email Transcript Information -->
+            <!--<apex:pageBlockSection title="Chat / Email Transcript Information" collapsible="false" columns="1"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Chat / Email Transcript"/>
+                    <apex:inputTextArea value="{!opp.Chat_Email_Transcript__c}" readonly="{!IF(CONTAINS($Profile.Name, "VOB"), True, False)}" tabIndex="470" richText="True" rows="25" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection> -->
+
+            <!-- ="Additional Notes Information -->
+            <apex:pageBlockSection title="Additional Notes" collapsible="false" columns="1"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="IOP Notes" html-apiName="IOP_Notes__c"/>
+                    <apex:inputTextArea value="{!opp.IOP_Notes__c}" readonly="{!IF(CONTAINS($Profile.Name, "VOB"), True, False)}" tabIndex="470" richText="True" rows="25" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!-- Clinical Collected From Information -->
+            <apex:pageBlockSection title="Clinical Collected From Information" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Clinical Collected from?" html-apiName="Clinical_Collected_from__c"/>
+                    <apex:inputField value="{!opp.Clinical_Collected_from__c}"  tabOrderHint="48" styleClass="fieldRef1 clinicalFromField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+
+            <!-- Abused Substance Related List-->
+            <apex:pageBlock html-class="substance-abuse-and-withdrawal-information section qlt_substance_abuse_and_withdrawal_score__c" title="Substance Abuse and Withdrawal Information">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="New Abused Substance" styleClass="newBtn" action="{!abusedsubstance}" tabindex="530"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="false" columns="1" id="AbsHead1" >
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!absSubsWrpList}" var="eachAbsSubs">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToAbsList}" onclick="if(!confirm('Are you sure?')){return};" rerender="AbsHead1" tabindex="540" >
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink styleClass="actLink" value="Edit"  action="{!abusedsubstanceEdit}" tabindex="540" >
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}"/>
+                            </apex:commandLink>
+                        </apex:column>
+
+                        <apex:column headerValue="Substance" headerClass="Substance__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Substance__c}" styleClass="fieldRef1"/>
+                        </apex:column>
+
+                        <apex:column headerValue="Date of Last Use" headerClass="Date_of_Last_Use__c">
+                            <apex:outputText value="{0,date,MM'/'dd'/'yyyy}" style="width:100px">
+                                <apex:param value="{!eachAbsSubs.record.Date_of_Last_Use__c}" />
+                            </apex:outputText>
+                        </apex:column>
+
+                        <apex:column headerValue="Age of First Use" headerClass="Age_of_First_Use__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Age_of_First_Use__c}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+
+                        <apex:column headerValue="Average Amount of Use" headerClass="Average_Amount_of_Use__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Average_Amount_of_Use__c}" />
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+            <!--Frequency of Blackouts -->
+
+            <apex:pageBlockSection html-class="frequency-of-blackouts section qlt_frequency_of_blackouts_score__c" title="Frequency of Blackouts" collapsible="false" columns="1"  >
+            <apex:pageBlockSectionItem >
+                <apex:outputText value="Frequency of Blackouts" html-apiName="Frequency_of_Blackouts__c" />
+                <apex:inputField value="{!opp.Frequency_of_Blackouts__c}" tabOrderHint="54" styleClass="fieldRef1 bclkOutFrqncyFld Frequency_of_Blackouts__c"/>
+            </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!--Withdrawal Information -->
+             <apex:pageBlockSection html-class="withdrawal-information section qlt_withdrawal_information_score__c" title="Withdrawal Information" collapsible="false" columns="2"  >
+                <apex:inputField value="{!opp.Withdrawal_Symptoms__c}" tabOrderHint="55" styleClass="fieldRef1 withdrawalInfoField" html-apiName="Withdrawal_Symptoms__c"/>
+                <apex:inputField value="{!opp.Reason_for_No_Withdrawal_Symptom__c}" tabOrderHint="56" styleClass="fieldRef1 withdrawalREasonFld"/>
+            </apex:pageBlockSection>
+
+            <!--Clean  Sober Information -->
+            <apex:pageBlockSection html-class="clean-sober-information section qlt_clean_sober_section_section_score__c" title="Clean / Sober Information" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Have_you_Been_Clean_Sober__c.InlineHelpText}">
+                    <apex:outputText value="Have you Been Clean/Sober?" html-apiName="Have_you_Been_Clean_Sober__c"/>
+                    <apex:inputField value="{!opp.Have_you_Been_Clean_Sober__c}" tabOrderHint="57" styleClass="fieldRef1 isSoberField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Clean_Sober__c.InlineHelpText}">
+                    <apex:outputText value="Length of Time Clean/Sober?" html-apiName="Length_of_Time_Clean_Sober__c"/>
+                    <apex:inputField value="{!opp.Length_of_Time_Clean_Sober__c}" tabOrderHint="59" styleClass="fieldRef1 lenthOfSoberTimeField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.When_Were_You_Clean_Sober__c.InlineHelpText}">
+                    <apex:outputText value="When Were You Clean/Sober?" html-apiName="When_Were_You_Clean_Sober__c"/>
+                    <apex:inputField value="{!opp.When_Were_You_Clean_Sober__c}" tabOrderHint="58" styleClass="fieldRef1 whenWereSoberField"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!-- Family History -->
+            <apex:pageBlockSection html-class="family-history section qlt_family_history_score__c" title="Family History" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Family_Hx_of_Mental_Health__c.InlineHelpText}">
+                    <apex:outputText value="Family Hx of Mental Health" html-apiName="Family_Hx_of_Mental_Health__c"/>
+                    <apex:inputField value="{!opp.Family_Hx_of_Mental_Health__c}" tabOrderHint="60" styleClass="fieldRef1 familtyHxMentalHealthField"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Family_Hx_of_Substance_Abuse__c.InlineHelpText}">
+                    <apex:outputText value="Family Hx of Substance Abuse" html-apiName="Family_Hx_of_Substance_Abuse__c"/>
+                    <apex:inputField value="{!opp.Family_Hx_of_Substance_Abuse__c}" tabOrderHint="61" styleClass="fieldRef1 familtyHxSubstanceAbuseField" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!--Impacts on Life Information -->
+            <apex:actionfunction name="refreshImpactsOnLifeSection" action="{!renderedSection}" rerender="impactsOnLifeSection" status="actStatusId"/>
+
+            <apex:pageBlockSection id="impactsOnLifeSection" html-class="impacts-on-life-information section qlt_impacts_on_life_information_score__c" title="Impacts on Life Information" collapsible="false" columns="2"  >
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Reason_for_Seeking_Help__c.InlineHelpText}">
+                    <apex:outputText value="Reason for Seeking Help" html-apiName="Reason_for_Seeking_Help__c"/>
+                    <apex:inputField value="{!opp.Reason_for_Seeking_Help__c}" tabOrderHint="62" styleClass="fieldRef1 reasonForHelpField" />
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Occupation__c.InlineHelpText}">
+                    <apex:outputText value="Occupation" html-apiName="Occupation__c"/>
+                    <apex:inputField value="{!opp.Occupation__c}" tabOrderHint="66"  styleClass="fieldRef1 occupationField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Non_Sober_Scary_Behavior__c.InlineHelpText}">
+                    <apex:outputText value="Non Sober Scary Behavior" html-apiName="Non_Sober_Scary_Behavior__c"/>
+                    <apex:inputField value="{!opp.Non_Sober_Scary_Behavior__c}" tabOrderHint="63"  styleClass="fieldRef1 nonsoberScaryBehaviourField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Professional_License__c.InlineHelpText}">
+                    <apex:outputText value="Professional License?" html-apiName="Professional_License__c"/>
+                    <apex:inputField value="{!opp.Professional_License__c}" tabOrderHint="67" styleClass="fieldRef1 professionLicenseField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Work_or_School_Problems__c.InlineHelpText}">
+                    <apex:outputText value="Work or School Problems" html-apiName="Work_or_School_Problems__c"/>
+                    <apex:inputField value="{!opp.Work_or_School_Problems__c}" tabOrderHint="64"  styleClass="fieldRef1 wrkSchlPrblmField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Sober_Living_Selected__c.InlineHelpText}">
+                    <apex:outputText value="{!$ObjectType.Opportunity.fields.Sober_Living_Selected__c.Label}" html-apiName="Sober_Living_Selected__c"/>
+                    <apex:inputField onChange="refreshImpactsOnLifeSection();" value="{!opp.Sober_Living_Selected__c}" tabOrderHint="64"  styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Sober_Support__c.InlineHelpText}">
+                    <apex:outputText value="Sober Support" html-apiName="Sober_Support__c"/>
+                    <apex:inputField value="{!opp.Sober_Support__c}" tabOrderHint="65"  styleClass="fieldRef1 soberSupportField"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Sober_Living_Facility__c.InlineHelpText}" rendered="{!IF(opp.Sober_Living_Selected__c=='Yes',true,false)}">
+                    <apex:outputText value="{!$ObjectType.Opportunity.fields.Sober_Living_Facility__c.Label}" html-apiName="Sober_Living_Facility__c"/>
+                    <apex:inputField value="{!opp.Sober_Living_Facility__c}" tabOrderHint="64"  styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>
+
+            <!--Psychiatric Diagnoses Section-->
+            <apex:pageBlockSection html-class="psychiatric-diagnoses-information section qlt_psych_diagnoses_information_score__c" title="Psychiatric Diagnoses Information" collapsible="false" columns="1" id="PDHead"  >
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Pt_Diagnosed_with_Psychiatric_Condition__c.InlineHelpText}">
+                    <apex:outputText value="Pt Diagnosed with Psychiatric Condition?" html-apiName="Pt_Diagnosed_with_Psychiatric_Condition__c" />
+                    <apex:inputField value="{!opp.Pt_Diagnosed_with_Psychiatric_Condition__c}" tabOrderHint="65"
+                                     styleClass="fieldRef1 ptPsychcConditionFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!pdWrpList}" var="eachPD">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToPDList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PDHead" tabIndex="680" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Diagnosis" headerClass="Diagnosis__c">
+                        <apex:inputField value="{!eachPD.record.Diagnosis__c}" html-tabIndex="680" styleClass="fieldRef1 psychiatricDaignosisField"/>
+                    </apex:column>
+                    <apex:column headerValue="Date of Diagnosis" headerClass="Date_of_Diagnosis__c">
+                        <apex:inputField value="{!eachPD.record.Date_of_Diagnosis__c}" html-tabIndex="680"  styleClass="fieldRef1 psychiatricDateOfDaignosisField"/>
+                    </apex:column>
+                    <apex:column headerValue="Diagnosed By" headerClass="Diagnosed_By__c">
+                        <apex:inputField value="{!eachPD.record.Diagnosed_By__c}" html-tabIndex="680"  styleClass="fieldRef1 psychiatricDaignosedByField"/>
+                    </apex:column>
+                    <apex:column headerValue="Action" >
+                        <apex:outputPanel rendered="{!if((pdWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewPDObj}" rerender="ErrorMessage,PDHead" tabIndex="680" />
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!--Mental Health Section-->
+            <apex:pageBlockSection html-class="mental-health-symptoms section qlt_mental_health_symptoms_score__c" title="Mental Health Symptoms" collapsible="false" columns="1" id="MHSHead1">
+                <apex:outputPanel Style="padding-left: 3px;">
+                    <apex:outputText value="What type of psychiatric, emotional, or mental health symptoms are you experiencing currently (please describe each one)? (ie. suicidal ideations, depression, sleep problems, appetite problems, hearing/seeing things, isolation, anxiety):" styleClass="fieldRef1"/>
+                </apex:outputPanel>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!mhsWrpList}" var="eachMHS">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToMHSList}" onclick="if(!confirm('Are you sure?')){return};" rerender="MHSHead1" tabIndex="730" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Description" headerClass="Description__c">
+                         <img src="/img/alohaSkin/help_orange.png" alt="Help" title="{!$ObjectType.Mental_Health_Symptom__c.Fields.Description__c.inlineHelpText}" style="padding-bottom: 32px; margin-right: 5px;"/>
+                        <apex:inputField value="{!eachMHS.record.Description__c}" style="width:300px;height:75px;" html-tabIndex="730" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((mhsWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewMHSObj}" rerender="ErrorMessage,MHSHead1" tabIndex="730" styleClass="fieldRef1 actLink" />
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!-- Treatment History Related List -->
+            <apex:pageBlockSection html-class="treatment-history-information section qlt_treatment_history_information_score__c" title="Treatment History Information" collapsible="false" columns="1" id="PTHHead1" >
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!pTHWrpList}" var="eachPTH">
+                    <apex:column headerValue="Action" style="width:8%">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToPTHList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PTHHead1" tabIndex="750" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Treatment Type" headerClass="Type__c">
+                        <apex:inputField value="{!eachPTH.record.Type__c}"  style="width:70px !important" html-tabIndex="750" styleClass="fieldRef1 treatmentHistoryTypeField"/>
+                    </apex:column>
+                    <apex:column headerClass="Level_of_Care__c">
+                        <apex:facet name="header">Level<br/>of Care</apex:facet>
+                        <apex:inputField value="{!eachPTH.record.Level_of_Care__c}"  style="width:60px !important" html-tabIndex="750"  styleClass="fieldRef1 treatmentHistoryLevelofCareField"/>
+                    </apex:column>
+                    <!-- <apex:column >
+                        <apex:facet name="header">Treatment<br/>Facility</apex:facet>
+                        <apex:inputField value="{!eachPTH.record.Treatment_Facility__c}" style="width:60px !important"/>
+                    </apex:column>  -->
+                    <!-- <apex:column headerValue="Other Facility"> -->
+                    <apex:column headerValue="Treatment facility" headerClass="Other_Facility__c">
+                        <apex:inputField value="{!eachPTH.record.Other_Facility__c}" style="width:80px !important" html-tabIndex="750"  styleClass="fieldRef1 treatmentFacilityField"/>
+                    </apex:column>
+                    <apex:column headerClass="Was_Treatment_Involuntary__c">
+                        <apex:facet name="header">Was Treatment<br/>Involuntary?</apex:facet>
+                        <apex:inputField value="{!eachPTH.record.Was_Treatment_Involuntary__c}" style="width:80px" html-tabIndex="750"  styleClass="fieldRef1 treatmentIsInvoluntaryField"/>
+                    </apex:column>
+                    <apex:column headerValue="Admit Date" headerClass="Admit_Date__c">
+                        <apex:inputfield value="{!eachPTH.record.Admit_Date__c}" style="width:60px" html-tabIndex="750"  styleClass="fieldRef1 treatmentHistoryAdmitDateField"/>
+                    </apex:column>
+                    <apex:column headerValue="Discharge Date" headerClass="Discharge_Date__c">
+                        <apex:inputField value="{!eachPTH.record.Discharge_Date__c}" style="width:60px" html-tabIndex="750"  styleClass="fieldRef1 treatmentHistoryDschrgeDateField"/>
+                    </apex:column>
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((pTHWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewPTHObj}" rerender="ErrorMessage,PTHHead1"  tabIndex="750" styleClass="fieldRef1 actLink"/>
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection html-class="medications section qlt_medications_score__c" title="Medications" collapsible="false" columns="1" id="PMHead"  >
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!pmWrpList}" var="eachPM">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink value="Del" styleClass="actLink"  action="{!removeRowToPMList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PMHead" tabIndex="810" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Medication" headerClass="Medication__c">
+                        <apex:inputfield value="{!eachPM.record.Medication__c}" style="width:70px !important" html-tabIndex="810" styleClass="fieldRef1 medicationField">
+                            <apex:actionSupport event="onchange" action="{!medicationOthers}" reRender="PMHead" />
+                        </apex:inputfield>
+                    </apex:column>
+                    <apex:column headerValue="Other medication" headerClass="Other_medication__c">
+                        <apex:inputfield value="{!eachPM.record.Other_medication__c}" style="width:100px !important" html-tabIndex="810" styleClass="fieldRef1" rendered="{!AND(eachPM.isMedicationOther, True)}"/>
+                    </apex:column>
+                    <apex:column headerValue="Indication" headerClass="Indication__c">
+                        <apex:inputfield value="{!eachPM.record.Indication__c}" html-tabIndex="810" styleClass="fieldRef1 medicationIndicationFld"/>
+                    </apex:column>
+                    <apex:column headerValue="Prescribed Dosage" headerClass="Prescribed_Dosage__c">
+                        <apex:inputField value="{!eachPM.record.Prescribed_Dosage__c}" style="width:70px !important" html-tabIndex="810" styleClass="fieldRef1 medicationPrescribedDoseFld"/>
+                    </apex:column>
+                    <apex:column headerValue="Frequency" headerClass="Frequency__c">
+                        <apex:inputField value="{!eachPM.record.Frequency__c}" style="width:70px !important" html-tabIndex="810" styleClass="fieldRef1 medicationFrequencyFld"/>
+                    </apex:column>
+                    <apex:column headerClass="Currently_Abusing_Substance__c"
+                                 html-apiName="Currently_Abusing_Substance__c">
+                        <apex:facet name="header">Currently Abusing<br/>Substance?</apex:facet>
+                        <apex:inputfield value="{!eachPM.record.Currently_Abusing_Substance__c}" html-tabIndex="810" styleClass="fieldRef1 medicationAbusingSubstanceFld"/>
+                    </apex:column>
+                    <apex:column headerValue="Amount Abused" headerClass="Amount_Abused__c">
+                        <apex:inputField value="{!eachPM.record.Amount_Abused__c}" style="width:70px !important" html-tabIndex="810" styleClass="fieldRef1 medicationAmtUsedFld"/>
+                    </apex:column>
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((pmWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewPMObj}" rerender="ErrorMessage,PMHead" tabIndex="810" styleClass="fieldRef1 actLink"/>
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!--Suicide Questions Section-->
+            <apex:actionfunction name="change" action="{!renderedSection}" rerender="SQ" status="actStatusId"/>
+            <apex:pageBlockSection html-class="suicide-information section qlt_suicide_information_score__c" title="Suicide Information" collapsible="false" columns="1" id="SQ"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Have You Ever Attempted Suicide?" html-apiName="Have_You_Ever_Attempted_Suicide__c"/>
+                    <apex:inputField value="{!opp.Have_You_Ever_Attempted_Suicide__c}" onchange="change();" tabOrderHint="89" styleClass="fieldRef1 suicideAttemptEverFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Number_of_Suicide_Attempts__c.InlineHelpText}">
+                    <apex:outputText value="Number of Suicide Attempts" html-apiName="Number_of_Suicide_Attempts__c"/>
+                    <apex:inputField value="{!opp.Number_of_Suicide_Attempts__c}" tabOrderHint="89" styleClass="fieldRef1 suicideAttemptnumberFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Most_Recent_Attempt_Date__c.InlineHelpText}">
+                        <apex:outputText value="Most Recent Attempt Date" html-apiName="Most_Recent_Attempt_Date__c"/>
+                        <apex:inputField value="{!opp.Most_Recent_Attempt_Date__c}" tabOrderHint="89" styleClass="fieldRef1 suicideAttemptRecentFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Attempted_Suicide_Methods__c.InlineHelpText}">
+                        <apex:outputText value="Attempted Suicide Methods" html-apiName="Attempted_Suicide_Methods__c"/>
+                        <apex:inputField value="{!opp.Attempted_Suicide_Methods__c}" tabOrderHint="89" styleClass="fieldRef1 suicideAttemptMethodFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Description_of_Suicide_Attempt__c.InlineHelpText}">
+                        <apex:outputText value="Description of Suicide Attempt" html-apiName="Description_of_Suicide_Attempt__c"/>
+                        <apex:inputField value="{!opp.Description_of_Suicide_Attempt__c}" tabOrderHint="90" styleClass="fieldRef1 suicideAttemptDescFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}"  helpText="{!$ObjectType.Opportunity.fields.Under_Influence_at_Time_of_Attempt__c.InlineHelpText}">
+                        <apex:outputText value="Under Influence at Time of Attempt?" html-apiName="Under_Influence_at_Time_of_Attempt__c"/>
+                        <apex:inputField value="{!opp.Under_Influence_at_Time_of_Attempt__c}" tabOrderHint="90" styleClass="fieldRef1 suicideAttemptUnderInfluenceFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Attempted_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Suicide_Attempt_Additional_Notes__c.InlineHelpText}">
+                        <apex:outputText value="Suicide Attempt - Additional Notes" html-apiName="Suicide_Attempt_Additional_Notes__c"/>
+                        <apex:inputField value="{!opp.Suicide_Attempt_Additional_Notes__c}" tabOrderHint="90" styleClass="fieldRef1 suicideAttemptNotesFld"/>
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Current_Thoughts_of_Attempting_Suicide__c.InlineHelpText}">
+                    <apex:outputText value="Current Thoughts of Attempting Suicide?" html-apiName="Current_Thoughts_of_Attempting_Suicide__c"/>
+                    <apex:inputField value="{!opp.Current_Thoughts_of_Attempting_Suicide__c}" onchange="change();" tabOrderHint="91" styleClass="fieldRef1 suicideAttemptCurrentThoughtsFld"/>
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem rendered="{!if(opp.Current_Thoughts_of_Attempting_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Describe_Suicide_Thoughts__c.InlineHelpText}">
+                    <apex:outputText value="Describe Suicide Thoughts" html-apiName="Describe_Suicide_Thoughts__c"/>
+                    <apex:inputField value="{!opp.Describe_Suicide_Thoughts__c}" tabOrderHint="91" styleClass="fieldRef1 suicideAttemptThoughtsDescFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Current_Thoughts_of_Attempting_Suicide__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Do_You_Have_a_Suicide_Plan__c.InlineHelpText}">
+                    <apex:outputText value="Do You Have a Suicide Plan?" html-apiName="Do_You_Have_a_Suicide_Plan__c"/>
+                    <apex:inputField value="{!opp.Do_You_Have_a_Suicide_Plan__c}" onchange="change();" tabOrderHint="92" styleClass="fieldRef1 suicideAttemptPlnFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Current_Thoughts_of_Attempting_Suicide__c=='Yes' && opp.Do_You_Have_a_Suicide_Plan__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Description_of_Suicide_Plan__c.InlineHelpText}">
+                    <apex:outputText value="Description of Suicide Plan" html-apiName="Description_of_Suicide_Plan__c"/>
+                    <apex:inputField value="{!opp.Description_of_Suicide_Plan__c}" tabOrderHint="92" styleClass="fieldRef1 suicideAttemptPlnDescFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Current_Thoughts_of_Attempting_Suicide__c=='Yes' && opp.Do_You_Have_a_Suicide_Plan__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Intention_Fear_of_Suicide__c.InlineHelpText}">
+                    <apex:outputText value="Intention/Fear of Suicide? " html-apiName="Intention_Fear_of_Suicide__c"/>
+                    <apex:inputField value="{!opp.Intention_Fear_of_Suicide__c}" onchange="change();" tabOrderHint="92" styleClass="fieldRef1 suicideAttemptFearFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:outputPanel rendered="{!if(opp.Current_Thoughts_of_Attempting_Suicide__c=='Yes' && opp.Do_You_Have_a_Suicide_Plan__c=='Yes' && opp.Intention_Fear_of_Suicide__c=='Yes',true,false)}">
+                    <script type="text/javascript">
+                        { window.alert("Please notify co-worker or manager and follow suicide threat protocol"); }
+                    </script>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+
+            <!--Self Harm Information Section-->
+            <apex:actionfunction name="change1" action="{!renderedSection}" rerender="SQ1" status="actStatusId"/>
+            <apex:pageBlockSection html-class="self-harm-information section qlt_self_harm_information_score__c" title="Self Harm Information" collapsible="false" columns="1" id="SQ1"  >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Purposely Cut or Burned Yourself?" html-apiName="Purposely_Cut_or_Burned_Yourself__c"/>
+                    <apex:inputField value="{!opp.Purposely_Cut_or_Burned_Yourself__c}" onchange="change1();" tabOrderHint="93" styleClass="fieldRef1 selfHarmPurposelyCuttingBurningFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Cut_or_Burned_Yourself__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Frequency_of_Cutting_Burning__c.InlineHelpText}">
+                    <apex:outputText value="Frequency of Cutting / Burning" html-apiName="Frequency_of_Cutting_Burning__c"/>
+                    <apex:inputField value="{!opp.Frequency_of_Cutting_Burning__c}" tabOrderHint="93" styleClass="fieldRef1 selfHarmCuttingBurningFrequencyFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Cut_or_Burned_Yourself__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Last_Cut_Burn_Date__c.InlineHelpText}">
+                    <apex:outputText value="Last Cut / Burn Date" html-apiName="Last_Cut_Burn_Date__c"/>
+                    <apex:inputField value="{!opp.Last_Cut_Burn_Date__c}" tabOrderHint="93" styleClass="fieldRef1 selfHarmLastCuttingBurningDateFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Cut_or_Burned_Yourself__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Did_Cut_Burn_Require_Medical_Attention__c.InlineHelpText}" >
+                    <apex:outputText value="Did Cut/Burn Require Medical Attention?" html-apiName="Did_Cut_Burn_Require_Medical_Attention__c"/>
+                    <apex:inputField value="{!opp.Did_Cut_Burn_Require_Medical_Attention__c}" tabOrderHint="93" styleClass="fieldRef1 selfHarmMedAttentionForCuttingBurningFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Cut_or_Burned_Yourself__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Under_Influence_while_Cutting_Burning__c.InlineHelpText}">
+                    <apex:outputText value="Under Influence while Cutting/Burning?" html-apiName="Under_Influence_while_Cutting_Burning__c"/>
+                    <apex:inputField value="{!opp.Under_Influence_while_Cutting_Burning__c}" tabOrderHint="93" styleClass="fieldRef1 selfHarmUnderInfluenceCuttingBurningFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Do_You_Have_a_Cutting_Burning_Plan__c.InlineHelpText}">
+                    <apex:outputText value="Do You Have a Cutting/Burning Plan?" html-apiName="Do_You_Have_a_Cutting_Burning_Plan__c"/>
+                    <apex:inputField value="{!opp.Do_You_Have_a_Cutting_Burning_Plan__c}" onchange="change1();" tabOrderHint="94" styleClass="fieldRef1 selfHarmCuttingBurningPlanFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Do_You_Have_a_Cutting_Burning_Plan__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Cutting_Burning_Plan_Details__c.InlineHelpText}">
+                    <apex:outputText value="Cutting/Burning Plan Details" html-apiName="Cutting_Burning_Plan_Details__c"/>
+                    <apex:inputField value="{!opp.Cutting_Burning_Plan_Details__c}" tabOrderHint="94" styleClass="fieldRef1 selfHarmCuttingBurningPlanDetailsFld"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!-- Eating Disorder -->
+                <apex:actionfunction name="changeEDQR" action="{!renderedSection}" rerender="EDQ" status="actStatusId"/>
+                <apex:outputPanel id="EDQ">
+                    <apex:pageBlockSection html-class="eating-disorder section qlt_eating_disorder_score__c" title="Eating Disorder" collapsible="false" columns="2"    id="EDSection">
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Have_You_Ever_Purged_or_Forced_Throw_Up__c.InlineHelpText}">
+                            <apex:outputText value="Have You Ever Purged or Forced Throw Up?"
+                                            html-apiName="Have_You_Ever_Purged_or_Forced_Throw_Up__c"/>
+                            <apex:inputField value="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c}" onchange="changeEDQR()" tabOrderHint="95" styleClass="fieldRef1 eatingDisorderForcedPurgedThrowupFld"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Purposely_Starved_or_Restricted_Food__c.InlineHelpText}">
+                            <apex:outputText value="Purposely Starved or Restricted Food?"
+                                            html-apiName="Purposely_Starved_or_Restricted_Food__c"/>
+                            <apex:inputField value="{!opp.Purposely_Starved_or_Restricted_Food__c}" onchange="changeEDQR()" tabOrderHint="96" styleClass="fieldRef1 eatingDisorderPurposelyStarvedFld"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Last_Purged_Date__c.InlineHelpText}">
+                            <apex:outputText value="Last Purged Date" html-apiName="Last_Purged_Date__c"/>
+                            <apex:inputField value="{!opp.Last_Purged_Date__c}" tabOrderHint="95" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c!='Yes' && opp.Purposely_Starved_or_Restricted_Food__c=='Yes'}"
+                            />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Starved_or_Restricted_Food__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Starving__c.InlineHelpText}">
+                            <apex:outputText value="Length of Time Starving?" html-apiName="Length_of_Time_Starving__c"/>
+                            <apex:inputField value="{!opp.Length_of_Time_Starving__c}" tabOrderHint="96" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' && opp.Purposely_Starved_or_Restricted_Food__c!='Yes'}"
+                            />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Purge_Frequency__c.InlineHelpText}">
+                            <apex:outputText value="Purge Frequency" html-apiName="Purge_Frequency__c"/>
+                            <apex:inputField value="{!opp.Purge_Frequency__c}" tabOrderHint="95" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c!='Yes' && opp.Purposely_Starved_or_Restricted_Food__c=='Yes'}"
+                            />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Starved_or_Restricted_Food__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Starving__c.InlineHelpText}">
+                            <apex:outputText value="Last Starved / Restricted Date ?" html-apiName="Last_Starved_Restricted_Date__c"/>
+                            <apex:inputField value="{!opp.Last_Starved_Restricted_Date__c}" tabOrderHint="96" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' && opp.Purposely_Starved_or_Restricted_Food__c!='Yes'}"
+                            />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Purging__c.InlineHelpText}">
+                            <apex:outputText value="Length of Time Purging?" html-apiName="Length_of_Time_Purging__c"/>
+                            <apex:inputField value="{!opp.Length_of_Time_Purging__c}" tabOrderHint="95" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c!='Yes' && opp.Purposely_Starved_or_Restricted_Food__c=='Yes'}" />
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Purposely_Starved_or_Restricted_Food__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Starving__c.InlineHelpText}">
+                            <apex:outputText value="Starved / Restricted Frequency" html-apiName="Starved_Restricted_Frequency__c"/>
+                            <apex:inputField value="{!opp.Starved_Restricted_Frequency__c}" tabOrderHint="96" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' && opp.Purposely_Starved_or_Restricted_Food__c!='Yes'}" />
+
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Use_of_Laxatives_for_Weight_Loss__c.InlineHelpText}">
+                            <apex:outputText value="Use of Laxatives for Weight Loss?" html-apiName="Use_of_Laxatives_for_Weight_Loss__c"/>
+                            <apex:inputField value="{!opp.Use_of_Laxatives_for_Weight_Loss__c}" onchange="changeEDQR()" tabOrderHint="97" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                         <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Have_You_Suffered_from_Binge_Eating__c.InlineHelpText}">
+                            <apex:outputText value="Have You Suffered from Binge Eating?" styleClass="fieldRef1" html-apiName="Have_You_Suffered_from_Binge_Eating__c"/>
+                            <apex:inputField value="{!opp.Have_You_Suffered_from_Binge_Eating__c}" onchange="changeEDQR()" tabOrderHint="99" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Using_Laxatives__c.InlineHelpText}">
+                            <apex:outputText value="Length of Time Using Laxatives?" styleClass="fieldRef1" html-apiName="Length_of_Time_Using_Laxatives__c"/>
+                            <apex:inputField value="{!opp.Length_of_Time_Using_Laxatives__c}" tabOrderHint="97" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c!='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c =='Yes',true,false)}" />
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Binge_Eating_Comments__c.InlineHelpText}" rendered="{!if(opp.Have_You_Suffered_from_Binge_Eating__c == 'Yes',true,false)}">
+                            <apex:outputText value="Binge Eating Comments" styleClass="fieldRef1" html-apiName="Binge_Eating_Comments__c"/>
+                            <apex:inputField value="{!opp.Binge_Eating_Comments__c}" tabOrderHint="99" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c !='Yes',true,false)}"/>
+
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Using_Laxatives__c.InlineHelpText}">
+                            <apex:outputText value="Laxative Use Frequency" styleClass="fieldRef1" html-apiName="Laxative_Use_Frequency__c"/>
+                            <apex:inputField value="{!opp.Laxative_Use_Frequency__c}" tabOrderHint="97" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c!='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c =='Yes',true,false)}"/>
+
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Binge_Eating_Comments__c.InlineHelpText}" rendered="{!if(opp.Have_You_Suffered_from_Binge_Eating__c == 'Yes',true,false)}">
+                            <apex:outputText value="Last Binge Eating Date" styleClass="fieldRef1" html-apiName="Last_Binge_Eating_Date__c"/>
+                            <apex:inputField value="{!opp.Last_Binge_Eating_Date__c}" tabOrderHint="99" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c !='Yes',true,false)}"/>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Length_of_Time_Using_Laxatives__c.InlineHelpText}">
+                            <apex:outputText value="Last Laxative Use Date" styleClass="fieldRef1" html-apiName="Last_Laxative_Use_Date__c"/>
+                            <apex:inputField value="{!opp.Last_Laxative_Use_Date__c}" tabOrderHint="97" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c!='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c =='Yes',true,false)}"/>
+
+                        <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Binge_Eating_Comments__c.InlineHelpText}" rendered="{!if(opp.Have_You_Suffered_from_Binge_Eating__c == 'Yes',true,false)}">
+                            <apex:outputText value="Binge Eating Frequency" styleClass="fieldRef1" html-apiName="Binge_Eating_Frequency__c"/>
+                            <apex:inputField value="{!opp.Binge_Eating_Frequency__c}" tabOrderHint="99" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' && opp.Have_You_Suffered_from_Binge_Eating__c !='Yes',true,false)}" />
+
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c !='Yes' && opp.Purposely_Starved_or_Restricted_Food__c != 'Yes' &&
+                        opp.Use_of_Laxatives_for_Weight_Loss__c != 'Yes' && opp.Have_You_Suffered_from_Binge_Eating__c != 'Yes' && opp.Have_You_Seen_a__c != 'Yes',true,false)}"/>
+
+                        <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' || opp.Purposely_Starved_or_Restricted_Food__c =='Yes' ||
+                        opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' || opp.Have_You_Suffered_from_Binge_Eating__c =='Yes' || opp.Have_You_Seen_a__c =='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Height_ft_in__c.InlineHelpText}">
+                            <apex:outputText value="Height (ft.in)" styleClass="fieldRef1" html-apiName="Height_ft_in__c"/>
+                            <apex:outputPanel >
+                                <apex:outputPanel layout="block" styleClass="requiredInput" >
+                                    <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                                    <apex:inputField value="{!opp.Height_ft_in__c}" required="false" tabOrderHint="95" styleClass="fieldRef1">
+                                    </apex:inputField><br/>
+                                    <apex:outputPanel rendered="{!isHeightNull}">
+                                        <apex:outputLabel value="Error:"  style="color:#C00; font-weight:bold;"/>
+                                        <apex:outputLabel value="You must enter a value" style="color:#C00; " styleClass="fieldRef1"/>
+                                    </apex:outputPanel>
+                                </apex:outputpanel>
+                            </apex:outputPanel>
+                        </apex:pageBlockSectionItem>
+                    <!--apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' || opp.Purposely_Starved_or_Restricted_Food__c =='Yes' ||
+                        opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' || opp.Have_You_Suffered_from_Binge_Eating__c =='Yes' || opp.Have_You_Seen_a__c =='Yes',true,false)}" /-->
+
+                    <apex:pageBlockSectionItem helpText="{!$ObjectType.Opportunity.fields.Have_You_Seen_a__c.InlineHelpText}">
+                        <apex:outputText value="Eating Disorder Therapist / Treatment?" styleClass="fieldRef1" html-apiName="Have_You_Seen_a__c"/>
+                        <apex:inputField value="{!opp.Have_You_Seen_a__c}" onchange="changeEDQR()" tabOrderHint="98" styleClass="fieldRef1"/>
+                    </apex:pageBlockSectionItem>
+
+                    <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c=='Yes' || opp.Purposely_Starved_or_Restricted_Food__c =='Yes' ||
+                        opp.Use_of_Laxatives_for_Weight_Loss__c=='Yes' || opp.Have_You_Suffered_from_Binge_Eating__c =='Yes' || opp.Have_You_Seen_a__c =='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Weight_lbs__c.InlineHelpText}">
+
+                    <apex:outputText value="Weight (lbs)" html-apiName="Weight_lbs__c"/>
+                        <apex:outputPanel >
+                            <apex:outputPanel layout="block" styleClass="requiredInput" >
+                                <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                                    <apex:inputField value="{!opp.Weight_lbs__c}" required="false" tabOrderHint="95" styleClass="fieldRef1">
+                                </apex:inputField><br/>
+                                <apex:outputPanel rendered="{!isWeightNull}">
+                                <apex:outputLabel value="Error:"  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You must enter a value" style="color:#C00; "/>
+                                </apex:outputPanel>
+                            </apex:outputpanel>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <!--apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Ever_Purged_or_Forced_Throw_Up__c!='Yes',true,false)}" /-->
+                    <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Seen_a__c=='Yes',true,false)}" helpText="{!$ObjectType.Opportunity.fields.Eating_Disorder_Treatment_Facility__c.InlineHelpText}">
+                        <apex:outputText value="Eating Disorder Treatment Facility?" styleClass="fieldRef1" html-apiName="Eating_Disorder_Treatment_Facility__c"/>
+                        <apex:inputField value="{!opp.Eating_Disorder_Treatment_Facility__c}" tabOrderHint="98" styleClass="fieldRef1"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!if(opp.Have_You_Seen_a__c!='Yes',true,false)}"/>
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+
+            <!--Anger Management / Aggression Information Section-->
+            <apex:pageBlockSection html-class="anger-management-aggression-information section qlt_anger_management_aggression_score__c" title="Anger Management / Aggression Information" collapsible="false"  rendered="{!showForResidentialTreatment}" id="AngMAgIID" columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Have You Physically Hit / Harmed Anyone?"
+                                         styleClass="fieldRef1" html-apiName="Have_You_Physically_Hit_Harmed_Anyone__c"/>
+                    <apex:inputField value="{!opp.Have_You_Physically_Hit_Harmed_Anyone__c}"
+                                     tabOrderHint="100"
+                                     styleClass="fieldRef1 agressionInfoPhysicallyHarmedAnyoneFld Have_You_Physically_Hit_Harmed_Anyone__c">
+                        <apex:actionSupport event="onchange" rerender="AngMAgIID" />
+                    </apex:inputField>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Were You Under the Influence?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Were_You_Under_the_Influence__c"/>
+                    <apex:inputField value="{!opp.Were_You_Under_the_Influence__c}" tabOrderHint="101"
+                                     styleClass="fieldRef1 agressionInfounderInfluenceFld Were_You_Under_the_Influence__c"
+                                     />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!If(opp.Have_You_Physically_Hit_Harmed_Anyone__c =='Yes',true,false)}" >
+                    <apex:outputText styleClass="fieldRef1" value="Describe Hit / Harm Situation"
+                                     html-apiName="Describe_Hit_Harm_Situation__c"/>
+                    <apex:inputField value="{!opp.Describe_Hit_Harm_Situation__c}"
+                                 tabOrderHint="100"
+                                 styleClass="fieldRef1 agressionInfoHitHarmDescFld"
+                                 />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Have You Attended Anger Mgmt Class?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Have_You_Attended_Anger_Mgmt_Class__c"/>
+                    <apex:inputField value="{!opp.Have_You_Attended_Anger_Mgmt_Class__c}"
+                                 tabOrderHint="101"
+                                 styleClass="fieldRef1 agressionInfoAttendedAngerMgmntClassFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Involved in Domestic Violence?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Involved_in_Domestic_Violence__c"/>
+                    <apex:inputField value="{!opp.Involved_in_Domestic_Violence__c}"
+                                 tabOrderHint="100"
+                                 styleClass="fieldRef1 agressionInfoInvolvedDomesticViolenceFld">
+                        <apex:actionSupport event="onchange" rerender="AngMAgIID"/>
+                    </apex:inputField>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Have You Had Thoughts of Harming Others?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Have_You_Had_Thoughts_of_Harming_Others__c"/>
+                    <apex:inputField value="{!opp.Have_You_Had_Thoughts_of_Harming_Others__c}"
+                                     tabOrderHint="101"
+                                     styleClass="fieldRef1 agressionInfoThoughtsOfHarmingOthersFld">
+                        <apex:actionSupport event="onchange" rerender="AngMAgIID"/>
+                    </apex:inputField>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!If(opp.Involved_in_Domestic_Violence__c =='Yes',true,false)}">
+                    <apex:outputText styleClass="fieldRef1" value="Describe Domestic violence situation"
+                                     html-apiName="Describe_Domestic_Violence_Situation__c" />
+                    <apex:inputField value="{!opp.Describe_Domestic_Violence_Situation__c}"
+                                 tabOrderHint="100"
+                                 styleClass="fieldRef1 agressionInfoDomesticVoilenceDescFld "/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!If(opp.Have_You_Had_Thoughts_of_Harming_Others__c =='Yes',true,false)}" >
+                    <apex:outputText value="Who Were You Thinking of Hurting?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Who_Were_You_Thinking_of_Hurting__c"/>
+                    <apex:inputField value="{!opp.Who_Were_You_Thinking_of_Hurting__c}"
+                                     tabOrderHint="101"
+                                     styleClass="fieldRef1 agressionInfoThinkingOfHurtingWhomFld" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!--Legal Information Section-->
+            <apex:actionfunction name="changeEDQ1" action="{!renderedSection}" rerender="EDQ1"/>
+            <apex:pageBlockSection html-class="legal-information section qlt_legal_information_score__c" title="Legal Information"
+                                   id="EDQ1"
+                                   collapsible="false"
+                                   columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Do You Have a Legal Guardian?"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Do_You_Have_a_Legal_Guardian__c"/>
+                    <apex:inputField value="{!opp.Do_You_Have_a_Legal_Guardian__c}"
+                                     onchange="changeEDQ1()"
+                                     tabOrderHint="102"
+                                     styleClass="fieldRef1 legalInfoLegalGuardianFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Upcoming court dates"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Upcoming_Court_Dates__c"/>
+                    <apex:inputField value="{!opp.Upcoming_Court_Dates__c}" tabOrderHint="105"
+                                     styleClass="fieldRef1 legalInfoUpcomingCourtDatesFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(opp.Do_You_Have_a_Legal_Guardian__c=='Yes',true,false)}" >
+                    <apex:outputText value="Legal Guardian First Name"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Legal_Guardian_First_Name__c"/>
+                    <apex:inputField value="{!opp.Legal_Guardian_First_Name__c}"
+                                     tabOrderHint="103"
+                                     styleClass="fieldRef1 legalInfoLegalGuardianFirstNameFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem rendered="{!if(opp.Do_You_Have_a_Legal_Guardian__c=='Yes',true,false)}" >
+                    <apex:outputText value="Legal Guardian Last Name"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Legal_Guardian_Last_Name__c"/>
+                    <apex:inputField value="{!opp.Legal_Guardian_Last_Name__c}"
+                                     tabOrderHint="104"
+                                     styleClass="legalInfoLegalGuardianLastNameFld"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Travel Restrictions"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Travel_Restrictions__c"/>
+                    <apex:inputField value="{!opp.Travel_Restrictions__c}"
+                                     tabOrderHint="107"
+                                     styleClass="fieldRef1 legalInfoTravelRestrictionsFld  "/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Patient Currently Incarcerated"
+                                     styleClass="fieldRef1"
+                                     html-apiName="Patient_Currently_Incarcerated__c"/>
+                    <apex:inputField value="{!opp.Patient_Currently_Incarcerated__c}"
+                                     tabOrderHint="108"
+                                     styleClass="fieldRef1 legalInfoPtntCrcrtdFld"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection html-class="legal offenses section qlt_legal_offenses_score__c" title="Legal Offenses" collapsible="false" columns="1" id="LOHead"  >
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!loWrpList}" var="eachLO">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink value="Del"  action="{!removeRowToLOList}" onclick="if(!confirm('Are you sure?')){return};" rerender="LOHead" tabIndex="1070" styleClass="fieldRef1 actLink">
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}" />
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Type" headerClass="Type__c">
+                        <apex:inputField value="{!eachLO.record.Type__c}" style="width:70px !important" html-tabIndex="1070" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Date" headerClass="Date__c">
+                        <apex:inputField value="{!eachLO.record.Date__c}" style="width:70px !important" html-tabIndex="1070" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Circumstances" headerClass="Circumstances__c">
+                        <apex:inputField value="{!eachLO.record.Circumstances__c}" style="width:200px;height:80px !important" html-tabIndex="1070" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerClass="Registered_Sex_Offender_List__c">
+                        <apex:facet name="header">Registered Sex<br/>Offender List</apex:facet>
+                        <apex:inputField value="{!eachLO.record.Registered_Sex_Offender_List__c}" html-tabIndex="1070" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="On Probation?" headerClass="On_Probation__c">
+                        <apex:inputField value="{!eachLO.record.On_Probation__c}" style="width:70px !important" html-tabIndex="1070" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="On Parole?" headerClass="On_Parole__c">
+                        <apex:inputField value="{!eachLO.record.On_Parole__c}" style="width:60px !important" html-tabIndex="1070" styleClass="fieldRef1" />
+                    </apex:column>
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((loWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewLOObj}" rerender="ErrorMessage,LOHead" tabIndex="1070" styleClass="fieldRef1 actLink"/>
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!--Medical Problems / Symptoms Related List-->
+            <apex:actionfunction name="changeEDQ" action="{!renderedSection}" rerender="MPSHead" status="actStatusId"/>
+                <apex:pageBlockSection html-class="medical-health-information section qlt_medical_health_information_score__c" title="Medical / Health Information" collapsible="false" columns="1" id="MPSHead"  >
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Ongoing Medical Issues or Conditions?" html-apiName="Ongoing_Medical_Issues_or_Conditions__c"/>
+                        <apex:inputfield value="{!opp.Ongoing_Medical_Issues_or_Conditions__c}" onchange="changeEDQ()" tabOrderHint="141" styleClass="fieldRef1"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:outputPanel rendered="{!if(opp.Ongoing_Medical_Issues_or_Conditions__c=='Yes',true,false)}">
+                        <apex:variable value="{!0}" var="rowNum"/>
+                            <apex:pageBlockTable value="{!mPSWrpList}" var="eachMPS"  >
+                                <apex:column headerValue="Action" >
+                                <apex:commandLink value="Del" styleClass="actLink"  action="{!removeRowToMPSList}" onclick="if(!confirm('Are you sure?')){return};" rerender="MPSHead" tabIndex="1420" >
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                </apex:commandLink>
+                                </apex:column>
+                                <apex:column headerValue="Problem" headerClass="Problem__c">
+                                <apex:inputField value="{!eachMPS.record.Problem__c}" html-tabIndex="1420" styleClass="fieldRef1"/>
+                                </apex:column>
+                                <apex:column headerValue="Symptom(s)" headerClass="Symptoms__c">
+                                <apex:inputfield value="{!eachMPS.record.Symptoms__c}" html-tabIndex="1420" styleClass="fieldRef1"/>
+                                </apex:column>
+                                <apex:column headerValue="Last Doctor Visit Date" headerClass="Last_Doctor_Visit_Date__c">
+                                <apex:inputField value="{!eachMPS.record.Last_Doctor_Visit_Date__c}" html-tabIndex="1420" styleClass="fieldRef1"/>
+                                </apex:column>
+                                <apex:column headerValue="Follow up Recommended ?" headerClass="Follow_up_Recommended__c">
+                                <apex:inputField value="{!eachMPS.record.Follow_up_Recommended__c}" style="margin-left: 2cm;" html-tabIndex="1420" styleClass="fieldRef1"/>
+                                </apex:column>
+                                <apex:column headerValue="Action">
+                                <apex:outputPanel rendered="{!if((mPSWrpList.size)-1 ==rowNum,true,false)}">
+                                <apex:commandLink value="Add New" styleClass="actLink" action="{!addNewMPSObj}" rerender="ErrorMessage,MPSHead" tabIndex="1420"/>
+                                </apex:outputPanel>
+                                <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                                </apex:column>
+                        </apex:pageBlockTable>
+                        <br/>
+                    </apex:outputPanel>
+                    </apex:pageBlockSection>
+
+                    <apex:pageBlockSection html-class="illness-injury section qlt_illness_injury_score__c" columns="1" collapsible="false" title="Illness Injury" id="IIHead">
+                      <apex:variable value="{!0}" var="rowNum"/>
+                        <apex:pageBlockTable value="{!iiWrpList}" var="eachII" >
+                            <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToIIList}" onclick="if(!confirm('Are you sure?')){return};" rerender="IIHead" tabIndex="1450">
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink>
+                            </apex:column>
+                            <apex:column headerValue="Illness / Injury" headerClass="Illness_Injury__c">
+                            <apex:inputField value="{!eachII.record.Illness_Injury__c}" style="width:75px" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerValue="Description" headerClass="Description__c">
+                            <apex:inputfield value="{!eachII.record.Description__c}" style="width:75px" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerClass="Surgeries_or_Hospitalizations__c">
+                            <apex:facet name="header">Surgeries or <br/>Hospitalizations</apex:facet>
+                            <apex:inputField value="{!eachII.record.Surgeries_or_Hospitalizations__c}" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerClass="Surgery_or_Hospitalization_Description__c">
+                            <apex:facet name="header">Surgery or <br/>Hospitalization <br/> Description</apex:facet>
+                            <apex:inputField value="{!eachII.record.Surgery_or_Hospitalization_Description__c}" style="width:75px" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerClass="Surgery_or_Hospitalization_Date__c">
+                            <apex:facet name="header">Surgery or Hospitalization <br/> Date</apex:facet>
+                            <apex:inputField value="{!eachII.record.Surgery_or_Hospitalization_Date__c}" html-tabIndex="1450" styleClass="fieldRef1" />
+                            </apex:column>
+                            <apex:column headerClass="Were_Follow_up_Appointments_Scheduled__c">
+                            <apex:facet name="header">Were Follow <br/>up Appointments <br/> Scheduled?</apex:facet>
+                            <apex:inputField value="{!eachII.record.Were_Follow_up_Appointments_Scheduled__c}" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerClass="Did_You_Go_to_Follow_up_Appointments__c">
+                            <apex:facet name="header">Did You Go to <br/>Follow up <br/> Appointments</apex:facet>
+                            <apex:inputField value="{!eachII.record.Did_You_Go_to_Follow_up_Appointments__c}" html-tabIndex="1450" styleClass="fieldRef1"/>
+                            </apex:column>
+                            <apex:column headerValue="Action">
+                            <apex:outputPanel rendered="{!if((iiWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewIIObj}" rerender="ErrorMessage,IIHead" tabIndex="1450"/>
+                            </apex:outputPanel>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                            </apex:column>
+                    </apex:pageBlockTable>
+                    </apex:pageBlockSection>
+                    <br/>
+                    <apex:pageBlockSection html-class="major-medical-issues section qlt_major_medical_issues_score__c" columns="1" collapsible="false" title="Major Medical Issues" id="MMIHead">
+                    <apex:pageBlockTable value="{!mmiWrpList}" var="eachID1" styleClass="tblCls">
+                        <apex:column headerValue="Major Medical Issue" headerClass="Major_Medical_Issue__c">
+                            <apex:outputField value="{!eachID1.record.Major_Medical_Issue__c}" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Occurred?" headerClass="Occured__c">
+                            <apex:inputField value="{!eachID1.record.Occured__c}" html-tabIndex="1520" styleClass="fieldRef1"/>
+                        </apex:column>
+                         <apex:column headerValue="When Did it Happen ?" headerClass="When_Did_it_Happen__c">
+                            <apex:inputField value="{!eachID1.record.When_Did_it_Happen__c}" html-tabIndex="1520" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Ongoing Symptoms" headerClass="Ongoing_Symptoms__c">
+                            <apex:inputField value="{!eachID1.record.Ongoing_Symptoms__c}" html-tabIndex="1520" styleClass="fieldRef1"/>
+                        </apex:column>
+
+                        <apex:column headerValue="Follow up Appointment(s) Scheduled" headerClass="Follow_up_Appointments_Scheduled__c">
+                            <apex:inputField value="{!eachID1.record.Follow_up_Appointments_Scheduled__c}" html-tabIndex="1520" styleClass="fieldRef1"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+              <apex:pageBlockSection html-class="infectious-diseases section qlt_infectious_diseases_score__c" title="Infectious Diseases" collapsible="False" columns="1" id="IDHead"  >
+                <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!idWrpList}" var="eachID" styleClass="tblCls infctsDiseasesTbl">
+                        <!-- <apex:column headerValue="Action">
+                            <apex:commandLink value="Del"  action="{!removeRowToIDList}" onclick="if(!confirm('Are you sure?')){return};" rerender="IDHead" >
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink>
+                        </apex:column>  -->
+                        <apex:column headerValue="Infectious Disease" headerClass="Infectious_Disease__c">
+                            <apex:outputField value="{!eachID.record.Infectious_Disease__c}" style="width:65px !important" styleClass="fieldRef1 "/>
+                        </apex:column>
+                         <apex:column headerValue="Diagnosed ?" headerClass="Diagnosed__c">
+                            <apex:inputField value="{!eachID.record.Diagnosed__c}" style="width:75px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblDiagnosed"/>
+                        </apex:column>
+                        <apex:column headerValue="Diagnosis Date" headerClass="Diagnosis_Date__c">
+                            <apex:inputField value="{!eachID.record.Diagnosis_Date__c}"   style="width:70px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblDiagnosedDate"/>
+                        </apex:column>
+                        <apex:column headerClass="Currently_Symptomatic__c">
+                        <apex:facet name="header">Currently <br/>Symptomatic</apex:facet>
+                            <apex:inputField value="{!eachID.record.Currently_Symptomatic__c}"  style="width:74px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblCurrentSymptomatic"/>
+                        </apex:column>
+                        <apex:column headerClass="Currently_Taking_Medications__c">
+                            <apex:facet name="header">Currently <br/>Taking <br/>Medications?</apex:facet>
+                            <apex:inputField value="{!eachID.record.Currently_Taking_Medications__c}"   style="width:72px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblCurrentMedications"/>
+                        </apex:column>
+                        <apex:column headerClass="Regular_Follow_Up_Recommended__c">
+                            <apex:facet name="header">Regular<br/> Follow Up<br/> Recommended</apex:facet>
+                            <apex:inputField value="{!eachID.record.Regular_Follow_Up_Recommended__c}"   style="width:72px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblRegularFollowup"/>
+                        </apex:column>
+                         <apex:column headerClass="Have_You_Followed_Up_with_Appointments__c">
+                            <apex:facet name="header">Have You  <br/> Followed Up with <br/> Appointments?</apex:facet>
+                            <apex:inputField value="{!eachID.record.Have_You_Followed_Up_with_Appointments__c}"   style="width:72px !important" html-tabIndex="1560" styleClass="fieldRef1 infctsDiseasesTblFollowUpAppointment"/>
+                        </apex:column>
+                        <!-- <apex:column headerValue="Action">
+                                <apex:outputPanel rendered="{!if((idWrpList.size)-1 ==rowNum,true,false)}">
+                                    <apex:commandLink value="Add New" action="{!addNewIDObj}" rerender="ErrorMessage,IDHead"/>
+                                </apex:outputPanel>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column> -->
+                    </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!--Patient Insurance Related List--><br/>
+            <apex:pageBlock html-class="patient-insuranc section qlt_patient_insurances_score__c" title="Patient Insurance">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="New Patient Insurance" styleClass="newBtn" action="{!newPatientInsurance}" tabindex="1680"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="False" columns="1" id="PIHead" >
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!piWrpList}" var="eachPI" styleClass="patntInsurenceTbl">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToPIList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PIHead" tabindex="1690" >
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink value="Edit" styleClass="actLink" action="{!patientInsuranceEdit}" tabindex="1690">
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}"/>
+                            </apex:commandLink>
+                        </apex:column><!--
+                        <apex:column headerValue="Patient Insurance Name">
+                            <apex:outputField value="{!eachPI.record.Name}" style="width:70px !important"/>
+                        </apex:column> -->
+                        <apex:column headerValue="Subscriber">
+                            <apex:outputText value="{!eachPI.patConName}" style="width:70px !important" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Phone">
+                           <!--  <apex:outputField value="{!eachPI.record.Provider_Services_Phone__c}" style="width:70px !important"/> -->
+                             <apex:outputText value="{!eachPI.patConPhone}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Member ID" headerClass="Member_ID__c">
+                            <apex:outputField value="{!eachPI.record.Member_ID__c}" style="width:70px !important" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Type / Order" headerClass="Type_Order__c">
+                            <apex:outputField value="{!eachPI.record.Type_Order__c}" style="width:70px !important" styleClass="fieldRef1 "/>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column> <!--
+                        <apex:column headerValue="Action">
+                                <apex:outputPanel rendered="{!if((piWrpList.size)-1 ==rowNum,true,false)}">
+                                    <apex:commandLink value="Add New" action="{!addNewPIObj}" rerender="ErrorMessage,PIHead"/>
+                                </apex:outputPanel>
+                                <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column> -->
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+              <!--Refer Out Information Section-->
+            <apex:pageBlockSection title="Refer Out Information" collapsible="false" columns="1"    id="referout">
+                <!-- <apex:inputField value="{!opp.Refer_Out_Reason__c}" tabOrderHint="105"/> -->
+                <apex:pageBlockSectionItem rendered="{!if(stageValue == 'Referral Requested',true,false)}">
+                    <apex:outputText value="Refer Out Reason" html-apiName="Refer_Out_Reason__c"/>
+                    <apex:outputPanel >
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                        <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                        <apex:inputField value="{!opp.Refer_Out_Reason__c}" taborderhint="169" styleClass="fieldRef1 rfrlRqstdReferOutReasonFld"/>
+                        </apex:outputpanel>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(stageValue != 'Referral Requested',true,false)}">
+                    <apex:outputText value="Refer Out Reason" html-apiName="Refer_Out_Reason__c"/>
+                    <apex:inputField value="{!opp.Refer_Out_Reason__c}" taborderhint="169" styleClass="fieldRef1 nonRfrlRqstdReferOutReasonFld"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+               <!--Referral__c Related List-->
+            <apex:pageBlockSection title="Referrals" collapsible="False" columns="1" id="rFHead1"  >
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!ReferralWrpList}" var="eachReferral">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToReferralList}" onclick="if(!confirm('Are you sure?')){return};" rerender="rFHead1"  tabIndex="1690">
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink><apex:outputText value="&nbsp;" escape="false"/>
+                        <apex:commandLink styleClass="actLink" value="Edit"  action="{!editReferral}" tabIndex="1690" >
+                            <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Patient Name" headerClass="Patient_Name__c">
+                        <apex:outputText value="{!eachReferral.record.Patient_Name__c}" style="width:100px" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Account" headerClass="Account__c">
+                        <!-- <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>    -->
+                        <apex:outputField value="{!eachReferral.record.Account__c}" style="width:100px" styleClass="fieldRef1"/>
+                        <!-- </apex:outputPanel> -->
+                    </apex:column>
+                    <apex:column headerValue="Contact" headerClass="Consentor__c">
+                        <apex:outputField value="{!eachReferral.record.Consentor__c}" style="width:100px" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Referral Reason" headerClass="Referral_Reason__c">
+                        <apex:outputText value="{!eachReferral.record.Referral_Reason__c}" style="width:100px" styleClass="fieldRef1"/>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+
+                    <!-- <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((ReferralWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewReferralObj}" rerender="ErrorMessage,rFHead1"/>
+                        </apex:outputPanel>
+
+                    </apex:column> -->
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <!--- end the fields -->
+            <!-- start Related List -->
+            <br/>
+
+             <apex:pageBlockSection title="Matching Opportunities" collapsible="false" columns="1" rendered="{!IF( oppInEditMode ,true,false)}">
+                  <apex:iframe src="/apex/OppotunityExtensionPage?id={!opp.id}" width="100%" height="200" scrolling="true"/>
+            </apex:pageBlockSection>
+
+
+
+                </apex:outputPanel>
+                <apex:outputPanel >
+                    <div id="side-tabs" style="position: fixed;padding: 10px;" class="floating-panel">
+
+                        <ul>
+                            <apex:outputPanel rendered="{!AND( $CurrentPage.parameters.showQualityReport!=null
+                                     , $CurrentPage.parameters.showQualityReport!=''
+                                     , $CurrentPage.parameters.showQualityReport=='true')}" layout="none">
+                            <li><a href="#quality-report-wrapper">Quality</a></li>
+                            </apex:outputPanel>
+                            <li><a href="#notes-wrapper">Notes</a></li>
+                            <li>
+                                <a id="save-continue-tab" href="#quality-report-wrapper">    
+
+                                     <span id="stub-wrapper">
+
+                                         <apex:CommandButton value="Save & Continue" action="{!saveAndContinue}" styleClass="save-button save-continue-button" onComplete="frn.saveAndContinueDone();" status="actStatusId" reRender="oppsaved,ErrorMessage" tabindex="1700" />
+
+                                         <apex:outputPanel id="oppsaved" styleClass="oppsaved">
+                                            <apex:outputPanel styleClass="save-response" 
+                                                               html-is-opp-saved="{!isOpportunitySaved}">
+                                            </apex:outputPanel>                   
+                                            <!-- <apex:outputText value="&nbsp;&nbsp;Opportunity Saved" style="color:red;font-size:12px;" escape="false" rendered="{!isOpportunitySaved}" styleClass="fieldRef1"/>
+                                            <apex:actionPoller action="{!hideMessage}" reRender="oppsaved" interval="5" enabled="{!isOpportunitySaved}"/> -->
+                                        </apex:outputPanel>
+                                    </span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div id="quality-report-wrapper">
+                            <!-- Main container -->
+                            <span id="qualityscore-report">
+                                <div >  <!-- class="floating-panel" -->
+                                    <div id="reportDiv" class="quality-report-panel">
+                                    </div>
+                                </div>
+                            </span>
+                        </div>
+                        
+                        <div id="notes-wrapper">
+
+                            <apex:pageBlockSection columns="1">
+                                <apex:pageblocksectionItem >
+                                  <!--  <apex:inputField value="{!opp.Scratchpad__c}" taborderhint="171" id="sp" styleClass="fieldRef1"/> -->
+
+                                  <apex:inputTextArea id="sp" readonly="{!IF(CONTAINS($Profile.Name, "VOB"), True, False)}" value="{!opp.Scratchpad__c}" richText="True" tabIndex="1710" rows="25" styleClass="sratchPadFld"/>
+                                </apex:pageblocksectionItem>
+                            </apex:pageBlockSection>
+
+                        </div>    
+
+                        <div id="save-wrapper">
+                        </div>    
+
+                        <!-- <hr color="#ddb929"></hr> -->
+                        
+                        
+
+                    </div>
+                </apex:outputPanel>
+            </apex:panelGrid>
+        </apex:pageBlock>
+
+        <!-- Loading Status  -->
+        <apex:actionStatus id="loadingStatus">
+            <apex:facet name="start">
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.75; z-index: 1000; background-color: black;">
+                    &nbsp;
+                </div>
+                <div style="position: fixed; left: 0; top: 0; bottom: 0; right: 0; z-index: 1001; margin: 30% 50%">
+                    <img src="http://upload.wikimedia.org/wikipedia/commons/e/ed/Cursor_Windows_Vista.gif" />
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </apex:form>
+
+    <script>
+        $(document).ready(function(){
+
+            setTimeout(function(){$("[id*='sp']").attr("tabindex", "1710");}, 2000)
+        });
+    </script>
+</apex:page>

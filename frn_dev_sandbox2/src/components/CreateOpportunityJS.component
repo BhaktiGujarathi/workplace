@@ -1,0 +1,257 @@
+<apex:component >
+    <script src="//code.jquery.com/jquery-2.2.4.min.js" />
+    <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js">
+    </script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js">
+    </script>
+
+    
+    <c:Loader />
+
+    <script>
+
+        // var jQ = $.noConflict();
+        var frn = frn || {};
+
+        frn.initializeFieldSecurity = function(){
+            var fieldList = $(".fieldRef");
+            var fieldList1 = $(".fieldRef1");
+            
+            var pName = ('{!$Profile.Name}');
+            var nVOB = pName.includes("VOB");
+            var nVOB1 = pName.includes("(AC) Manager");
+            if(!nVOB)   {
+                if(!nVOB1)   {
+                    if(fieldList.length > 0){                           
+                        for (var i = 0, len = fieldList.length; i < len; i++) {
+                            fieldList[i].disabled = nVOB== false ? true : false;
+                            
+                        }
+                    } 
+                } 
+            } 
+            if(nVOB){
+                    $(".actLink").each(function( index ) {
+                            $(this).remove();
+                    }); 
+                    $(".lookupInput a").each(function( index ) {
+                            $(this).remove();
+                    });     
+                    $(".newBtn").each(function( index ) {
+                            $(this).remove();
+                    });                 
+    
+                    if(fieldList1.length > 0){                          
+                        for (var i = 0, len = fieldList1.length; i < len; i++) {
+                            fieldList1[i].disabled = nVOB== true ? true : false;                            
+                        }
+                    }
+                    
+            }
+            //textarea fix for scrollbars and resizing does not work together
+            frn.applyTextAreaResizeFix(); 
+        };
+
+        frn.applyTextAreaResizeFix = function(){ 
+            var disabledTextareas = $("textarea[disabled]");
+            disabledTextareas.removeAttr("disabled");
+            disabledTextareas.attr("readonly","true");
+        };
+
+        frn.applyMultipleSubmitFix = function(){
+            $("input.save-button").click(function(event){ 
+                //$(this).prop("disabled","true");
+                frn.showLoader();
+                return true;
+            });
+        };
+
+        frn.saveAndContinueDone = function(){
+            $("body").trigger("opportunity-save-done");    
+            frn.hideLoader();
+            frn.showOpportunitySaveResponse();
+        };
+
+        frn.initializeSideBarTabs = function(){
+            $( "#side-tabs" ).tabs();
+            //disableSaveContinueTab
+            $("body").on("click","#save-continue-tab", function(event){
+                event.preventDefault();
+                return false;
+            });
+
+            //stop event propagation for last tab
+            $("#side-tabs #stub-wrapper").on("click",function(event){
+               event.stopPropagation();
+               return false;
+            });
+
+            //scroll page to top
+            $(this).scrollTop(0);
+            //make the side bar sticky
+            makePanelSticky(".floating-panel","panel-isfloating");
+
+        };
+
+        $(document).ready(function(){
+
+            frn.applyMultipleSubmitFix();
+            $('form').bind('submit', function () {
+                $(this).find(':input').prop('disabled', false);
+            });
+
+            frn.initializeSideBarTabs();
+        });
+
+    </script>
+
+        <!-- Make Panel Sticky -->
+    <script>
+        var makePanelSticky = function(panelClassSelector,panelFloatingClass){
+            var searchHeader = $(panelClassSelector);
+            // var headerTop    = searchHeader.offset().top;
+            var headerTop       = 115;
+            var headerLeft   = searchHeader.offset().left; 
+    
+            $(window).scroll(function(event){
+                var floatingEventTimer = null;
+                var resetTop = null;
+                var resetLeft = null;
+                var horizontalFloatingClass = "horizontal-floating";
+                var placeholderId = null;
+    
+                var addPlaceHolder = function(node){
+                    var nodeHeight = node.height();
+                    var nodeWidth = node.outerWidth(true);
+                    var nodeCssfloat = node.css("float");
+                    var nodeCssdisplay = node.css("display");
+                    var randomNum = Math.ceil(Math.random() * 9999); /* Pick random number between 1 and 9999 */
+                    placeholderId = "stickyPanelSpace" + randomNum;
+                    PanelSpacer = $("<div id='" + placeholderId + "' style='width:" +nodeWidth + "px;height:" + nodeHeight + "px;float:" + nodeCssfloat + ";display:" + nodeCssdisplay + ";'>&#20;</div>");
+                    node.after(PanelSpacer);
+                }
+    
+                var stickHeader = function(event){
+    
+                    var headerHeight = searchHeader.height();
+                    var reachedTop   = false;
+                    var currentScrollLeft = $(window).scrollLeft();
+                    var currentScrollTop = $(window).scrollTop();
+    
+                    // //handle vertical scrolling
+                    if(currentScrollTop > headerTop){
+    
+                        //remove horizontal scrolling
+                        if(searchHeader.hasClass(horizontalFloatingClass)){
+                            searchHeader.removeClass(horizontalFloatingClass);
+                            $(panelClassSelector).removeStyle("top");
+                        }                        
+    
+                        if(!searchHeader.hasClass(panelFloatingClass)){
+                            addPlaceHolder(searchHeader);
+                            searchHeader.addClass(panelFloatingClass);
+                        }
+    
+                        reachedTop = false;
+                    }
+    
+                    if(currentScrollTop<headerTop || currentScrollTop==0) {
+                        searchHeader.removeClass(panelFloatingClass);
+                        $("#"+placeholderId).remove();
+                        reachedTop = true;
+                    }
+    
+                    //handle horizontal scrolling
+                    if(!searchHeader.hasClass(panelFloatingClass) || reachedTop===true){
+    
+                        if(currentScrollLeft > headerLeft && currentScrollTop < headerTop){
+                            if(!searchHeader.hasClass(horizontalFloatingClass)){
+                                searchHeader.addClass(horizontalFloatingClass);
+                            }
+    
+                            $(panelClassSelector).css("top",headerTop-currentScrollTop); 
+                        }
+                        else if(currentScrollLeft <= headerLeft ){
+                            searchHeader.removeClass(horizontalFloatingClass);
+                            $(panelClassSelector).removeStyle("top");
+                        }
+                    }
+                };
+    
+                return function(){
+                    //stick message search box if past it.                    
+                    clearTimeout(floatingEventTimer); 
+                    floatingEventTimer = setTimeout(stickHeader, 5); 
+                };
+            }());
+        };
+        
+        //jquery addition
+        //remove individual style
+        (function($)
+        {
+            $.fn.removeStyle = function(styleToRemove)
+            {
+                var search = new RegExp(styleToRemove + '[^;]+;?', 'g');
+        
+                return this.each(function()
+                {
+                    var currentStyle = $(this).attr('style');
+                    
+                    if(!currentStyle){
+                        return true;
+                    }
+                    
+                    $(this).attr('style', function(i, currentStyle)
+                    {   
+                        return currentStyle.replace(search, '');
+                    });
+                });
+            };
+    
+        }(jQuery));
+    
+    </script>
+
+    <!-- Initialize toastr -->
+    <script type="text/javascript">
+        toastr.options = {
+          "closeButton": false,
+          "debug": false,
+          "newestOnTop": false,
+          "progressBar": true,
+          "positionClass": "toast-top-right",
+          "preventDuplicates": false,
+          "onclick": null,
+          "showDuration": "300",
+          "hideDuration": "1000",
+          "timeOut": "5000",
+          "extendedTimeOut": "1000",
+          "showEasing": "swing",
+          "hideEasing": "linear",
+          "showMethod": "fadeIn",
+          "hideMethod": "fadeOut"
+        }
+
+        frn.showOpportunitySaveResponse = function(){
+
+            var saveResponseElem = $(".oppsaved .save-response");
+
+            if( saveResponseElem.length == 0 )
+               return;     
+
+            var response = saveResponseElem.attr("is-opp-saved");
+            if( response === "true" ){
+                toastr["success"]("Saved Successfully");
+            } else {
+                toastr["error"]("Error Saving");
+            }
+            return false;
+        }
+
+
+
+    </script>
+    
+</apex:component>

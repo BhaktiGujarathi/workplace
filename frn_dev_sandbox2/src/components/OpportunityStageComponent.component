@@ -1,0 +1,169 @@
+<apex:component controller="OpportunityStageCont" >
+    <apex:attribute name="opportunityID"  type="Id" assignTo="{!opptID}" description="TODO: Describe me" />
+    
+    <head>
+      <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/dojo/1.5/dojo/dojo.xd.js"
+            djConfig="parseOnLoad: true,
+          modulePaths: { 
+              'dojo': 'https://ajax.googleapis.com/ajax/libs/dojo/1.5/dojo', 
+              'dijit': 'https://ajax.googleapis.com/ajax/libs/dojo/1.5/dijit', 
+             'dojox': 'https://ajax.googleapis.com/ajax/libs/dojo/1.5/dojox'
+                 }
+        ">
+      </script>
+      <link rel="stylesheet"
+        href="https://ajax.googleapis.com/ajax/libs/dojo/1.5/dijit/themes/claro/claro.css" />
+    </head>
+    <body class="claro">
+          <apex:form id="frm">
+            <apex:actionFunction name="reloadWithStages" action="{!reload}" />
+            <div id="test1" style="width: 100%; height: 150px;"></div>
+            <apex:outputPanel layout="block" id="vals" style="display:none">
+			
+              <!--<apex:inputField value="{!opp.StageName}" required="false" id="stages"/> -->
+                <apex:selectList size="1" id="stages">
+                <apex:selectOptions value="{!Stages}" />
+                <apex:actionSupport event="onchange" reRender="vals" 
+                              status="actionStatusDisplay"/>					
+                </apex:selectList>
+
+                <apex:actionStatus id="actionStatusDisplay"
+                          startText="loading..." stopText=""/>
+                <apex:inputText value="{!valsText}" required="false" id="back"/>
+            </apex:outputPanel>
+			
+          </apex:form>
+          <apex:outputField value="{!opp.StageName}" rendered="false"/>
+        <script>
+  function reload()
+  {
+     var ele=document.getElementById('{!$Component.frm.stages}');
+     var idx=0;
+     var valText='';
+	 var RTFlag= {!flagRTC};
+     for (idx=0; idx<ele.length; idx++)
+     {
+		//alert(ele.options[idx].text );
+		
+		if(RTFlag){
+			if(ele.options[idx].text !='Closed Lost' && ele.options[idx].text !='Prospecting' && ele.options[idx].text !='Pending Medical / Clinical Review' && ele.options[idx].text !='Pending IOP Assessment' && ele.options[idx].text !='Intervention Requested')
+				valText+=ele.options[idx].text + ':';
+		}else{
+			if(ele.options[idx].text !='Closed Lost')
+				valText+=ele.options[idx].text + ':';
+		}
+		
+        
+     }
+
+
+     var backele=document.getElementById('{!$Component.frm.back}');
+     backele.value=valText;
+    
+     reloadWithStages();
+  }
+ 
+  <apex:outputPanel layout="none" rendered="{!NOT(loadOnce)}">
+    dojo.require("dojox.charting.Chart2D");
+    dojo.require("dojox.charting.axis2d.Default");  
+    dojo.require("dojox.charting.plot2d.Default");
+    dojo.require("dojox.charting.plot2d.StackedLines");
+    dojo.require("dojox.charting.plot2d.Columns");
+    dojo.require("dojox.charting.plot2d.Bars");
+    dojo.require("dojox.charting.plot2d.ClusteredBars");
+    dojo.require("dojox.charting.plot2d.StackedBars");
+    dojo.require("dojox.charting.plot2d.Bubble");
+    dojo.require("dojox.charting.plot2d.Grid");
+    dojo.require("dojox.charting.plot2d.Pie");
+ 
+    dojo.require("dojox.charting.themes.PlotKit.green");
+ 
+    dojo.require("dojox.charting.action2d.Highlight");
+    dojo.require("dojox.charting.action2d.Magnify");
+    dojo.require("dojox.charting.action2d.MoveSlice");
+    dojo.require("dojox.charting.action2d.Shake");
+    dojo.require("dojox.charting.action2d.Tooltip");
+ 
+    dojo.require("dojox.charting.widget.Legend");
+ 
+    dojo.require("dojo.colors");
+    dojo.require("dojo.fx.easing");
+    dojo.require("dojo.date.stamp");
+    dojo.require("dojo.date.locale");
+ 
+    makeCharts = function(){
+ 
+ var myMap={
+  <apex:repeat value="{!labels}" var="label">
+      '{!label.idx}':'{!label.text}'<apex:outputText value="," rendered="{!label.idx!=labelCount}"/>
+  </apex:repeat>
+            };
+             
+ var chart1 = new dojox.charting.Chart2D("test1");
+ var myTheme =  dojox.charting.themes.PlotKit.green;
+ myTheme.chart.fill= "white";
+  myTheme.plotarea.fill = "white";
+ chart1.setTheme(myTheme);
+ chart1.addPlot("default", {type: "Default", lines: true, markers: true, tension:2});
+ chart1.addAxis("x",
+ { 
+    majorTick: {stroke: "black", length: 3},
+    majorTickStep:1, 
+  minorTicks: false, 
+  microTicks: false,
+  min: 0,
+  max: {!labelCount},
+  rotation:30, 
+  font: "6pt Tahoma",
+  labels: [
+  <apex:repeat value="{!labels}" var="label">
+
+      {value: {!label.idx}, text:'{!label.text}'}<apex:outputText value="," rendered="{!label.idx!=labelCount}"/>
+  </apex:repeat>
+  ]
+   
+ });
+  
+ chart1.addSeries("cleared", 
+   [
+       <apex:repeat value="{!doneStageNumbers}" var="stage">
+    {x: {!stage}, y: 2},
+    </apex:repeat>
+   ]);
+ chart1.addSeries("todo", 
+   [
+    <apex:repeat value="{!todoStageNumbers}" var="stage">
+    {x: {!stage}, y: 2},
+    </apex:repeat>
+   ],
+   {plot: "default", stroke: {color:"#FE2E2E"}}
+   );
+    
+ var myMap={
+  <apex:repeat value="{!tooltips}" var="tooltip">
+   "{!tooltip.idx}": "{!tooltip.text}",
+  </apex:repeat>
+            };
+     
+ var anim1a = new dojox.charting.action2d.Magnify(chart1, "default");
+ var anim1b = new dojox.charting.action2d.Tooltip(chart1, "default",
+ {
+     text : function(o) {
+         return (myMap[o.x])
+                       }
+        });
+    
+ chart1.render();
+    };
+  </apex:outputPanel>
+   dojo.addOnLoad(
+     <apex:outputPanel layout="none" rendered="{!loadOnce}">
+        reload
+     </apex:outputPanel>
+     <apex:outputPanel layout="none" rendered="{!NOT(loadOnce)}">
+ makeCharts
+     </apex:outputPanel>
+      );
+  </script>
+     </body>
+</apex:component>

@@ -1,0 +1,43 @@
+40.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO;CALLOUT,INFO;DB,INFO;SYSTEM,DEBUG;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO
+Execute Anonymous: String sourceOpportunityId = '006g000000EvUAv';
+Execute Anonymous: Opportunity sourceOpportunityInstance = new Opportunity();
+Execute Anonymous: Map<String, StepDown_Related_Objects_To_Clone__c> objectsToCloneMap = new Map<String, StepDown_Related_Objects_To_Clone__c>();
+Execute Anonymous: objectsToCloneMap = StepDown_Related_Objects_To_Clone__c.getAll();
+Execute Anonymous: String querystr = 'SELECT id, ';
+Execute Anonymous: string fieldStr = '';
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     fieldStr = '(SELECT ';
+Execute Anonymous:     for(Schema.SObjectField fieldInstance : Schema.getGlobalDescribe().get(settingInstance.Object_API_Name__c).getDescribe().fields.getMap().Values()) {
+Execute Anonymous:         fieldStr += fieldInstance.getDescribe().getname() + ', ';
+Execute Anonymous:     }
+Execute Anonymous:     fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: 	fieldStr += ' FROM '+settingInstance.Opportunity_Relationship_API_Name__c+'__r), ';
+Execute Anonymous: }
+Execute Anonymous: system.debug('>>> fieldStr : '+fieldStr);
+Execute Anonymous: fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: queryStr += fieldStr + ' FROM Opportunity WHERE Id =\''+sourceOpportunityId+'\'';
+Execute Anonymous: system.debug('>>> queryStr : '+queryStr);
+05:28:09.1 (1026487)|USER_INFO|[EXTERNAL]|005g0000004SEeD|bhakti.gujrathi@eternussolutions.com.sgdev|Central Standard Time|GMT-05:00
+05:28:09.1 (1043965)|EXECUTION_STARTED
+05:28:09.1 (1047161)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex
+05:28:09.1 (71834471)|USER_DEBUG|[15]|DEBUG|>>> fieldStr : (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Currently_Symptomatic__c, Currently_Taking_Medications__c, Diagnosed__c, Diagnosis_Date__c, Have_You_Followed_Up_with_Appointments__c, Infectious_Disease__c, Opportunity__c, Patient__c, Regular_Follow_Up_Recommended__c FROM Infectious_Diseases__r), 
+05:28:09.1 (71906995)|USER_DEBUG|[18]|DEBUG|>>> queryStr : SELECT id, (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Currently_Symptomatic__c, Currently_Taking_Medications__c, Diagnosed__c, Diagnosis_Date__c, Have_You_Followed_Up_with_Appointments__c, Infectious_Disease__c, Opportunity__c, Patient__c, Regular_Follow_Up_Recommended__c FROM Infectious_Diseases__r) FROM Opportunity WHERE Id ='006g000000EvUAv'
+05:28:09.71 (71950232)|CUMULATIVE_LIMIT_USAGE
+05:28:09.71 (71950232)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 0 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+05:28:09.71 (71950232)|CUMULATIVE_LIMIT_USAGE_END
+
+05:28:09.1 (71983865)|CODE_UNIT_FINISHED|execute_anonymous_apex
+05:28:09.1 (72801305)|EXECUTION_FINISHED

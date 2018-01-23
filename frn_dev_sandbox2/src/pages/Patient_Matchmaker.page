@@ -1,0 +1,350 @@
+<apex:page controller="AccountSearchController" sidebar="false">
+
+  <apex:form >
+  <apex:pageMessages id="errors" />
+
+  <apex:pageBlock title="Find This Patient a Match!" mode="edit">
+
+  <table width="100%" border="0">
+  <tr>  
+    <td width="200" valign="top">
+
+      <apex:pageBlock title="Parameters" mode="edit" id="criteria">
+
+      <script type="text/javascript">
+      function doSearch() {
+        searchServer(
+          document.getElementById("shippingcity").value,
+          document.getElementById("shippingstate").value,
+          document.getElementById("shippingpostalcode").value,
+          document.getElementById("Accreditation").options[document.getElementById("Accreditation").selectedIndex].value,
+          document.getElementById("facility_type").options[document.getElementById("facility_type").selectedIndex].value,
+          document.getElementById("private_practice").options[document.getElementById("private_practice").selectedIndex].value,
+          document.getElementById("patient_sex").options[document.getElementById("patient_sex").selectedIndex].value,
+          document.getElementById("age_and_population").options[document.getElementById("age_and_population").selectedIndex].value,
+          document.getElementById("levels_of_care").options[document.getElementById("levels_of_care").selectedIndex].value,
+          document.getElementById("Type_of_Treatment_Offered").options[document.getElementById("Type_of_Treatment_Offered").selectedIndex].value,
+          document.getElementById("Disorder_Treatment_and_Specialization").options[document.getElementById("Disorder_Treatment_and_Specialization").selectedIndex].value,
+          document.getElementById("Mothers_with_Children").options[document.getElementById("Mothers_with_Children").selectedIndex].value,
+          document.getElementById("Public_Funded_Ins").options[document.getElementById("Public_Funded_Ins").selectedIndex].value,
+          document.getElementById("Insurance_List").options[document.getElementById("Insurance_List").selectedIndex].value,
+          document.getElementById("Community_Partner").options[document.getElementById("Community_Partner").selectedIndex].value,
+          document.getElementById("ParentText").value
+          )
+          ;
+      }
+      </script> 
+
+      <apex:actionFunction name="searchServer" action="{!runSearch}" rerender="results,debug,errors">
+          <apex:param name="shippingcity" value="" />
+          <apex:param name="shippingstate" value="" />
+          <apex:param name="shippingpostalcode" value="" />
+          <apex:param name="Accreditation" value="" />
+          <apex:param name="facility_type" value="" />
+          <apex:param name="private_practice" value="" />
+          <apex:param name="patient_sex" value="" />
+          <apex:param name="age_and_population" value="" />
+          <apex:param name="levels_of_care" value="" />
+          <apex:param name="Type_of_Treatment_Offered" value="" />
+          <apex:param name="Disorder_Treatment_and_Specialization" value="" />
+          <apex:param name="Mothers_with_Children" value="" />
+          <apex:param name="Public_Funded_Ins" value="" />
+          <apex:param name="Insurance_List" value="" />
+          <apex:param name="Community_Partner" value="" />
+          <apex:param name="ParentText" value="" />
+      </apex:actionFunction>
+
+      <table cellpadding="2" cellspacing="2">
+      <tr>
+        <td style="font-weight:bold;">City<br/>
+        <input type="text" id="shippingcity" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">State<br/>
+        <input type="text" id="shippingstate" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Zip Code<br/>
+        <input type="text" id="shippingpostalcode" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Accreditation<br/>
+          <select id="Accreditation" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Accreditation}" var="Accreditation">
+              <option value="{!Accreditation}">{!Accreditation}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Facility<br/>
+          <select id="facility_type" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!facility_type}" var="facility_type">
+              <option value="{!facility_type}">{!facility_type}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Private Practice<br/>
+          <select id="private_practice" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!private_practice}" var="private_practice">
+              <option value="{!private_practice}">{!private_practice}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Patient Sex<br/>
+          <select id="patient_sex" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!patient_sex}" var="patient_sex">
+              <option value="{!patient_sex}">{!patient_sex}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Age and Population<br/>
+          <select id="age_and_population" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!age_and_population}" var="age_and_population">
+              <option value="{!age_and_population}">{!age_and_population}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Levels of Care<br/>
+          <select id="levels_of_care" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!levels_of_care}" var="levels_of_care">
+              <option value="{!levels_of_care}">{!levels_of_care}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Type of Treatment Offered<br/>
+          <select id="Type_of_Treatment_Offered" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Type_of_Treatment_Offered}" var="Type_of_Treatment_Offered">
+              <option value="{!Type_of_Treatment_Offered}">{!Type_of_Treatment_Offered}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Disorder Treatment and Specialization<br/>
+          <select id="Disorder_Treatment_and_Specialization" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Disorder_Treatment_and_Specialization}" var="Disorder_Treatment_and_Specialization">
+              <option value="{!Disorder_Treatment_and_Specialization}">{!Disorder_Treatment_and_Specialization}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Patients with Children<br/>
+          <select id="Mothers_with_Children" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Mothers_with_Children}" var="Mothers_with_Children">
+              <option value="{!Mothers_with_Children}">{!Mothers_with_Children}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Public Funded Insurance<br/>
+          <select id="Public_Funded_Ins" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Public_Funded_Ins}" var="Public_Funded_Ins">
+              <option value="{!Public_Funded_Ins}">{!Public_Funded_Ins}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Private Insurance List<br/>
+          <select id="Insurance_List" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Insurance_List}" var="Insurance_List">
+              <option value="{!Insurance_List}">{!Insurance_List}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">Community Partner<br/>
+          <select id="Community_Partner" onchange="doSearch();">
+            <option value=""></option>
+            <apex:repeat value="{!Community_Partner}" var="Community_Partner">
+              <option value="{!Community_Partner}">{!Community_Partner}</option>
+            </apex:repeat>
+          </select>
+        </td>
+      </tr>
+    <tr>
+        <td style="font-weight:bold;">Parent<br/>
+        <input type="text" id="ParentText" onkeyup="doSearch();"/>
+        </td>
+      </tr>
+      </table>
+
+      </apex:pageBlock>
+
+    </td>
+    <td valign="top">
+
+    <apex:pageBlock mode="edit" id="results">
+
+        <apex:pageBlockTable value="{!accounts}" var="account">
+
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Priority" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="Priority_Step_Down__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Priority_Step_Down__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Name" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="Name" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputLink value="/{!Account.id}">{!Account.name}</apex:outputLink>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Street" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="shippingstreet" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.shippingstreet}"/>
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="City" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="shippingcity" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.shippingcity}"/>
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="State" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="shippingstate" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.shippingstate}"/>
+            </apex:column>
+
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Zip Code" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="shippingpostalcode" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.shippingpostalcode}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Phone" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="Phone" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.phone}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Type" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="type" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.type}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Rating" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="account_rating1__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Account_Rating1__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Account Owner" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="owner" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.owner.name}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="RAM" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="ram_text__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputtext value="{!account.RAM_Text__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Low Cost" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="low_cost__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Low_Cost__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Type of Treatment Offered" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="type_of_treatment_offered__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Type_of_Treatment_Offered__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Disorder Treatment and Specialization" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="disorder_treatment_and_specialization__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Disorder_Treatment_and_Specialization__c}"/>
+            </apex:column>
+            <apex:column >
+                <apex:facet name="header">
+                    <apex:commandLink value="Patient Sex" action="{!toggleSort}" rerender="results,debug">
+                        <apex:param name="sortField" value="patient_sex__c" assignTo="{!sortField}"/>
+                    </apex:commandLink>
+                </apex:facet>
+                <apex:outputField value="{!account.Patient_Sex__c}"/>
+            </apex:column>
+
+
+        </apex:pageBlockTable>
+
+    </apex:pageBlock>
+
+    </td>
+  </tr>
+  </table>
+
+  <apex:pageBlock title="Debug - SOQL" id="debug">
+      <apex:outputText value="{!debugSoql}" />           
+  </apex:pageBlock>    
+
+  </apex:pageBlock>
+
+  </apex:form>
+
+</apex:page>

@@ -1,0 +1,512 @@
+<apex:component >
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="{!$Resource.jquery_scrollTo}"></script>
+    <style>
+       #qualityscore-report .floating-panel {
+            position: fixed;
+            padding: 5px;
+            width: 23.1%;
+            left: 75.7%;    
+            overflow: scroll;
+            max-height: 100px;
+            min-height: 100px;
+            overflow-x: hidden;
+            overflow-y: scroll;
+
+            display: block;
+            border: 1px solid #b6b6b6;
+            padding: 0;
+            box-shadow: 0 0 3px rgba(0,0,0,.15);
+        }
+        
+         .panel-isfloating {
+            position: fixed !important;
+            z-index: 2000 !important;
+            opacity: 0.95 !important;
+            filter: alpha(opacity=95) ;
+            margin: 0px !important;
+            top: 0px !important;
+            max-height: 300px !important;
+            min-height: 300px !important;
+        }
+        
+        .horizontal-floating{
+            position: fixed !important;
+            left: 0px;
+            width: 350px;
+        }
+        
+        #qualityscore-report .quality-report-panel {
+            
+        }
+        
+        #qualityscore-report li { 
+            cursor: pointer; cursor: hand; 
+        }
+        
+        #qualityscore-report li a {
+              text-decoration: none;
+              font-size: 13px;
+              margin-left: -15%;
+              color: #000;
+            
+              -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+              transition: font-size 0.3s ease, background-color 0.3s ease;
+              display: block;
+              width: 200px;
+        }
+        
+        #qualityscore-report li a:hover {
+          font-size: 15px;
+          background: #f6f6f6;
+        }
+        
+        #qualityscore-report .hide-control{
+            margin-left: -23px;
+            position: fixed;
+            z-index: 1000;
+            cursor: pointer; cursor: hand; 
+        }
+
+        #qualityscore-report .show-control{
+            cursor: pointer; 
+            cursor: hand;
+            position: fixed;
+            left: 97%;
+        }
+    
+        #qualityscore-report li.incomplete{
+            color : red !important;
+        }
+    
+        #qualityscore-report li.incomplete a{
+            color : red !important;
+        }
+
+        #qualityscore-report li.complete{
+            color : green !important;
+        }
+
+        #qualityscore-report li.complete a{
+            color : green !important;
+        }
+
+
+        #qualityscore-report .flexbox-container {
+            display: flex;
+            height: 100%;
+        }
+
+        #qualityscore-report .flexbox-container {
+            flex-direction: row;
+        }
+
+        #qualityscore-report .flex-big-column {
+            flex: 0 0 17em;
+        }
+
+        #qualityscore-report .flexbox-small-column {
+            /* width: 25em; */
+            flex: 0 0 4em;
+        }
+
+        #qualityscore-report .margin-top-medium {
+            margin-top : 15px;
+        }
+
+        #qualityscore-report .field-highlight{
+            background-color : yellow !important;
+        }
+
+        @-webkit-keyframes highlight-animation {
+            0%, 49% {
+                background-color: rgb(117, 209, 63);
+                border: 3px solid #e50000;
+            }
+            50%, 100% {
+                background-color: #e50000;
+                border: 3px solid rgb(117, 209, 63);
+            }
+        }
+
+        .field-highlight {
+            -webkit-animation: highlight-animation 1s infinite;  /* Safari 4+ */
+            -moz-animation: highlight-animation 1s infinite;  /* Fx 5+ */
+            -o-animation: highlight-animation 1s infinite;  /* Opera 12+ */
+            animation: highlight-animation 1s infinite;  /* IE 10+, Fx 29+ */
+        }
+
+        .oppScore {
+            font-size: 15px;
+            margin-left: -15%;
+            color : red !important;
+            font-family: sans-serif !important;
+
+            -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+              transition: font-size 0.3s ease, background-color 0.3s ease;
+        }
+        
+    </style>
+    <span id="qualityscore-report" style="position: fixed;padding: 10px;">
+        <!-- <h2 >Quality Report</h2> -->
+
+        <span class="show-control" style="display:none;"> 
+            <img style="height: 25px;width: 25px;" src="{!$Resource.ToOpenQualityReport}"/>
+         </span>    
+        <div class="floating-panel">
+
+            <span class="hide-control"> 
+                <img style="height: 25px;width: 25px;" src="{!$Resource.ToExitQualityReport}"/>
+            </span>     
+           
+            <div  style="display:none;" html-sectionSelector=".opportunity-information.section" class="opportunity-information detail-report margin-top-medium">
+                
+                <h2 style="padding: 20%;">
+                    Quality Factor : 1/10 fields filled.
+                </h2>
+
+                <ul>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".closeReasonFldLabel" fieldSelector=".closeReasonFld" class="incomplete flex-big-column field"> Close Reason </a> 
+                    </li>
+                    <li class="complete flexbox-container"> 
+                        <a labelSelector=".bnftStatusFldLabel" fieldSelector=".bnftStatusFld" class="incomplete flex-big-column field"> Benefits Status </a>    
+                    </li>
+                </ul> 
+
+                <div style="text-align:center">
+                    <button class="go-back-button"> Go Back </button>   
+                </div>
+            </div>
+
+            <div  style="display:none;" html-sectionSelector=".shift-assign-information.section" class="shift-assign-information detail-report margin-top-medium">
+                
+                <h2 style="padding: 20%;">
+                    Quality Factor : 1/10 fields filled.
+                </h2>
+
+                <ul>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".vobAssignedFldLabel" fieldSelector=".vobAssignedFld" class="incomplete flex-big-column field"> VOB Assigned </a> 
+                    </li>
+                </ul> 
+
+                <div style="text-align:center">
+                    <button class="go-back-button"> Go Back </button>   
+                </div>
+            </div>
+
+            <div  style="display:none;" html-sectionSelector=".ram-information.section" class="ram-information detail-report margin-top-medium">
+                
+                <h2 style="padding: 20%;">
+                    Quality Factor : 1/10 fields filled.
+                </h2>
+
+                <ul>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".ramAssignedFldLabel" fieldSelector=".ramAssignedFld" class="incomplete flex-big-column field"> RAM Assigned </a> 
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".ramStatusFldLabel" fieldSelector=".ramStatusFld" class="incomplete flex-big-column field"> RAM Status </a> 
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".referralIsRAMFldLabel" fieldSelector=".referralIsRAMFld" class="incomplete flex-big-column field"> Referral Source is RAM Account </a> 
+                    </li>
+                </ul>                
+
+                <div style="text-align:center">
+                    <button class="go-back-button"> Go Back </button>   
+                </div>
+            </div>
+
+            <div  style="display:none;" html-sectionSelector=".frn-facility-information.section" class="frn-facility-information detail-report margin-top-medium">
+                
+                <h2 style="padding: 20%;">
+                    Quality Factor : 1/10 fields filled.
+                </h2>
+
+                <ul>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".readmitFldLabel" fieldSelector=".readmitFld" class="incomplete flex-big-column field"> Readmit </a> 
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                        <a labelSelector=".frnIOPFacilityFldLabel" fieldSelector=".frnIOPFacilityFld" class="incomplete flex-big-column field"> Current FRN IOP Facility </a> 
+                    </li>
+                </ul> 
+
+                <div style="text-align:center">
+                    <button class="go-back-button"> Go Back </button>   
+                </div>
+            </div>
+
+            <div class="quality-report-panel">
+                <ul>
+                    <li class="incomplete flexbox-container">   
+
+                        <a html-scrollTo=".opportunity-information.section" class="incomplete flex-big-column section-name">
+                            Opportunity Information (10%) 
+                        </a>
+
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                        
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                            <a html-scrollTo=".shift-assign-information.section" class="incomplete flex-big-column section-name">
+                            Shift Assign Information (20%)
+                            </a> 
+
+                            <a class="flexbox-small-column detail-report-link">
+                                <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                            </a>
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                        <a html-scrollTo=".ram-information.section" class="incomplete flex-big-column section-name">
+                            Ram Information (35%)
+                        </a>
+
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+
+                    </li>
+                    <li class="incomplete flexbox-container"> 
+                        <a html-scrollTo=".frn-facility-information.section" class="incomplete flex-big-column section-name">
+                            FRN Facility Information (50%)
+                        </a> 
+
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                    </li>
+                    <li class="complete flexbox-container"> 
+                        <a html-scrollTo=".marketing-information.section" class="flex-big-column section-name">Marketing Information</a> 
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>    
+                    </li>
+
+                    <li class="complete flexbox-container"> 
+                        <a html-scrollTo=".situational-questions.section" class="flex-big-column section-name">Situational Questions</a>
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                    </li>
+
+                    <li class="complete flexbox-container"> 
+                        <a html-scrollTo=".impact-questions.section" class="flex-big-column section-name">Impact Questions</a> 
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                    </li>
+
+                    <li class="complete flexbox-container"> 
+                        <a html-scrollTo=".cause-questions.section" class="flex-big-column section-name">Cause Questions</a> 
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                    </li>
+
+                    <li class="complete flexbox-container"> 
+                        <a html-scrollTo=".qualifying-questions.section" class="flex-big-column section-name">Qualifying Questions</a> 
+                        <a class="flexbox-small-column detail-report-link">
+                            <img src="{!$Resource.more_details_icon}" height="20" width="20" title="Click for more details"/>
+                        </a>
+                    </li>
+                </ul>
+             </div>
+
+            <div style="text-align:center" class="oppScore">
+                Total Opportunity score is 30%
+            </div>
+        </div>
+    </span>
+    <script>
+    frn.scrollTo = function(scrollToSelector){
+        return $(window).scrollTo($(scrollToSelector), 500, {axis:'y',offset: {top:-20}});
+    };    
+
+
+    $(document).ready(function(event){
+
+        $("#qualityscore-report .detail-report-link").click(function(event){
+            event.preventDefault();
+        
+            var item               = $(this).closest("li");
+            var sectionNameElement = item.find(".section-name");
+            var scrollToSelector   = sectionNameElement.attr("html-scrollTo");
+            frn.scrollTo(scrollToSelector);
+            var fieldDetailsSection = $("#qualityscore-report [html-sectionSelector='"+scrollToSelector+"']");
+            $("#qualityscore-report .quality-report-panel" ).hide("slide", { direction: "right" }, 500);
+            fieldDetailsSection.show("slide", { direction: "right" }, 500);
+           
+            return false; 
+        });
+
+        $("#qualityscore-report .detail-report .field").click(function(event){
+            event.preventDefault();
+            var fieldSelector = $(this).attr("fieldselector");
+            var labelSelector = $(this).attr("labelselector");
+
+            $(".field-highlight").removeClass("field-highlight");
+
+            if( $(this).hasClass("incomplete") ){
+                $(fieldSelector).addClass("field-highlight");
+            }
+            
+            //$(labelSelector).addClass("field-highlight");
+
+            frn.scrollTo(fieldSelector); 
+
+            return false;
+        });
+
+        $("#qualityscore-report .detail-report .go-back-button").click(function(event){
+
+            var fieldDetailsSection = $(this).closest(".detail-report");
+            fieldDetailsSection.hide("slide", { direction: "right" }, 100);
+            $("#qualityscore-report .quality-report-panel" ).show("slide", { direction: "right" }, 500);
+            
+            return false;
+        });
+        
+
+        $("#qualityscore-report [html-scrollTo]").click(function(event){
+            event.preventDefault();
+            var scrollToSelector = $(this).attr("html-scrollTo");
+            frn.scrollTo(scrollToSelector);
+            return false;
+        });
+        
+        $("#qualityscore-report .hide-control").click(function(event){
+            $("#qualityscore-report .floating-panel" ).hide("slide", { direction: "right" }, 1000);
+            $(".show-control").show();
+            
+        });
+
+        $("#qualityscore-report .show-control").click(function(event){
+            $("#qualityscore-report .floating-panel").show("slide", { direction: "right" }, 1000);
+            $(".show-control").hide();
+        });    
+    
+        makePanelSticky("#qualityscore-report .floating-panel","panel-isfloating");
+        
+    });
+    </script>
+    
+    <!-- Make Panel Sticky -->
+    <script>
+        var makePanelSticky = function(panelClassSelector,panelFloatingClass){
+            var searchHeader = $(panelClassSelector);
+            var headerTop    = searchHeader.offset().top;
+            var headerLeft   = searchHeader.offset().left; 
+    
+            $(window).scroll(function(event){
+                var floatingEventTimer = null;
+                var resetTop = null;
+                var resetLeft = null;
+                var horizontalFloatingClass = "horizontal-floating";
+                var placeholderId = null;
+    
+                var addPlaceHolder = function(node){
+                    var nodeHeight = node.height();
+                    var nodeWidth = node.outerWidth(true);
+                    var nodeCssfloat = node.css("float");
+                    var nodeCssdisplay = node.css("display");
+                    var randomNum = Math.ceil(Math.random() * 9999); /* Pick random number between 1 and 9999 */
+                    placeholderId = "stickyPanelSpace" + randomNum;
+                    PanelSpacer = $("<div id='" + placeholderId + "' style='width:" +nodeWidth + "px;height:" + nodeHeight + "px;float:" + nodeCssfloat + ";display:" + nodeCssdisplay + ";'>&#20;</div>");
+                    node.after(PanelSpacer);
+                }
+    
+                var stickHeader = function(event){
+    
+                    var headerHeight = searchHeader.height();
+                    var reachedTop   = false;
+                    var currentScrollLeft = $(window).scrollLeft();
+                    var currentScrollTop = $(window).scrollTop();
+    
+                    // //handle vertical scrolling
+                    if(currentScrollTop > headerTop-111){
+    
+                        //remove horizontal scrolling
+                        if(searchHeader.hasClass(horizontalFloatingClass)){
+                            searchHeader.removeClass(horizontalFloatingClass);
+                            $(panelClassSelector).removeStyle("top");
+                        }                        
+    
+                        if(!searchHeader.hasClass(panelFloatingClass)){
+                            addPlaceHolder(searchHeader);
+                            searchHeader.addClass(panelFloatingClass);
+                        }
+    
+                        reachedTop = false;
+                    }
+    
+                    if(currentScrollTop<headerTop-111 || currentScrollTop==0) {
+                        searchHeader.removeClass(panelFloatingClass);
+                        $("#"+placeholderId).remove();
+                        reachedTop = true;
+                    }
+    
+                    //handle horizontal scrolling
+                    if(!searchHeader.hasClass(panelFloatingClass) || reachedTop===true){
+    
+                        if(currentScrollLeft > headerLeft && currentScrollTop < headerTop){
+                            if(!searchHeader.hasClass(horizontalFloatingClass)){
+                                searchHeader.addClass(horizontalFloatingClass);
+                            }
+    
+                            $(panelClassSelector).css("top",headerTop-currentScrollTop); 
+                        }
+                        else if(currentScrollLeft <= headerLeft ){
+                            searchHeader.removeClass(horizontalFloatingClass);
+                            $(panelClassSelector).removeStyle("top");
+                        }
+                    }
+                };
+    
+                return function(){
+                    //stick message search box if past it.                    
+                    clearTimeout(floatingEventTimer); 
+                    floatingEventTimer = setTimeout(stickHeader, 5); 
+                };
+            }());
+        };
+        
+        //jquery addition
+        //remove individual style
+        (function($)
+        {
+            $.fn.removeStyle = function(styleToRemove)
+            {
+                var search = new RegExp(styleToRemove + '[^;]+;?', 'g');
+        
+                return this.each(function()
+                {
+                    var currentStyle = $(this).attr('style');
+                    
+                    if(!currentStyle){
+                        return true;
+                    }
+                    
+                    $(this).attr('style', function(i, currentStyle)
+                    {   
+                        return currentStyle.replace(search, '');
+                    });
+                });
+            };
+    
+        }(jQuery));
+    
+    </script>
+    
+</apex:component>

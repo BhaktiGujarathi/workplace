@@ -1,0 +1,116 @@
+40.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO;CALLOUT,INFO;DB,INFO;SYSTEM,DEBUG;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO
+Execute Anonymous: String sourceOpportunityId = '006g000000EvUAv';
+Execute Anonymous: Opportunity sourceOpportunityInstance = new Opportunity();
+Execute Anonymous: Map<String, StepDown_Related_Objects_To_Clone__c> objectsToCloneMap = new Map<String, StepDown_Related_Objects_To_Clone__c>();
+Execute Anonymous: objectsToCloneMap = StepDown_Related_Objects_To_Clone__c.getAll();
+Execute Anonymous: String querystr = 'SELECT id, ';
+Execute Anonymous: string fieldStr = '';
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     fieldStr = '(SELECT ';
+Execute Anonymous:     for(Schema.SObjectField fieldInstance : Schema.getGlobalDescribe().get(settingInstance.Object_API_Name__c).getDescribe().fields.getMap().Values()) {
+Execute Anonymous:         fieldStr += fieldInstance.getDescribe().getname() + ', ';
+Execute Anonymous:     }
+Execute Anonymous:     fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: 	fieldStr += ' FROM '+settingInstance.Opportunity_Relationship_API_Name__c+'__r), ';
+Execute Anonymous:     queryStr += fieldStr;
+Execute Anonymous: }
+Execute Anonymous: queryStr = queryStr.removeEnd(', ');
+Execute Anonymous: queryStr += ' FROM Opportunity WHERE Id =\''+sourceOpportunityId+'\'';
+Execute Anonymous: sourceOpportunityInstance = database.query(querystr);
+Execute Anonymous: List<sObject> clonesSObjectList = new List<sObject>();
+Execute Anonymous: sObject sObjectObj;
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     Schema.SObjectType sobjTypeStr = sourceOpportunityInstance.getsObjects(settingInstance.Opportunity_Relationship_API_Name__c+'__r').getSObjectType();
+Execute Anonymous:     system.debug('>>> sobjTypeStr '+sobjTypeStr);
+Execute Anonymous:     for(sobject sobjectInstance : sourceOpportunityInstance.getsObjects(settingInstance.Opportunity_Relationship_API_Name__c+'__r')) {
+Execute Anonymous:         sObjectObj = sobjTypeStr.newSObject();
+Execute Anonymous:         sObjectObj = sobjectInstance.clone(False, True, false, false);
+Execute Anonymous:         clonesSObjectList.add(sObjectObj);
+Execute Anonymous: 	}
+Execute Anonymous: }
+Execute Anonymous: system.debug('>>> clonesSObjectList : '+clonesSObjectList.size());
+Execute Anonymous: insert clonesSObjectList;
+05:58:03.0 (954622)|USER_INFO|[EXTERNAL]|005g0000004SEeD|bhakti.gujrathi@eternussolutions.com.sgdev|Central Standard Time|GMT-05:00
+05:58:03.0 (977173)|EXECUTION_STARTED
+05:58:03.0 (980567)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex
+05:58:03.0 (58255392)|SOQL_EXECUTE_BEGIN|[18]|Aggregations:1|SELECT id, (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, ACA_Policy_Paid_Through_Date__c, ACA_Policy__c, Accepts_Assignment_of_Benefits__c, Accreditation__c, Behavioral_Health_Phone__c, Benefits_Check__c, COBRA_Account__c, COBRA_Effective_Date__c, COBRA_Paid_Through_Date__c, COB_Completed__c, COB_Needed__c, Claims_Billing_Address__c, Clinical_Assessment_Needed__c, Description__c, Free_Standing_Facility__c, Free_Standing_RTC_Facility__c, Group_Number__c, Insurance_Company__c, Insurance_Plan__c, Is_this_Medicare_Medicaid__c, Member_ID__c, Opportunity__c, Other_Insurance_Company__c, Patient_Age__c, Patient_DOB__c, Patient_Social_Security_Number__c, Patient__c, Pharmacy_Coverage__c, Phone__c, Policy_Effective_Date__c, PreCert_Penalty_Description__c, PreCert_Penalty__c, PreCert_Phone__c, PreCert_Required__c, Prior_Auth_Before_Travel__c, Provider_Services_Phone__c, Referral_Needed__c, Renewal_Date__c, Rx_Phone__c, Rx_Vendor__c, State_of_Origination__c, Subscriber_Employer__c, Subscriber__c, Subscriber_is_Patient__c, Term_Date__c, Travel_Out_of_State_for_Non_Emergent_Tx__c, Type_Order__c, VOB_Assigned__c, VOB_status__c, Vendor__c, Num_of_Insurance_Benefits__c, Total_Benefits_Created__c, Date_Benefits_Check_Completed__c, AC_Assigned__c, RAM_Assigned__c, Approving_Without_Medical_Records__c, Patient_is_High_Acuity__c FROM Patient_Insurances__r) FROM Opportunity WHERE Id ='006g000000EvUAv'
+05:58:03.0 (68057205)|SOQL_EXECUTE_END|[18]|Rows:1
+05:58:03.0 (68497701)|USER_DEBUG|[23]|DEBUG|>>> sobjTypeStr Patient_Insurance__c
+05:58:03.0 (69259974)|USER_DEBUG|[30]|DEBUG|>>> clonesSObjectList : 2
+05:58:03.0 (69299662)|DML_BEGIN|[31]|Op:Insert|Type:SObject|Rows:2
+05:58:03.0 (78405930)|CODE_UNIT_STARTED|[EXTERNAL]|01qj00000019fNN|PatientInsuranceTrigger on Patient_Insurance trigger event BeforeInsert for [new, new]
+05:58:03.0 (82297532)|SYSTEM_MODE_ENTER|false
+05:58:03.0 (82316548)|SYSTEM_MODE_EXIT|false
+05:58:03.0 (82357904)|SYSTEM_MODE_ENTER|false
+05:58:03.0 (87641240)|SOQL_EXECUTE_BEGIN|[29]|Aggregations:0|SELECT Id, Name FROM Account WHERE Id = :tmpVar1
+05:58:03.0 (92442568)|SOQL_EXECUTE_END|[29]|Rows:1
+05:58:03.0 (92726121)|SOQL_EXECUTE_BEGIN|[33]|Aggregations:0|SELECT Id, FirstName, LastName FROM Contact WHERE Id = :tmpVar1
+05:58:03.0 (97414901)|SOQL_EXECUTE_END|[33]|Rows:1
+05:58:03.0 (98066044)|SYSTEM_MODE_EXIT|false
+05:58:03.98 (98081509)|CUMULATIVE_LIMIT_USAGE
+05:58:03.98 (98081509)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 5 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of DML rows: 2 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+05:58:03.98 (98081509)|CUMULATIVE_LIMIT_USAGE_END
+
+05:58:03.0 (99710050)|CODE_UNIT_FINISHED|PatientInsuranceTrigger on Patient_Insurance trigger event BeforeInsert for [new, new]
+05:58:03.0 (141534551)|CODE_UNIT_STARTED|[EXTERNAL]|Workflow:01Ij0000001dVvY
+05:58:03.0 (149677252)|WF_RULE_EVAL_BEGIN|Workflow
+05:58:03.0 (149700689)|WF_CRITERIA_BEGIN|[Patient Insurance: a1bg00000028ksI a1bg00000028ksS]|Update Date Benefits Check Completed|01Qj0000000gMcy|ON_ALL_CHANGES|0
+05:58:03.0 (151678397)|WF_RULE_FILTER|([Patient Insurance : VOB status equals Benefits Check Completed] OR
+ [Patient Insurance : VOB status equals Benefits Verified] OR
+ [Patient Insurance : VOB status equals Secondary Benefits Complete] OR
+ [Patient Insurance : VOB status equals Determination Complete]) AND
+ [Patient Insurance : Date Benefits Check Completed equals ]
+05:58:03.0 (151722508)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151725091)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151726537)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151727692)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151729917)|WF_CRITERIA_END|false
+05:58:03.0 (151742310)|WF_CRITERIA_BEGIN|[Patient Insurance: TestFirst Kenedy - Aetna a1bg00000028ksT]|Update Date Benefits Check Completed|01Qj0000000gMcy|ON_ALL_CHANGES|0
+05:58:03.0 (151795335)|WF_RULE_FILTER|([Patient Insurance : VOB status equals Benefits Check Completed] OR
+ [Patient Insurance : VOB status equals Benefits Verified] OR
+ [Patient Insurance : VOB status equals Secondary Benefits Complete] OR
+ [Patient Insurance : VOB status equals Determination Complete]) AND
+ [Patient Insurance : Date Benefits Check Completed equals ]
+05:58:03.0 (151810539)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151813998)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151815213)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151816376)|WF_RULE_EVAL_VALUE|
+05:58:03.0 (151817661)|WF_CRITERIA_END|false
+05:58:03.0 (151825091)|WF_SPOOL_ACTION_BEGIN|Workflow
+05:58:03.0 (151834644)|WF_ACTION| None
+05:58:03.0 (151837950)|WF_RULE_EVAL_END
+05:58:03.0 (151871897)|WF_ACTIONS_END| None
+05:58:03.0 (151880198)|CODE_UNIT_FINISHED|Workflow:01Ij0000001dVvY
+05:58:03.0 (156301577)|DML_END|[31]
+05:58:03.179 (179606901)|CUMULATIVE_LIMIT_USAGE
+05:58:03.179 (179606901)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 3 out of 100
+  Number of query rows: 5 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 1 out of 150
+  Number of DML rows: 2 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+05:58:03.179 (179606901)|CUMULATIVE_LIMIT_USAGE_END
+
+05:58:03.0 (179645714)|CODE_UNIT_FINISHED|execute_anonymous_apex
+05:58:03.0 (180437363)|EXECUTION_FINISHED

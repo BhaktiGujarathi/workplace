@@ -1,0 +1,278 @@
+<apex:page standardController="Lead" extensions="FRN_New_Lead_Controller">
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js" />
+    <apex:styleSheet value="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
+	
+	
+	<style type="text/css">
+    .col1 {width:80%;}
+    .col2 {width:20%;}      
+	</style>
+	
+	
+	<apex:form >
+	<apex:actionFunction action="{!selectedvalue}" name="getselectedObjID" reRender="content1,content2,content3">
+            <apex:param name="idVal" value=""/>
+        </apex:actionFunction>
+    <apex:sectionHeader title="Lead Edit" subtitle="New Lead"/>
+	
+        
+		<apex:pageBlock >
+		
+		<apex:panelGrid columns="2" id="theGrid" columnClasses="col1, col2">	
+			<apex:outputPanel >
+			
+				<apex:pageBlockSection columns="2">
+					<apex:pageblocksectionItem >
+					<apex:outputLabel value="Call In Code"></apex:outputLabel>
+					<apex:selectList value="{!selectedCallInCode}" size="1" >
+						 <apex:selectOptions value="{!callInCodePicklist}"/>
+					</apex:selectList> 
+					</apex:pageblocksectionItem>
+					
+					
+					<apex:pageblocksectionItem >
+					<apex:outputLabel value="Lead Source" />
+						<apex:inputField value="{!nLead.LeadSource}" >
+							<apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+						</apex:inputField>
+					</apex:pageblocksectionItem>
+					
+					
+					<!-- <apex:pageblocksectionItem >
+					<apex:outputLabel value="ScratchPad"/>
+						<apex:inputField  value="{!nLead.ScratchPad__c}"/>
+					</apex:pageblocksectionItem>  -->
+					
+				</apex:pageBlockSection>
+				
+				
+				<apex:outputPanel id="pbs">
+				<apex:actionFunction name="CallApexMethod" action="{!selectedvalue}" rerender="PosHead,accPickList"/>
+				   <apex:pageBlockSection rendered="{!rend1}">             
+						 <apex:inputField value="{!nLead.Online_Search_Term__c}"/>
+				   </apex:pageBlockSection> 
+				   
+				    <apex:outputPanel id="PosHead"  rendered="{!rend2}">             
+						<!-- multi row  -->
+						<apex:variable value="{!0}" var="rowNum"/>  
+						<apex:pageBlockTable value="{!campMWrpList}" var="eachRecord">   
+							<apex:column >
+								<apex:outputPanel rendered="{!campMWrpList.size>1}">
+								<apex:commandLink value="Del"  action="{!removeRow}" onclick="if(!confirm('Are you sure?')){return};" rerender="PosHead,ErrorMessage" >
+								<apex:param value="{!eachRecord.index}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+								</apex:commandLink>
+								</apex:outputPanel>
+							</apex:column>
+							
+							<apex:column headerValue="Search :">                    
+								<apex:inputText id="accId" value="{!eachRecord.selectedKeyWrp}" style="width:220px;" styleClass="placeHolder-{!eachRecord.index}" onkeypress="doWhateverUneed({!eachRecord.index})" html-placeholder="Enter Search Keyword">
+									<apex:inputHidden id="searchPos" value="{!searchPosition}" /> 
+									<apex:inputHidden id="searchAccountId" value="{!eachRecord.searchKeyWord}" />                       
+								</apex:inputText>
+							</apex:column>              
+									
+							<apex:column headerValue="Referral Source" id="accPickList">
+								<apex:selectList value="{!eachRecord.cmpM.Referral_Source__c}" size="1">
+									<apex:selectOptions value="{!eachRecord.referralSourceList}"/>
+								</apex:selectList>              
+							</apex:column>                    
+										 
+							<apex:column headerValue="Referral Source Contact" id="conPickList">
+								<apex:selectList value="{!eachRecord.cmpM.Referral_Source_Contact__c}" size="1">
+									<apex:selectOptions value="{!eachRecord.referralSourceConList}"/>
+								</apex:selectList>                    
+							</apex:column>                  
+							
+							<apex:column headerValue="RAM Assigned :" id="ramAssign">
+								<apex:outputText value="{!eachRecord.cmpM.RAM_Assigned_to_Referral_Source__r.Name}"/>                  
+							</apex:column>
+							
+							<apex:column >
+								<apex:outputPanel rendered="{!if((campMWrpList.size)-1 ==rowNum,true,false)}">
+									<apex:commandLink value="Add New" action="{!addNewRow}" rerender="ErrorMessage,PosHead" Status="status" />
+								</apex:outputPanel> 
+								<apex:variable var="rowNum" value="{!rowNum + 1}"/>
+							</apex:column> 
+						</apex:pageBlockTable> 
+						
+						<script type="text/javascript">
+							function doWhateverUneed(index){                        
+								var movieObjects1;
+								var queryTerm1;                         
+								$('.placeHolder-'+index).autocomplete({
+									minLength: 2,                           
+									source: function(request, response) {                               
+										queryTerm1 = request.term;  
+										NewLeadController.getSearchResult(request.term, function(result, event){
+											if(event.type == 'exception') {
+												  alert(event.message);
+											} else {                                
+												movieObjects1 = result;
+												if(movieObjects1=='null' || movieObjects1==''){   
+													$('.error-'+index).show();
+													response([]);
+												} else {
+													$('.error-'+index).hide();
+													response(movieObjects1);                              
+												}
+											} 
+										});
+									},
+									focus: function( event, ui ) {
+										var aa = ui.item.label;
+										var varTitle = $('<textarea />').html(aa).text(); 
+										$('.placeHolder-'+index).val( varTitle );                   
+										return false;
+									},
+									select: function( event, ui ) {
+										var aa = ui.item.label;
+										var varTitle = $('<textarea />').html(aa).text();
+										$('.placeHolder-'+index).val( varTitle );                           
+										$('[id$=searchAccountId]').val( ui.item.id ); 
+										$('[id$=searchPos]').val( index ); 
+										CallApexMethod();
+										return false;
+									},
+								})                      
+								.data( "autocomplete" )._renderItem = function( ul, item ) {
+									var entry = "";
+									if(item.label=='Referral Source' || item.label=='Referral Source Contact'){
+										entry = "<br/><b>"+item.label+"</b><br/>";    
+									} else if (item.label=='--No Matches--'){
+										entry = item.label;   
+									} else {
+										entry = "<a>"+item.label+"</a>";
+									}
+									//var entry = "<a>" + item.label;                           
+									//entry = entry + "</a>";
+									//entry = entry.replace(queryTerm1, "<b>" + queryTerm1 + "</b>");
+									return $( "<li></li>" )
+										.data( "item.autocomplete", item )
+										.append( entry )
+										.appendTo( ul );
+								};
+									
+								// Add or remove placeholder values
+								$('.placeHolder-'+index).val(PLACEHOLDER1);
+								$('.placeHolder-'+index).on("focus",  function(event){
+									$tgt = $(event.target);
+									if($tgt.val() === PLACEHOLDER1 ){
+										$tgt.val('');
+										$tgt.removeClass('placeHolder');
+									}
+								});
+								$('.placeHolder-'+index).on( "blur",  function(event){
+									$tgt = $(event.target);
+									if($tgt.val() === '' ){
+										$('[id$=searchAccountId]').val('');
+										$('[id$=searchPos]').val(index);
+										CallApexMethod();
+									}
+								});                     
+							}
+						</script>
+						<!-- //end -->
+				   </apex:outputPanel>  
+				   
+				   <apex:pageBlockSection rendered="{!rend3}">             
+					 <apex:pageblocksectionItem >
+						<apex:outputLabel value="Alumni Referral Source" />
+						<apex:inputField value="{!nLead.Alumni_Referral_Source__c}"/>
+					</apex:pageblocksectionItem>
+					 <apex:pageblocksectionItem >
+						<apex:outputLabel value="Lead Source is FRN Alumni" />
+						<apex:inputField value="{!nLead.Lead_Source_is_FRN_Alumni__c}"/>
+					</apex:pageblocksectionItem>
+				   </apex:pageBlockSection> 
+				   
+				   <apex:pageBlockSection rendered="{!rend4}">             
+						 <apex:inputField value="{!nLead.Referral_Source_Unknown_Details__c}" style="width: 411px;height: 112px;"/>
+				   </apex:pageBlockSection>          
+				</apex:outputPanel>
+				
+
+				 <apex:pageBlockSection title="Contact Information">
+					<apex:inputField value="{!nLead.Preferred_Contact_Method__c}"/>
+					<apex:pageblockSectionItem />
+					<apex:inputField value="{!nLead.Phone}"/>
+					<apex:inputField value="{!nLead.DoNotCall}"/>
+					<apex:inputField value="{!nLead.MobilePhone}"/>
+					<apex:inputField value="{!nLead.HasOptedOutOfEmail}"/>
+					<apex:inputField value="{!nLead.Work_Phone__c}"/>
+					<apex:pageblockSectionItem />
+					<apex:inputField value="{!nLead.Email}"/>
+					<apex:pageblockSectionItem />
+					<apex:inputField value="{!nLead.Fax}"/>
+					<apex:inputField value="{!nLead.HasOptedOutOfFax}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Address Information">
+					<apex:inputField value="{!nLead.Street}"/>
+					<apex:pageblockSectionItem />
+					<apex:inputField value="{!nLead.City}"/>
+					<apex:inputField value="{!nLead.State}"/>
+					<apex:inputField value="{!nLead.PostalCode}"/>
+					<apex:inputField value="{!nLead.Country}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Situational Questions">
+					<apex:inputField value="{!nLead.Calling_for__c}"/>
+					<apex:inputField value="{!nLead.Relationship_to_Patient__c}"/>
+					<apex:inputField value="{!nLead.Patient_Willing_to_Receive_Treatment__c}"/>
+					<apex:inputField value="{!nLead.Description_of_Average_Day__c}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Impact Questions">
+					<apex:inputField value="{!nLead.Timeframe_of_Impact__c}"/>
+					<apex:pageblockSectionItem />
+					<apex:inputField value="{!nLead.What_Prompted_Call__c}"/>
+					<apex:inputField value="{!nLead.Impact_on_Job__c}"/>
+					<apex:inputField value="{!nLead.Patient_Currently_Working__c}"/>
+					<apex:inputField value="{!nLead.Impact_on_Relationships__c}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Cause Questions">
+					<apex:inputField value="{!nLead.Trigger__c}"/>
+					<apex:inputField value="{!nLead.Contributing_Factors__c}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Qualifying Questions">
+					<apex:inputField value="{!nLead.Payment__c}"/>
+					<apex:inputField value="{!nLead.Diagnosed_with_Psychiatric_Condition__c}"/>
+					<apex:inputField value="{!nLead.Prior_Treatment__c}"/>
+				 </apex:pageBlockSection>
+				
+				 <apex:pageBlockSection title="Commitment Questions">
+					<apex:inputField value="{!nLead.Vision_of_Future_without_Treatment__c}"/>
+					<apex:inputField value="{!nLead.Ready_to_Make_Commitment__c}"/>
+					<apex:inputField value="{!nLead.Level_of_Committment__c}"/>
+				 </apex:pageBlockSection>
+							
+				 
+        
+		</apex:outputPanel>
+		<apex:outputPanel style="height: 1131px;">
+		   <apex:pageBlockSection columns="1">
+				ScratchPad
+				<apex:pageblocksectionItem >
+				<!-- <apex:outputLabel value="ScratchPad"/> -->
+					<apex:inputField value="{!nLead.ScratchPad__c}" />
+				</apex:pageblocksectionItem>
+					
+			</apex:pageBlockSection>
+		</apex:outputPanel>
+		
+		</apex:panelGrid>
+		<apex:pageBlockButtons >
+                <apex:commandButton action="{!editLead}" value="Edit"/>
+                <apex:commandButton action="{!deleteLead}" value="Delete"/>
+                <apex:commandButton action="{!cloneLead}" value="Clone"/>
+                <apex:commandButton action="{!fdLead}" value="Find Duplicates"/>
+                <apex:commandButton action="{!crtLead}" value="Convert Residential Treatment"/>
+                <apex:commandButton action="{!cotLead}" value="Convert Outpatient Treatment"/>
+                <apex:commandButton action="{!crooLead}" value="Convert Refer Out Only"/>
+            </apex:pageBlockButtons>
+		</apex:pageBlock>
+    </apex:form>
+</apex:page>

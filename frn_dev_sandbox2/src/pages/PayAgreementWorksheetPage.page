@@ -1,0 +1,491 @@
+<apex:page Controller="PayAgreementWorksheetCtrl" cache="false" action="{!redirectIfLocked}">
+ <style>
+    .bEditBlock input, .bEditBlock select, .quickCreateModule input, .quickCreateModule select  {
+        vertical-align: middle;
+        margin-right: 1.40em;
+    }
+    .bPageBlock .lookupIcon, .bPageBlock .lookupIconOn, .genericPageBlockTable .lookupIcon, .genericPageBlockTable .lookupIconOn {
+        vertical-align: middle;
+        padding-bottom: 1px;
+        margin-left: -115px;
+    }
+    .apexp .bPageBlock .detailList {
+        width: 95%;
+    }
+    .editPage .bPageBlock .detailList tr th {
+        border-bottom: none;
+        left: 1.40em;
+    }
+</style>
+
+<script>
+function onSaveDetails(validVar) 
+{
+    
+     if(validVar == true)
+     {
+         if (!confirm("The EDR is less that the target EDR for the selected facility. Are you sure you want to continue?")) 
+         {
+            return false;
+         } 
+        
+     }
+     saveDetail();
+     
+}
+</script>
+
+    <apex:sectionHeader title="Pay Agreement Worksheet Edit"  subtitle="Pay Agreement Worksheet" />
+        <apex:form style="width:100%;">
+            <apex:outputPanel id="ErrorMessage">
+                <apex:pagemessages />
+            </apex:outputPanel>
+            
+            <apex:pageBlock mode="Edit" id="ac">
+                <apex:outputPanel id="btns">
+                    <div align="center" draggable="false" style="margin-top:10px;">
+                        <apex:commandButton value="Update Details" action="{!updateDetail}" rerender="WorksheetDetail,ErrorMessage,btns,locVal" />
+                        <!--apex:commandButton value="Save & Close" action="{!saveDetail}" rerender="WorksheetDetail,ErrorMessage" disabled="{!saveBtn}"/-->
+                        <input type="button" class="btn" onclick="onSaveDetails({!AND(targetEDR != null,LOCValues.pAWrkSht.Daily_Revenue__c!=null,LOCValues.pAWrkSht.Daily_Revenue__c != 0,LOCValues.pAWrkSht.Daily_Revenue__c < targetEDR)});" id="saveDetails" value="Save"/>
+                        <apex:commandButton value="Cancel" action="{!cancel}" rendered="{!IF(CONTAINS(retUrl, 'CreateOpportunity'),'false','true')}"/>
+                        <apex:commandButton value="Cancel" action="{!cancelFromOpp}" rendered="{!IF(CONTAINS(retUrl, 'CreateOpportunity'),'true','false')}"/> 
+                    </div>
+                </apex:outputPanel>
+                <apex:actionfunction name="changeLOC" action="{!updateLOCValues}" reRender="patDel,patDel1,locVal,btns,ErrorMessage"/>
+                <apex:actionfunction name="changeFrnPrgm" action="{!updateLOCValues}" reRender="locVal,btns,ErrorMessage"/>
+                <apex:actionfunction name="changeFrn" action="{!onFRNFacilitySelected}" reRender="patDel,patDel1,locVal,btns,ErrorMessage"/>
+                <apex:actionfunction name="changeBenefit" action="{!onBenefitChange}" reRender="patDel,locVal,btns,ErrorMessage"/>
+                <apex:actionfunction name="patSelected" action="{!onPatientSelected}" reRender="patDel,locVal,btns"/>
+                <apex:actionfunction name="saveDetail" action="{!saveDetail}" reRender="WorksheetDetail,ErrorMessage"/>
+                
+                
+                <apex:pageBlockSection columns="2" id="patDel"> 
+                    <apex:pageBlockSectionItem rendered="{!showPILookup}">
+                        <apex:outputLabel value="Patient Insurance"/> 
+                        <apex:inputField value="{!LOCValues.pAWrkSht.Patient_Insurance__c}" onchange="patSelected()" style="width:140px;margin-right: 119px;"/>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem rendered="{!!showPILookup}">
+                        <apex:outputLabel value="Patient Insurance"/>                       
+                            <apex:outputPanel >
+                                <apex:outputText value="{!pat.Name}" rendered="{!pat.Name!=null}"/> 
+                                <apex:selectList value="{!LOCValues.pAWrkSht.Patient_Insurance__c}" rendered="{!pat.Name==null}" size="1" multiselect="false" onchange="patSelected()">
+                                    <apex:selectOptions value="{!Patient}"/>
+                                </apex:selectList>
+                            </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                 
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Insurance Benefit"/>
+                        <apex:selectList value="{!selectedBenefit}" size="1" multiselect="false" onchange="changeBenefit()">
+                            <apex:selectOptions value="{!Benefit}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="FRN Facility"/>
+                        <apex:selectList value="{!selectdFRNFacility}" size="1" multiselect="false" onchange="changeFrn()">
+                            <apex:selectOptions value="{!FRNFacilities}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Rate Adjustment Type"/>
+                        <apex:selectList value="{!selectdRateAdjistment}" size="1" multiselect="false" onchange="changeLOC()">
+                            <apex:selectOptions value="{!RateAdjustment}"/>
+                        </apex:selectList>
+                        <!-- <apex:inputField value="{!LOCValues.pAWrkSht.Rate_Adjustment_Type__c}"/>  -->
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem id="fpName">
+                        <apex:outputText value="Facility Program Name"/>
+                        <apex:selectList value="{!selectdFacilityProgram}" size="1" multiselect="false" onchange="changeFrnPrgm()">
+                            <apex:selectOptions value="{!facilityProgrammes}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible Included in OOP"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Deductible_Included_in_OOP__c}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Counter Offer"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Counter_Offer__c}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    
+                    
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                </apex:pageBlockSection>    
+                
+                
+                
+<apex:pageBlockSection columns="4" id="locVal" >
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Deductible"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Deductible__c}" rendered="{!LOCValues.insBf.Deductible__c!=null}"/> 
+            <apex:outputText value="$ 0.00" rendered="{!LOCValues.insBf.Deductible__c==null}"/>
+        </apex:outputPanel>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Max_Out_of_Pocket__c}" rendered="{!LOCValues.insBf.Max_Out_of_Pocket__c!=null}"/> 
+            <apex:outputText value="$0.00" rendered="{!LOCValues.insBf.Max_Out_of_Pocket__c==null}"/> 
+        </apex:outputPanel>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Deductible&nbsp;Amount&nbsp;Requested" escape="false"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Deductible_Amount_Requested__c}" style="width:120px;"/>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%">
+        <apex:outputText value="Total&nbsp;Patient&nbsp;Contribution" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.pAWrkSht.Total_Patient_Contribution__c}" rendered="{!LOCValues.pAWrkSht.Total_Patient_Contribution__c!=null}"/> 
+            <apex:outputText value="$ 0.00" rendered="{!LOCValues.pAWrkSht.Total_Patient_Contribution__c==null}"/>                              
+        </apex:outputPanel>
+    </apex:pageBlockSectionItem>
+    
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Deductible&nbsp;Met" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Deductible_Met__c}" rendered="{!LOCValues.insBf.Deductible_Met__c!=null}"/>    
+            <apex:outputText value="$0.00" rendered="{!LOCValues.insBf.Deductible_Met__c==null}"/>  
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem> 
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max&nbsp;Met" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Max_Out_of_Pocket_Met__c}" rendered="{!LOCValues.insBf.Max_Out_of_Pocket_Met__c!=null}"/> 
+            <apex:outputText value="$0.00" rendered="{!LOCValues.insBf.Max_Out_of_Pocket_Met__c==null}"/> 
+        </apex:outputPanel>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Co&nbsp;Insurance&nbsp;Amount&nbsp;Requested" escape="false"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Co_Insurance_Amount_Requested__c}" style="width:120px;"/>
+    </apex:pageBlockSectionItem>                     
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Total&nbsp;EIV" escape="false"/>
+        <apex:outputPanel rendered="{!totalInsCoResp!=null}">
+            <apex:outputText value="${0, number, 0,000.00}" rendered="{!totalInsCoResp>=1000}" escape="false" style="white-space: nowrap;">
+                <apex:param value="{!totalInsCoResp}" />
+            </apex:outputText> 
+            <apex:outputText value="${0, number, 0.00}" rendered="{!totalInsCoResp<1000}" escape="false" style="white-space: nowrap;">
+                <apex:param value="{!totalInsCoResp}" />
+            </apex:outputText> 
+        </apex:outputPanel> 
+    </apex:pageBlockSectionItem>
+
+    
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Deductible&nbsp;Remaining" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Deductible_Remaining__c}" rendered="{!LOCValues.insBf.Deductible_Remaining__c!=null}"/>    
+            <apex:outputText value="$0.00" rendered="{!LOCValues.insBf.Deductible_Remaining__c==null}"/>  
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max&nbsp;Remaining" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.insBf.Max_Out_of_Pocket_Remaining__c}" rendered="{!LOCValues.insBf.Max_Out_of_Pocket_Remaining__c!=null}"/> 
+            <apex:outputText value="$0.00" rendered="{!LOCValues.insBf.Max_Out_of_Pocket_Remaining__c==null}"/> 
+        </apex:outputPanel>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >        
+        <apex:outputText value="Co-Pay&nbsp;Amount&nbsp;Requested" escape="false"/>     
+        <apex:inputField value="{!LOCValues.pAWrkSht.Co_Pay_Amount_Requested__c}" style="width:120px;"/>        
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Total&nbsp;Revenue" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.pAWrkSht.Total_Revenue__c}" rendered="{!LOCValues.pAWrkSht.Total_Revenue__c!=null}"/> 
+            <apex:outputText value="$ 0.00" rendered="{!LOCValues.pAWrkSht.Total_Revenue__c==null}"/>
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem>
+
+    
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+        <apex:outputText value="Room&nbsp;and&nbsp;Board&nbsp;Fee(s)" escape="false"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Room_and_Board_Fees__c}" style="width:120px;"/>   
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+        <apex:outputText value="Uncovered&nbsp;Charges" escape="false"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Uncovered_Charges__c}" style="width:120px;"/>   
+    </apex:pageBlockSectionItem>
+    <!--
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Daily&nbsp;Revenue" escape="false"/>                        
+        <apex:outputPanel >
+            <apex:outputField value="{!LOCValues.pAWrkSht.Daily_Revenue__c}" rendered="{!LOCValues.pAWrkSht.Daily_Revenue__c!=null}" /> 
+            <apex:outputText value="$ 0.00" rendered="{!LOCValues.pAWrkSht.Daily_Revenue__c==null}"/>
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem>
+    -->
+    
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Daily&nbsp;Revenue" escape="false"/>        
+            <apex:outputPanel style="{!IF(AND(targetEDR != null,LOCValues.pAWrkSht.Daily_Revenue__c!=null,LOCValues.pAWrkSht.Daily_Revenue__c != 0,LOCValues.pAWrkSht.Daily_Revenue__c < targetEDR),'color:red','color:black')}" >
+            <apex:outputField value="{!LOCValues.pAWrkSht.Daily_Revenue__c}" rendered="{!LOCValues.pAWrkSht.Daily_Revenue__c!=null}"  /> 
+            <apex:outputText value="$ 0.00" rendered="{!LOCValues.pAWrkSht.Daily_Revenue__c==null}"/>
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem>
+    
+    
+    <apex:pageBlockSectionItem dataStyle="text-align:right;margin-left: 34px !important;position: relative;left:15px;" >
+        <apex:outputText value="Plan&nbsp;Coverage" escape="false" styleClass="labelCol vfLabelColTextWrap"/>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+        <apex:outputField value="{!LOCValues.pAWrkSht.Plan_Coverage__c}"/>   
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem labelStyle="text-align: left;" rendered="{!!isTalbott}" >
+        <apex:outputField value="{!LOCValues.pAWrkSht.Plan_Coverage__c}"/> 
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Ancillary Fee(s)"/>
+        <apex:outputField value="{!LOCValues.pAWrkSht.Ancillary_Fees__c}" rendered="{!LOCValues.pAWrkSht.Ancillary_Fees__c!=null}"/> 
+    </apex:pageBlockSectionItem>
+    
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Total&nbsp;Co&nbsp;Pay" escape="false"/>
+        <apex:outputPanel >
+            <apex:outputText value="${0, number, 0,000.00}" rendered="{!totalCoPay!=null && totalCoPay>=1000}" style="white-space: nowrap;">
+                <apex:param value="{!totalCoPay}" />
+            </apex:outputText>
+            <apex:outputText value="${0, number, 0.00}" rendered="{!totalCoPay!=null && totalCoPay<1000}" style="white-space: nowrap;">
+                <apex:param value="{!totalCoPay}" />
+            </apex:outputText>
+            <apex:outputText value="$ 0.00" rendered="{!totalCoPay==null}"/>
+        </apex:outputPanel>                         
+    </apex:pageBlockSectionItem>
+    
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+        <apex:outputText value="Miscellaneous Pay"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Miscellaneous_Fees__c}" style="width:120px;"/>
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+        <apex:outputText value="Days 60-90 Fee(s)"/>
+        <apex:outputField value="{!LOCValues.pAWrkSht.Days_60_90_Fees__c}" rendered="{!LOCValues.pAWrkSht.Days_60_90_Fees__c!=null}"/> 
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem />
+    
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem >
+        <apex:outputText value="Private Pay"/>
+        <apex:inputField value="{!LOCValues.pAWrkSht.Private_Pay__c}" style="width:120px;"/>   
+    </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem />
+    
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+    <apex:pageBlockSectionItem />
+</apex:pageBlockSection>
+
+
+
+                <apex:pageBlockSection columns="4" id="patDel1">   
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                        <apex:outputlabel value="Detox&nbsp;(DTX)" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Detox_DTX__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%" rendered="{!!isTalbott}">
+                        <apex:outputlabel value="Detox&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!LOCValues.pAWrkSht.Detox_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!LOCValues.pAWrkSht.Detox_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.Detox_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!LOCValues.pAWrkSht.Detox_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.Detox_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                        <apex:outputlabel value="Detox&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Detox_Over__c}" rendered="{!LOCValues.pAWrkSht.Detox_Over__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                    </apex:pageBlockSectionItem> 
+                    
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                        <apex:outputlabel value="Residential&nbsp;Treatment&nbsp;(RTC)" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Residential_Treatment_RTC__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">  
+                        <apex:outputlabel value="RTC&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!LOCValues.pAWrkSht.RTC_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!LOCValues.pAWrkSht.RTC_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.RTC_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!LOCValues.pAWrkSht.RTC_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.RTC_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                        <apex:outputlabel value="Residential&nbsp;Treatment&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Residential_Treatment_Override__c}" rendered="{!LOCValues.pAWrkSht.Residential_Treatment_Override__c!=null}" /> 
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem rendered="{!!isTalbott}">
+                    </apex:pageBlockSectionItem> 
+                    
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Partial&nbsp;Hospitalization&nbsp;(PHP)" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Partial_Hospitalization_PHP__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="PHP&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!LOCValues.pAWrkSht.PHP_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!LOCValues.pAWrkSht.PHP_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.PHP_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!LOCValues.pAWrkSht.PHP_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.PHP_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:20%">
+                        <apex:outputlabel value="Partial&nbsp;Hospitalization&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Partial_Hospitalization_Override__c}" rendered="{!LOCValues.pAWrkSht.Partial_Hospitalization_Override__c!=null}"/>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem />
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Intensive&nbsp;Outpatient&nbsp;(IOP)" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Intensive_Outpatient_IOP__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >  
+                        <apex:outputlabel value="IOP&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!LOCValues.pAWrkSht.IOP_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!LOCValues.pAWrkSht.IOP_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.IOP_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!LOCValues.pAWrkSht.IOP_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!LOCValues.pAWrkSht.IOP_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:20%">
+                        <apex:outputlabel value="Intensive&nbsp;Outpatient&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Intensive_Outpatient_Override__c}" rendered="{!LOCValues.pAWrkSht.Intensive_Outpatient_Override__c!=null}"/> 
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem />
+                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Total" escape="false"/>
+                        <apex:outputText value="{!totalRowCount}" style="{!if(totalRowCount<=30,'color:black;','color: red;')}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />                 
+                    <apex:pageBlockSectionItem />
+                    
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />                  
+                    <apex:pageBlockSectionItem />
+                    
+                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Uncovered__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days&nbsp;Rate" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Uncovered_Days_Rate__c}" rendered="{!LOCValues.pAWrkSht.Uncovered_Days_Rate__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Uncovered_Days_Override__c}" rendered="{!LOCValues.pAWrkSht.Uncovered_Days_Override__c!=null}"/> 
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}" >
+                    </apex:pageBlockSectionItem> 
+                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Num_Days_Room__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days&nbsp;Rate" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Room_and_Board_Days_Rate__c}" rendered="{!LOCValues.pAWrkSht.Room_and_Board_Days_Rate__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!LOCValues.pAWrkSht.Room_and_Board_Days_Override__c}" rendered="{!LOCValues.pAWrkSht.Room_and_Board_Days_Override__c!=null}"/>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                    </apex:pageBlockSectionItem> 
+                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                        <apex:outputlabel value="Total" escape="false"/>
+                        <apex:outputText value="{!totalTalbottDay}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem rendered="{!isTalbott}">
+                    </apex:pageBlockSectionItem> 
+                </apex:pageBlockSection>
+        
+        <apex:pageBlockSection columns="1">     
+            <apex:outputPanel id="WorksheetDetail">
+                <apex:outputPanel rendered="{!show}" >
+                    <style>
+                        .tbl tr th, .tbl tr td{padding:3px 3px;text-align:center;vertical-align:middle;}
+                        .tbl tr th{font-weight:bold}
+                    </style>
+                    
+                    <table border="1" cellspacing="0" cellpadding="0" class="tbl" style="margin-top:50px;">
+                     
+                        <tr>
+                            <th>Days </th>
+                            <th>LOC </th>
+                            <th>Billed Rate </th>
+                            <th>Ins Coverage </th>
+                            <th>(Effective)<br/>Beginning<br/>Deductible </th>
+                            <th>Apply<br/>Deductible </th>
+                            <th>Charge After<br/>Deductible </th>
+                            <th>Beginning OOP </th>
+                            <th>OOP After<br/>Deductible </th>
+                            <th>Calculated Co-<br/>Ins </th>
+                            <th>Co-Ins </th>
+                            <th>Ins EIV </th>
+                            <th>Patient<br/>Responsibility </th>
+                            <th>Ins Co Responsibility </th>
+                        </tr>
+                        <apex:variable value="{!1}" var="rowNum"/>
+                        <apex:repeat value="{!AgreementDetaillist}" var="agdet">
+                            <tr>
+                               <td><apex:outputText value="{!FLOOR(rowNum)}"/>  </td>
+                               <td><apex:outputText value="{!agdet.Level_of_Care__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Billed_Rate__c}"/> </td>
+                               <td><apex:outputText value="{!agdet.Insurance_Coverage__c}%"/> </td>
+                               <td><apex:outputField value="{!agdet.Beginning_Deductible__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Applied_Deductible__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Charge_After_Deductible__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Beginning_Out_of_Pocket__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Out_of_Pocket_After_Deductible__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Calculated_Co_Insurance__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Co_Insurance__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Insurance_EIV__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Patient_Responsibility__c}"/> </td>
+                               <td><apex:outputField value="{!agdet.Insurance_Co_Responsibility__c}"/> </td>
+                            </tr>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:repeat>
+                    </table>
+                </apex:outputPanel>
+            </apex:outputPanel>
+       </apex:pageBlockSection>
+     </apex:pageBlock>
+   </apex:form>
+</apex:page>

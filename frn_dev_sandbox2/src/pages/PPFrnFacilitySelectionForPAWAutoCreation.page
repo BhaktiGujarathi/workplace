@@ -1,0 +1,75 @@
+<apex:page controller="PPFrnFacilitySelectionForPAWCreationExt">
+	<apex:includeScript value="{!urlfor($Resource.FRNResource, 'FRNResource/JS/jquery-1.11.1.min.js')}" />
+	<apex:form >
+		<apex:PageBlock id="pawBlck">
+			<apex:pageBlockButtons location="top">
+				<apex:CommandButton action="{!savePAWRecords}"
+					value="Save" rerender="tblePnl" status="loadingPanel" />
+				<apex:CommandButton action="{!autoAddRecords}"
+                    value="Auto-Add" rerender="pawBlck" status="loadingPanel" />
+				<apex:CommandButton action="{!redirectToPatientInsurance}"
+                    value="Cancel" rerender="" />
+			</apex:pageBlockButtons>
+			<table class="list contentTable" border="0" cellpadding="0"
+				cellspacing="0" id="pawTable">
+				<tbody>
+					<tr class="headerRow">
+						<th>Index</th>
+						<th>FRN Facility</th>
+						<th>Program</th>
+						<th>Private Pay Amount</th>
+						<th>Action</th>
+					</tr>
+					<apex:repeat value="{!pawDetailsWrapperList}" var="pawWraper">
+						<tr class="dataRow">
+							<td>{!pawWraper.pawIndex+1}</td>
+							<td><apex:selectList value="{!pawWraper.pawFRNFacility}"
+									multiselect="false" size="1">
+									<apex:actionSupport event="onchange"
+										action="{!getProgramListForFacilitySelected}"
+										reRender="prgrmPnl">
+										<apex:param name="frnFacilitySelectedIndex"
+											value="{!pawWraper.pawIndex}"
+											assignTo="{!frnFacilitySelectedIndex}" />
+									</apex:actionSupport>
+									<apex:selectOptions value="{!frnFacilitySelectList}" />
+								</apex:selectList></td>
+
+							<td><apex:outputPanel id="prgrmPnl">
+									<apex:selectList value="{!pawWraper.pawProgram}"
+										multiselect="false" size="1">
+										<apex:actionSupport event="onchange"
+											action="{!getPrivatPayFeeForSelectedPrgrm}"
+											reRender="payFeePnl">
+											<apex:param name="frnFacilitySelectedIndex"
+												value="{!pawWraper.pawIndex}"
+												assignTo="{!frnFacilitySelectedIndex}" />
+										</apex:actionSupport>
+										<apex:selectOptions value="{!pawWraper.pawPrgmSelectList}" />
+									</apex:selectList>
+								</apex:outputPanel></td>
+
+							<td><apex:outputPanel id="payFeePnl">
+									<apex:inputText value="{!pawWraper.pawPrivatePayFee}" />
+								</apex:outputPanel></td>
+
+							<td><apex:commandLink action="{!newPAWDetails}" value="Add"
+									reRender="pawBlck" />
+								<apex:outputLabel value="| " rendered="{!IF(pawDetailsWrapperList.size > 1, true, false)}" />
+								<apex:commandLink action="{!removePAWRecord}" value="Del"
+                                    reRender="pawBlck" rendered="{!IF(pawDetailsWrapperList.size > 1, true, false)}">
+	                                <apex:param name="pawIndexToRemove"
+	                                            value="{!pawWraper.pawIndex}" 
+	                                            assignTo="{!pawIndexToRemove}">
+	                                </apex:param>
+                                </apex:commandLink>
+                            </td>
+						</tr>
+					</apex:repeat>
+				</tbody>
+			</table>
+
+		</apex:PageBlock>
+	</apex:form>
+
+</apex:page>

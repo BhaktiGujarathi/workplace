@@ -1,0 +1,49 @@
+40.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO;CALLOUT,INFO;DB,INFO;SYSTEM,DEBUG;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO
+Execute Anonymous: String sourceOpportunityId = '006g000000EvUAv';
+Execute Anonymous: Opportunity sourceOpportunityInstance = new Opportunity();
+Execute Anonymous: Map<String, StepDown_Related_Objects_To_Clone__c> objectsToCloneMap = new Map<String, StepDown_Related_Objects_To_Clone__c>();
+Execute Anonymous: objectsToCloneMap = StepDown_Related_Objects_To_Clone__c.getAll();
+Execute Anonymous: String querystr = 'SELECT id, ';
+Execute Anonymous: string fieldStr = '';
+Execute Anonymous: system.debug('>>> objectsToCloneMap.size : '+objectsToCloneMap.size());
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     system.debug('>>> settingInstance : '+settingInstance);
+Execute Anonymous:     fieldStr = '(SELECT ';
+Execute Anonymous:     for(Schema.SObjectField fieldInstance : Schema.getGlobalDescribe().get(settingInstance.Object_API_Name__c).getDescribe().fields.getMap().Values()) {
+Execute Anonymous:         fieldStr += fieldInstance.getDescribe().getname() + ', ';
+Execute Anonymous:     }
+Execute Anonymous:     fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: 	fieldStr += ' FROM '+settingInstance.Opportunity_Relationship_API_Name__c+'__r), ';
+Execute Anonymous: }
+Execute Anonymous: system.debug('>>> fieldStr : '+fieldStr);
+Execute Anonymous: fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: queryStr += fieldStr + ' FROM Opportunity WHERE Id =\''+sourceOpportunityId+'\'';
+Execute Anonymous: system.debug('>>> queryStr : '+queryStr);
+05:29:57.0 (964666)|USER_INFO|[EXTERNAL]|005g0000004SEeD|bhakti.gujrathi@eternussolutions.com.sgdev|Central Standard Time|GMT-05:00
+05:29:57.0 (982943)|EXECUTION_STARTED
+05:29:57.0 (986027)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex
+05:29:57.0 (2339228)|USER_DEBUG|[7]|DEBUG|>>> objectsToCloneMap.size : 3
+05:29:57.0 (2796283)|USER_DEBUG|[9]|DEBUG|>>> settingInstance : StepDown_Related_Objects_To_Clone__c:{LastModifiedDate=2017-08-23 10:03:02, IsDeleted=false, CreatedById=005g0000004SEeDAAW, Object_API_Name__c=Major_Medical_Issue__c, CreatedDate=2017-08-23 09:56:17, Id=a2Fg0000000kSVfEAM, Opportunity_Relationship_API_Name__c=Major_Medical_Issues, LastModifiedById=005g0000004SEeDAAW, SetupOwnerId=00Dg0000001qSFeEAM, Name=Major Medical Issue, SystemModstamp=2017-08-23 10:03:02}
+05:29:57.0 (48029755)|USER_DEBUG|[9]|DEBUG|>>> settingInstance : StepDown_Related_Objects_To_Clone__c:{LastModifiedDate=2017-08-23 10:03:08, IsDeleted=false, CreatedById=005g0000004SEeDAAW, Object_API_Name__c=Patient_Insurance__c, CreatedDate=2017-08-23 09:55:45, Id=a2Fg0000000kSVaEAM, Opportunity_Relationship_API_Name__c=Patient_Insurances, LastModifiedById=005g0000004SEeDAAW, SetupOwnerId=00Dg0000001qSFeEAM, Name=Patient Insurance, SystemModstamp=2017-08-23 10:03:08}
+05:29:57.0 (67344669)|USER_DEBUG|[9]|DEBUG|>>> settingInstance : StepDown_Related_Objects_To_Clone__c:{LastModifiedDate=2017-08-23 10:03:00, IsDeleted=false, CreatedById=005g0000004SEeDAAW, Object_API_Name__c=Infectious_Disease__c, CreatedDate=2017-08-23 09:56:48, Id=a2Fg0000000kSVkEAM, Opportunity_Relationship_API_Name__c=Infectious_Diseases, LastModifiedById=005g0000004SEeDAAW, SetupOwnerId=00Dg0000001qSFeEAM, Name=Infectious Disease, SystemModstamp=2017-08-23 10:03:00}
+05:29:57.0 (79309035)|USER_DEBUG|[17]|DEBUG|>>> fieldStr : (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Currently_Symptomatic__c, Currently_Taking_Medications__c, Diagnosed__c, Diagnosis_Date__c, Have_You_Followed_Up_with_Appointments__c, Infectious_Disease__c, Opportunity__c, Patient__c, Regular_Follow_Up_Recommended__c FROM Infectious_Diseases__r), 
+05:29:57.0 (79427948)|USER_DEBUG|[20]|DEBUG|>>> queryStr : SELECT id, (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Currently_Symptomatic__c, Currently_Taking_Medications__c, Diagnosed__c, Diagnosis_Date__c, Have_You_Followed_Up_with_Appointments__c, Infectious_Disease__c, Opportunity__c, Patient__c, Regular_Follow_Up_Recommended__c FROM Infectious_Diseases__r) FROM Opportunity WHERE Id ='006g000000EvUAv'
+05:29:57.79 (79487422)|CUMULATIVE_LIMIT_USAGE
+05:29:57.79 (79487422)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 0 out of 100
+  Number of query rows: 0 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+05:29:57.79 (79487422)|CUMULATIVE_LIMIT_USAGE_END
+
+05:29:57.0 (79538778)|CODE_UNIT_FINISHED|execute_anonymous_apex
+05:29:57.0 (80706575)|EXECUTION_FINISHED

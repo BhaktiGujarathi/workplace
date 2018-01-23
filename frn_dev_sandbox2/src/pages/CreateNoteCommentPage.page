@@ -1,0 +1,110 @@
+<apex:page controller="CreateNoteCommentController" tabStyle="Note_Comment__c">
+    <apex:pageMessages id="errMsg" />
+    <apex:sectionHeader title="Note / Comment Edit" subtitle="New Note / Comment"/>
+    <style type="text/css">
+        a.alpha-link {
+           font-weight: normal;
+           font-size: 91%;
+           padding: 0 4px;
+           color: #015BA7;
+        }
+        a.alpha-link+a.alpha-link {
+           border-left: 1px solid #CFCECE;
+        }
+        a.alpha-link:hover {
+           background-color: #e0f5fc !important;
+        }
+        a.alpha-select {
+           font-weight: bold;
+           text-decoration: none;
+           background-color: #C6E1FF;
+           color: #000000 !important;
+        }
+    </style>
+    
+    <apex:form id="theForm">
+        <apex:pageBlock >
+            <apex:pageBlockButtons location="bottom">
+                <apex:CommandButton value="Save & Send" action="{!save}" reRender="errMsg"/>
+                <apex:CommandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+
+                <apex:pageBlockSection >
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel value="Patient"/>
+                        <apex:outputText value="{!patientNAME}" rendered="{!IF(patientNAME != '' && patientNAME != null, true, false)}"/>
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel value="DOB"/>
+                            <apex:outputText value="{0,date,MM/dd/yyyy}" rendered="{!IF(patientDOB != null, true, false)}">
+                                <apex:param value="{!patientDOB}" />
+                            </apex:outputText>                      
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection> 
+
+                <apex:pageBlockSection columns="1">
+                    <!-- <apex:pageblockSectionItem > -->
+                        <apex:inputField value="{!noteComment.Note_Comment__c}"/>
+                    <!-- </apex:pageblockSectionItem > -->
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel value="Type"/>
+                        <apex:selectList value="{!selectedType}" size="1">
+                            <apex:selectOptions value="{!allTypes}"/>
+                        </apex:selectList>
+                    </apex:pageblockSectionItem>                   
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+                <br/>
+                    <apex:pageblockSectionItem >
+                    <apex:outputPanel > <br/> </apex:outputPanel> 
+                    <apex:outputPanel style="text-align:center" id="refreshLink1">
+                    <apex:repeat value="{!AlphaList}" var="a">
+                        <apex:commandLink value="{!a}" action="{!sortGroup}" styleClass="alpha-link{!if(searchGroup ==a,' alpha-select','')}" rerender="groupComp,refreshLink1">
+                            <apex:param value="{!a}" assignTo="{!searchGroup}" name="searchGroup"/> 
+                        </apex:commandLink>
+                    </apex:repeat>
+                    </apex:outputPanel>
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel value="Notify Groups"/>
+                        <apex:outputPanel id="groupComp"> 
+                            <c:MultiSelectPicklist leftLabel="Available Group"
+                            leftOption="{!allGroup}"
+                            rightLabel="Selected Group"
+                            rightOption="{!selectedGroup}"
+                            size="8"
+                            width="250px"/>
+                        </apex:outputPanel>
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection columns="1">
+                <br/>
+                    <apex:pageblockSectionItem >
+                        <apex:outputPanel > <br/> </apex:outputPanel> 
+                        <apex:outputPanel style="text-align:center" id="refreshLink2">
+                        <apex:repeat value="{!AlphaList}" var="a">
+                            <apex:commandLink value="{!a}" action="{!sortUser}" styleClass="alpha-link{!if(searchUser==a,' alpha-select','')}"  rerender="usrComp, refreshLink2">
+                                <apex:param value="{!a}" assignTo="{!searchUser}" name="searchUser"/> 
+                            </apex:commandLink>
+                        </apex:repeat>
+                        </apex:outputPanel>
+                    </apex:pageblockSectionItem>
+                    <apex:pageblockSectionItem >
+                        <apex:outputLabel value="Notify Users"/>
+                        <apex:outputPanel id="usrComp">
+                        <c:MultiSelectPicklist leftLabel="Available User"
+                        leftOption="{!allUser}"
+                        rightLabel="Selected User"
+                        rightOption="{!selecteduser}"
+                        size="8"
+                        width="250px"/>
+                        </apex:outputPanel>
+                    </apex:pageblockSectionItem>
+                </apex:pageBlockSection>
+                
+        </apex:pageBlock>
+    </apex:form>
+
+</apex:page>

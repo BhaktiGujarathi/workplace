@@ -1,0 +1,149 @@
+<apex:page standardController="Reservation__c" extensions="NewReservationExt">
+    <apex:sectionHeader title="Reservation Edit" subtitle="New Reservation"/>
+    <apex:form id="cpy"> 
+        <apex:pageBlock id="Details" title="Reservation Edit" mode="edit">  
+
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save" />
+                <apex:commandButton action="{!saveandnew}" value="Save & New" />
+                <apex:commandButton action="{!cancel}" value="Cancel" immediate="true"/>
+            </apex:pageBlockButtons>
+        
+            <apex:pageBlockSection title="Information" columns="2" collapsible="false" >
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Trip"/>
+                    <apex:outputPanel >
+                        <apex:outputText value="{!reservObj.Trip__r.Name}" />
+                        <apex:outputPanel layout="block" styleClass="requiredInput" rendered="{!isNewRecord}">
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>                   
+                            <apex:inputField value="{!reservObj.Trip__c}" required="false"/><br/>
+                            <apex:outputPanel rendered="{!isTripNull}">
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You must enter a value" style="color:#C00; "/>
+                            </apex:outputPanel>
+                        </apex:outputpanel>
+                    </apex:outputpanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem />            
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Record Type" />
+                    <apex:outputText value="{!recTypeName}" />
+                </apex:pageBlockSectionItem>                
+            </apex:pageBlockSection>    
+            <!--Record_Type: AirFare-->         
+            <apex:pageBlockSection columns="2" collapsible="false" title="Flight Information" rendered="{!IF(recTypeName == 'Airfare', true, false)}">
+                <apex:inputField value="{!reservObj.Ticket_Number__c}" />
+                <apex:inputField value="{!reservObj.Airline__c}" />
+                <apex:inputField value="{!reservObj.Confirmation_Number__c}" />
+                <apex:inputField value="{!reservObj.Flight_Number__c}" />
+                <apex:inputField value="{!reservObj.Cabin__c}" />
+                <apex:inputField value="{!reservObj.Status__c}" />
+                <apex:inputField value="{!reservObj.Seat_Assignment__c}" />
+                <apex:inputField value="{!reservObj.Additional_Details__c}" style="width:250px;height:45px"/>
+                <apex:inputField value="{!reservObj.Info_Warnings__c}" style="width:250px;height:45px"/>
+            </apex:pageBlockSection>            
+            <apex:pageBlockSection columns="1" collapsible="false"  title="Departure Information" rendered="{!IF(recTypeName == 'Airfare', true, false)}">
+                <apex:inputField value="{!reservObj.Departure_Date_Time__c}" />
+                <apex:inputField value="{!reservObj.Departure_Airport__c}" required="true"/>
+            </apex:pageBlockSection>                
+            <apex:pageBlockSection columns="1" collapsible="false"  title="Arrival Information" rendered="{!IF(recTypeName == 'Airfare', true, false)}">
+                <apex:inputField value="{!reservObj.Arrival_Date_Time__c}" />
+                <apex:inputField value="{!reservObj.Arrival_Airport__c}" required="true"/>
+            </apex:pageBlockSection>            
+            <apex:pageBlockSection columns="1" collapsible="false"  title="Charge Information" rendered="{!IF(recTypeName == 'Airfare', true, false)}">
+                <apex:inputField value="{!reservObj.Total_Amount_Charged__c}" />
+            </apex:pageBlockSection>    
+
+            <!--Record_Type: Car_Service-->
+            <apex:pageBlockSection columns="2" collapsible="false"  title="Car Service Company Information" rendered="{!IF(recTypeName == 'Car Service', true, false)}">
+                <apex:inputField value="{!reservObj.Car_Service_Company_Name__c}" />
+                <apex:inputField value="{!reservObj.Car_Service_Company_Phone__c}" />
+            </apex:pageBlockSection>    
+            
+            <apex:outputpanel id="location">  
+            <apex:pageBlockSection columns="2" collapsible="false"  title="Pickup Information" rendered="{!IF(recTypeName == 'Car Service', true, false)}">
+                <apex:inputfield value="{!reservObj.Pickup_Date_Time__c}" />
+                
+                <apex:inputfield value="{!reservObj.Pickup_Address__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Street Address'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>              
+                
+                <apex:pageBlockSectionItem rendered="{!reservObj.Pickup_Location_Type__c!='Street Address'}"/>
+                                
+                        
+                <apex:inputField value="{!reservObj.Pickup_Location_Type__c}" >
+                    <!-- <apex:actionSupport event="onchange" rerender="location" /> -->
+                    <apex:actionSupport action="{!CopyPickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField> 
+                
+                <apex:inputfield value="{!reservObj.Pickup_City__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Street Address'}"> 
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>              
+                
+                <apex:pageBlockSectionItem rendered="{!reservObj.Pickup_Location_Type__c!='Street Address'}"/>
+                
+                <apex:inputfield value="{!reservObj.Pickup_Airport__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Airport'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>  
+                
+                <apex:pageBlockSectionItem rendered="{!reservObj.Pickup_Location_Type__c!='Airport' && reservObj.Pickup_Location_Type__c!='FRN Facility'}"/>
+                
+                <apex:inputfield value="{!reservObj.Pickup_State_Province_Region__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Street Address'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>              
+                <apex:pageBlockSectionItem rendered="{!reservObj.Pickup_Location_Type__c!='Airport' && reservObj.Pickup_Location_Type__c!='FRN Facility'}"/>
+                
+                <apex:inputfield value="{!reservObj.Pickup_Zip_Postal_Code__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Street Address'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>
+                
+                <apex:inputfield value="{!reservObj.Pickup_FRN_Facility__c}" rendered="{!reservObj.Pickup_Location_Type__c=='FRN Facility'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>
+                
+                <apex:pageBlockSectionItem rendered="{!reservObj.Pickup_Location_Type__c!='Airport' && reservObj.Pickup_Location_Type__c!='FRN Facility'}"/>
+                <apex:inputfield value="{!reservObj.Pickup_Country__c}" rendered="{!reservObj.Pickup_Location_Type__c=='Street Address'}">
+                    <apex:actionSupport action="{!CopyChangePickupAddress}" event="onchange" reRender="cpy" />
+                </apex:inputField>              
+                
+            </apex:pageBlockSection>                        
+            </apex:outputpanel>
+            <apex:outputpanel id="location1">       
+                <apex:pageBlockSection columns="2" collapsible="false"  title="Drop-off Information" rendered="{!IF(recTypeName == 'Car Service', true, false)}">           
+                    <apex:pageBlockSectionItem > 
+                        <apex:outputlabel value="Drop-off at same location as Pickup" />
+                        <apex:inputField value="{!reservObj.Drop_off_at_same_location_as_Pickup__c}">
+                            <apex:actionSupport action="{!CopyPickupAddress}" event="onclick" reRender="cpy" />
+                        </apex:inputField>
+                    </apex:pageBlockSectionItem>                
+                    <apex:pageBlockSectionItem />                        
+                    <apex:inputfield value="{!reservObj.Drop_Off_Date_Time__c}" />                                
+                    <apex:inputfield value="{!reservObj.Drop_off_Address__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Street Address'}"/>
+                    <apex:pageBlockSectionItem rendered="{!reservObj.Drop_off_Location_Type__c!='Street Address'}"/>              
+                    <apex:inputField value="{!reservObj.Drop_off_Location_Type__c}" >
+                        <apex:actionSupport event="onchange" rerender="location1" />
+                    </apex:inputField> 
+                    <apex:inputfield value="{!reservObj.Drop_off_City__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Street Address'}"/>                
+                    
+                    <apex:pageBlockSectionItem rendered="{!reservObj.Drop_off_Location_Type__c!='Street Address'}"/>
+                    <apex:inputfield value="{!reservObj.Drop_off_Airport__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Airport'}"/>
+                    
+                    <apex:pageBlockSectionItem rendered="{!reservObj.Drop_off_Location_Type__c!='Airport' && reservObj.Drop_off_Location_Type__c!='FRN Facility'}"/>
+                    <apex:inputfield value="{!reservObj.Drop_off_State_Province_Region__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Street Address'}"/>
+                    <apex:pageBlockSectionItem rendered="{!reservObj.Drop_off_Location_Type__c!='Airport' && reservObj.Drop_off_Location_Type__c!='FRN Facility'}"/>
+                    <apex:inputfield value="{!reservObj.Drop_off_Zip_Postal_Code__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Street Address'}"/>
+                    
+                    <apex:inputfield value="{!reservObj.Drop_off_FRN_Facility__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='FRN Facility'}"/>
+                    <apex:pageBlockSectionItem rendered="{!reservObj.Drop_off_Location_Type__c!='Airport' && reservObj.Drop_off_Location_Type__c!='FRN Facility'}"/>
+                    <apex:inputfield value="{!reservObj.Drop_off_Country__c}" rendered="{!reservObj.Drop_off_Location_Type__c=='Street Address'}"/>
+                              
+                </apex:pageBlockSection> 
+            </apex:outputpanel>                       
+            <apex:pageBlockSection columns="1" collapsible="false"  title="Charge Information" rendered="{!IF(recTypeName == 'Car Service', true, false)}">
+                <apex:inputField value="{!reservObj.Rate__c}" />
+            </apex:pageBlockSection>
+            
+        </apex:pageBlock>
+    </apex:form>        
+</apex:page>

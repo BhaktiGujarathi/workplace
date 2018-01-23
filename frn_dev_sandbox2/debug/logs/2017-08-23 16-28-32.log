@@ -1,0 +1,59 @@
+40.0 APEX_CODE,DEBUG;APEX_PROFILING,INFO;CALLOUT,INFO;DB,INFO;SYSTEM,DEBUG;VALIDATION,INFO;VISUALFORCE,INFO;WAVE,INFO;WORKFLOW,INFO
+Execute Anonymous: String sourceOpportunityId = '006g000000EvUAv';
+Execute Anonymous: Opportunity sourceOpportunityInstance = new Opportunity();
+Execute Anonymous: Map<String, StepDown_Related_Objects_To_Clone__c> objectsToCloneMap = new Map<String, StepDown_Related_Objects_To_Clone__c>();
+Execute Anonymous: objectsToCloneMap = StepDown_Related_Objects_To_Clone__c.getAll();
+Execute Anonymous: String querystr = 'SELECT id, ';
+Execute Anonymous: string fieldStr = '';
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     fieldStr = '(SELECT ';
+Execute Anonymous:     for(Schema.SObjectField fieldInstance : Schema.getGlobalDescribe().get(settingInstance.Object_API_Name__c).getDescribe().fields.getMap().Values()) {
+Execute Anonymous:         fieldStr += fieldInstance.getDescribe().getname() + ', ';
+Execute Anonymous:     }
+Execute Anonymous:     fieldStr = fieldStr.removeEnd(', ');
+Execute Anonymous: 	fieldStr += ' FROM '+settingInstance.Opportunity_Relationship_API_Name__c+'__r), ';
+Execute Anonymous:     queryStr += fieldStr;
+Execute Anonymous: }
+Execute Anonymous: queryStr = queryStr.removeEnd(', ');
+Execute Anonymous: queryStr += ' FROM Opportunity WHERE Id =\''+sourceOpportunityId+'\'';
+Execute Anonymous: sourceOpportunityInstance = database.query(querystr);
+Execute Anonymous: List<sObject> clonesSObjectList = new List<sObject>();
+Execute Anonymous: sObject sObjectObj;
+Execute Anonymous: for(StepDown_Related_Objects_To_Clone__c settingInstance : objectsToCloneMap.values()) {
+Execute Anonymous:     Schema.SObjectType sobjTypeStr = sourceOpportunityInstance.getsObjects(settingInstance.Opportunity_Relationship_API_Name__c+'__r').getSObjectType();
+Execute Anonymous:     system.debug('>>> sobjTypeStr '+sobjTypeStr);
+Execute Anonymous:     for(sobject sobjectInstance : sourceOpportunityInstance.getsObjects(settingInstance.Opportunity_Relationship_API_Name__c+'__r')) {
+Execute Anonymous:         sObjectObj = sobjTypeStr.newSObject();
+Execute Anonymous:         sObjectObj = sobjectInstance.clone(False, True, false, false);
+Execute Anonymous:         clonesSObjectList.add(sObjectObj);
+Execute Anonymous: 	}
+Execute Anonymous: }
+Execute Anonymous: system.debug('>>> clonesSObjectList : '+clonesSObjectList.size());
+05:54:11.0 (942684)|USER_INFO|[EXTERNAL]|005g0000004SEeD|bhakti.gujrathi@eternussolutions.com.sgdev|Central Standard Time|GMT-05:00
+05:54:11.0 (956960)|EXECUTION_STARTED
+05:54:11.0 (959802)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex
+05:54:11.0 (86067636)|SOQL_EXECUTE_BEGIN|[18]|Aggregations:3|SELECT id, (SELECT Id, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Opportunity__c, Follow_up_Appointments_Scheduled__c, Major_Medical_Issue__c, Occured__c, Ongoing_Symptoms__c, When_Did_it_Happen__c FROM Major_Medical_Issues__r), (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, ACA_Policy_Paid_Through_Date__c, ACA_Policy__c, Accepts_Assignment_of_Benefits__c, Accreditation__c, Behavioral_Health_Phone__c, Benefits_Check__c, COBRA_Account__c, COBRA_Effective_Date__c, COBRA_Paid_Through_Date__c, COB_Completed__c, COB_Needed__c, Claims_Billing_Address__c, Clinical_Assessment_Needed__c, Description__c, Free_Standing_Facility__c, Free_Standing_RTC_Facility__c, Group_Number__c, Insurance_Company__c, Insurance_Plan__c, Is_this_Medicare_Medicaid__c, Member_ID__c, Opportunity__c, Other_Insurance_Company__c, Patient_Age__c, Patient_DOB__c, Patient_Social_Security_Number__c, Patient__c, Pharmacy_Coverage__c, Phone__c, Policy_Effective_Date__c, PreCert_Penalty_Description__c, PreCert_Penalty__c, PreCert_Phone__c, PreCert_Required__c, Prior_Auth_Before_Travel__c, Provider_Services_Phone__c, Referral_Needed__c, Renewal_Date__c, Rx_Phone__c, Rx_Vendor__c, State_of_Origination__c, Subscriber_Employer__c, Subscriber__c, Subscriber_is_Patient__c, Term_Date__c, Travel_Out_of_State_for_Non_Emergent_Tx__c, Type_Order__c, VOB_Assigned__c, VOB_status__c, Vendor__c, Num_of_Insurance_Benefits__c, Total_Benefits_Created__c, Date_Benefits_Check_Completed__c, AC_Assigned__c, RAM_Assigned__c, Approving_Without_Medical_Records__c, Patient_is_High_Acuity__c FROM Patient_Insurances__r), (SELECT Id, OwnerId, IsDeleted, Name, CreatedDate, CreatedById, LastModifiedDate, LastModifiedById, SystemModstamp, LastViewedDate, LastReferencedDate, Currently_Symptomatic__c, Currently_Taking_Medications__c, Diagnosed__c, Diagnosis_Date__c, Have_You_Followed_Up_with_Appointments__c, Infectious_Disease__c, Opportunity__c, Patient__c, Regular_Follow_Up_Recommended__c FROM Infectious_Diseases__r) FROM Opportunity WHERE Id ='006g000000EvUAv'
+05:54:11.0 (110560619)|SOQL_EXECUTE_END|[18]|Rows:1
+05:54:11.0 (111453137)|USER_DEBUG|[23]|DEBUG|>>> sobjTypeStr Major_Medical_Issue__c
+05:54:11.0 (112584841)|USER_DEBUG|[23]|DEBUG|>>> sobjTypeStr Patient_Insurance__c
+05:54:11.0 (113029628)|USER_DEBUG|[23]|DEBUG|>>> sobjTypeStr Infectious_Disease__c
+05:54:11.0 (114147833)|USER_DEBUG|[30]|DEBUG|>>> clonesSObjectList : 14
+05:54:11.114 (114190136)|CUMULATIVE_LIMIT_USAGE
+05:54:11.114 (114190136)|LIMIT_USAGE_FOR_NS|(default)|
+  Number of SOQL queries: 1 out of 100
+  Number of query rows: 15 out of 50000
+  Number of SOSL queries: 0 out of 20
+  Number of DML statements: 0 out of 150
+  Number of DML rows: 0 out of 10000
+  Maximum CPU time: 0 out of 10000
+  Maximum heap size: 0 out of 6000000
+  Number of callouts: 0 out of 100
+  Number of Email Invocations: 0 out of 10
+  Number of future calls: 0 out of 50
+  Number of queueable jobs added to the queue: 0 out of 50
+  Number of Mobile Apex push calls: 0 out of 10
+
+05:54:11.114 (114190136)|CUMULATIVE_LIMIT_USAGE_END
+
+05:54:11.0 (114224033)|CODE_UNIT_FINISHED|execute_anonymous_apex
+05:54:11.0 (114986436)|EXECUTION_FINISHED

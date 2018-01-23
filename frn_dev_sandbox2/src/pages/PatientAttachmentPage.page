@@ -1,0 +1,61 @@
+<apex:page controller="PatientAttachmentController">  
+    <apex:form id="rendiv">
+    
+    <!-- Include the Jquery Script files -->
+    <link rel="stylesheet" href="{!URLFOR($Resource.Jtreeview,'Jquerytreeview/jquery.treeview.css')}"/>
+    <script src="{!URLFOR($Resource.Jtreeview,'Jquerytreeview/jquery.js')}" type="text/javascript"></script>
+    <script src="{!URLFOR($Resource.Jtreeview,'Jquerytreeview/jquery.cookie.js')}" type="text/javascript"></script>
+    <script src="{!URLFOR($Resource.Jtreeview,'Jquerytreeview/jquery.treeview.js')}" type="text/javascript"></script>
+<!-- End of Javascript files -->
+<script type="text/javascript">
+        $(function() {
+            $("#tree").treeview({
+                collapsed: true,
+                animated: "medium",
+                control:"#sidetreecontrol",
+                persist: "location"
+            });
+        })
+</script>
+    
+    
+    <apex:pageBlock >
+    <apex:pageMessages ></apex:pageMessages>
+    <apex:pageBlockSection title="Patient Information" collapsible="false" columns="1">
+    <apex:pageBlockSectionItem >
+        <apex:outputlabel value="Patient"/>
+        <apex:inputField value="{!doc.Patient__c}">
+        <apex:actionSupport action="{!AttachmentsType}" event="onchange" rerender="rendiv"/>
+        </apex:inputField>
+      </apex:pageBlockSectionItem>
+    <apex:pageBlockSectionItem >
+     </apex:pageBlockSectionItem>
+        <apex:pageBlockSectionItem >
+    <apex:outputpanel rendered="{!showAttachment}">
+    <apex:OutputLabel value="Documents Related to the Patient:" style="color:#4a4a56; font-weight:bold;font-size:14px; "/>
+    
+    <div class="treeheader" style="height:0px;">&nbsp;</div>
+<div id="sidetreecontrol"><a href="?#"><font style="color:blue;">Collapse All</font></a> | <a href="?#"><font style="color:blue;">Expand All</font></a></div>
+    
+   <ul id="tree" style="padding-left: 60px;">   
+            <apex:repeat value="{!mapattach}" var="parent">  
+                <li><strong><apex:outputtext style="color:blue;" escape="false" value="{!parent}"/></strong>
+                    <ul>                  
+                        <apex:repeat value="{!mapattach[parent]}" var="child">                     
+                        <li>    
+                            <span class="formattextcon">
+                            <apex:outputLink value="{!URLFOR($Action.Attachment.Download,child.id)}" target="_blank"> {!child.Name}</apex:outputLink></span> 
+                        </li>                  
+                        </apex:repeat>                
+                    </ul>           
+                 </li>  
+            </apex:repeat> 
+        </ul> 
+    </apex:outputpanel>
+    
+     </apex:pageBlockSectionItem>
+    </apex:pageBlockSection>
+    
+    </apex:pageBlock>
+</apex:form>       
+</apex:page>

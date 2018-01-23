@@ -1,0 +1,450 @@
+<apex:component controller="ScoreQualityReportController">
+    
+    <apex:attribute assignTo="{!opportunityId}" 
+                    description="Opportuniyt id" 
+                    type="Id" 
+                    name="oppId"/>
+    <apex:attribute assignTo="{!opportunityRecordtypeName}" 
+                    description="Opportuniyt Recordtype developername" 
+                    type="String" 
+                    name="recordTypeName"/>
+    <script type="text/JavaScript" 
+            src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js" >
+    </script>   
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="{!$Resource.jquery_scrollTo}"></script>
+    <script type="text/javascript" 
+            src="https://rawgit.com/kimmobrunfeldt/progressbar.js/1.0.0/dist/progressbar.js">
+    </script>
+
+    <!-- Templates -->
+    <script type="text/html" id='section-data'>
+
+        <!-- Opportunity Score Header -->
+        <div class="opportunity-score-view view">
+
+            <table>
+                <tr>
+                    <td class="vertical-align-middle">
+                        <div class="back-button visiblity-hidden" style="margin-right: 25px;" >
+                            <a href="#" class="left-button go-back-button">
+                              <!-- <span class="left" style="zoom: 0.1;">           </span> -->
+                                <img src="{!$Resource.Back_To_Icon}" 
+                                     alt="back-button" 
+                                     height="14" 
+                                     width="20" />
+                            </a>
+                        </div>
+                    </td>
+                    <td class="vertical-align-middle">
+                        <h1 style="font-size: 14px;"> 
+                            Total Score : <%=scoreValue%> %
+                        </h1>
+                    </td>
+
+                </tr>
+
+                <tr>
+                    <td colspan="2">
+                        <div class="line-progress" 
+                             data-value="<%=scoreValue%>" 
+                             data-thickness="2"
+                             title="<%=scoreValue%>%">
+                        </div>
+                    </td>
+                <tr>
+            </table>
+
+            <div> 
+                    
+            </div>    
+
+            
+            
+        </div>
+
+        <div class="refresh-view view" style="display:none;">
+
+            <h3>Data modified! <br/> Click refresh to get updated scores.</h3>
+
+            <img class="refresh-button" src="{!$Resource.Refresh_Icon}" alt="refresh-button"/>
+
+        </div>
+
+        <!-- Section View -->
+        <div class="sectionClass section-view view"> 
+
+            <table>
+                <% _.each(qualityReportList,function(section,key,list){ %>
+                    <tr html-scrollTo="<%=section.label%>" html-apiName ="<%=section.fieldAPiName%>">
+                        <!-- flexbox-container -->
+                        <td class="incomplete section-name-column" >
+
+                            <!-- flex-big-column  -->
+                            <a  class="incomplete section-name section-scrollto-link show-hand-cursor" 
+                                title="Scroll To Section" >
+                                <%= section.label %>
+                            </a>
+
+                        </td>
+                        <td>
+                             <%= section.scoreValue %>
+                        </td>
+                        <td>
+                            <!-- flexbox-small-column  -->
+                                <a class="detail-report-link show-hand-cursor" title="Click for more details">
+                                <img src="{!$Resource.more_details_icon}" height="20" width="20" />
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">
+                            <div class="line-progress" data-value="<%=section.scoreValue%>">
+                            </div>
+                        </td>
+                    </tr>    
+
+                <% }) %>
+            </table>
+        </div>
+        <!-- Field View -->
+        <% _.each(qualityReportList,function(sectionDetails,key,list){ %>
+
+            <table details-for="<%=sectionDetails.fieldAPiName%>" 
+                   class="field-view view" 
+                   style="display:none;">
+
+                <% _.each(sectionDetails.qualityReportList,function( fieldDetails , key, list){ %>
+                    <% if ( fieldDetails.isDependent == false ) { %>
+                        <tr class="flexbox-container"> 
+                            <td>
+                                <a labelSelector="<%= fieldDetails.fieldAPiName %>" fieldSelector="<%= fieldDetails.fieldAPiName %>" class="incomplete flex-big-column field show-hand-cursor"> 
+                                    <%= fieldDetails.label %> 
+                                </a>
+                            </td> 
+                            <td class="checkBoxImg">
+                            <% if(fieldDetails.isOpportunityField == true && fieldDetails.scoreValue == 0) { %>
+                                    <img src="{!$Resource.FalseCheckBox}" height="12" width="12" />
+                                <% } %>
+                            <% if(fieldDetails.isOpportunityField == true && fieldDetails.scoreValue == 1) { %>
+                                    <img src="{!$Resource.TrueCheckBox}" height="12" width="12" />
+                                <% } %>
+                            <% if(fieldDetails.isOpportunityField == false) { %>
+                                    <%= fieldDetails.scoreValue %> / <%= fieldDetails.expectedScore %>  
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% } %>
+                    
+                    <!-- <% if ( true == isFieldVisible(fieldDetails.fieldAPiName, sectionDetails.fieldAPiName ) ) { %>
+            if is visible in vf page
+                        <tr class="flexbox-container"> 
+                            <td>
+                                <a labelSelector="<%= fieldDetails.fieldAPiName %>" fieldSelector="<%= fieldDetails.fieldAPiName %>" class="incomplete flex-big-column field show-hand-cursor"> 
+                                    <%= fieldDetails.label %> 
+                                </a>
+                            </td> 
+                            <td class="checkBoxImg">
+                            <% if(fieldDetails.scoreValue == 0) { %>
+                                    <img src="{!$Resource.FalseCheckBox}" height="12" width="12" />
+                                <% } %>
+                            <% if(fieldDetails.scoreValue == 1) { %>
+                                    <img src="{!$Resource.TrueCheckBox}" height="12" width="12" />
+                                <% } %>
+                            </td>
+                        </tr>
+                    
+                    <% } %> -->
+                    <!-- <% if(      false == isFieldVisible(fieldDetails.fieldAPiName, sectionDetails.fieldAPiName ) 
+                            &&  fieldDetails.isDependent == false) { %>
+                        if not visible page but need to be shown in quality report
+                        <tr class="flexbox-container"> 
+                            <td>
+                                <a labelSelector="<%= fieldDetails.fieldAPiName %>" fieldSelector="<%= fieldDetails.fieldAPiName %>" class="incomplete flex-big-column field show-hand-cursor"> 
+                                    <%= fieldDetails.label %> 
+                                </a>
+                            </td> 
+                            <td class="checkBoxImg">
+                            <% if(fieldDetails.scoreValue == 0) { %>
+                                    <img src="{!$Resource.FalseCheckBox}" height="12" width="12" />
+                                <% } %>
+                            <% if(fieldDetails.scoreValue == 1) { %>
+                                    <img src="{!$Resource.TrueCheckBox}" height="12" width="12" />
+                                <% } %>
+                            </td>
+                        </tr>
+
+                    <% } %>    -->                 
+
+                <% }) %>
+            </table>            
+            
+        <% }) %>
+    </script>
+
+    <script type="text/JavaScript" >
+
+        var frn = frn || {};
+        frn.score = {};
+
+        //render methods
+        frn.score.renderScorePanel = function(result, event){
+
+            if ( !result ) {
+                alert("Error loading quality score!");
+                return false;
+            }
+
+            //populate isVisible flag
+
+            // var sectionItems = result.qualityReportList;
+            $("#reportDiv").html('')
+                           .append( frn.score.template( result ));
+
+            frn.score.initializeProgressBars();
+        };
+
+        //data methods
+
+        frn.score.remotingConfig = {    
+              buffer:  false 
+            , escape:  false
+            , timeout: 120000
+        };
+
+        frn.score.fetchScoreData = function(){
+            var oppId = '{!opportunityId}';
+            var oppRecordType = '{!opportunityRecordtypeName}';
+
+            //show loading
+            $("#reportDiv").html('<img class="loading-symbol" src="http://78.media.tumblr.com/0018b4de0800b3e822bc5a7895ccfc62/tumblr_nbp3g3IwBz1sq0qq9o1_400.gif" />');
+            
+            
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.ScoreQualityReportController.getScoreReportDetails}',
+                oppId,
+                oppRecordType,
+                frn.score.renderScorePanel,
+                frn.score.remotingConfig
+            );
+        };
+
+        frn.score.sectionTemplate = $("#section-data").html();
+        frn.score.template = _.template(
+            frn.score.sectionTemplate
+        );    
+
+        //event methods
+        frn.score.scrollTo = function(scrollToSelector){
+            console.log('>>> last scrollToSelector : ',scrollToSelector); 
+            console.log('>>> last scrollToSelector : '+scrollToSelector);
+            return $(window).scrollTo($(scrollToSelector), 500, {axis:'y',offset: {top:-20}});
+        };
+
+        var isFieldVisible = function(fieldAPIName,sectionScoreField){
+            return frn.score.getField(fieldAPIName,sectionScoreField).length != 0
+        }
+
+        frn.score.getField  = function(fieldAPIName,sectionScoreField){
+
+            sectionScoreField = sectionScoreField.toLowerCase();
+
+            var rawAttributeSelector        = "[html-apiName='"+fieldAPIName+"']";
+            var formattedAttributeSelector  = "[apiName='"+fieldAPIName+"']";
+            var rawClassSelector            = "."+fieldAPIName;
+
+            var result;
+
+            if( $("."+sectionScoreField).length == 0 ){
+                result = $(rawAttributeSelector+','+formattedAttributeSelector+','+rawClassSelector).first();
+            } else {
+
+                var attributeSelectorA = "."+sectionScoreField+" "+rawAttributeSelector; 
+                var attributeSelectorB = "."+sectionScoreField+" "+formattedAttributeSelector;
+                var classSelector      = "."+sectionScoreField+" "+rawClassSelector;
+                result = $(attributeSelectorA+','+attributeSelectorB+','+classSelector).first();
+            }
+
+            return result;
+        }
+
+        frn.score.initializeScrollToEvents = function(){
+            var headerFieldSelector = $(".labelCol,.pbSubheader,.headerRow,label,.pbTitle");
+
+            //finds the section to scroll to
+            var scrollToSection  = function(scrollToLabel,scrollToAPI){
+
+                console.log('>>> scrollToLabel : ',scrollToLabel);
+                
+                var scrollToAPISelector = scrollToAPI ? "."+scrollToAPI.toLowerCase() : "";
+                var scrollToElement;
+
+                if( scrollToAPISelector ) {
+                    scrollToElement  = $(scrollToAPISelector).first();    
+                }
+
+                if( !scrollToElement || scrollToElement.length == 0  ){
+                    var scrollToSelector   = ":contains("+scrollToLabel+")" || "";
+                    scrollToElement  = headerFieldSelector.find(scrollToSelector).first();       
+                }
+
+                frn.score.scrollTo(scrollToElement);
+            };
+
+            //finds the field to scroll to
+            var scrollToField = function(fieldAPIName, sectionScoreField){
+                //var scrollToSelector   = ":contains("+fieldLabel+")" || "";
+                var scrollToSelector   = frn.score.getField(fieldAPIName,sectionScoreField);
+                var scrollToElement    = headerFieldSelector.find(scrollToSelector).first();
+                if( scrollToElement.length == 0 ){
+                    scrollToElement    = headerFieldSelector.find(scrollToSelector).last();
+                }
+                return scrollToElement;
+            };
+
+
+            $("body").on("click","#qualityscore-report .section-scrollto-link",function(event){
+                console.log('>>> this : ',this);
+                var row               = $(this).closest("tr");
+                console.log('>>> row : ',row);
+                 //scroll user to particular section
+                var scrollToLabel      = row.attr("html-scrollTo");
+                var scrollToAPI        = row.attr("html-apiname");
+                console.log('>>> scrollToLabel : ',scrollToLabel);
+                scrollToSection(scrollToLabel,scrollToAPI);
+            });
+
+            $("body").on("click","#qualityscore-report .detail-report-link" , function(event){
+                event.preventDefault();
+                
+                var row                 = $(this).closest("tr");
+                var fieldAPIName        = row.attr("html-apiName");
+                var scrollToLabel       = row.attr("html-scrollTo");
+
+                var fieldDetailsSection = $("table[details-for='"+fieldAPIName+"']");
+                $("#qualityscore-report .sectionClass" ).hide("slide", { direction: "right" }, 500);
+                fieldDetailsSection.show();
+                //also scroll to the section
+                scrollToSection(scrollToLabel,fieldAPIName);
+
+                $(".back-button").removeClass("visiblity-hidden");
+
+                return false; 
+            });
+
+            $("body").on("click","#qualityscore-report .field" , function(event){
+                event.preventDefault();
+            
+                var fieldLabel = $(this).attr("fieldselector");
+                var sectionScoreField = $(this).closest("table[details-for]").attr("details-for");
+                // var labelSelector = $(this).attr("labelselector");
+                var scrollToElement = scrollToField(fieldLabel, sectionScoreField);               
+                $(".field-highlight").removeClass("field-highlight");
+
+                if( $(this).hasClass("incomplete") ){
+                    $(scrollToElement).addClass("field-highlight");
+                }
+                
+                frn.score.scrollTo(scrollToElement);
+                return false;
+            });
+        };
+
+        frn.score.initializeGoBackButton = function(){
+            $("body").on("click","#qualityscore-report .go-back-button" , function(event){
+                
+                event.preventDefault();
+                var fieldDetailsSection = $(".field-view:visible");
+                
+                fieldDetailsSection.hide("slide", { direction: "right" }, 100);
+
+                $("#qualityscore-report .sectionClass" ).show("slide", { direction: "right" }, 500);
+
+                $(".back-button").addClass("visiblity-hidden");
+
+                return false;
+            });
+        };
+
+        frn.score.initializeDirtyRecalculationModule = function(){
+
+
+            frn.score.$form = $('form.create-opportunity-form'),
+            frn.score.origForm = frn.score.$form.serialize();    
+
+            $('body').on('change input', "form.create-opportunity-form :input", function() {
+                var isChanged = frn.score.$form.serialize() !== frn.score.origForm;
+                console.log("isChanged=",isChanged);
+                if( isChanged ){
+                    frn.score.updateRefreshView();
+                }
+                return true;
+            });
+        };
+
+        frn.score.initializeRefreshEvents = function(){
+            $("body").on("click","#qualityscore-report .refresh-button",function(event){
+                $(".save-continue-button").trigger("click");
+                return false;
+            });
+        };
+
+        frn.score.updateRefreshView =  function(){
+            $("#qualityscore-report .view").hide();
+            $("#qualityscore-report .refresh-view").show();
+        };
+
+        frn.score.initializeProgressBars = function(){
+
+            $(".line-progress").each(function(index,element){
+
+                var strokeWidthValue = $(element).attr("data-thickness") || '1';
+                strokeWidthValue     = parseFloat(strokeWidthValue) || 1;
+                
+                var line  = new ProgressBar.Line(element,{
+                  color: '#FFEA82',
+                  trailColor: '#eee',
+                  trailWidth: 1,
+                  duration: 1400,
+                  easing: 'bounce',
+                  strokeWidth: strokeWidthValue,
+                  from: {color: '#800000', a:0},
+                  to: {color: '#008000', a:1},
+                  // Set default step function for all animate calls
+                  step: function(state, line) {
+                    line.path.setAttribute('stroke', state.color);
+                  }
+                });
+
+                var value = $(element).attr("data-value");
+                value     = parseFloat(value);
+                line.animate(value/100);
+            });
+
+            
+        };
+
+
+        frn.score.initializeSaveEvents = function(){
+            $("body").on("opportunity-save-done",function(){
+                frn.score.fetchScoreData();
+            });    
+        };
+        
+
+        //initialize
+        $(document).ready(function(event) {
+
+            frn.score.fetchScoreData();
+            frn.score.initializeScrollToEvents();
+            frn.score.initializeGoBackButton();
+            frn.score.initializeDirtyRecalculationModule();
+            frn.score.initializeRefreshEvents();
+            frn.score.initializeSaveEvents();
+
+
+        });
+
+    </script>
+
+</apex:component>

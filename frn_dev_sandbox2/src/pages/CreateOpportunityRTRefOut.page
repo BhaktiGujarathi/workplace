@@ -1,0 +1,636 @@
+<!--
+CreateOpportunityRTRefOut
+Reord Type: Refer Out Only
+-->
+<apex:page standardController="Opportunity" extensions="CreateOpportunityExt" tabstyle="Opportunity">
+    <apex:sectionHeader title="Screening Edit" subtitle="New Screening"/>
+        <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js" />
+    <apex:styleSheet value="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
+
+    <script type="text/javascript">
+        function Callmefunc(id) {
+            var type = document.getElementById(id).value;
+            check(type);
+        }
+    </script>
+    <script>
+    $(function (){
+            frn.initializeFieldSecurity();
+        }
+    )
+</script>
+
+    <style>
+        .displayNone {
+            display:none;
+        }
+        .displayBlock {
+            display:block;
+        }
+        .ui-autocomplete-loading {
+            background: white url(/img/loading32.gif) right center no-repeat;
+            background-size:15px 15px;
+        }
+        .placeHolder {
+            font-style: italic;
+        }
+        .ui-autocomplete{
+            height:150px;
+            overflow:auto;
+            width:190px !important;
+            background-color: lightgray;
+        }
+        ul li, ol li {
+            margin-left: -1.5em;
+            padding-left: 0;
+            list-style:none;
+            padding:3px;
+            font-famil:Arial;
+            font-size:14px;
+        }
+        .requiredLegend {
+            padding: 0 2px;
+            background-color: #fff;
+            font-weight: normal;
+            color: #000;
+            display: none;
+        }
+        select.myMultiClass{ width: 250px !important;}
+       .apexp .detailList .list td {
+            border-bottom: none !important;
+        }
+
+        .col1{
+            width:75% !important;
+        }
+        .col2{
+             width:25% !important;
+        }
+
+    .customPopup {
+        background-color: white;
+        border-style: solid;
+        border-width: 2px;
+        left: 30%;
+        padding: 10px;
+        position: absolute;
+        z-index: 100;
+
+        width: 400px;
+        top: 4%;
+    }
+
+    .disabledTextBox {
+        background-color: white;
+        border: 1px solid;
+        color: black;
+        cursor: default;
+        width: 90px;
+        display: table;
+        padding: 2px 1px;
+        text-align:right;
+    }
+
+.closeButton {
+    float: right;
+}
+</style>
+    <apex:form >
+        <apex:actionFunction name="showPopupFunction" action="{!showPopup}" rerender="popup" status="myStatus"/>
+        <apex:outputPanel id="popup">
+            <apex:outputPanel id="popInnerOutputPnl" styleClass="customPopup" layout="block" rendered="{!displayPopup}">
+                <apex:pageBlock mode="maindetail" >
+                    <apex:commandButton value="X" title="Close the popup" action="{!closePopup}" styleClass="closeButton" rerender="popup, p1"/>
+                    <apex:pageblockSection >
+                        <apex:pageblockSectionItem >
+                            <apex:outputLabel value="Owner" for="address" html-apiName="OwnerId"></apex:outputLabel>
+                            <apex:inputField id="address" value="{!opp.ownerId}"/>
+                        </apex:pageblockSectionItem>
+                    </apex:pageblockSection>
+                    <apex:commandButton value="Ok" title="Close the popup" action="{!closePopup}" styleClass="closeButton" rerender="popup, changeOwner"/>
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </apex:form>
+    <apex:form id="theForm">
+
+        <apex:outputPanel id="ErrorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+
+        <apex:pageBlock mode="maindetail" >
+            <apex:actionFunction name="CallApexMethod" action="{!selectedvalue}" rerender="PosHead,accPickList,conPickList,ramAssign"/>
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="Save" action="{!saveOppInfo}" styleClass="oppSaveBtn save-button" status="myStatus"  />
+                <apex:CommandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+            <apex:panelGrid columns="2" id="theGrid" columnClasses="col1, col2" width="100%">
+                <apex:outputPanel >
+                <apex:pageBlockSection title="Screening Detail" collapsible="true" columns="2" id="conInfo" rendered="{!showForReferalFields}">
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Screening Name" html-apiName="Name"/>
+                    <apex:outputText value="{!opp.name}" />
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Screening Owner" html-apiName="ClosedDate"/>
+                        <apex:outputPanel id="changeOwner">
+                            <apex:outputField value="{!opp.ownerId}" styleClass="fieldRef1"/>
+                        </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Account Name" html-apiName="accountid"/>
+                    <apex:inputField value="{!opp.accountid}" tabOrderHint="1" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Original Lead Owner" html-apiName="Original_Lead_Owner__c"/>
+                    <apex:outputField value="{!opp.Original_Lead_Owner__c}" />
+                 </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Stage" html-apiName="StageName"/>
+                    <apex:outputfield value="{!opp.StageName}"/>
+                    <!-- <apex:outputPanel >                 -->
+                        <!-- <apex:actionRegion > -->
+                            <!-- <apex:selectList value="{!stageValue}" size="1" tabindex="20"> -->
+                                <!-- <apex:selectOptions value="{!Stages}"/> -->
+                                <!-- <apex:actionSupport event="onchange" action="{!changeStageName}" rerender="conInfo,leadSrc,messages" status="counterStatus"/> -->
+                            <!-- </apex:selectList> -->
+                        <!-- </apex:actionRegion> -->
+                        <!-- <apex:actionStatus startText="Fetching Probability %..." stopText=" " id="counterStatus" style="color:red;"/> -->
+                    <!-- </apex:outputPanel> -->
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Screening Record Type"/>
+                    <apex:outputText value="{!dispRecTypeName}" />
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Cloned from Screening"/>
+                    <apex:commandLink value="{!opp.Cloned_from_Opportunity__r.name}" action="/{!opp.Cloned_from_Opportunity__r.id}" />
+                 </apex:pageBlockSectionItem>
+
+               <apex:pageBlockSectionItem >
+                    <apex:outputText value="Close Date" html-apiName="CloseDate"/>
+                    <apex:outputField value="{!opp.CloseDate}" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+
+               <apex:pageBlockSectionItem rendered="{!if(stageValue == 'Referral Requested',true,false)}" id="refout1">
+                    <apex:outputText value="Refer Out Reason" html-apiName="Refer_Out_Reason__c"/>
+                    <apex:outputPanel >
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                            <apex:inputField value="{!opp.Refer_Out_Reason__c}" tabOrderHint="3" required="false" styleClass="fieldRef1"/>
+                        </apex:outputpanel>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!if(stageValue != 'Referral Requested',true,false)}" id="refout2">
+                    <apex:outputText value="Refer Out Reason" />
+                    <apex:inputField value="{!opp.Refer_Out_Reason__c}" tabOrderHint="3" required="false" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Probability %" html-apiName="Probability"/>
+                    <apex:outputField value="{!opp.Probability}" id="probability" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Benefits Status" html-apiName="Benefits_Status__c"/>
+                    <apex:inputField value="{!opp.Benefits_Status__c}" tabOrderHint="3" styleClass="fieldRef"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Close Reason" html-apiName="Close_Reason__c"/>
+                    <apex:inputField value="{!opp.Close_Reason__c}" tabOrderHint="3" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+             <!-- Assignment Information-->
+            <apex:pageBlockSection title="Assignment Information" collapsible="true" columns="2" rendered="{!showForReferalFields}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="AC Assigned" html-apiName="AC_Assigned__c"/>
+                    <apex:inputField value="{!opp.AC_Assigned__c}" tabOrderHint="7" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+               <apex:pageBlockSectionItem >
+                    <apex:outputText value="RAM Assigned" html-apiName="RAM_Assigned__c"/>
+                    <apex:inputField value="{!opp.RAM_Assigned__c}" tabOrderHint="9" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="VOB Assigned" html-apiName="VOB_Assigned__c"/>
+                    <apex:inputField value="{!opp.VOB_Assigned__c}" tabOrderHint="8" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="RAM Status" html-apiName="RAM_Status__c"/>
+                    <apex:inputField value="{!opp.RAM_Status__c}" tabOrderHint="9" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+              <!--Marketing Information -->
+            <apex:pageBlockSection html-class="marketing-information section qlt_marketing_section_score__c" title="Marketing Information" collapsible="true" columns="2" rendered="{!showForReferalFields}" id="leadSrc">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Caller Id" html-apiName="Caller_Id__c"/>
+                    <apex:inputField value="{!opp.Caller_Id__c}" tabOrderHint="10" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem />
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Call in Code" html-apiName="Call_in_Code__c"/>
+                    <apex:inputField value="{!opp.Call_in_Code__c}" tabOrderHint="11" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Pre-Screening Source" html-apiName="LeadSource"/>
+                    <apex:outputPanel >
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                            <apex:inputField value="{!opp.LeadSource}" tabOrderHint="13" required="false" styleClass="fieldRef1">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+                            </apex:inputField>
+                        </apex:outputpanel>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+
+            </apex:pageBlockSection>
+            <br/>
+            <apex:outputPanel id="pbs">
+                <apex:actionFunction name="check" action="{!toldYouAbout}" reRender="refresh,referalSUD">
+                    <apex:param name="about" value="" />
+                </apex:actionFunction>
+
+                <apex:outputPanel id="referalSUD" >
+                    <apex:pageBlockSection columns="2" rendered="{!rend5}" collapsible="false">
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Online Search Term" html-apiName="Online_Search_Term__c"/>
+                            <apex:inputField value="{!opp.Online_Search_Term__c}" Style="width: 120%; height: 50px;" id="check" onmouseOut="Callmefunc('{!$Component.check}');" tabOrderHint="13" styleClass="fieldRef1"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageblocksectionItem />
+                        <apex:outputPanel id="refresh" >
+                            <apex:pageblocksectionItem rendered="{!IF(searchTerm != null && searchTerm != '', true, false)}">
+                                <apex:outputText style="margin-left:150px; color:red; font-weight:bold;" value="Who told you about {!searchTerm}?" escape="false"/>
+                            </apex:pageblocksectionItem>
+                        </apex:outputPanel>
+                    </apex:pageBlockSection>
+
+                    <apex:pageBlockSection rendered="{!rend6}" collapsible="false">
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Referral Source<br/>Unknown Details" escape="false" style="width: 31.99%;" html-apiName="Referral_Source_Unknown_Details__c"/>
+                            <apex:inputTextArea value="{!opp.Referral_Source_Unknown_Details__c}" style="width: 229%;height: 75px;" tabindex="200" styleClass="fieldRef1"/>
+                        </apex:pageblocksectionItem>
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+                <apex:outputPanel id="alumni">
+                    <apex:pageBlockSection rendered="{!rend7}" collapsible="false">
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Alumni Name" html-apiName="Alumni_Name__c"/>
+                            <apex:inputField value="{!opp.Alumni_Name__c}" tabOrderHint="21" styleClass="fieldRef1"/>
+                        </apex:pageblocksectionItem>
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Alumni FRN Facility" html-apiName="Alumni_FRN_Facility__c"/>
+                            <apex:inputField value="{!opp.Alumni_FRN_Facility__c}" tabOrderHint="22" styleClass="fieldRef1"/>
+                        </apex:pageblocksectionItem>
+                    </apex:pageBlockSection>
+                </apex:outputPanel>
+                <apex:outputPanel id="PosHead" style="width:100%;">
+                    <apex:outputPanel rendered="{!rend3}">
+                        <apex:variable value="{!0}" var="rowNum"/>
+                        <apex:pageBlockTable value="{!ReferWrpList}" var="eachRecord">
+                            <apex:column >
+                                <apex:outputPanel rendered="{!ReferWrpList.size>1}">
+                                    <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRow}" onclick="if(!confirm('Are you sure?')){return};" rerender="PosHead,ErrorMessage" tabIndex="140" >
+                                        <apex:param value="{!eachRecord.index}" name="rowToRemove" assignTo="{!rowToRemove}" />
+                                    </apex:commandLink>
+                                </apex:outputPanel>
+                            </apex:column>
+
+                            <apex:column headerValue="Search" style="width:30%;" >
+                                <apex:inputText id="accId" value="{!eachRecord.selectedKeyWrp}" style="width:220px;" styleClass="placeHolder-{!eachRecord.index} fieldRef1" onkeypress="doWhateverUneed({!eachRecord.index})" html-placeholder="Enter Search Keyword" tabindex="140 ">
+                                    <apex:inputHidden id="searchPos" value="{!searchPosition}" />
+                                    <apex:inputHidden id="searchAccountId" value="{!eachRecord.searchKeyWord}" />
+                                </apex:inputText>
+                            </apex:column>
+
+                            <apex:column headerValue="Referral Source" id="accPickList" style="width:10%;" headerClass="Account__c">
+                            <apex:outputPanel layout="block" styleClass="requiredInput" >
+                                <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                                <apex:selectList value="{!eachRecord.cmpM.Account__c}" size="1" tabindex="140" styleClass="fieldRef1">
+                                    <apex:selectOptions value="{!eachRecord.referralSourceList}"/>
+                                </apex:selectList>
+                            </apex:outputpanel>
+                            </apex:column>
+
+                            <apex:column headerValue="Referral Source Contact" id="conPickList" style=" width: 15%;"
+							headerClass="Consentor__c">
+                                <apex:selectList value="{!eachRecord.cmpM.Consentor__c}" size="1" tabindex="140" styleClass="fieldRef1">
+                                    <apex:selectOptions value="{!eachRecord.referralSourceConList}"/>
+                                </apex:selectList>
+                            </apex:column>
+
+                            <apex:column headerValue="Referral Order" id="refOrd" style=" width: 20%;" headerClass="Referral_Rank__c">
+                                <apex:selectList value="{!eachRecord.cmpM.Referral_Rank__c}" size="1" style=" width: 90px;" tabindex="140" styleClass="fieldRef1">
+                                    <apex:selectOptions value="{!eachRecord.refOrders}" />
+                                    <apex:actionSupport event="onchange" action="{!referlist}" rerender="ErrorMessage,PosHead" />
+                                </apex:selectList>
+                            </apex:column>
+
+                            <apex:column headerValue="RAM assigned to Account" id="ramAssign" style=" width: 15%;" headerClass="RAM_Lookup__c">
+                                <apex:outputText value="{!eachRecord.cmpM.RAM_Lookup__c}"/>
+                                <apex:outputText value="{!eachRecord.RAMName}"/>
+                            </apex:column>
+
+                            <apex:column style=" width: 10%;" >
+                                <apex:outputPanel rendered="{!if((ReferWrpList.size)-1 ==rowNum && ReferWrpList.size != 4 ,true,false)}">
+                                    <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewRow}" rerender="ErrorMessage,PosHead" Status="status" tabindex="140"/>
+                                </apex:outputPanel>
+                                <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                        <script type="text/javascript">
+                            function doWhateverUneed(index){
+                                var movieObjects1;
+                                var queryTerm1;
+                                $('.placeHolder-'+index).autocomplete({
+                                    minLength: 2,
+                                    source: function(request, response) {
+                                        queryTerm1 = request.term;
+                                        CreateOpportunityExt.getSearchResult(request.term, function(result, event){
+                                            if(event.type == 'exception') {
+                                                  alert(event.message);
+                                            } else {
+                                                movieObjects1 = result;
+                                                if(movieObjects1=='null' || movieObjects1==''){
+                                                    $('.error-'+index).show();
+                                                    response([]);
+                                                } else {
+                                                    $('.error-'+index).hide();
+                                                    response(movieObjects1);
+                                                }
+                                            }
+                                        });
+                                    },
+                                    focus: function( event, ui ) {
+                                        var aa = ui.item.label;
+                                        var varTitle = $('<textarea />').html(aa).text();
+                                        $('.placeHolder-'+index).val( varTitle );
+                                        return false;
+                                    },
+                                    select: function( event, ui ) {
+                                        var aa = ui.item.label;
+                                        var varTitle = $('<textarea />').html(aa).text();
+                                        $('.placeHolder-'+index).val( varTitle );
+                                        $('[id$=searchAccountId]').val( ui.item.id );
+                                        $('[id$=searchPos]').val( index );
+                                        CallApexMethod();
+                                        return false;
+                                    },
+                                })
+                                .data( "autocomplete" )._renderItem = function( ul, item ) {
+                                    var entry = "";
+                                    if(item.label=='Referral Source' || item.label=='Referral Source Contact'){
+                                        entry = "<br/><b>"+item.label+"</b><br/>";
+
+                                    } else if (item.label=='--No Matches--'){
+                                        entry = item.label;
+
+                                    } else {
+                                        entry = "<a>"+item.label+"</a>";
+
+                                    }
+                                    //var entry = "<a>" + item.label;
+                                    //entry = entry + "</a>";
+                                    //entry = entry.replace(queryTerm1, "<b>" + queryTerm1 + "</b>");
+                                    return $( "<li></li>" )
+                                        .data( "item.autocomplete", item )
+                                        .append( entry )
+                                        .appendTo( ul );
+                                        alert(ul);
+                                };
+
+                                // Add or remove placeholder values
+                                $('.placeHolder-'+index).val(PLACEHOLDER1);
+                                $('.placeHolder-'+index).on("focus",  function(event){
+                                    $tgt = $(event.target);
+                                    if($tgt.val() === PLACEHOLDER1 ){
+                                        $tgt.val('');
+                                        $tgt.removeClass('placeHolder');
+                                    }
+                                });
+                                $('.placeHolder-'+index).on( "blur",  function(event){
+                                    $tgt = $(event.target);
+                                    if($tgt.val() === '' ){
+                                        $('[id$=searchAccountId]').val('');
+                                        $('[id$=searchPos]').val(index);
+                                        CallApexMethod();
+                                    }
+                                });
+                            }
+                        </script>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                </apex:outputPanel>
+                <br/>
+
+            <!-- Presenting Problem/Hx (Clinical Narrative)-->
+            <apex:pageBlockSection title="Presenting Problem/Hx (Clinical Narrative)" collapsible="true" columns="2" rendered="{!showForReferalFields}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Brief PPH" html-apiName="Brief_PPH__c"/>
+                    <apex:inputField value="{!opp.Brief_PPH__c}" tabOrderHint="23" styleClass="fieldRef1"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+
+            <!-- Abused Substances Related List--><br/>
+            <apex:pageBlock html-class="substance-abuse-and-withdrawal-information section qlt_substance_abuse_and_withdrawal_score__c" title="Substance Abuse and Withdrawal Information">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton styleClass="newBtn"  value="New Abused Substance" action="{!abusedsubstance}" tabindex="240"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="false" columns="1" id="AbsHead1" >
+                    <apex:variable value="{!0}" var="rowNum"/>
+
+                    <apex:pageBlockTable value="{!absSubsWrpList}" var="eachAbsSubs">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToAbsList}" onclick="if(!confirm('Are you sure?')){return};" rerender="AbsHead1" tabindex="240">
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink styleClass="actLink" value="Edit"  action="{!abusedsubstanceEdit}" tabindex="240">
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}" />
+                            </apex:commandLink>
+                        </apex:column>
+
+                        <apex:column headerValue="Substance" headerClass="Substance__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Substance__c}" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Date of Last Use" headerClass="Date_of_Last_Use__c">
+                            <apex:outputText value="{0,date,MM'/'dd'/'yyyy}" style="width:100px">
+                                <apex:param value="{!eachAbsSubs.record.Date_of_Last_Use__c}" />
+                            </apex:outputText>
+                        </apex:column>
+                        <apex:column headerValue="Age of First Use" headerClass="Age_of_First_Use__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Age_of_First_Use__c}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Average Amount of Use" headerClass="Average_Amount_of_Use__c">
+                            <apex:outputText value="{!eachAbsSubs.record.Average_Amount_of_Use__c}" styleClass="fieldRef1"/>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <!--Patient Insurance Related List--><br/>
+            <apex:pageBlock html-class="patient-insuranc section qlt_patient_insurances_score__c" title="Patient Insurance">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton styleClass="newBtn" value="New Patient Insurance" action="{!newPatientInsurance}" tabindex="250"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="False" columns="1" id="PIHead" rendered="{!showForReferalFields}">
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!piWrpList}" var="eachPI">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToPIList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PIHead" tabindex="250">
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink styleClass="actLink" value="Edit"  action="{!patientInsuranceEdit}" tabindex="250" >
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}"/>
+                            </apex:commandLink>
+                        </apex:column>
+                        <apex:column headerValue="Subscriber">
+                            <apex:outputText value="{!eachPI.patConName}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Phone">
+                            <apex:outputText value="{!eachPI.patConPhone}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Member ID" headerClass="Member_ID__c">
+                            <apex:outputField value="{!eachPI.record.Member_ID__c}" style="width:100px"/>
+                        </apex:column>
+                        <apex:column headerValue="Type / Order" headerClass="Type_Order__c">
+                            <apex:outputField value="{!eachPI.record.Type_Order__c}" />
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <!-- Patient Contacts Related List--><br/>
+            <apex:pageBlock title="Patient Contacts">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton styleClass="newBtn"  value="New Patient Contact" action="{!patientcontact}" tabindex="260"/>
+                </apex:pageBlockButtons>
+                <apex:pageBlockSection collapsible="False" id="PCHead" columns="1" rendered="{!showForReferalFields}">
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!pcWrpList}" var="eachPC" width="60%">
+                        <apex:column headerValue="Action">
+                            <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToPCList}" onclick="if(!confirm('Are you sure?')){return};" rerender="PCHead" tabindex="260">
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> &nbsp;&nbsp;
+                            <apex:commandLink styleClass="actLink" value="Edit"  action="{!patientcontactEdit}" tabindex="260">
+                                <apex:param value="{!rowNum}" name="rowToEdit" assignTo="{!rowToEdit}"/>
+                            </apex:commandLink>
+                        </apex:column>
+                        <apex:column headerValue="First Name" headerClass="First_Name__c">
+                            <apex:outputText value="{!eachPC.record.First_Name__c}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Last Name" headerClass="Last_Name__c">
+                            <apex:outputText value="{!eachPC.record.Last_Name__c}" style="width:100px" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Preferred Contact Method" headerClass="Preferred_Contact_Method__c">
+                            <apex:outputText value="{!eachPC.record.Preferred_Contact_Method__c}" styleClass="fieldRef1"/>
+                        </apex:column>
+                        <apex:column headerValue="Relationship" headerClass="Relationship__c">
+                            <apex:outputText value="{!eachPC.record.Relationship__c}" style="width:100px" styleClass="fieldRef1"/>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+
+            <apex:pageBlockSection title="Referrals" collapsible="False" columns="1" id="rFHead" rendered="{!showForReferalFields}">
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!ReferralWrpList}" var="eachReferral">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToReferralList}" onclick="if(!confirm('Are you sure?')){return};" rerender="rFHead" tabIndex="270" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}" />
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Patient Name" headerClass="Patient_Name__c">
+                        <apex:inputField value="{!eachReferral.record.Patient_Name__c}" style="width:100px" html-tabIndex="270" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Account" headerClass="Account__c">
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                        <apex:inputField value="{!eachReferral.record.Account__c}" required="false" style="width:100px" html-tabIndex="270" styleClass="fieldRef1"/>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="Contact" headerClass="Consentor__c">
+                        <apex:inputField value="{!eachReferral.record.Consentor__c}" style="width:100px" html-tabIndex="270" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Referral Reason" headerClass="Referral_Reason__c">
+                        <apex:inputField value="{!eachReferral.record.Referral_Reason__c}" style="width:100px" html-tabIndex="270" styleClass="fieldRef1"/>
+                    </apex:column>
+
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((ReferralWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewReferralObj}" rerender="ErrorMessage,rFHead" tabIndex="270"/>
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="Notes / Comments" collapsible="False" columns="1" id="NCHead" rendered="{!showForNoteCommentFields}">
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!NoteCommentWrpList}" var="eachNoteComment">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink styleClass="actLink" value="Del"  action="{!removeRowToNoteCommentList}" onclick="if(!confirm('Are you sure?')){return};" rerender="NCHead" tabIndex="280" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                    <apex:column headerValue="Record Type" headerClass="RecordTypeId">
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                            <apex:inputField value="{!eachNoteComment.record.RecordTypeId}" required="false" html-tabIndex="280" styleClass="fieldRef1"/>
+                        </apex:outputPanel>
+                    </apex:column>
+                    <apex:column headerValue="Note / Comment" headerClass="noteComment">
+                        <apex:inputTextarea value="{!eachNoteComment.noteComment}" richText="false" style="width:300px;height:75px;" tabindex="280" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Email To" headerClass="Email_To__c">
+                        <apex:inputField value="{!eachNoteComment.record.Email_To__c}" html-tabIndex="280" styleClass="fieldRef1"/>
+                    </apex:column>
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((NoteCommentWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink styleClass="actLink" value="Add New" action="{!addNewNoteCommentObj}" rerender="ErrorMessage,NCHead" tabindex="280"/>
+                        </apex:outputPanel>
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+
+            </apex:pageBlockSection>
+        </apex:outputPanel>
+        <apex:outputPanel >
+            <div style="position: fixed;padding: 10px;">
+                <apex:CommandButton value="Save & Continue" action="{!saveAndContinue}" reRender="oppsaved,ErrorMessage" tabindex="290" styleclass="save-button save-continue-button" oncomplete="frn.saveAndContinueDone();"/>
+                <apex:outputPanel id="oppsaved">
+                    <apex:outputText value="&nbsp;&nbsp;Opportunity Saved" style="color:red;font-size:12px;" escape="false" rendered="{!isOpportunitySaved}"/>
+                    <apex:actionPoller action="{!hideMessage}" reRender="oppsaved" interval="5" enabled="{!isOpportunitySaved}"/>
+                </apex:outputPanel>
+                <hr color="#ddb929"></hr>
+               <apex:pageBlockSection columns="1">
+                    Scratchpad
+                    <apex:pageblocksectionItem >
+                       <!-- <apex:inputField value="{!opp.Scratchpad__c}" tabOrderHint="300" id="sp" styleClass="richtxt"/> -->
+
+                         <apex:inputTextArea id="sp" readonly="{!IF(CONTAINS($Profile.Name, "VOB"), True, False)}" value="{!opp.Scratchpad__c}" richText="True" tabIndex="3000" rows="20" />
+                    </apex:pageblocksectionItem>
+               </apex:pageBlockSection>
+            </div>
+        </apex:outputPanel>
+        </apex:panelGrid>
+        </apex:pageBlock>
+
+        <script>
+            $(document).ready(function(){
+                setTimeout(function(){$("[id*='sp']").attr("tabindex", "300");}, 2000)
+            });
+
+    </script>
+
+
+    </apex:form>
+</apex:page>

@@ -1,0 +1,89 @@
+<apex:page standardController="Opportunity" extensions="AddingUpAttachmentsPOCController" sidebar="false" showHeader="false">
+    <apex:form >
+    <apex:includeScript value="{!URLFOR($Resource.FileSaver)}"  />
+    <apex:includeScript value="{!URLFOR($Resource.JsZip)}"/>
+     
+    <input type="button" onclick="create_zip(true)" value="Create Zip"></input>
+    </apex:form>
+    <script>
+
+        window.onload  = function(){
+
+            Visualforce.remoting.Manager.invokeAction(
+                                '{!$RemoteAction.AddingUpAttachmentsPOCController.getAttachedDocsList}',
+                                "{!opp.Id}",
+                                create_zip,
+                                { buffer: false, escape: false, timeout: 120000 }
+                            );
+        }
+
+        var zip;
+        function create_zip(attchmntList,event) {
+            console.log('attchmntList',attchmntList);
+            var isdownloadAll = true;
+
+            zip = new JSZip();
+            //var attchmntList = '{!attchmentList}';
+            var attID = [], attachmentName = [], attachSize = 0, attsize = [];
+            var content, noCall = 0;
+            var totalsize = 0;;
+            // Get all checked attchment id
+            var listAtt = [];
+            var countAttch = 0;
+            if(attchmntList.length > 0) {
+                //try {
+
+
+                for (var i = 0; i < attchmntList.length; i++) {
+                    var count = 0;
+                    for(var nameIndex = 0; nameIndex < attachmentName.length; nameIndex++){
+                        if(attachmentName[nameIndex] == attchmntList[i].Name )
+                            count++;
+                    }
+                    if(count != 0){
+                        zip.file(
+                            attchmntList[i].Name,/*count+'.'+attchmntList[i].ContentType, */
+                            attchmntList[i].Body, {base64: true}
+                        );
+                    }else{
+                        zip.file(
+                            attchmntList[i].Name,/*+'.'+attchmntList[i].ContentType,*/
+                            attchmntList[i].Body, {base64: true}
+                        );
+                    }
+                    attachmentName.push(attchmntList[i].Name);
+                    //attachSize = attachSize + attchmntList[i].Body.size;
+                    /*if(attachSize > 10000000) {
+                        alert('to big to download');
+                    }*/
+                }// end For
+                
+                zip_Creation();
+                /*} catch(err) {
+                    alert('Please select less file. Error Is '+err.message);
+                }*/
+            } else {
+                alert('Please select at least one attachment');
+            }
+        }// End create_zip()
+
+        // Create zip.
+        function zip_Creation() {
+            // Check browser and perform download operation
+            var isIE = /*@cc_on!@*/false;
+            if(isIE){
+                //alert('hiii out side safari');
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "PDFFile.zip");
+            }else if(navigator.vendor.indexOf("Apple")==0 && /\sSafari\//.test(navigator.userAgent)) {
+                content = zip.generate();
+                location.href="data:application/zip;base64," + content;
+            } else {
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "PDFFile.zip");
+            }// End Else If
+        }
+    </script>
+</apex:page>
