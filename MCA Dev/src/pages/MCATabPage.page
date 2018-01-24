@@ -1,0 +1,364 @@
+<apex:page name="MCATabPage" standardController="Opportunity" cache="true" sidebar="false"  id="testSecttionJump" >
+
+ <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" />
+ <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery.tablesorter.min.js')}" />
+ <apex:outputPanel id="refreshComponent">
+  <script type="text/javascript">
+
+      t$ = jQuery.noConflict();
+      t$(function () {
+          t$('.records .tablesorting.tablesorter a').click(function(event) {
+            try {
+                console.log("Table Sorting Field");
+                if (t$(this).attr('id').indexOf('lookup') != -1) {
+                  event.preventDefault();
+                  window.open(t$(this).attr('href'));
+                }
+            }
+            catch(err) {
+              console.warn('Error catched from table sorting');
+            }
+          });
+     });
+   </script>
+   <style>
+    .rich-tab-inactive {
+        background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(1, #C8C8C8));
+    }
+    .rich-tab-active { 
+         background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(1, #ADCDAD));
+    }
+    .rich-tabpanel-content {
+        background-color: #ffffff;
+    }
+    body .bPageBlock, body #bodyCell .bResource .secondaryPalette, body .secondaryPalette.bPageBlock, body .individualPalette .secondaryPalette.bPageBlock, body .bodyDiv .genericTable, body .genericPageBlockTable, body .bodyDiv .bSubBlock, body .bComponentBlock .bPageBlock, body .bMyDashboard .bPageBlock, body.rlHoverFrame .bPageBlock, body.subjectSelectionPopup div.choicesBox, body.lookupTab .secondaryPalette.bPageBlock, body.popupTab .secondaryPalette.bPageBlock, body.UserTagStatsPage .secondaryPalette.bPageBlock {
+        background-color: #ffffff;
+    }
+  </style>
+ </apex:outputPanel>
+
+  <style type="text/css">
+    th,td{
+        //border: 1px solid red;
+        height: 25px;
+    }
+    .pbSubheader.brandTertiaryBgr.tertiaryPalette {
+      background-color: transparent !important;
+    }
+
+    .pbSubheader.brandTertiaryBgr.tertiaryPalette, .bPageBlock.brandSecondaryBrd.apexDefaultPageBlock.secondaryPalette {
+      border-color: transparent !important;
+    }
+
+    .pbSubheader.brandTertiaryBgr.first.tertiaryPalette h3, .pbSubheader.brandTertiaryBgr.tertiaryPalette h3 {
+      color: black;
+    }
+
+    .loadingPanel {
+
+      position: absolute;
+      top: 0;
+      background-color: rgba(0, 0, 0, 0.2);
+      height: 100%;
+      width: 100%;
+    }
+    .loadingPanelImage {
+
+       margin-left: 50%;
+       margin-top: 5%;
+    }
+    .records th {
+
+      cursor: pointer;
+    }
+    .records th.headerSortUp {
+        background-image: url(/img/colTitle_uparrow.gif) !important;
+        background-repeat: no-repeat !important;
+        background-position: right center !important;
+    }
+    .records th.headerSortDown {
+       // background-image: url(/img/colTitle_downarrow.gif) !important;
+        background-repeat: no-repeat !important;
+        background-position: right center !important;
+    }
+    .records .dataCell {
+      white-space: nowrap;
+    }
+<!-- for action spinner -->
+    #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        
+        
+        
+        /**********new style*******************/
+        
+        /*-------------------------------*/
+                .test {
+                position: relative;
+                border-right: 1px solid #ccc;
+                padding-top: 37px;
+                background: #f2f3f3;
+                overflow: hidden;
+                width:100%;
+                }
+                .positioned {
+                position: absolute;
+                top:100px;
+                left:100px;
+                width:100%;
+                box-shadow: 0 0 15px #333;
+                }
+                .container-new {
+                overflow-y: auto;
+                max-height: 300px;
+                }
+
+                .tablesorter tr{
+                background:#fff !important;
+                }
+                .tablesorter tr:hover{
+                background:#e6f4ff !important;
+                }
+
+                .tablesorter td:hover{
+
+                }
+                .container-new table {
+                border-spacing: 0;
+                width:100%;
+                }
+                .container-new td + td {
+                border-bottom:1px solid #ddd;
+                }
+                .container-new td, th {
+                border-bottom:1px solid #eee;
+                color: #000;
+                padding: 10px 25px;
+                }
+                .container-new th {
+                height: 0;
+                line-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                color: transparent;
+                border: solid 1px #ccc;
+                white-space: nowrap;
+                }
+                .container-new th div{
+                position: absolute;
+                background: transparent;
+                color: #000;
+                padding: 12px 25px;
+                top: 0;
+                margin-left: -25px;
+                line-height: normal;
+                border: 1px solid #ddd;
+                width:100%
+                }
+                .container-new td:first-child { padding:2px;}
+                .container-new th:first-child div{
+                border: none;
+                }
+                /*-------------------------------*/
+                .test1 {
+                position: relative;
+                border-right: 1px solid #ccc;
+                padding-top: 37px;
+                background: #f2f3f3;
+                overflow: hidden;
+                width:100%;
+                }
+                .positioned {
+                position: absolute;
+                top:100px;
+                left:100px;
+                width:100%;
+                box-shadow: 0 0 15px #333;
+                }
+                .container-new1 {
+                overflow-y: auto;
+                max-height: 145px;
+                }
+
+                .tablesorter tr{
+                background:#fff !important;
+                }
+                .tablesorter tr:hover{
+                background:#e6f4ff !important;
+                }
+
+                .tablesorter td:hover{
+
+                }
+                .container-new1 table {
+                border-spacing: 0;
+                width:100%;
+                }
+                .container-new1 td + td {
+                border-bottom:1px solid #ddd;
+                }
+                .container-new1 td, th {
+                border-bottom:1px solid #eee;
+                color: #000;
+                padding: 10px 25px;
+                }
+                .container-new1 th {
+                height: 0;
+                line-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                color: transparent;
+                border: solid 1px #ccc;
+                white-space: nowrap;
+                }
+                .container-new1 th div{
+                position: absolute;
+                background: transparent;
+                color: #000;
+                padding: 12px 25px;
+                top: 0;
+                margin-left: -25px;
+                line-height: normal;
+                border: 1px solid #ddd;
+                width:100%
+                }
+                .container-new1 td:first-child { padding:2px;}
+                .container-new1 th:first-child div{
+                border: none;
+                }
+
+
+                /*-------------------------------*/
+                .test2 {
+                position: relative;
+                border-right: 1px solid #ccc;
+                padding-top: 37px;
+                background: #f2f3f3;
+                overflow: hidden;
+                width:100%;
+                }
+                .positioned {
+                position: absolute;
+                top:100px;
+                left:100px;
+                width:100%;
+                box-shadow: 0 0 15px #333;
+                }
+                .container-new2 {
+                overflow-y: auto;
+                max-height: 145px;
+                }
+
+                .tablesorter tr{
+                background:#fff !important;
+                }
+                .tablesorter tr:hover{
+                background:#e6f4ff !important;
+                }
+
+                .tablesorter td:hover{
+
+                }
+                .container-new2 table {
+                border-spacing: 0;
+                width:100%;
+                }
+                .container-new2 td + td {
+                border-bottom:1px solid #ddd;
+                }
+                .container-new2 td, th {
+                border-bottom:1px solid #eee;
+                color: #000;
+                padding: 10px 25px;
+                }
+                .container-new2 th {
+                height: 0;
+                line-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                color: transparent;
+                border: solid 1px #ccc;
+                white-space: nowrap;
+                }
+                .container-new2 th div{
+                position: absolute;
+                background: transparent;
+                color: #000;
+                padding: 12px 25px;
+                top: 0;
+                margin-left: -25px;
+                line-height: normal;
+                border: 1px solid #ddd;
+                width:100%
+                }
+                .container-new2 td:first-child { padding:2px;}
+                .container-new2 th:first-child div{
+                border: none;
+                }
+                
+                /********new style**********/
+        
+  </style>
+  
+ <apex:pageBlock >
+    <p id="postbottom" />
+  <apex:tabPanel switchType="client">
+    <apex:tab id="submissiontab" label="Submissions" rendered="{!$ObjectType.Submission__c.accessible}"> <c:MCASubmissionsTabComponent /> </apex:tab>
+    <apex:tab id="offertab" label="Offers" rendered="{!$ObjectType.Offer__c.accessible}" > <c:MCAOffersTabComponent /> </apex:tab>
+   <apex:tab label="Stips" id="stipstab" rendered="{!$ObjectType.Stips__c.accessible}"> <c:MCAStipsTabComponent /> </apex:tab>
+    <apex:tab label="Open Balances" id="loanBaltab" rendered="{!$ObjectType.Loan_Balance__c.accessible}"> <c:MCALoanBalanceTabComponent /> </apex:tab>
+    <apex:tab label="Sales History" id="salesHistorytab" rendered="{!OR($ObjectType.Bank_Account__c.accessible,$ObjectType.Credit_Card__c.accessible)}"> 
+         <c:MCASalesHistoryTabComponent /> </apex:tab>
+    <apex:tab label="Commissions" id="commissiontab" rendered="{!OR($ObjectType.Receivable__c.accessible,$ObjectType.Payable__c.accessible)}"> <c:MCACommissionsTabComponent /> </apex:tab>
+    <apex:tab label="Syndications" id="syndicationtab" rendered="{!$ObjectType.Syndication__c.accessible}"> <c:MCASyndicationTabComponent /> </apex:tab>
+    <apex:tab label="Contact Roles" id="contactRoletab" > <c:MCAContactRolesTabComponent /> </apex:tab>
+    <apex:tab id="tasktab" label="Tasks" > <c:MCATasksTabComponent /> </apex:tab>
+    <apex:tab id="attachmenttab" label="Attachments"> <c:MCAAttachmentTabComponent /> </apex:tab>
+    <apex:tab id="submissiontabtest" label="SubmissionNew"> <c:SubmissionNew /> </apex:tab>
+   </apex:tabPanel>
+  <apex:actionStatus id="loadingPanel" layout="block">
+        <apex:facet name="start">
+            <div id="assign-action-spinner-main">
+                <div id="assign-action-spinner-content">
+                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+ </apex:pageBlock>
+</apex:page>

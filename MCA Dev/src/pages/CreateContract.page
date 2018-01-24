@@ -1,0 +1,1401 @@
+<apex:page Controller="CreateContractController" action="{!populateData}"
+        title="Deal Entry Wizard" sidebar="false" showHeader="false">
+
+    <apex:stylesheet value="{!URLFOR($Resource.BankAssets_Resources, 'css/master.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS213, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+    <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" />
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+    <style>
+        [title~=dealEntryWizard] body, [title~=dealEntryWizard] .noProgramStyle,
+        [title~=dealEntryWizard] h3, .popupBackground, [title~=dealEntryWizard] .attachmentSection,
+        [title~=dealEntryWizard] h2, [title~=dealEntryWizard] #droplabel,
+        [title~=dealEntryWizard] .dataCell span  {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=dealEntryWizard] .fundApp table,  th, td {
+            line-height: 1.6em !important;
+        }
+
+        [title~=dealEntryWizard] .apexp [title~=dealEntryWizard] .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin-top: -3px!important;
+        }
+
+        [title~=dealEntryWizard] th label {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=dealEntryWizard] .btn{
+            font-size: 12px !important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none !important;
+            color: #fff !important;
+            transition: color 50ms linear, background-color 50ms linear;
+            background: #0070d2 !important;
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+            vertical-align: middle !important;
+            padding: 0px 10px !important;
+            font-weight: 500 !important;
+            border-radius: 0.25rem !important;
+            margin: 0 4px !important;
+            border-color: #d8dde6 !important;
+        }
+
+        [title~=dealEntryWizard] input[type="email"],
+        [title~=dealEntryWizard] input[type="number"],
+        [title~=dealEntryWizard] input[type="password"],
+        [title~=dealEntryWizard] input[type="tel"],
+        [title~=dealEntryWizard] input[type="url"],
+        [title~=dealEntryWizard] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=dealEntryWizard] select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=dealEntryWizard] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=dealEntryWizard] input[type="email"]:focus,
+        [title~=dealEntryWizard] input[type="number"]:focus,
+        [title~=dealEntryWizard] input[type="password"]:focus,
+        [title~=dealEntryWizard] input[type="tel"]:focus,
+        [title~=dealEntryWizard] input[type="url"]:focus,
+        [title~=dealEntryWizard] input[type="text"]:focus,
+        [title~=dealEntryWizard] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=dealEntryWizard] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 80%;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+            height: 30px;
+        }
+
+        [title~=dealEntryWizard] .bPageBlock {
+            background:#f4f6f9!important;
+            /*padding:5px!important;*/
+            border-radius: .25rem!important;
+            border-top:1px solid #eaeaea!important;
+        }
+
+        [title~=dealEntryWizard] .fundApp .headerCss {
+            padding: 5px!important;
+            font-size: 13px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 10px!important;
+        }
+
+        [title~=dealEntryWizard] .bPageBlock{
+            background : #fff!important;
+        }
+        [title~=dealEntryWizard] .btnContainerTable {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        [title~=dealEntryWizard] .headerRow div {
+            color: #54698d!important;
+            text-transform: uppercase;
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            line-height: 1.25;
+            font-size: 12px;
+        }
+
+        [title~=dealEntryWizard] .headerRow th {
+            border-bottom: 1px solid #d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size:13px!important;
+            font-weight:600!important;
+        }
+        [title~=dealEntryWizard] body .pbBody table.list tr.headerRow th {
+            font-size: 11px!important;
+            font-weight: bold !important;
+            background: #fff!important;
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            border-top: 1px solid #d8dde6!important;
+            padding-top: 8px;
+            padding-bottom: 4px;
+            color: #54698d;
+            letter-spacing: 0px;
+        }
+
+        /*[title~=dealEntryWizard] a {
+            color: #54698d!important;
+        }*/
+
+        [title~=dealEntryWizard] .bPageBlock{
+            border:none!important;
+        }
+
+        .slds-spinner, .slds-spinner_container{
+            position: fixed !important;
+        }
+
+        [title~=dealEntryWizard] .mainTitle{
+            font-size: 17px!important;
+            font-weight: 600;
+            margin-bottom: -16px!important;
+        }
+
+        [title~=dealEntryWizard] .detailList .dataCol{
+            padding-top: 10px!important;
+            padding-bottom: 5px!important;
+        }
+
+        [title~=dealEntryWizard] td {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=dealEntryWizard] .detailLabel {
+            font-size: 12px!important;
+        }
+
+        [title~=dealEntryWizard] .pbBody table.list {
+            border:none!important;
+        }
+
+        [title~=dealEntryWizard] .pbBody table.list tr.dataRow td {
+            padding-top: 8px!important;
+            padding-bottom: 8px!important;
+            border-bottom:1px solid #d8dde6!important;
+        }
+
+        [title~=dealEntryWizard] .pbBody .pbSubheader {
+            background-color: #CFEEF8 !important;
+        }
+
+        [title~=dealEntryWizard] .bPageBlock .detailList tr th {
+            /*border-color: #d8dde6!important;*/
+        }
+
+        [title~=dealEntryWizard] .pbSubheader h3{
+            font-size: 15px!important;
+            font-weight: 500!important;
+        }
+
+        [title~=dealEntryWizard] .sfdc_richtext {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=dealEntryWizard] .dataRow:hover{
+            background:#F4F6F9!important;
+        }
+
+        .bPageBlock .detailList .dataCol {
+            width: 0%;
+        }
+
+        .sectionHeader {
+            padding-bottom: 10px;
+        }
+
+        .labelCol {
+            vertical-align: middle !important;
+        }
+
+        .cmb .slds-page-header__title {
+            font-size: 25px !important;
+        }
+
+        .cmb body, .cmb:not(html) {
+            font-size: 100% !important;
+        }
+
+        #fundingoLogo {
+            height: 20px !important;
+        }
+
+        #headerValue {
+            padding-left: 3px;
+            display: initial;
+            height: 50px !important;
+            vertical-align: middle;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+
+        .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .memo-field {
+            /*min-height: 35px !important;*/
+            min-width: 80px !important;
+        }
+
+        body .bDetailBlock.bPageBlock .pbBody .labelCol,
+        body .bDetailBlock.bPageBlock .pbBody .dataCol,
+        body .bDetailBlock.bPageBlock .pbBody .data2Col,
+        body .bPageBlock.bEditBlock .pbBody .labelCol,
+        body .bPageBlock.bEditBlock .pbBody .dataCol,
+        body .bPageBlock.bEditBlock .pbBody .data2Col{
+            padding: 11px;
+            border: none !important;
+        }
+        .cmb h1, .cmb h2, .cmb h3, .cmb h4, .cmb h5, .cmb h6 {
+            display: inline;
+        }
+
+        .cmb audio, .cmb canvas, .cmb iframe, .cmb img, .cmb svg, .cmb video {
+            vertical-align: baseline;
+        }
+
+        .previewTableFooter tr:last-child {
+            border-top: #d8dde6 1px solid !important;
+        }
+
+        .previewTableFooter  tfoot tr td{
+            font-weight : bold; 
+        }
+
+        .dealInfoPreview {
+            margin-left: 8px;
+        }
+        .tablist {
+             padding-top: 20px;
+            margin-left: 120px;
+        }
+    </style>
+    <div id="container">
+        <!-- Page header -->
+        <div class="cmb">
+            <div class="slds-page-header">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <div class="slds-media slds-no-space slds-grow">
+                            <div class="slds-media__body">
+                                <p class="slds-text-title--caps slds-line-height--reset"></p>
+                                <h1 class="slds-page-header__title slds-m-right--small slds-align-middle slds-truncate"
+                                    title="Deal Entry Wizard">
+                                    <img src="{!$Resource.FundingoLogo}" id="fundingoLogo"/>
+                                    <div id="headerValue">
+                                        Deal Entry Wizard
+                                    </div>
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                    <apex:outputPanel rendered="{!!isInConsole}">
+                    <div class="slds-col slds-no-flex slds-grid slds-align-middle">
+                        <button class="slds-button slds-button--neutral" onclick="navigateToOpp();">
+                            &lt;&lt; Back to Opportunity
+                        </button>
+                    </div>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </div>
+
+        <apex:form id="form" title="dealEntryWizard">
+         <script type = "text/javascript">
+             var isInConsoleFlag = '{!isInConsole}';
+             window.onload = function() {
+                 if({!wizardType == 'Deal'} ) {
+                     changeWizard('Deal');
+                 }
+
+                 $('#container').click(function(event) {
+                     if(event.target.className == 'referenceLink' ||
+                         (event.target.id.indexOf('lookup') == 0 && $(event.target).is('a'))) {
+                         event.preventDefault();
+                         if(isInConsoleFlag == 'true') {
+                             var urlToRedirect = event.target.href;
+                             if(urlToRedirect.indexOf('srcUp') > -1) {
+                                 urlToRedirect = getUrlFromJavascriptUri(urlToRedirect);
+                             }
+                             openConsoleNewPrimaryTab(urlToRedirect);
+                         } else {
+                             window.open(event.target.href, '_blank');
+                         }
+                     }
+                 });
+             };
+
+             /* This function gets the URL from srcUp statement in console */
+             function getUrlFromJavascriptUri(pUrlToRedirect) {
+                 pUrlToRedirect = decodeURIComponent(pUrlToRedirect);
+                 var urlToRedirect = pUrlToRedirect.split('(\'')[1];
+                 urlToRedirect = urlToRedirect.split('\'')[0];
+                 return urlToRedirect;
+             }
+
+             function openConsoleNewPrimaryTab(url, tabLabel) {
+                 sforce.console.openPrimaryTab(null, url, true, tabLabel, function (r) {});
+             }
+     </script>
+
+     <script type="text/javascript">
+         if({!wizardType == 'Offer'}) {
+             document.getElementById('Offer').className = 'selecttabctive';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+             document.getElementById('Syndication').className = 'selecttab';
+             document.getElementById('Preview').className = 'lasttab';
+         }
+
+         if({!wizardType == 'Deal'}) {
+             document.getElementById('Deal').className = 'selecttabctive';
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+             document.getElementById('Syndication').className = 'selecttab';
+             document.getElementById('Preview').className = 'lasttab';
+         }
+         else if({!wizardType == 'Payable'} ) {
+             document.getElementById('Payable').className = 'selecttabctive';
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Syndication').className = 'selecttab';
+             document.getElementById('Preview').className = 'lasttab';
+         }
+         else if({!wizardType == 'Receivable'}) {
+             document.getElementById('Receivable').className = 'selecttabctive';
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+             document.getElementById('Syndication').className = 'selecttab';
+             document.getElementById('Preview').className = 'lasttab';
+         }
+         else if({!wizardType == 'Syndication'} && '{!$Label.DEWSyndicationVisible}'.toLowerCase() == 'true') {
+             document.getElementById('Syndication').className = 'selecttabctive';
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+             document.getElementById('Preview').className = 'lasttab';
+         }
+         else if({!wizardType == 'Preview'}) {
+             document.getElementById('Preview').className = 'selecttabctive';
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+             document.getElementById('Syndication').className = 'selecttab';
+         }
+
+         var rowVal = -1;
+         function setRowValue(dataVal) {
+             rowVal = dataVal;
+         }
+
+         function setFocusToTextBox(classValue) {
+             if(rowVal != -1) {
+                 $("."+classValue+rowVal ).focus();
+             }
+         }
+
+         function changeTabs(objId) {
+             document.getElementById('Offer').className = 'selecttab';
+             document.getElementById('Deal').className = 'selecttab';
+             document.getElementById('Receivable').className = 'selecttab';
+             document.getElementById('Payable').className = 'selecttab';
+
+             if('{!$Label.DEWSyndicationVisible}'.toLowerCase() == 'true') {
+                 document.getElementById('Syndication').className = 'selecttab';
+             }
+             document.getElementById('Preview').className = 'lasttab';
+
+             if (objId == 'Offer') {
+                 document.getElementById('Offer').className = 'selecttabctive';
+             }
+
+             if({!isOfferSelected}) {
+                 if (objId == 'Deal') {
+                     document.getElementById('Deal').className = 'selecttabctive';
+                 }
+                 if (objId == 'Receivable') {
+                     document.getElementById('Receivable').className = 'selecttabctive';
+                 }
+                 if (objId == 'Payable') {
+                     document.getElementById('Payable').className = 'selecttabctive';
+                 }
+                 if (objId == 'Syndication') {
+                     document.getElementById('Syndication').className = 'selecttabctive';
+                 }
+                 if (objId == 'Preview') {
+                     document.getElementById('Preview').className = 'lasttabactive';
+                 }
+             } else if(objId != 'Offer') {
+                 alert('{!$Label.CreateContract_CannotSkipOffer}')
+                 objId = 'Offer';
+             }
+
+             setTimeout(function() {
+                     changeWizard(objId);
+             }, 500);
+         }
+
+         function onChangeDealInfoField(event) {
+             calculateEstimatedRenewalDate(event);
+         }
+
+         function calculateEstimatedRenewalDate(event) {
+             var element= event.target;
+             var fieldapiname = $(element).data("dealinfofield");
+             var deallookup = $(element).data("delinfolookup")
+             if( fieldapiname.endsWith('Term_Months__c')
+               || fieldapiname.endsWith('Date_Funded__c') || fieldapiname.endsWith('Renewal_Eligibility_Percent__c')) {
+                 onChangeDealInfoVals();
+             } else if( fieldapiname.endsWith('Bank_Program__c') ) {
+                 onChangeBankProg();
+             }
+         }
+     </script>
+
+    <!--outer most of Deal Entry Wizard Start-->
+        <apex:outputPanel id="OuterSecWizard" rendered="{!$ObjectType.Offer__c.accessible}">
+
+            <apex:actionStatus id="loadingStatus" layout="block">
+             <apex:facet name="start">
+                 <div class="cmb">
+                     <div class="slds-spinner_container">
+                         <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                             <span class="slds-assistive-text">Loading</span>
+                             <div class="slds-spinner__dot-a"></div>
+                             <div class="slds-spinner__dot-b"></div>
+                         </div>
+                     </div>
+                 </div>
+             </apex:facet>
+         </apex:actionStatus>
+
+         <div class="tablist" id="divId">
+             <ul>
+                 <li style="display: block" id="Offer" class="selecttabctive" onclick="changeTabs(this.id);">
+                     <a href="javascript:void(0)">
+                         Offers
+                     </a>
+                 </li>
+                 <li style="display: block" id="Deal" class="selecttab" onclick="changeTabs(this.id);">
+                     <a href="javascript:void(0)">
+                         Deal Information
+                     </a>
+                 </li>
+                 <li style="display: block" id="Receivable" class="selecttab" onclick="changeTabs(this.id);">
+                     <a href="javascript:void(0)">
+                         Receivables
+                     </a>
+                 </li>
+                 <li style="display: block" id="Payable" class="selecttab" onclick="changeTabs(this.id);">
+                     <a href="javascript:void(0)">
+                         Payables
+                     </a>
+                 </li>
+
+                 <!-- Start FO-1310 -->
+                 <apex:outputpanel rendered="{!IF(LOWER($Label.DEWSyndicationVisible) == 'true',true,false)}">
+                     <li style="display: block" id="Syndication" class="selecttab" onclick="changeTabs(this.id);">
+                         <a href="javascript:void(0)">
+                             Syndications
+                         </a>
+                     </li>
+                 </apex:outputpanel>
+
+                 <!-- End FO-1310 -->
+                 <li style="display: block" id="Preview" class="lasttab" onclick="changeTabs(this.id);">
+                     <a href="javascript:void(0)">
+                         Preview
+                     </a>
+                 </li>
+             </ul>
+         </div>
+         <br/>
+         <apex:actionfunction name="changeWizard" action="{!changeWizard}"
+                             reRender="form,pgMsgId" status="loadingStatus">
+             <apex:param name="wizardType" assignto="{!wizardType}" id="wizardType" value="{!wizardType}" />
+         </apex:actionfunction>
+
+         <apex:actionfunction name="onChangeBankProg" action="{!onChangeBankProg}"
+                             reRender="form,pgMsgId" status="loadingStatus" />
+         <apex:actionfunction name="onChangeDealInfoVals" action="{!onChangeDealInfoVals}"
+                             reRender="form,pgMsgId" status="loadingStatus" />
+
+         <apex:outputPanel rendered="{!WizardType == 'Offer'}" >
+             <apex:pageBlock mode="maindetail">
+                 <apex:pageBlockSection columns="2">
+                     <apex:pageBlockSectionItem >
+                         <apex:outputPanel >
+                             <b>
+                                 <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.Name.Label}"
+                                                   style="padding-left: 165px;"
+                                                   styleClass="labelCol"/>
+                             </b>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                             <a href="{!baseUrlOrg}/{!objOpp.Id}" target="_blank" class="referenceLink">
+                                 {!objOpp.Name}
+                             </a>
+                         </apex:outputPanel>
+                     </apex:pageBlockSectionItem>
+                 </apex:pageBlockSection>
+             </apex:pageBlock>
+         </apex:outputPanel>
+
+         <apex:outputPanel rendered="{!NOT(WizardType == 'Offer')}" title="dealinfosection">
+             <apex:pageBlock mode="maindetail">
+                 <apex:pageBlockSection columns="2">
+                     <apex:pageBlockSectionItem >
+                         <apex:outputPanel >
+                             <b>
+                                 <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.Name.Label}"
+                                                   style="padding-left: 188px;padding-right: inherit"
+                                                   styleClass="labelCol"/>
+                             </b>
+                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                             <a href="{!baseUrlOrg}/{!objOpp.Id}" target="_blank" class="referenceLink">
+                                 {!objOpp.Name}
+                             </a>
+                         </apex:outputPanel>
+                     </apex:pageBlockSectionItem>
+                     <apex:repeat value="{!$ObjectType.Opportunity.FieldSets.DEWDealInfoSummary}"
+                                  var="fieldSetIterator">
+                         <apex:pageBlockSectionItem >
+                             <apex:outputLabel value="{!fieldSetIterator.label}"/>
+                             <apex:outPutField value="{!objOpp[fieldSetIterator]}"/>
+                         </apex:pageBlockSectionItem>
+                     </apex:repeat>
+                 </apex:pageBlockSection>
+             </apex:pageBlock>
+         </apex:outputPanel>
+
+            <apex:pageMessages id="pgMsgId" />
+
+            <apex:outputPanel id="screens">
+
+            <!-- Start of Offer Screen -->
+             <apex:pageBlock rendered="{!wizardType == 'Offer' && $ObjectType.Offer__c.accessible}"
+                             id="offerScreen">
+                 <div class="sectionHeader">
+                     <apex:outputText style="font-weight:600; font-size: 130%;" value="Select Offer"/>
+
+                <apex:commandButton action="{!addRowOffer}"
+                                     value="Add Row"
+                                     style="left:430px;position:relative;"
+                                     rerender="offerScreen,pgMsgId"
+                                     status="loadingStatus"
+                                     immediate="true"
+                                     styleclass="dealEntryWizardBtns"
+                                     disabled="{!NOT($ObjectType.Offer__c.createable)}" />
+                <apex:commandButton action="{!quickSaveOffer}"
+                                     value="Quick Save"
+                                     style="left:435px;position:relative;"
+                                     rerender="offerScreen,pgMsgId"
+                                     status="loadingStatus"
+                                     styleclass="dealEntryWizardBtns"
+                                     disabled="{! NOT(($ObjectType.offer__c.updateable) 
+                                        || ($ObjectType.offer__c.createable))}"/>
+                 <apex:commandButton action="{!cancel}"
+                                     value="Cancel"
+                                     styleclass="dealEntryWizardBtns"
+                                     style="left:440px;position:relative;"
+                                     immediate="true"/>
+             </div>
+             <apex:variable var="rowNum" value="{!0}"/>
+             <div class="cmb">
+                 <div class="slds-scrollable--x">
+                     <apex:dataTable styleclass="slds-table slds-table--bordered slds-table--striped"
+                        value="{!offerWrapperList}" var="wrapper" >
+                         <apex:column >
+                             <apex:actionsupport action="{!selectedOffer}"
+                                                 event="onclick"
+                                                 rerender="form,pgMsgId"
+                                                 status="loadingStatus">
+                                 <input type="radio" name="SelectedOffer" value="{!wrapper.isSelected}" />
+                                 <apex:param name="offerId" assignTo="{!offerId}" value="{!wrapper.offer.Id}" />
+                                 <apex:param name="offerIndex" assignTo="{!offerIndex}" value="{!wrapper.index}" />
+                             </apex:actionsupport>
+                         </apex:column>
+                         <apex:column width="60px" headerValue="Action">
+                             <apex:variable var="rowNum" value="{!rowNum+1}"  />
+                             <apex:outputPanel rendered="{!NOT(wrapper.offer['Id'] == null)}">
+                                 <a href="{!baseUrlOrg}/{!wrapper.offer['Id']}" target="_blank" class="referenceLink">
+                                     <apex:outputText value="View"/>
+                                 </a>
+                                 <apex:outputText value=" "/>|<apex:outputText value=" "/>
+                             </apex:outputPanel>
+                             <apex:commandLink value="Del" 
+                                               action="{!deleteOffer}"
+                                               rerender="form"
+                                               status="loadingStatus"
+                                               immediate="true"
+                                               rendered="{!$ObjectType.Offer__c.deletable}">
+                                 <apex:param name="delname" value="{!wrapper.offer['Id']}"/>
+                                 <apex:param value="{!rowNum}" name="index"/>
+                             </apex:commandLink>
+                         </apex:column>
+                         <apex:column headerValue="Submission" >
+                             <apex:selectList value="{!wrapper.offer['Submission__c']}"
+                                              size="1"
+                                              id="values"
+                                              disabled="{!IF(wrapper.offer['Id'] == null,
+                                                         false,
+                                                         NOT($ObjectType.Offer__c.updateable))}">
+                                 <apex:selectOptions value="{!submissionNames}"/>
+                             </apex:selectList>
+                         </apex:column>
+                         <apex:column headerValue="Deal Type">
+                             <apex:inputField value="{!wrapper.offer['Deal_Type__c']}" />
+                         </apex:column>
+                         <apex:column headerValue="Funding Amt">
+                             <apex:inputField value="{!wrapper.offer['Amount__c']}" 
+                                              style="width: 90px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Payoff Amt">
+                             <apex:inputField value="{!wrapper.offer['Payoff_Amount__c']}"
+                                              style="width: 90px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Net Funded Amt">
+                             <apex:inputField value="{!wrapper.offer['Net_Funded_Amount__c']}"
+                                              style="width: 90px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Payback Amt">
+                             <apex:inputField value="{!wrapper.offer['Payback_Amt__c']}"
+                                              style="width: 90px;" />
+                         </apex:column>
+                         <apex:column headerValue="Factor Rate">
+                             <apex:inputField value="{!wrapper.offer['Rate__c']}"
+                                              style="width: 75px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Term (Months)">
+                             <apex:inputField value="{!wrapper.offer['Term_Months__c']}"
+                                              style="width: 70px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Holdback%">
+                             <apex:inputField value="{!wrapper.offer['Holdback__c']}"
+                                              style="width: 90px;"/>
+                         </apex:column>
+                         <apex:column headerValue="Payment Amt">
+                             <apex:inputField value="{!wrapper.offer['Payment_Amt__c']}"
+                                              style="width: 90px;"/>
+                         </apex:column>
+                         <apex:column headerValue="PMT Schedule">
+                             <apex:inputField value="{!wrapper.offer['PMT_Schedule__c']}" />
+                         </apex:column>
+                         <apex:column headerValue="Orig. Fee">
+                             <apex:inputField value="{!wrapper.offer['Origination_fee__c']}"
+                                              style="width: 90px;" />
+                         </apex:column>
+                         <apex:column headerValue="Buy Rate">
+                             <apex:inputField value="{!wrapper.offer['Buy_Rate__c']}"
+                                              style="width: 60px;" />
+                         </apex:column>
+                         <apex:column headerValue="Status">
+                             <apex:inputField value="{!wrapper.offer['Status__c']}"/>
+                         </apex:column>
+                     </apex:dataTable>
+                 </div>
+             </div>
+         </apex:pageBlock>
+        <!--End of Offer Screen -->
+
+        <!--Start of Deal Screen -->
+         <apex:pageblock rendered="{!wizardType == 'Deal'}" id="dealScreen">
+             <div class="sectionHeader">
+                 <apex:outputText style="font-weight:600; font-size: 130%;"
+                                  value="Deal Information"> </apex:outputText>
+                 <apex:commandButton action="{!previous}" 
+                                     value="Previous" 
+                                     style="left:430px;position:relative;"
+                                     rerender="form,pgMsgId"
+                                     status="loadingStatus"
+                                     styleclass="dealEntryWizardBtns" />
+                 <apex:commandButton action="{!save}"
+                                     value="Quick Save"
+                                     style="left:435px;position:relative;"
+                                     rerender="form,pgMsgId" 
+                                     status="loadingStatus" 
+                                     styleclass="dealEntryWizardBtns" />
+                     <apex:commandButton action="{!next}"
+                                         value="Next" 
+                                         style="left:440px;position:relative;"
+                                         rerender="form" 
+                                         status="loadingStatus"
+                                         styleclass="dealEntryWizardBtns"/>
+                 </div>
+
+                 <apex:pageBlockSection >
+                     <apex:repeat value="{!dynamicOppFieldSetList}" var="oppFieldPath1" >
+                         <apex:pageBlockSectionItem >
+                             <apex:outputLabel value="{!mOppFieldWrapper[oppFieldPath1.fieldPath].fieldlabel}"/>
+                             <apex:pageBlockSectionItem >
+                                 <apex:inputField value="{!objOpp[oppFieldPath1.fieldPath]}"
+                                                  rendered="{!NOT(mOppFieldWrapper[oppFieldPath1.fieldPath].isReadonly)}"
+                                                  onchange="onChangeDealInfoField(event);"
+                                                  html-data-delInfoLookup="{!mOppFieldWrapper[oppFieldPath1.fieldPath].isLookup}"
+                                                  html-data-dealinfofield="{!mOppFieldWrapper[oppFieldPath1.fieldPath].fieldPathStr}" />
+                                 <apex:outputText value="" rendered="{!(mOppFieldWrapper[oppFieldPath1.fieldPath].isReadonly)}"/>
+                             </apex:pageBlockSectionItem>
+                         </apex:pageBlockSectionItem>
+                     </apex:repeat>
+                 </apex:pageBlockSection>
+             </apex:pageblock>
+            <!-- End of Deal Screen -->
+
+            <!--    Start of Receivable Screen -->
+             <apex:pageBlock id="receivableScreen" rendered="{!wizardType == 'Receivable'}">
+                 <div class="sectionHeader">
+                     <apex:outputText style="font-weight:600; font-size: 130%;"
+                                      value="Receivables"> </apex:outputText>
+                 <apex:commandButton action="{!previous}" 
+                                     value="Previous"
+                                     style="left:430px;position:relative;"
+                                     styleclass="dealEntryWizardBtns"
+                                     rerender="form,pgMsgId"
+                                     status="loadingStatus" />
+                 <apex:commandButton value="Add Row" 
+                                     action="{!addRowReceivable}"
+                                     style="left:435px;position:relative;"
+                                     rerender="receivableTable,pgMsgId"
+                                     status="loadingStatus"
+                                     disabled="{!NOT($ObjectType.Receivable__c.createable)}"
+                                     styleclass="dealEntryWizardBtns" />
+
+                 <apex:commandButton value="Quick Save" 
+                                     action="{!quickSaveReceivable}"
+                                     style="left:440px;position:relative;"
+                                     rerender="receivableTable,pgMsgId"
+                                     status="loadingStatus"
+                                     disabled="{! NOT(($ObjectType.Receivable__c.updateable)
+                                               || ($ObjectType.Receivable__c.createable))}"
+                                     styleclass="dealEntryWizardBtns" />
+                 <apex:commandButton action="{!next}"
+                                     value="Next"
+                                     style="left:445px;position:relative;"
+                                     rerender="form,pgMsgId"
+                                     status="loadingStatus"
+                                     styleclass="dealEntryWizardBtns" />
+             </div>
+             <div class="cmb">
+                 <div class="slds-scrollable--x" >
+                     <apex:pageBlockSection columns="1" 
+                        id="receivableTable"
+                        rendered="{!wizardType == 'Receivable' && 
+                            $ObjectType.Receivable__c.accessible}">
+                        <apex:dataTable styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter"
+                            id="receivableTable1" 
+                            value="{!receivableWrapperList}"
+                            var="receivablewrp"
+                            width="100%">
+                             <apex:column headerValue="Action">
+                                <apex:commandLink value="Del" 
+                                                  action="{!deletReceivables}" 
+                                                  rerender="form"
+                                                  status="loadingStatus"
+                                                  rendered="{!AND($ObjectType.Receivable__c.deletable,
+                                                         receivablewrp.isReadOnVF)}">
+                                     <apex:param name="index" value="{!receivablewrp.index}" />
+                                 </apex:commandLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                               <!--apex:variable var="rowNum" value="{!rowNum+1}"/-->
+                             </apex:column>
+
+                            <apex:column headerValue="#">
+                                <!--{!rowNum}-->
+                                {!receivablewrp.index+1}
+                             </apex:column>
+
+                             <apex:column headerValue="Type">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Type__c']}"
+                                     rendered="{!receivablewrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Type__c']}"
+                                     rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Percentage__c.Label}">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Percentage__c']}"
+                                                  onfocus="setRowValue({!rowNum})"
+                                                  rendered="{!receivablewrp.isReadOnVF}"
+                                                  style="width: 90px !important;">
+                                     <apex:actionSupport event="onchange"
+                                                         action="{!onChangeRecPercentage}" 
+                                                         rerender="receivableTable,pgMsgId"
+                                                         status="loadingStatus" 
+                                                         onComplete="setFocusToTextBox('percentageof');">
+                                         <apex:param name="recId" assignTo="{!recId}" value="{!receivable.Id}" />
+                                     </apex:actionSupport>
+                                 </apex:inputField>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Percentage__c']}"
+                                     rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Percentage of">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Payback_Funded__c']}"
+                                                  styleClass="percentageof{!rowNum}"
+                                                  onfocus="setRowValue({!rowNum})" 
+                                                  rendered="{!receivablewrp.isReadOnVF}">
+                                     <apex:actionSupport event="onchange" 
+                                                         action="{!onChangeRecPaybackFunded}"
+                                                         rerender="receivableTable,pgMsgId" 
+                                                         status="loadingStatus"
+                                                         onComplete="setFocusToTextBox('amount');">
+                                         <apex:param name="recId" 
+                                                     assignTo="{!recId}"
+                                                     value="{!receivable.Id}" />
+                                     </apex:actionSupport>
+                                 </apex:inputField>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Payback_Funded__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Amount">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Amount__c']}"
+                                                  styleClass="amount{!rowNum}" 
+                                                  rendered="{!receivablewrp.isReadOnVF}"
+                                                  style="width: 100px !important;"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Amount__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!receivableAmtTotal}"/></apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+
+                             <apex:column headerValue="Due From Account">
+                                 <apex:inputField styleClass="reference-field" 
+                                                  value="{!receivablewrp.objReceivable['Due_From_Account__c']}"
+                                                  rendered="{!receivablewrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Due_From_Account__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Due Date">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Due_Date__c']}"
+                                                  rendered="{!receivablewrp.isReadOnVF}" 
+                                                  style="width: 90px;"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Due_Date__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Status">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Status__c']}"
+                                                  rendered="{!receivablewrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Status__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Memo">
+                                 <apex:inputField value="{!receivablewrp.objReceivable['Memo__c']}"
+                                                  rendered="{!receivablewrp.isReadOnVF}"
+                                                  styleClass="memo-field"/>
+                                 <apex:outputField value="{!receivablewrp.objReceivable['Memo__c']}"
+                                                   rendered="{!NOT(receivablewrp.isReadOnVF)}"/>
+                             </apex:column>
+                         </apex:dataTable>
+                     </apex:pageBlockSection>
+                 </div>
+             </div>
+         </apex:pageBlock>
+        <!--    End of Receivable Screen -->
+
+        <!--     Start of Payable Screen -->
+            <apex:variable value="{!0.00}" var="total1" />
+         <apex:pageBlock id="payableScreen" rendered="{!wizardType == 'Payable'}">
+             <div class="sectionHeader">
+                 <apex:outputText style="font-weight:600; font-size: 130%;" 
+                                  value="Payables"></apex:outputText>
+                 <apex:commandButton action="{!previous}" 
+                                     value="Previous"
+                                     style="left:430px;position:relative;" 
+                                     styleclass="dealEntryWizardBtns"
+                                     rerender="form,pgMsgId" 
+                                     status="loadingStatus" />
+                 <apex:commandButton value="Add Row" 
+                                     action="{!addRowPayable}"
+                                     style="left:435px;position:relative;"
+                                     rerender="payableScreen,pgMsgId"
+                                     status="loadingStatus" 
+                                     styleclass="dealEntryWizardBtns"
+                                     disabled="{!NOT($ObjectType.Payable__c.createable)}"/>
+                 <apex:commandButton value="Quick Save" 
+                                     action="{!quickSavePayable}"
+                                     style="left:440px;position:relative;"
+                                     rerender="payableScreen,pgMsgId"
+                                     status="loadingStatus"
+                                     disabled="{! NOT(($ObjectType.Payable__c.updateable)
+                                         || ($ObjectType.Payable__c.createable))}"
+                                     styleclass="dealEntryWizardBtns" />
+                 <apex:commandButton action="{!next}" 
+                                     value="Next"
+                                     style="left:445px;position:relative;" 
+                                     styleclass="dealEntryWizardBtns"
+                                     rerender="form,pgMsgId" 
+                                     status="loadingStatus" />
+             </div>
+             <div class="cmb">
+                 <div class="slds-scrollable--x" >
+                     <apex:pageBlockSection columns="1" id="payableTable"
+                         rendered="{!wizardType == 'Payable' && $ObjectType.Payable__c.accessible}">
+
+                  <!--Wrapping Payables starts from here-->
+                   <!--apex:variable var="rowNum" value="{!0}"  /-->
+                         <apex:dataTable value="{!payableWrapperList}" var="payableWrpr"
+                              rendered="true" width="100%"
+                              styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter">
+                             <apex:column headerValue="Action">
+                                 <apex:commandLink value="Del" action="{!deletPayables}"
+                                     rerender="payableScreen,pgMsgId" status="loadingStatus"
+                                     rendered="{!AND($ObjectType.Payable__c.deletable, payableWrpr.isReadOnVF)}">
+                                      <apex:param name="index" value="{!payableWrpr.index}" > </apex:param>
+                                 </apex:commandLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue="#">
+                                {!payableWrpr.index+1}
+                             </apex:column>
+
+                             <apex:column headerValue="Type">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Type__c']}" 
+                                                  rendered="{!payableWrpr.isReadOnVF}" >
+                                 </apex:inputField>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Type__c']}" 
+                                                   rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Percentage__c.Label}">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Percentage__c']}"
+                                                  onfocus="setRowValue({!rowNum})" 
+                                                  rendered="{!payableWrpr.isReadOnVF}"
+                                                  style="width: 90px !important;">
+                                     <apex:actionSupport event="onchange" 
+                                                         action="{!onChangePayPercentage}"
+                                                         onComplete="setFocusToTextBox('percentageof');"
+                                                         rerender="payableTable,pgMsgId" 
+                                                         status="loadingStatus" >
+                                         <apex:param name="payId" 
+                                                     assignTo="{!payId}"
+                                                     value="{!payableWrpr.objPayable['Id']}" />
+                                     </apex:actionSupport>
+                                 </apex:inputField>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Percentage__c']}"
+                                                  rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="Percentage of">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Payback_Funded__c']}"
+                                     styleClass="percentageof{!rowNum}" onfocus="setRowValue({!rowNum})"
+                                     rendered="{!payableWrpr.isReadOnVF}" >
+                                     <apex:actionSupport event="onchange" action="{!onChangePayPaybackFunded}"
+                                         onComplete="setFocusToTextBox('amount');"
+                                         rerender="payableTable,pgMsgId" status="loadingStatus" >
+                                         <apex:param name="payId" assignTo="{!payId}"
+                                             value="{!payableWrpr.objPayable['Id']}" />
+                                     </apex:actionSupport>
+                                 </apex:inputField>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Payback_Funded__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="Amount">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Amount_Due__c']}"
+                                     styleClass="amount{!rowNum}" rendered="{!payableWrpr.isReadOnVF}"
+                                     style="width: 100px !important;"/>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Amount_Due__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!payableAmtTotal}"/></apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+
+                              <apex:column headerValue="Due to Account">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Account__c']}"
+                                     rendered="{!payableWrpr.isReadOnVF}"
+                                     styleClass="reference-field"/>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Account__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="Due Date">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Due_Date__c']}"
+                                     rendered="{!payableWrpr.isReadOnVF}" style="width: 90px !important;" />
+                                 <apex:outputField value="{!payableWrpr.objPayable['Due_Date__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="Status">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Status__c']}"
+                                     rendered="{!payableWrpr.isReadOnVF}"  />
+                                 <apex:outputField value="{!payableWrpr.objPayable['Status__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                             </apex:column>
+
+                             <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Receivable_Dependency__c.Label}">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Receivable_Dependency__c']}"
+                                     rendered="{!payableWrpr.isReadOnVF}"
+                                     styleClass="reference-field"/>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Receivable_Dependency__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                                 <apex:outputPanel style="display: none;">
+                                     <apex:inputfield value="{!payableWrpr.objPayable['Opportunity__c']}"/>
+                                 </apex:outputPanel>
+                             </apex:column>
+
+                             <apex:column headerValue="Memo">
+                                 <apex:inputField value="{!payableWrpr.objPayable['Memo__c']}"
+                                     rendered="{!payableWrpr.isReadOnVF}"
+                                     styleClass="memo-field"/>
+                                 <apex:outputField value="{!payableWrpr.objPayable['Memo__c']}"
+                                     rendered="{!NOT(payableWrpr.isReadOnVF)}"/>
+                            </apex:column>
+                         </apex:dataTable>
+                     <!--Wrapping Payables  ends from here-->
+                     </apex:pageBlockSection>
+                 </div>
+             </div>
+         </apex:pageBlock>
+        <!--    End of Payable Screen -->
+
+        <!-- Start of Syndication Screen -->
+         <apex:pageBlock id="syndicationScreen" rendered="{!wizardType == 'Syndication'}">
+             <div class="sectionHeader">
+                 <apex:outputText style="font-weight:600; font-size: 130%;" 
+                                  value="Syndication"> </apex:outputText>
+                 <apex:commandButton action="{!previous}" 
+                                     value="Previous" 
+                                     style="left:430px;position:relative;"
+                                     rerender="form,pgMsgId" 
+                                     status="loadingStatus"
+                                     styleclass="dealEntryWizardBtns"/>
+                 <apex:commandButton action="{!addRowSyndication}"
+                                     value="Add Row" 
+                                     style="left:435px;position:relative;"
+                                     rerender="syndicationScreen,pgMsgId" 
+                                     status="loadingStatus"
+                                     disabled="{!NOT($ObjectType.Syndication__c.createable)}"
+                                     styleclass="dealEntryWizardBtns" />
+                 <apex:commandButton action="{!quickSaveSyndication}" 
+                                     value="Quick Save"
+                                     style="left:440px;position:relative;"
+                                     rerender="syndicationScreen,pgMsgId"
+                                     status="loadingStatus" 
+                                     styleclass="dealEntryWizardBtns"
+                                     disabled="{!NOT(($ObjectType.Syndication__c.updateable)
+                                         || ($ObjectType.Syndication__c.createable))}"/>
+                 <apex:commandButton action="{!next}" 
+                                     value="Next" 
+                                     style="left:445px;position:relative;"
+                                     rerender="form,pgMsgId" 
+                                     status="loadingStatus"
+                                     styleclass="dealEntryWizardBtns" />
+             </div>
+             <div class="cmb">
+                 <div class="slds-scrollable--x" >
+                     <apex:pageBlockSection columns="1" 
+                                             id="syndTable"
+                                             rendered="{!wizardType == 'Syndication'
+                                                     && $ObjectType.Syndication__c.accessible}" >
+                         <apex:dataTable styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter"
+                            value="{!SyndicationWrapperList}"
+                            var="syndcationWrp" 
+                            width="100%">
+                             <apex:column headerValue="Action">
+                                 <apex:commandLink value="Del" 
+                                                   action="{!deletSyndications}"
+                                                   rerender="syndicationScreen" 
+                                                   status="loadingStatus"
+                                                   rendered="{!$ObjectType.Syndication__c.deletable}">
+                                     <apex:param name="index" value="{!syndcationWrp.index}" >
+                                     </apex:param>
+                                 </apex:commandLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue="#">
+                                 {!syndcationWrp.index+1}
+                             </apex:column>
+                             <apex:column headerValue=" Syndication Amount">
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Syndication_Amt__c']}"
+                                                 rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Syndication_Amt__c']}"
+                                                  rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!syndAmtTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+
+                             <apex:column headerValue="Syndication Fee %">
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Syndication_Percentage__c']}"
+                                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Syndication_Percentage__c']}"
+                                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Commission Fee $">
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Commission_Fee__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Commission_Fee__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!commissionFeeTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headervalue="{!$ObjectType.Syndication__c.Fields.Syndicated_By__c.Label}" >
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Syndicated_By__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Syndicated_By__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headervalue="{!$ObjectType.Syndication__c.Fields.Disbursment_Schedule__c.Label}" >
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Disbursment_Schedule__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Disbursment_Schedule__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headerValue="Profit $">
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Profit_Amount__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputtext value="{!syndcationWrp.objSyndication['Profit_Amount__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!profitTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headervalue="{!$ObjectType.Syndication__c.Fields.ROR_per__c.Label}" >
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['ROR_per__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}"/>
+                                 <apex:outputtext value="{!syndcationWrp.objSyndication['ROR_per__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                             </apex:column>
+                             <apex:column headervalue="{!$ObjectType.Syndication__c.Fields.Memo__c.Label}" >
+                                 <apex:inputField value="{!syndcationWrp.objSyndication['Memo__c']}"
+                                     rendered="{!syndcationWrp.isReadOnVF}" styleClass="memo-field"/>
+                                 <apex:outputField value="{!syndcationWrp.objSyndication['Memo__c']}"
+                                     rendered="{!NOT(syndcationWrp.isReadOnVF)}"/>
+                             </apex:column>
+                         </apex:dataTable>
+                     </apex:pageBlockSection>
+                 </div>
+             </div>
+         </apex:pageBlock>
+        <!-- End of Syndication Screen -->
+
+            <!-- Start of Preview Screen -->
+            <apex:pageBlock id="previewScreen" 
+                rendered="{!wizardType == 'Preview'}" mode="maindetail">
+                <!-- Start of Deal Info Preview -->
+             <apex:pageBlockSection title="Deal Information" columns="4" 
+                html-class="selecttabctive dealInfoPreview">
+                 <apex:repeat value="{!$ObjectType.Opportunity.FieldSets.DEWDealInfoDetail}"
+                     var="fieldSetIterator">
+                     <!--<apex:pageBlockSectionItem>
+                         <apex:outputLabel value="{!fieldSetIterator.label}" />
+                         <apex:outputfield id="fieldHolder" value="{!objOpp[fieldSetIterator]}"/>
+                     </apex:pageBlockSectionItem>-->
+                    <apex:outputPanel >
+                        <strong>
+                            <apex:outputLabel value="{!fieldSetIterator.Label}"/>
+                        </strong>
+                         <apex:outputPanel layout="block" styleClass="fieldHolder">
+                             <apex:outputField id="fieldHolder" value="{!objOpp[fieldSetIterator.fieldPath]}"/>
+                         </apex:outputPanel>
+                     </apex:outputPanel>
+                 </apex:repeat>
+             </apex:pageBlockSection>
+            <!--  End of Deal Info Preview -->
+             <br/>
+             <!-- Start of Receivables Preview -->
+             <div class="cmb">
+                 <apex:pageBlockSection columns="1" title="Receivables"
+                     rendered="{!$ObjectType.Receivable__c.accessible}" >
+                    <div class="slds-scrollable--x">
+                       
+                        <apex:dataTable id="receivableTable" value="{!receivableList}"
+                             var="receivable" width="100%"
+                             styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter">
+                             <apex:column headervalue="Receivable Name">
+                                 <apex:outputLink styleClass="referenceLink"
+                                     value="/{!receivable.Id}" id="theLink" target="_blank">
+                                     {!receivable.Name}
+                                 </apex:outputLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headervalue="Type" value="{!receivable.Type__c}"/>
+                             <apex:column headervalue="Percentage %" value="{!receivable.Percentage__c}"/>
+                             <apex:column headerValue="Percentage of">
+                                 <apex:outputField value="{!receivable.Payback_Funded__c}"/>
+                             </apex:column>
+                              <apex:column headerValue="Amount">
+                                 <apex:outputField value="{!receivable.Amount__c}" />
+                                 <apex:facet name="footer">
+                                    Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                        <apex:param value="{!receivableAmtTotal}"/>
+                                    </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue="Due From Account"
+                                 value="{!receivable.Due_From_Account__c}"/>
+                             <apex:column headerValue="Due Date" value="{!receivable.Due_Date__c}"/>
+                             <apex:column headerValue="Status" value="{!receivable.Status__c}"/>
+                             <apex:column headerValue="Memo" value="{!receivable.Memo__c}"/>
+                         </apex:dataTable>
+                     </div>
+                 </apex:pageBlockSection>
+             </div>
+             <!--  End of Receivables Preview -->
+             <br/>
+
+             <!--  Start of Payables Preview -->
+            <div class="cmb" >
+                <apex:pageBlockSection columns="1" title="Payables"
+                     rendered="{!$ObjectType.Payable__c.accessible}">
+                    <div class="slds-scrollable--x">
+                        <apex:dataTable styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter"
+                             id="payableTable" value="{!payableList}" var="payable" width="100%"
+                             rendered="true">
+                             <apex:column headervalue="Payable Name">
+                                 <apex:outputLink styleClass="referenceLink" value="/{!payable.Id}"
+                                     id="theLink" target="_blank">
+                                     {!payable.Name}
+                                 </apex:outputLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue="Type" value="{!payable.Type__c}"/>
+
+                             <apex:column headerValue="Percentage %" value="{!payable.Percentage__c}"/>
+                             <!--<apex:column value="{!payable.Payback_Funded__c}"/>-->
+                             <apex:column headerValue="Percentage of">
+                                 <apex:outputField value="{!payable.Payback_Funded__c}"/>
+                             </apex:column>
+                             <apex:column headerValue="Amount">
+                                 <apex:outputField value="{!payable.Amount_Due__c}" />
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!payableAmtTotal}"/></apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue="Due To Account" value="{!payable.Account__c}"/>
+                             <apex:column headerValue="Due Date" value="{!payable.Due_Date__c}"/>
+                             <apex:column headerValue="Status" value="{!payable.Status__c}"/>
+                             <apex:column headerValue="Receivable Dependency"
+                                 value="{!payable.Receivable_Dependency__c}"/>
+                             <apex:column headerValue="Memo" value="{!payable.Memo__c}"/>
+                         </apex:dataTable>
+                     </div>
+                 </apex:pageBlockSection>
+             </div>
+             <!--  End of Payables Preview -->
+             <br/>
+            <!--  Start of Syndication Preview -->
+             <div class="cmb">
+                 <apex:pageBlockSection columns="1" title="Syndication"
+                     rendered="{!AND($ObjectType.Syndication__c.accessible,LOWER($Label.DEWSyndicationVisible) == 'true')}">
+                     <div class="slds-scrollable--x">
+                         <apex:dataTable styleclass="slds-table slds-table--bordered slds-table--striped previewTableFooter"
+                             id="syndTable" value="{!syndicationList}" var="synd" width="100%">
+                             <apex:column headervalue="Syndication Name">
+                                 <apex:outputLink styleClass="referenceLink" value="/{!synd.Id}"
+                                     id="theLink" target="_blank">
+                                     {!synd.Name}
+                                 </apex:outputLink>
+                                 <apex:facet name="footer">
+                                     <b>Total</b>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column headerValue=" Syndication Amount">
+                                 <apex:outputField value="{!synd.Syndication_Amt__c}" />
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!syndAmtTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <apex:column value="{!synd.Syndication_Percentage__c}"
+                                 headervalue="Syndication Fee %"/>
+                             <apex:column headerValue=" Commission Fee $">
+                                 <apex:outputField value="{!synd.Commission_Fee__c}" />
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!commissionFeeTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <!--<apex:column value="{!synd.Commission_Fee__c}"
+                                 headervalue="Commission Fee $"/>-->
+                             <apex:column value="{!synd.Syndicated_By__c}"
+                                 headervalue="Syndicated By"/>
+                             <apex:column value="{!synd.Disbursment_Schedule__c}"
+                                 headervalue="Disbursment Schedule"/>
+                             <apex:column headerValue="Profit $">
+                                 <apex:outputField value="{!synd.Profit_Amount__c}" />
+                                 <apex:facet name="footer">
+                                     Sum: <apex:outputText value="${0, number, ###,###,###,###.00}">
+                                     <apex:param value="{!profitTotal}"/> </apex:outputText>
+                                 </apex:facet>
+                             </apex:column>
+                             <!--apex:column value="{!synd.Profit_Amount__c}"
+                                 headervalue="Profit $"/>-->
+                             <!-- <apex:column value="{!synd.Syndication_Fee__c}" headervalue="Syndication Fee %"/> -->
+                             <apex:column value="{!synd.ROR_per__c}" headervalue="ROR %"/>
+                             <apex:column value="{!synd.Memo__c}" headervalue="Memo"/>
+                         </apex:dataTable>
+                     </div>
+                 </apex:pageBlockSection>
+             </div>
+                 <!--  End of Syndication Preview -->
+                <apex:pageBlockButtons >
+                    <apex:commandButton action="{!previous}" value="Previous"
+                                     style="left:200px;position:relative;" styleclass="dealEntryWizardBtns"
+                                     rerender="form,pgMsgId" status="loadingStatus"/>
+                    <apex:commandButton action="{!finish}" value="Finish" styleclass="dealEntryWizardBtns"
+                                     style="left:220px;position:relative;" />
+                    <apex:commandButton rendered="{!IF(newFlag == 'TRUE', true, false)}"
+                         onclick="window.open(
+                         'https://ap1.salesforce.com/a0b/e?retURL=%2Fa0b%2Fo&RecordType={!recordTypeId}'
+                         +'&CF00N9000000BrgyG={!objOpp.Account.Name}&CF00N9000000BrgnI={!objOpp.Name}'
+                         +'&00N9000000BrgnJ={!objOpp.Payment_Amount__c}&00N9000000BrgnM=Active'
+                         +'&00N9000000BrgnK={!objOpp.Schedule__c}&00N9000000BrgnG={!objOpp.Payback_Amount__c}'
+                         +'&retURL=%2F{!objOpp.Id}');"
+                     value="Create ACH" />
+
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            <!-- End of Preview screen -->
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <apex:actionFunction name="navigateToOpp" action="{!bckToOpportunity}" />
+        <!--outer most of Deal Entry Wizard End-->
+        </apex:form>
+    </div>
+</apex:page>

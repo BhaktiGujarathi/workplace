@@ -1,0 +1,136 @@
+<apex:component controller="PieChartControllerNewSid">
+
+    
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+	<script src="https://code.highcharts.com/modules/data.js"></script>
+	<script src="https://code.highcharts.com/modules/drilldown.js"></script>
+	
+	<div id="container" style="min-width: 310px; max-width: 600px; height: 400px; margin: 0 auto"></div>
+        
+	<script>
+		
+		window.onload = drawPieChart();
+		
+		var customizedData1  = new Array();
+		var customizedDataDrill  = new Array();
+		
+		
+		function drawPieChart() {
+			console.log('In method');
+			UFHT.PieChartControllerNewSid.FetchContainerData(
+				//Remote Function
+				function(result, event) {
+					var kilobyte = 1024;
+					var megabyte = kilobyte * 1024;
+					var precision = 5;
+					
+					var totalRecords = 0;
+					
+					for(var i=0;i<result.length;i++) {
+						totalRecords = totalRecords + result[i].Number_of_Records;
+					}
+					
+					for(var i=0;i<result.length;i++) {
+						
+						var r = result[i];
+						var data1 = {};
+						var data2 = {};
+						var data3 = new Array();
+						var data4 = new Array();
+						var data5 = new Array();
+						
+						data1['name'] = r.Object_Label;
+						data1['y'] = parseFloat(((r.Must_Have + r.Good_To_Have)/totalRecords)*100);
+						data1['t'] = parseFloat(r.Must_Have + r.Good_To_Have);
+						data1['a'] = (r.bodylength / megabyte).toFixed(precision);
+						data1['n'] = r.Object_Name;
+						data1['r'] = r.Number_of_Records;
+						data1['h'] = r.Is_Tracking_Enabled;
+						data1['s'] = (r.bodylength/ megabyte);
+						console.log('y1', (r.Must_Have));
+						console.log('y2', (r.Good_To_Have));
+						data1['drilldown'] = r.Object_Label;
+						console.log('data1', data1);
+						
+						customizedData1.push(data1);
+						console.log('customizedData1', customizedData1);
+						
+						data2['name'] = r.Object_Label;
+						data2['id'] = r.Object_Label;
+						
+						data3.push("Must Have");
+						data3.push((r.Must_Have/(r.Must_Have + r.Good_To_Have))*100);
+						data3['a'] = (r.bodylength / megabyte).toFixed(precision);
+						data3['t'] = r.Must_Have;
+						data3['n'] = r.Object_Name;
+						data3['r'] = r.Number_of_Records;
+						data3['h'] = r.Is_Tracking_Enabled;
+						data3['s'] = (r.bodylength/ megabyte);
+						data5.push(data3);
+						
+						data4.push("Good To Have");
+						data4.push((r.Good_To_Have/(r.Must_Have + r.Good_To_Have))*100);
+						data4['a'] = (r.bodylength / megabyte).toFixed(precision);
+						data4['n'] = r.Object_Name;
+						data4['t'] = r.Good_To_Have;
+						data4['r'] = r.Number_of_Records;
+						data4['h'] = r.Is_Tracking_Enabled;
+						data4['s'] = (r.bodylength/ megabyte);
+						data5.push(data4);
+						console.log('data5', data5);
+						
+						data2['data'] = data5;
+						console.log('data2', data2);
+						
+						customizedDataDrill.push(data2);
+						console.log('--result--'+result[i]);
+					}
+					DisplayChart();
+				}
+			);
+		}
+		
+		function DisplayChart() {
+			
+			
+			Highcharts.chart('container', {
+			    chart: {
+			        type: 'pie'
+			    },
+			    title: {
+			        text: 'Storage Usage'
+			    },
+			    subtitle: {
+			        text: 'Click the slices to view versions.'
+			    },
+			    plotOptions: {
+			        series: {
+			            dataLabels: {
+			                enabled: true,
+			                format: '{point.name}: {point.y:.1f}%'
+			            }
+			        }
+			    },
+			
+			    tooltip: {
+			     	headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+			        pointFormat: '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b> of total<br/>'+
+			                     '<span style="color:{point.color}">Attachment Size </span>: <b>{point.a}</b><br/>'+
+			                     '<span style="color:{point.color}">Record Count </span>: <b>{point.r}</b><br/>'+
+			                     '<span style="color:{point.color}">History Tracking Enabled </span>: <b>{point.h}</b><br/>'+
+			                     '<span style="color:{point.color}">Size: </span> <b>{point.s}</b><br/>'
+			    },
+			    series: [{
+			        name: 'Storage',
+			        colorByPoint: true,
+			        data: customizedData1
+			    }],
+			    drilldown: {
+			        series: customizedDataDrill
+			    }
+			});
+			console.log('--costum--' ,customizedData1);
+			console.log('--drill--' ,customizedDataDrill);
+		}
+	</script>
+</apex:component>

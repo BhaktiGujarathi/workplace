@@ -1,0 +1,1028 @@
+<apex:component controller="MerchantStatementSummaryController" allowDML="true">
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS214, 'assets/styles/salesforce-lightning-design-system.min.css')}"
+    />
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS213, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"
+    />
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+<!--     <apex:includeScript value="/support/console/30.0/integration.js"/> -->
+    <style type="text/css">
+        .merchntStatemntContainer .width10TdSub {
+            min-width: 50px!important;
+            max-width: 150px!important;
+            white-space: nowrap!important;
+            border-bottom: 1px solid #f1f1f1!important;
+            boder-spacing: 0px!important;
+            padding-right: 1px!important;
+            text-overflow: ellipsis!important;
+            overflow: hidden!important;
+            font-size: 11px;
+            border-top: 1px solid #ecebe9!important;
+            // text-align:right;
+        }
+
+        .merchntStatemntContainer .width10TdSub:after {
+            //content: " ...";
+        }
+
+        .blockbox {
+            display: block;
+        }
+
+        .merchntStatemntContainer .grey_overlay {
+            // display: none;
+            position: absolute;
+            top: 0%;
+            left: 0%;
+            width: 132%;
+            height: 250%;
+            /*width: 100%;
+            height: 100%;*/
+            background-color: black;
+            z-index: 2;
+            -moz-opacity: 0.4;
+            opacity: .40;
+            filter: alpha(opacity=40);
+        }
+
+        .merchntStatemntContainer .custPopup {
+            border-width: 2px;
+            max-width: 1000px;
+            max-height: 10000px;
+            /*border-style: solid;*/
+            z-index: 2;
+            left: 50%;
+            padding: 10px;
+            position: fixed;
+            margin-left: -500px;
+            top: 100px;
+            left: 50%;
+            background: #F7F9FB;
+        }
+
+        .merchntStatemntContainer .newPopupMerchntStmnt {
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 2;
+            left: 84%;
+            padding: 10px 0px 10px 15px;
+            /*position: absolute;*/
+            position: fixed;
+            width: 370px;
+            margin-left: -600px;
+            top: 210px;
+        }
+        .merchntStatemntContainer .popupBackground {
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .allMerchntStmntsBlogCls {
+            border-top: 1px solid #b3b3b3!important;
+            border-left: 1px solid #b3b3b3;
+            border-right: 1px solid #b3b3b3!important;
+        }
+
+        #header-fixed {
+            position: fixed;
+            top: 0px;
+            display: none;
+            background-color: white;
+        }
+
+        *,
+        :after,
+        :before {
+            box-sizing: initial!important;
+        }
+
+        .containerHeading {
+            box-sizing: initial!important;
+        }
+
+        th,
+        td {
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        .merchntStatemntContainer .tableHeader {
+            color: #54698d!important;
+            text-transform: uppercase;
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            line-height: 1.25;
+            font-size: 12px;
+            white-space: normal!important;
+            text-align: center;
+            height: 15px!important;
+
+        }
+
+        .merchntStatemntContainer .tableHeader b {
+            font-size: 10px;
+            font-weight: 1000!important;
+            // word-wrap: break-word!important;
+        }
+
+        .merchntStatemntContainer .pgHeading {
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+            font-size: 15px;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .bPageBlock {
+            border: none !important;
+            background: #fff !important;
+        }
+
+        .merchntStatemntContainer .headerButton {
+            font-size: 11px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+        }
+        /*.merchntStatemntContainer .btn{
+            font-size: 12px!important;
+            line-height: 1.875rem!important;
+            text-decoration: none!important;
+            color: #0070d2!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #fff!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }*/
+        /*select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }*/
+        /**CSS FOR CHECKBOX**/
+
+        .customCheckbox [type=checkbox] {
+            width: 1px;
+            height: 1px;
+            border: 0;
+            clip: rect(0 0 0 0);
+            margin: -1px;
+            overflow: hidden;
+            padding: 0;
+            position: absolute;
+        }
+
+        .check-box {
+            width: 16px;
+            height: 16px;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            border: 1px solid #d8dde6;
+            border-radius: 2px;
+            background: #fff;
+            transition: border .1s linear, background-color .1s linear;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        .customCheckbox [type=checkbox]:checked + .check-box:after,
+        .customCheckbox [type=checkbox]:checked + .custom-label .check-box:after,
+        .customCheckbox [type=checkbox]:checked ~ .check-box:after {
+            display: block;
+            content: '';
+            height: 3px;
+            width: 8px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate3d(-50%, -50%, 0) rotate(-45deg);
+            border-bottom: 2px solid #1589ee;
+            border-left: 2px solid #1589ee;
+        }
+        .slds-spinner, .slds-spinner_container{
+            position: fixed !important;
+        }
+
+        .merchntStatemntContainer input[type="email"],
+        .merchntStatemntContainer input[type="number"],
+        .merchntStatemntContainer input[type="password"],
+        .merchntStatemntContainer input[type="tel"],
+        .merchntStatemntContainer input[type="url"],
+        .merchntStatemntContainer input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+            width: 90px;
+        }
+
+        .merchntStatemntContainer input[type="email"]:focus,
+        .merchntStatemntContainer input[type="number"]:focus,
+        .merchntStatemntContainer input[type="password"]:focus,
+        .merchntStatemntContainer input[type="tel"]:focus,
+        .merchntStatemntContainer input[type="url"]:focus,
+        .merchntStatemntContainer input[type="text"]:focus,
+        .merchntStatemntContainer select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        .merchntStatemntContainer .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        .merchntStatemntContainer .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .merchntStatemntContainer textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        .merchntStatemntContainer select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+        .btn{
+           font-size: 12px!important;
+           /*line-height: 1.875rem!important;*/
+           height: 29px;
+           text-decoration: none!important;
+           color: #fff!important;
+           transition: color 50ms linear,background-color 50ms linear;
+           background: #0070d2!important;
+           font-family:'Salesforce Sans', Arial, sans-serif!important;
+           vertical-align: middle!important;
+           padding: 0px 10px!important;
+           font-weight: 500!important;
+           border-radius: 0.25rem!important;
+           margin:0 4px!important;
+           border-color:#d8dde6!important;
+       }
+       
+       .tableFooter {
+            background-color:#f2f2f2;
+       }
+    </style>
+
+    <div class="merchntStatemntContainer">
+        <apex:outputPanel id="merchntStatemntPanel">
+        <table >
+            <tr class="containerHeading">
+                <td>
+                    <h1 class="pgHeading">
+                        Merchant Statement
+                    </h1>
+                </td>
+                <td >
+
+                    <div style="text-align: -webkit-right;" >
+                        <apex:outputPanel rendered="{!!displayAccountView}">
+                            <button class="slds-button slds-button--neutral headerButton btn"
+                                onclick="NewMerchntStatment();return false;">
+                              New
+                            </button>
+                            <button class="slds-button slds-button--neutral headerButton btn"
+                                onclick="onClickSaveMerchntStatment();return false;">
+                              Save
+                            </button>
+                            <button class="slds-button slds-button--neutral headerButton btn"
+                                onclick="refreshMerchantStatements();return false;">
+                               Cancel
+                           </button>
+                        </apex:outputPanel>
+                    </div>
+                </td>
+                <td style="text-align:right;">
+                    <apex:outputlabel >MID Account #:</apex:outputlabel>
+                    &nbsp;&nbsp;
+                    <apex:selectList multiselect="false" size="1" value="{!midAccountNo}"
+                        onchange="filterBasedOnMidNo();">
+                        <apex:selectoption itemValue="All" itemLabel="All" />
+                        <apex:selectoptions value="{!midAccountNos}" />
+                    </apex:selectList>
+                </td>
+            </tr>
+        </table>
+
+        <div id="divPMsg">
+            <apex:pagemessages id="pMsg"
+                rendered="{! (renderMrchntStmntPageMessage && !mrchntErrorRecordsPopup) }" />
+        </div>
+
+        <div>
+            <apex:actionfunction name="filterBasedOnMidNo" action="{!filterBasedOnMidNo}"
+                reRender="merchntStatemntPanel,pMsgstatus"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="closeMIDAccountUpdate" action="{!closeMIDAccountUpdate}"
+                reRender="merchntStatemntPanel,pMsgstatus" status="loadingMrchntStmnt"
+            />
+            <apex:actionfunction name="newSaveMerchantStmnt" action="{!newSave}"
+                rerender="newSectionMrchntPopUp, merchntStatemntPanel"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="closeNewPopup"
+                action="{!closeNewPopup}" rerender="newSectionMrchntPopUp,pMsg"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="doneForAllMerchntStmnt" action="{!doneForAllMerchntStmnt}"
+                rerender="newSectionMrchntPopUp, merchntStatemntPanel" status="loadingMrchntStmnt" />
+            <apex:actionfunction name="NewMerchntStatment" action="{!showNewPopup}"
+                reRender="newSectionMrchntPopUp"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="SaveMerchntStatment" action="{!saveMerchntStatment}"
+                reRender="merchntStatemntPanel,newSectionMrchntPopUp,errorSectionMrchntPopup,pMsg"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="refreshMerchantStatements" action="{!refreshMerchantStatements}"
+                rerender="merchntStatemntPanel"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="errorSavemrchntStmnt" action="{!errorSave}"
+                rerender="newSectionMrchntPopUp,merchntStatemntPanel"
+                status="loadingMrchntStmnt" />
+            <apex:actionfunction name="closeErrorPopup" action="{!closeErrorPopup}"
+                rerender="newSectionMrchntPopUp,merchntStatemntPanel,errorSectionMrchntPopup"
+                status="loadingMrchntStmnt" />
+            <!--br/-->
+            <apex:outputPanel id="allMerchntStmntsBlog">
+            <div style="width:40%; min-height:600px!important;">
+                <table cellspacing="4"
+                    class="slds-table slds-table--bordered slds-table--cell-buffer">
+                    <thead>
+                        <tr>
+                            <td class="expColmrchntStmntMain">
+                                <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}"
+                                    style="margin-top:7px;float:left;cursor:pointer;"
+                                    title="Collapse" id="colpsImg" />
+                            </td>
+                            <td class="tableHeader">
+                                <b> Month </b>
+                            </td>
+                            <td class="tableHeader">
+                                <b> Year </b>
+                            </td>
+                            <td class="tableHeader">
+                                <b> MID Account # </b>
+                            </td>
+                            <apex:repeat value="{!merchntStmntFieldSetList}" var="fieldMember">
+                                <td class="tableHeader">
+                                    <apex:outputPanel >
+                                        <b> {!fieldMember.label}</b>
+                                    </apex:outputPanel>
+                                </td>
+                            </apex:repeat>
+                            <td class="tableHeader">
+                                <b> Include </b>
+                            </td>
+                        </tr>
+                    </thead>
+                    <apex:repeat value="{!listMerchntStmntSumWrap}" var="mrchntStmntSumWrap">
+                        <tr class="content" style="background:#f2f2f2;">
+                            <td class="expColmrchntStmnt">
+                                <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}"
+                                    title="Collapse" style="margin-top:7px;float:left;cursor:pointer;width:15px;"
+                                    id="colpsImg" />
+                            </td>
+                            <td>
+                                <b>{!mrchntStmntSumWrap.Month}</b>
+                            </td>
+                            <td>
+                                <b> {!mrchntStmntSumWrap.Year}</b>
+                            </td>
+                            <td>
+                                <b> </b>
+                            </td>
+                            <apex:repeat value="{!merchntStmntFieldSetList}" var="fieldMember">
+                                <td class="{!fieldMember.type}-field">
+                                    <apex:repeat value="{!mrchntStmntSumWrap.mapMerchntStmentFields}" 
+                                        var="keyApiName">
+                                        <apex:outputPanel rendered="{!fieldMember==keyApiName}">
+                                            <apex:outputPanel rendered="{!fieldMember.type=='currency'}">
+                                                <b>$</b>
+                                            </apex:outputPanel>
+                                               <b>
+                                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" >
+                                                      <apex:param value="{!mrchntStmntSumWrap.mapMerchntStmentFields[keyApiName]}" />
+                                                    </apex:outputText>
+                                               </b>
+                                        </apex:outputPanel>
+                                    </apex:repeat>
+                                </td>
+                            </apex:repeat>
+                            <td>
+                                <b> </b>
+                            </td>
+                        </tr>
+                        <apex:repeat value="{!mrchntStmntSumWrap.lstMerchntStmntMonthSum}" var="mrchntStmntSumWrap">
+                            <tr class="content">
+                                <td>
+                                    <apex:outputLink value="#" 
+                                        onclick="openMrchntStatementPage('{!mrchntStmntSumWrap.merchantStatement.Id}');"
+                                        rendered="{!NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}">
+                                        View
+                                    </apex:outputLink>
+                                    <apex:outputLabel value=" | "
+                                        rendered="{!AND(NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                        $ObjectType.Credit_Card__c.deletable)}" />
+                                    <apex:commandLink action="{!deleteMerchntStatement}" value="Del"
+                                        rerender="merchntStatemntPanel"
+                                        status="loadingMrchntStmnt"
+                                        rendered="{!AND(NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                         $ObjectType.Credit_Card__c.deletable)}">
+                                        <apex:param name="merchantStmntIndexToRemove"
+                                            value="{!mrchntStmntSumWrap.indexMerchntStmnt}"
+                                            assignTo="{!merchantStmntIndexToRemove}"></apex:param>
+                                    </apex:commandLink>
+                                </td>
+
+                                <td>
+                                    <apex:outputfield value="{!mrchntStmntSumWrap.merchantStatement.Month__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                        NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                        IF(displayAccountView = true, true, false))}">
+                                        <apex:inlineEditSupport disabled="true" />
+                                    </apex:outputfield>
+                                    <apex:outputField value="{!mrchntStmntSumWrap.merchantStatement.Month__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                                NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                                IF(displayAccountView = false, true, false))}">
+                                    </apex:outputField>
+                                    <apex:inputField value="{!mrchntStmntSumWrap.merchantStatement.Month__c}"
+                                        rendered="{!OR(IF(mrchntStmntSumWrap.editMerchantStmnt = true, true, false),
+                                        ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}"
+                                    />
+                                </td>
+                                <td>
+                                    <apex:outputfield value="{!mrchntStmntSumWrap.merchantStatement.Year__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                        NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                        IF(displayAccountView = true, true, false))}">
+                                        <apex:inlineEditSupport disabled="true" />
+                                    </apex:outputfield>
+                                    <apex:outputField value="{!mrchntStmntSumWrap.merchantStatement.Year__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                                NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                                IF(displayAccountView = false, true, false))}">
+                                    </apex:outputField>
+                                    <apex:inputField value="{!mrchntStmntSumWrap.merchantStatement.Year__c}"
+                                        rendered="{!OR(IF(mrchntStmntSumWrap.editMerchantStmnt = true, true, false),
+                                        ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}"
+                                    />
+                                </td>
+
+                                <td>
+                                    <apex:outputfield value="{!mrchntStmntSumWrap.merchantStatement.MID_Account_Number__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                        NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                        IF(displayAccountView = true, true, false))}">
+                                        <apex:inlineEditSupport disabled="true" />
+                                    </apex:outputfield>
+                                    <apex:outputField value="{!mrchntStmntSumWrap.merchantStatement.MID_Account_Number__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                                NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                                IF(displayAccountView = false, true, false))}">
+                                    </apex:outputField>
+                                    <apex:inputField value="{!mrchntStmntSumWrap.merchantStatement.MID_Account_Number__c}"
+                                        rendered="{!OR(IF(mrchntStmntSumWrap.editMerchantStmnt = true, true, false),
+                                        ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}" />
+                                </td>
+
+                                <apex:repeat value="{!merchntStmntFieldSetList}" var="fieldMember">
+                                    <td class="{!fieldMember.type}-field">
+                                        <apex:outputfield value="{!mrchntStmntSumWrap.merchantStatement[fieldMember]}"
+                                            rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                            NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                            IF(displayAccountView = true, true, false))}">
+                                            <apex:inlineEditSupport disabled="true" />
+                                        </apex:outputfield>
+                                        <apex:outputField value="{!mrchntStmntSumWrap.merchantStatement[fieldMember]}"
+                                            rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                                    NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                                    IF(displayAccountView = false, true, false))}">
+                                        </apex:outputField>
+                                        <apex:inputField value="{!mrchntStmntSumWrap.merchantStatement[fieldMember]}"
+                                            rendered="{!OR(IF(mrchntStmntSumWrap.editMerchantStmnt = true, true, false),
+                                            ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}"
+                                        />
+                                    </td>
+                                </apex:repeat>
+                            
+                                <td>
+                                    <apex:outputfield value="{!mrchntStmntSumWrap.merchantStatement.Include_in_average__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                        NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                        IF(displayAccountView = true, true, false))}">
+                                        <apex:inlineEditSupport disabled="true" />
+                                    </apex:outputfield>
+                                    <apex:outputField value="{!mrchntStmntSumWrap.merchantStatement.Include_in_average__c}"
+                                        rendered="{!AND(IF(mrchntStmntSumWrap.editMerchantStmnt = false, true, false),
+                                                NOT(ISBLANK(mrchntStmntSumWrap.merchantStatement.Id)),
+                                                IF(displayAccountView = false, true, false))}">
+                                    </apex:outputField>
+                                    <apex:inputField value="{!mrchntStmntSumWrap.merchantStatement.Include_in_average__c}"
+                                        rendered="{!OR(IF(mrchntStmntSumWrap.editMerchantStmnt = true, true, false),
+                                        ISBLANK(mrchntStmntSumWrap.merchantStatement.Id))}" />
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </apex:repeat>
+                    <tr style="display:none;">
+                       <td class="expColmrchntStmnt" ></td>
+                    </tr>
+                    <tr style="height:50px!important" >
+                    </tr>
+                    <tr class="tableFooter">
+                        <td >
+                            <b> Total </b>
+                        </td>
+                        <td ></td>
+                        <td ></td>
+                        <td></td>
+                        <apex:repeat value="{!merchntStmntFieldSetList}" var="fieldMember">
+                            <td class="{!fieldMember.type}-field">
+                                <apex:repeat value="{!mapMerchStmTotalFields}" var="keyApiName">
+                                    <apex:outputPanel rendered="{!fieldMember==keyApiName}">
+                                        <apex:outputPanel rendered="{!fieldMember.type=='currency'}"><b>$</b></apex:outputPanel>
+                                        <b>
+                                        <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                          <apex:param value="{!ROUND(mapMerchStmTotalFields[keyApiName], 2)}" />
+                                        </apex:outputText>
+                                        </b>
+                                        <!--<b> {!ROUND(mapMerchStmTotalFields[keyApiName], 2)} </b>-->
+                                    </apex:outputPanel>
+                                </apex:repeat>
+                            </td>
+                        </apex:repeat>
+                        <td ></td>
+                    </tr>
+                    <tr class="tableFooter">
+                        <td >
+                            <b> Average</b>
+                        </td>
+                        <td ></td>
+                        <td ></td>
+                        <td ></td>
+                        <apex:repeat value="{!merchntStmntFieldSetList}" var="fieldMember">
+                            <td>
+                                <apex:repeat value="{!mapMerchStmTotalFields}" var="keyApiName">
+                                    <apex:outputPanel rendered="{!fieldMember==keyApiName}">
+                                        <apex:outputPanel rendered="{!fieldMember.type=='currency'}"><b>$</b></apex:outputPanel>
+                                        <b>
+                                            <apex:outputText value="{0, number, ###,###,###,##0.00}" >
+                                                <apex:param value="{!mapMerchStmTotalFields[keyApiName]/IF(mapIncludeCountMrchntStmnt[keyApiName]==0
+                                                    ,1,mapIncludeCountMrchntStmnt[keyApiName])}" />
+                                            </apex:outputText>
+                                        </b>
+                                    </apex:outputPanel>
+                                </apex:repeat>
+                            </td>
+                        </apex:repeat>
+                        <td ></td>
+                    </tr>
+                </table>
+            </div>
+            </apex:outputPanel>
+            <!--/apex:pageBlock-->
+        </div>
+        <!--Main Div End-->
+
+        <apex:outputPanel id="newSectionMrchntPopUp">
+            <apex:outputPanel styleClass="popupBackground" layout="block"
+                rendered="{!displayNewPopup}" />
+            <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displayNewPopup}">
+                <apex:sectionHeader subtitle="Merchant Account Entry" />
+                <apex:variable var="count" value="{!-1}" />
+                <div class="slds-scrollable">
+                    <table id="merchantStatmentNewSectionModule" style="width:60%;" cellspacing="5"
+                        class="slds-table slds-table--bordered slds-table--cell-buffer">
+                        <tr>
+                            <td class="width10TdSub">
+                                <b> Action </b>
+                            </td>
+                            <td class="width10TdSub">
+                                <b> Month </b>
+                            </td>
+                            <td class="width10TdSub">
+                                <b> Year </b>
+                            </td>
+                            <td class="width10TdSub">
+                                <b> MID Account # </b>
+                            </td>
+                            <apex:repeat value="{!merchntStmntFieldsetList}" var="fieldMember">
+                                <td class="width10TdSub">
+                                    <b> {!fieldMember.label}</b>
+                                </td>
+                            </apex:repeat>
+                            <td class="width10TdSub">
+                                <b> Include </b>
+                            </td>
+                        </tr>
+
+                        <apex:repeat value="{!newmerchantStatements}" var="newMrchntStmnt">
+                            <apex:variable var="count" value="{!count+1}" />
+                            <tr class="content">
+                                <td>
+                                    <apex:commandLink value="Remove" action="{!removeNewRow}"
+                                        rerender="newSectionMrchntPopUp" status="loadingMrchntStmnt" >
+                                        <apex:param name="removeNewIndex" value="{!count}"
+                                            assignTo="{!removeNewIndex}" />
+                                    </apex:commandLink>
+                                </td>
+                                <td>
+                                    <apex:inputField value="{!newMrchntStmnt.Month__c}" />
+                                </td>
+                                <td>
+                                    <apex:inputField value="{!newMrchntStmnt.Year__c}" />
+                                </td>
+                                <td>
+                                    <apex:inputField value="{!newMrchntStmnt.MID_Account_Number__c}" 
+                                            rendered="{!OR(merchantStatements.size <= 0, midAccountNos.size <=0)}"/>
+                                    <apex:outputPanel rendered="{!AND(merchantStatements.size > 0,midAccountNos.size >0)}">
+                                        <apex:selectList multiselect="false" size="1" id="slctLstMrchnt"
+                                                    value="{!newMrchntStmnt['MID_Account_Number__c']}">
+                                            <apex:selectoptions value="{!midAccountNos}" />
+                                            <apex:selectoption itemValue="{!newMidAccountNumber}"
+                                                itemLabel="{!newMidAccountNumber}"
+                                                rendered="{!newMidAccountNumber != NULL}" />
+                                            <apex:selectoption itemValue="--New--"
+                                                itemLabel="--New--" />
+                                            <apex:actionSupport event="onchange"
+                                                action="{!setNewOptionPopup}"
+                                                reRender="newBankAccountNo,newSectionMrchntPopUp,slctLstMrchnt"
+                                                status="loadingMrchntStmnt">
+                                                <apex:param name="newRowIndex"
+                                                    value="{!count}" assignTo="{!newRowIndex}" />
+                                            </apex:actionSupport>
+                                        </apex:selectList>
+                                    </apex:outputPanel>
+                                </td>
+                                <apex:repeat value="{!merchntStmntFieldsetList}" var="fieldMember">
+                                    <td class="width10TdSub {!fieldMember.type}-field">
+                                        <apex:outputPanel rendered="{!IF(NOT(fieldMember == 'MID_Account_Number__c')
+                                            ,true,false)}">
+                                            <apex:inputField value="{!newMrchntStmnt[fieldMember]}" />
+                                        </apex:outputPanel>
+                                    </td>
+                                </apex:repeat>
+                                <td>
+                                    <apex:inputField value="{!newMrchntStmnt.Include_in_average__c}" />
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </table>
+                </div>
+
+                <center>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="newSaveMerchantStmnt();return false;">
+                        Save
+                    </button>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="closeNewPopup();return false;">
+                        Close
+                    </button>
+                </center>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- Popup for New click for  Account #-->
+        <apex:outputPanel id="newBankAccountNo">
+            <apex:outputPanel styleClass="popupBackground" layout="block"
+                rendered="{!newMidAccountPopup}" />
+            <apex:outputPanel styleClass="newPopupMerchntStmnt"
+                layout="block" rendered="{!newMidAccountPopup}">
+                <apex:sectionHeader subtitle="MID Account # Entry" />
+                <div style="overflow-x:auto;">
+                    <b>MID Account # :</b>&nbsp; &nbsp;
+                    <apex:inputText value="{!newMidAccountNumber}" />
+                </div>
+                <apex:outputText style="color : red;" value="{!newMrchntError}" />
+                <div style="height: 10px;"></div>
+                <div>
+                    <span>
+                        Check to apply to all new records:
+                    </span>
+                    <apex:inputCheckbox value="{!updateAllAccountNos}" id="checkBox-1" />
+                </div>
+                <br/>
+                <center>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="doneForAllMerchntStmnt();return false;">
+                        Done
+                    </button>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="closeMIDAccountUpdate();return false;">
+                        Close
+                    </button>
+                </center>
+            </apex:outputPanel>
+        </apex:outputPanel>
+
+        <!-- POPUP for error List -->
+        <apex:outputPanel id="errorSectionMrchntPopup" rendered="{!mrchntErrorRecordsPopup}">
+            <apex:outputPanel styleClass="popupBackground" layout="block"
+                rendered="{!mrchntErrorRecordsPopup}" />
+            <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!mrchntErrorRecordsPopup}">
+                <apex:sectionHeader title="Merchant Statement Entry" />
+                <div class="slds-scrollable">
+                    <table class="slds-table slds-table--bordered slds-table--cell-buffer"
+                            cellspacing="5">
+                            <apex:repeat value="{!errormerchantStatements}" var="errorMerchntStmnt">
+                                <tr>
+                                    <td style="color:#D21700;">
+                                        <b>{!merchntStmErrorOnPopup}</b>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                    </table>
+                    <table id="bankStatmentErrorSectionModule"
+                        class="slds-table slds-table--bordered slds-table--cell-buffer"
+                        style="width:60%;" cellspacing="5">
+                        <tr>
+                            <td class="width10TdSub">
+                                <b> Month </b>
+                            </td>
+                            <td class="width10TdSub">
+                                <b> Year </b>
+                            </td>
+                            <td class="width10TdSub">
+                                <b> MID Account # </b>
+                            </td>
+                            <apex:repeat value="{!merchntStmntFieldsetList}" var="fieldMember">
+                                <td class="width10TdSub">
+                                    <b> {!fieldMember.label}</b>
+                                </td>
+                            </apex:repeat>
+                            <td class="width10TdSub">
+                                <b> Include </b>
+                            </td>
+                        </tr>
+                        <apex:repeat value="{!errormerchantStatements}" var="errorMerchntStmnt">
+                            <tr class="content">
+                                <td>
+                                    <apex:inputField value="{!errorMerchntStmnt.Month__c}" />
+                                </td>
+                                <td>
+                                    <apex:inputField value="{!errorMerchntStmnt.Year__c}" />
+                                </td>
+                                <td>
+                                    <apex:selectList multiselect="false" size="1"
+                                        value="{!errorMerchntStmnt['MID_Account_Number__c']}">
+                                        <apex:selectoptions value="{!midAccountNos}" />
+                                    </apex:selectList>
+                                </td>
+
+                                <apex:repeat value="{!merchntStmntFieldsetList}" var="fieldMember">
+                                    <td class="width10TdSub {!fieldMember.type}-field">
+                                        <apex:outputPanel rendered="{!IF(NOT(fieldMember == 'MID_Account_Number__c')
+                                            ,true,false)}">
+                                            <apex:inputField value="{!errorMerchntStmnt[fieldMember]}" />
+                                        </apex:outputPanel>
+                                    </td>
+                                </apex:repeat>
+                                
+                                <td>
+                                    <apex:inputField value="{!errorMerchntStmnt.Include_in_average__c}" />
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </table>
+                </div>
+                <center>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="errorSavemrchntStmnt();return false;">
+                        Save
+                    </button>
+                    <button class="slds-button slds-button--neutral btn"
+                        onclick="closeErrorPopup();return false;">
+                        Close
+                    </button>
+                </center>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        </apex:outputPanel>
+    </div>
+
+    <apex:outputPanel id="scriptPnl">
+        <apex:actionStatus id="loadingMrchntStmnt" layout="block">
+            <apex:facet name="start">
+                <div class="cmb">
+                <div class="slds-spinner_container">
+                    <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                        <span class="slds-assistive-text">Loading</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <script>
+            var isInConsoleMrchnt = false;
+            var tabIdmrchntStmnt;
+            /*var tableOffset = $("#allMerchntStmntsBlog").offset().top;*/
+            var $header = $("#allMerchntStmntsBlog > thead").clone();
+            var $fixedHeader = $("#header-fixed").append($header);
+
+            $(window).bind("scroll", function() {
+                /* var offset = $(this).scrollTop();
+                 $fixedHeader.width($("#allMerchntStmntsBlog").width());
+
+                  if (offset >= tableOffset && $fixedHeader.is(":hidden"))
+                  {
+                      $fixedHeader.show(500);
+                  }
+                  else if (offset < tableOffset)
+                  {
+                      $fixedHeader.hide(500);
+                  }*/
+            });
+            
+            $(document).ready(function() {
+                initCallMrchntStmnt();
+            });
+            function initCallMrchntStmnt() {
+                setIsConsoleMrchntStmnt();
+                getFocusedPrimaryTabIdMrchntStmnt();
+            }
+            
+            function setIsConsoleMrchntStmnt() {
+                var inConsole = false;
+                var url = document.location.href;
+                inConsole = url.indexOf('isConsole=1') > -1;
+                if(inConsole) {
+                    isInConsoleMrchnt = inConsole;
+                } else {
+                    isInConsoleMrchnt = sforce.console.isInConsole();
+                }
+                //isInConsoleMrchnt = sforce.console.isInConsole();
+            }
+
+            function getFocusedPrimaryTabIdMrchntStmnt() {
+                sforce.console.getFocusedPrimaryTabId(showTabIdMrchnt);
+            }
+            
+            var showTabIdMrchnt = function showTabIdMrchnt(result) {
+                //Display the tab ID
+                tabIdmrchntStmnt = result.id;
+            };
+            
+            function openConsoleTabMrchntStmnt(url, tabLabel) {
+                sforce.console.openPrimaryTab(tabIdmrchntStmnt, url, true, tabLabel, function(r){});
+                sforce.console.closeTab(tabIdmrchntStmnt);
+            }
+            
+            function onClickSaveMerchntStatment() {
+                setTimeout(function() {
+                    console.log('I am in call');
+                    SaveMerchntStatment();
+                }, 1000);
+            }
+
+            function openMrchntStatementPage(recordIdToOpen) {
+                if(isInConsoleMrchnt) {
+                    openConsoleTabMrchntStmnt(recordIdToOpen, '');
+                }
+                else {
+                    window.open('/'+recordIdToOpen);
+                }
+                event.preventDefault();
+            }
+
+            function expandCollapseMerchntStmnt(img, imgParent) {
+                $content = $(imgParent).nextUntil($(".expColmrchntStmnt").parent());
+                $content.slideToggle(50, function() {
+                });
+            }
+
+            function expandCollapseAllMerchntStmnt(img, imgParent, mainScr,
+                plusSrc, minusSrc) {
+                $content = $(imgParent).nextUntil($(".expColmrchntStmnt").parent());
+                if (mainScr == minusSrc) {
+                    $content.hide(500);
+                } else if (mainScr == plusSrc) {
+                    $content.show(500);
+                }
+            }
+
+            function togglePlusMinusMerchntStmnt(img, mainScr, plusSrc,
+                minusSrc) {
+                if (mainScr == minusSrc) {
+                    $(img).children().attr("src", plusSrc);
+                } else if (mainScr == plusSrc) {
+                    $(img).children().attr("src", minusSrc);
+                }
+            }
+
+             $( ".merchntStatemntContainer" ).on( "click", ".expColmrchntStmnt,.expColmrchntStmntMain", function() {
+                console.log('img clicked');
+                var mainScr = $(this).children().attr("src");
+                var plusSrc =
+                    "{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}";
+                var minusSrc =
+                    "{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}";
+                var className = $(this).attr("class");
+                if (className == 'expColmrchntStmnt') {
+                    expandCollapseMerchntStmnt($(this), $(this).parent());
+                    togglePlusMinusMerchntStmnt($(this), mainScr,
+                        plusSrc, minusSrc);
+                } else {
+                    if (className == 'expColmrchntStmntMain') {
+                        $.each($(".expColmrchntStmnt"), function(index,
+                            value) {
+                            if (index < ($(".expColmrchntStmnt")
+                                    .size() - 1)) {
+                                expandCollapseAllMerchntStmnt($(
+                                        value), $(value).parent(),
+                                    mainScr, plusSrc,
+                                    minusSrc);
+                                togglePlusMinusMerchntStmnt($(
+                                        value), mainScr,
+                                    plusSrc, minusSrc);
+                            }
+                        });
+                        togglePlusMinusMerchntStmnt($(this), mainScr,
+                            plusSrc, minusSrc);
+                    }
+                }
+            });
+
+            var checkforparent = '{!isAccountView}';
+
+            function redirectToParent() {
+                var url;
+                if (checkforparent == 'true') {
+                    url = '/{!accountId}';
+                } else {
+                    url = '/{!opportunityId}';
+                }
+                if (isInConsoleMrchnt) {
+                    openConsoleTabMrchntStmnt(url);
+                } else {
+                    window.top.location.href = url;
+                }
+            }
+
+            function openConsoleNewPrimaryTab(url, tabLabel) {
+                sforce.console.openPrimaryTab(null, url, true, tabLabel,
+                    function(r) {});
+            }
+
+            $( ".merchntStatemntContainer" ).on( "click", "[id^=lookup]", function() {
+                var url = $(this).attr("href");
+                var decodedurlmrchnt = decodeURIComponent(url);
+                var removedsrcupmrchnt = decodedurlmrchnt.replace('javascript:srcUp(\'','');
+                var redirecturl = removedsrcupmrchnt.replace('\')', '');
+                if(!isInConsoleMrchnt) {
+                    window.open(url);
+                } else {
+                    openConsoleNewPrimaryTab(redirecturl, '');
+                }
+                event.preventDefault();
+            });
+        </script>
+    </apex:outputPanel>
+</apex:component>

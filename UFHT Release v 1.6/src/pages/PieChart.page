@@ -1,0 +1,77 @@
+<!--
+    * @Page Name: PieChart
+    * @Description: A google pie chart to display Storage Usage information.On hover of a particular object, 
+    *               display: Object label, Object name, # of records, storage usage, history tracking enabled/disabled.               
+    *               
+    *================================================================================================================
+    *       Version   | Date        | Author             | Comments
+    *---------------------------------------------------------------------------------------------------
+    *       1.0       | 23/01/2017  | Eternus Solution   | 1. A google pie chart to display Storage Usage information.
+    *                 |             |                    |    
+    *================================================================================================================
+    -->
+<apex:page controller="PieChartController">
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+        <script type="text/javascript">
+        
+        //Method to capatalize boolean value of HistoryTrackingEnable
+        String.prototype.capitalize = function() {
+            return this.toLowerCase().replace( /\b\w/g, function (m) {
+                return m.toUpperCase();
+                });
+        };
+          
+        // Load the Visualization API and the piechart package.  
+        google.load("visualization", "1", {packages:["corechart"]});
+        
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.setOnLoadCallback(drawPieChart);
+        
+            // Function to draw Pie Chart
+            function drawPieChart() {
+                //FetchData from the method fetchUltraFieldHistoryData from PieChartController
+                UFHT.PieChartController.fetchUltraFieldHistoryData(
+                    //Remote Function
+                    function(result, event) {
+                       
+                        //load Pie chart
+                        var data = new google.visualization.DataTable();
+                        // Prepare table model for chart with columns
+                        data.addColumn('string', 'ObjectName');    
+                        data.addColumn('number', 'Size');
+                        data.addColumn({type: 'string', role: 'tooltip' , p : {'html': true}});
+                        
+                        for(var i =0; i<result.length;i++) {
+                            var r = result[i];
+                            var HistoryTrackingEnable = r.ultraFHTInstance.UFHT__Is_Tracking_Enabled__c + '' ;
+                            HistoryTrackingEnable = HistoryTrackingEnable.capitalize();
+                            
+                            //The Data that is to be shown on Tooltip Hover
+                            var toolTipData = new String("Object Name: ").bold() + r.ultraFHTInstance.UFHT__Object_Name__c + ' </br>' + 
+                                              new String("Object Label: ").bold() + r.ultraFHTInstance.UFHT__Object_Label__c + ' </br>' +  
+                                              new String("Attachment Size: ").bold() + r.bodylength  + ' KB' + ' </br>'  +  
+                                              new String("Record Count: ").bold() +r.ultraFHTInstance.UFHT__No_of_Records__c + ' </br>' +  
+                                              new String("History Tracking Enabled: ").bold() + HistoryTrackingEnable; 
+                                                                 
+                            //add rows from the remoting results                  
+                            data.addRow([r.ultraFHTInstance.UFHT__Object_Name__c,r.bodylength ,toolTipData]);                          
+                        }
+                        // Add options for view purpose 
+                        var options = 
+                        {
+                            tooltip: {isHtml: true},
+                            title: 'Storage Usage'   
+                        };
+                      
+                        var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+                        //Provide data and option to the chart to be drawn
+                        chart.draw(data, options);
+                    },  {escape:false}
+                );
+            }
+        </script>
+        <!-- Google Chart will be drawn in this DIV -->
+        <div class="container">
+            <div id="piechart" style="width: 900px; height: 500px;"></div>
+        </div>
+</apex:page>

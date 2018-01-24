@@ -1,0 +1,35 @@
+<apex:page standardController="Transaction__c" tabStyle="Transaction__c" extensions="TransactionControllerClone" id="thepage" sidebar="false">
+    <apex:sectionHeader title="Transaction Edit" subtitle="New {!strTransName} Transaction" />
+    <apex:form id="theform">
+        <apex:pagemessages id="theMsg" />
+        <apex:pageBlock title="Transaction Edit">
+            <apex:pageBlock >
+                <apex:pageBlockSection title="Transaction Information" columns="1"> 
+                    <apex:pageblockSection columns="2">
+                        <apex:inputField value="{!objTranscation.Account__c}" required="true" />
+                        <apex:pageBlockSectionItem >
+                            <apex:outputLabel value="Status"/>
+                            <apex:outputText value="Pending"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:repeat value="{!$ObjectType.Transaction__c.FieldSets.TransactionFieldSetColumn1}" var="field">                           
+                            <apex:inputField value="{!objTranscation[field.fieldPath]}" required="{!OR(field.required, field.dbrequired)}" />
+                        </apex:repeat>
+                    </apex:pageblockSection>
+                    <apex:pageBlockSection columns="1">
+                        <apex:repeat value="{!$ObjectType.Transaction__c.FieldSets.TransactionFieldSetColumn2}" var="field">
+                            <apex:inputField value="{!objTranscation[field.fieldPath]}" required="{!OR(field.required, field.dbrequired)}" /> <br />
+                        </apex:repeat>      
+                    </apex:pageBlockSection>
+                </apex:pageblockSection>
+            </apex:pageblock>
+            <apex:inputHidden value="{!Transaction__c.Account__c}" required="true" />
+        </apex:pageblock>
+    </apex:form>
+    <apex:actionStatus id="panelStatus" stopText="">
+        <apex:facet name="start">
+            <img src="{!URLFOR('/img/loading.gif')}" />
+            <span style="font-weight: bold"> Processing</span>
+            <br />
+        </apex:facet>
+    </apex:actionStatus>     
+</apex:page>

@@ -1,0 +1,164 @@
+<apex:component controller="PieChartControllerNewSid">
+    <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+            <script>
+                 $(document).ready(function() {
+                
+                 });
+                 function openNav() {
+                     document.getElementById("mySidenav").style.display= "block";
+                     document.getElementById("mySidenav").style.width = "400px";
+                     document.getElementById("mySidenav").style.height = "280px";
+                 }
+                 function closeNav() {
+                     document.getElementById("mySidenav").style.width = "0";
+                     document.getElementById("mySidenav").style.display= "none";
+                 }
+            </script>
+    <style>
+       
+          .closebtn {                  
+                        position: relative;
+                        top: -25px !important;
+                        right : -290px !important;
+                        font-size: 20px !important;
+                        margin-left: 53px;
+                        margin-right: 11px;
+          }
+    </style>
+    <div class="searchBox searchbox-shadow">
+         <div class="chart-panel">
+        <div class="chart-toggle" id="switch-toggle"><img src="{!URLFOR($Resource.LeftWhiteArrow)}" title="Help" style="width: 10px;"/></div>
+        <div class="chart-slide" id="panel2">
+   <h4 style="    color: white; margin: 0 0 10px 0; font-weight: bold; float: left;">Storage History Consumption</h4>
+        
+         <script type="text/javascript">
+        //Method to capatalize boolean value of HistoryTrackingEnable
+        String.prototype.capitalize = function() {
+                return this.toLowerCase().replace( /\b\w/g, function (m) {
+                    return m.toUpperCase();
+                });
+        };
+        // Load the Visualization API and the piechart package.  
+        google.load("visualization", "1", {packages:["corechart"]});
+        // Set a callback to run when the Google Visualization API is loaded.
+        google.setOnLoadCallback(drawPieChart);
+        
+        // Function to draw Pie Chart
+        function drawPieChart() {
+            //FetchData from the method FetchContainerData from PieChartController
+            UFHT.PieChartControllerNewSid.FetchContainerData(
+            //Remote Function
+            function(result, event) {
+                // load Column chart
+                var data = new google.visualization.DataTable();
+                var kilobyte = 1024;
+                var megabyte = kilobyte * 1024;
+                var precision = 5;
+                // Prepare table model for chart with columns
+                data.addColumn('string', 'ObjectName');
+                data.addColumn('string', 'RecordType');
+                data.addColumn('number', 'Size');
+                data.addColumn({type: 'string', role: 'tooltip' , p : {'html': true}});
+                for(var i=0;i<result.length;i++) {
+                    console.log('--result--'+result[i]);
+                    var r = result[i];
+                    var HistoryTrackingEnable = r.Is_Tracking_Enabled + '';
+                    HistoryTrackingEnable = HistoryTrackingEnable.capitalize();
+                    //The Data that is to be shown on Tooltip Hover
+                    var toolTipData = new String("Object Name: ").bold() + r.Object_Name + ' </br>' + 
+                                      new String("Object Label: ").bold() + r.Object_Label + ' </br>' +  
+                                      new String("Attachment Size: ").bold() + (r.bodylength / megabyte).toFixed(precision)  + ' MB' + ' </br>'  +  
+                                      new String("Record Count: ").bold() +r.Number_of_Records + ' </br>' +  
+                                      new String("History Tracking Enabled: ").bold() + HistoryTrackingEnable ;
+                                      console.log('Size',r.bodylength / megabyte );
+                                      console.log('object',r.Object_Name);
+                                      console.log('--Label--',r.Object_Label);
+                    // add rows from the remoting results                  
+                    data.addRow([r.Object_Label, 'Must Have', r.Must_Have, toolTipData]);
+                    data.addRow([r.Object_Label, 'Good To Have', r.Good_To_Have, toolTipData]);
+                }
+                
+                var aggregateData = google.visualization.data.group(data, [0], [{
+                    type: 'number',
+                    label: 'Size',
+                    column: 2,
+                    aggregation: google.visualization.data.sum
+                }]);
+                
+                // Add options for view purpose 
+                var options = { tooltip: {isHtml: true ,ignoreBounds: false},
+                                title: 'Storage Usage',
+                                'width':350,
+                                'height':200,
+                                 'display':'block',
+                                 titleTextStyle : { fontSize: 20, bold: true },
+                                legend: {'position':'right','alignment':'center', 'display':'block'}
+                };
+                
+                var topLevel = true;
+                
+                var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+                var belowchart = new google.visualization.PieChart(document.getElementById('belowchart'));
+                
+                function draw(category) {
+                    if (topLevel) {
+                        // rename the title
+                        options.title = 'Storage Usage';
+                        // draw the chart using the aggregate data
+                        chart.draw(aggregateData, options);
+                    }
+                    else {
+                        var view = new google.visualization.DataView(data);
+                        // use columns "Name" and "Value"
+                        view.setColumns([1, 2]);
+                        // filter the data based on the category
+                        view.setRows(data.getFilteredRows([{column: 0, value: category}]));
+                        // rename the title
+                        options.title = 'Category: ' + category;
+                        // draw the chart using the view
+                        belowchart.draw(view, options);
+                    }
+                }
+
+                google.visualization.events.addListener(chart, 'select', function () {
+                if (topLevel) {
+                    var selection = chart.getSelection();
+                    // drill down if the selection isnt empty
+                    if (selection.length) {
+                        var category = aggregateData.getValue(selection[0].row, 0);
+                        topLevel = false;
+                        draw(category);
+                    }
+                }
+                else {
+                    // go back to the top
+                    topLevel = true;
+                    draw();
+                }
+            });
+            
+            draw();
+            },  {escape:false}
+                        );
+        }
+            
+             
+         </script>
+
+            <!-- Google Chart will be drawn in this DIV -->
+          
+            <div style="float:left; ">    
+            <!-- <a href="javascript:void(0)" class="closebtn" onclick="closeNav()"> -->
+            <!--    <img height="18" width="20" src="https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSvV-J0TlgEgTWuFk1w81uawxeIpqlecHq2_pujXuiLnCALYNXWgiPe8g"/> -->
+            <!-- </a> -->            
+            <div id="piechart" style="width: 350px; height: 200px;"></div>
+            <div id="belowchart" style="width: 350px; height: 200px;"></div>
+           
+            </div>
+            </div>
+            </div>
+         
+    </div>
+            
+</apex:component>

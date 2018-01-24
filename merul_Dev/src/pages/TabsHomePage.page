@@ -1,0 +1,83 @@
+<apex:page id="pageSubTab" controller="TabsHomePageController" tabstyle="Tabs__tab" action="{!onloadSubTabsController}" cache="true">
+
+<apex:stylesheet value="{!URLFOR($Resource.Tabs_homepage_subtabs_css, 'SubTabsCSS/style.css')}" />
+
+<apex:outputLink value="{!$Label.Tabs_SetPreferenceTab_URL}" rendered="{!isSetPreferenceTabLink}"
+                 styleClass="linkSetPref" >{!$Label.Tabs_SetPreferenceTab_Link}</apex:outputLink><br/>
+<apex:outputLink value="{!$Label.Tabs_AdminPanel_URL}" rendered="{!$Profile.Name==$Label.Tabs_AdminPanel_Profile}"
+                 styleClass="linkAdminPanel">{!$Label.Tabs_AdminPanel_Link}</apex:outputLink><br/>
+<apex:outputLabel rendered="{!isError}" value="Insufficient privilege to access Tabs. Please contact administrator." > </apex:outputLabel>
+
+<apex:tabPanel id="tabPanel_1" width="100%" reRender="tabDetail1,tabDetail2,tabDetail3,tabDetail4,tabDetail5" rendered="{!isDisplayTabPanel}"
+                tabClass="activeTab"     inactiveTabClass="inactiveTab" 
+          headerClass="headerFontTab" styleClass="styledTab" >
+    
+    <apex:tab label="{!pObjectLabel1}" name="pObjectLabel1" status="tabDetail1" rendered="{!isPreferenceTab1}">
+           
+      
+       <apex:enhancedList type="{!pObjectApi1}"  height="1000"/> 
+
+
+     </apex:tab>
+    
+    <apex:tab label="{!pObjectLabel2}" name="pObjectLabel2" status="tabDetail2" rendered="{!isPreferenceTab2}">
+                      
+       <apex:enhancedList type="{!pObjectApi2}"  height="1000"/> 
+
+    </apex:tab>
+    
+         
+    <apex:tab label="{!pObjectLabel3}" name="pObjectLabel3" status="tabDetail3" rendered="{!isPreferenceTab3}">
+         
+      <apex:enhancedList type="{!pObjectApi3}"  height="1000"/>
+
+   </apex:tab>
+    
+    
+    <apex:tab label="{!pObjectLabel4}" name="pObjectLabel4" status="tabDetail4"  rendered="{!isPreferenceTab4}" >
+      <apex:enhancedList type="{!pObjectApi4}"  height="1000"/> 
+
+
+    </apex:tab>
+    
+    
+    <apex:tab label="{!pObjectLabel5}" name="pObjectLabel5" status="tabDetail5" rendered="{!isPreferenceTab5}">
+                        
+             
+     <apex:enhancedList type="{!pObjectApi5}"  height="1000"/> 
+
+       
+    </apex:tab>
+        
+        
+    <apex:tab label="{!$Label.Tabs_More_Name}" name="More"  rendered="{!isRenderedMore}">
+        <apex:form >
+            <apex:pageBlock >
+                <apex:pageBlockTable value="{!alphabetsSet}" var="letter">
+                    <apex:column id="firstColumn" rowspan="40">                                 
+                        <apex:commandLink value="{!letter}" action="{!sortList}">
+                            <apex:param name="sortAlphabet" value="{!letter}"/>
+                        </apex:commandLink>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:form> 
+        
+        <apex:pageBlock >
+            <apex:pageBlockSection >
+                <apex:pageBlockTable styleClass="pgbkTableLeft" value="{!listNP1}" var="npTab">
+                    <apex:column styleClass="pgbkTableLeftColumn">
+                        <apex:outputLink value="/{!npTab.keyPrefix}">{!npTab.label}</apex:outputLink>
+                    </apex:column>
+                </apex:pageBlockTable>
+                <apex:pageBlockTable styleClass="pgbkTableRight" value="{!listNP2}" var="npTab">
+                    <apex:column styleClass="pgbkTableRightColumn">
+                        <apex:outputLink value="/{!npTab.keyPrefix}">{!npTab.label}</apex:outputLink>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:tab>
+</apex:tabPanel>
+
+</apex:page>

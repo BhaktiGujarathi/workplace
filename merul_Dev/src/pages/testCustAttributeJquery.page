@@ -1,0 +1,111 @@
+<apex:page controller="testCustAttributeJqueryExt">
+<apex:form >
+
+<style type="text/css">
+.withoutb {
+    border-top: none !important;
+}
+</style>
+ <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" / >
+
+
+ 
+<apex:pageBlock title="My Content" id="MyContent" >
+    
+ 
+<div id="abc">
+bsd
+</div>
+
+<table class="list" border="0" cellpadding="0" cellspacing="0">
+                
+               
+               <tr class="headerRow">
+                <th>sda <img src="/s.gif" class="moreArrow" onclick="sortCall();" data-sortopt='Asc'/> </th>
+                <th>sda <img src="/s.gif" class="moreArrow" onclick="sortCall();" data-sortopt='Asc'/> </th>
+                <!--
+                   data-sortopt ---- use to define custom attribut for hmtl.
+                   html-data-sortopt --- use to define custom attribut for apex components. 
+                    for accessing it in Jquer see in the script part               
+                -->
+                
+                </tr>       
+        
+                       
+                    <apex:repeat value="{!lAcc}" var="item">
+                        <tr class="dataRow">
+                           <td>  
+                            {!item.name}
+                           </td>                   
+                        </tr>
+                         <tr class="dataRow">
+                           <td>  
+                            {!item.name}
+                           </td>                   
+                        </tr>
+                    </apex:repeat>
+        
+
+</table>
+   
+</apex:pageBlock> 
+
+
+<script>
+ 
+/*
+Suppose on load you want to select some thing in selector of Jquery.
+Here direct reference to id will not work because we need DOM id.
+Open inspect elemet and find the converted DOM structure.For eg. Page block will be converted in <div>
+Then use ends with $ selector in context with div id. For eg. ($('div[id$=MyContent]')
+
+
+*/ 
+
+
+
+ 
+            function sortCall()
+            {
+                /*
+                  event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+                  pick up native html id of the selector
+                
+                */  
+                var element= event.target;
+                
+                
+                
+                //$(element).data("sortopt")   <-- to get the value of custom attribute.
+                //$(element).data("sortopt","Sample")   <-- to put the value of custom attribute.
+                // $(element).parent().html() <----- $(element).parent() return the inediate parent and.html acts as InnerHtml of Js
+                // $(element).parent().html("sample")  <------ assign the value to InnerHtml. 
+                 
+               
+                
+                
+                if(  $(element).hasClass("moreArrow")  &&  $(element).data("sortopt") == "Asc" )
+                {
+                        $(element).removeClass("moreArrow").addClass("fewerArrow");
+                        $(element).data("sortopt","Desc");
+                }
+                else
+                {
+                    if(  $(element).hasClass("fewerArrow")   )
+                    {
+                            $(element).removeClass("fewerArrow").addClass("moreArrow");
+                            $(element).data("sortopt","Asc");
+                    }
+                }
+                
+            
+                // Call aCTION FUNCTION FUNCTION METHOD TO SORT BY PASSING THE VALUE OF dEC AND FIELD NAME      
+                    
+            
+            }
+ 
+</script> 
+
+
+</apex:form>
+</apex:page>

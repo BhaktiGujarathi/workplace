@@ -1,0 +1,931 @@
+<apex:page contentType="text/html" showHeader="false" sidebar="false" docType="html-5.0"
+    controller="DETE_ProfilePageController" id="profilePg">
+
+    <c:DETE_PageHeader />
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!-- <link rel="stylesheet" href="/resources/demos/style.css"/> -->
+
+    <style>
+        /*.ui-autocomplete {
+            position: absolute !important;
+            left : 275px !important;
+            list-style-type : none !important;
+            height: 200px !important;
+            width : 70% !important;
+            overflow: auto !important;
+         } */
+
+         .lastNameInput {
+            min-width : 246px !important;
+         }
+
+         .dateInput {
+            white-space: nowrap;
+            flex: 10;
+        }
+
+        .profile-form .form-group .dateInput .form-control {
+            width: 100%;
+        }
+
+        .error-highlight {
+            border: solid red 1px !important;
+        }
+
+        .inputFieldCls {
+            width: inherit;
+            height: inherit;
+            border-width: 0px;
+            padding: 12 6 12 6;
+        }
+
+        .noPadding {
+            padding: 0px !important;
+        }
+        .ui-datepicker {
+            height: initial !important;
+            overflow-y: hidden !important;
+        }
+
+        .tooltip-inner {
+            text-align: left !important;
+        }
+
+    </style>
+
+    <head>
+        <title> {!IF(isLoggedIn, 'Update Profile', 'Create Profile')} </title>
+    </head>
+
+    <body id="page-top" class="index" onLoad="window.scroll(0, 410)">
+
+        <!-- Navigation -->
+        <c:DETE_NavigationComponent username="{!strUserName}"/>
+
+        <c:DETE_ForgotPassword />
+
+        <!-- Header -->
+        <header>
+            <div class="slider">
+                <h1>{!IF(isLoggedIn, 'Update', 'Create')} a Profile</h1>
+    <!--                        <img class="img-responsive" src="img/create-profile.jpg" alt=""> -->
+                <apex:image url="{!URLFOR($Resource.DETE_Style, 'img/banner-6.jpg')}" styleClass="img-responsive"/>
+            </div>
+        </header>
+
+        <!-- Portfolio Grid Section -->
+        <section id="learn-more">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <h2>Make it Personal</h2>
+                            <p>Make the most of your job search--creating a Talent Exchange Profile can help you reimagine your next career move and your next job.</p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <ul>
+                            <li>
+                                <b>Match your skills</b> and profile with new career and job opportunities in the State.
+                            </li>
+                                <li><b>Gain visibility</b> with prospective employers.</li>
+                                <li>Tap into <b>networking opportunities</b>     with like-minded professionals in your field.</li>
+                                <li><b>Connect with Talent and placement specialists</b> who can facilitate that next introduction.</li>
+                                <li><b>Get a head start</b> on setting up a Job Seeker account on the State's JobLink.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                        <h2>Privacy Notice:</h2>
+                        <p>We utilize information in your profile to match your skills, knowledge and
+                        experience with job requirements posted by prospective employers in the Delaware
+                        JobLink database.  We do not disclose information about individual visits or share
+                        other private information with outside parties without prior authorization from you
+                        and will not use this data for any commercial purpose.  However, we may also use
+                        aggregate job seeker information with prospective employers to help promote the
+                        availability of talent in the State of Delaware.</p>
+                        <br/>
+                        </div>
+                    </div>
+
+                    <div class="stepwizard col-md-offset-3">
+
+                        <div class="stepwizard-row setup-panel">
+                               <div class="stepwizard-step step-1">
+                                 <a href="#step-1" type="button" class="btn btn-primary" >1</a>
+<!--                            <p>Name and Address</p> -->
+                               </div>
+                               <div class="stepwizard-step step-2">
+                                <a href="#step-2" type="button" class="btn btn-default" disabled="disabled" >2</a>
+    <!--                          <p>Education Level</p> -->
+                               </div>
+                               <div class="stepwizard-step step-3">
+                                 <a href="#step-3" type="button" class="btn btn-default" disabled="disabled">3</a>
+    <!--                          <p>Most Recent Employment</p> -->
+                               </div>
+                         </div>
+                    </div>
+                    <br/><br/>
+
+                    <div class="profile-form">
+                        <apex:form id="profileForm" forceSSL="true">
+                            <div>
+        <!--                         <div class="form-group"> -->
+                                <div>
+                                    <apex:pageMessages id="errorMessages" > </apex:pageMessages>
+                                    <apex:outPutPanel id="onSaveMsg">
+                                        <script>
+                                            msgStr = '{!messageStr}';
+                                            redirectUrl = '{!redirectUrl}';
+                                        </script>
+                                    </apex:outPutPanel>
+                                </div>
+
+                                <form role="form" action="" method="post">
+                                    <div class="row setup-content" id="step-1">
+                                        <div class="col-xs-12">
+                                            <div class="profile-block">
+                                                <h4>1. Name and Address</h4>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="email">First Name</label>
+                                                                <apex:inputfield value="{!stdContact.Salutation}" styleclass="form-control nullValidatorCls" id="conSalutation"  rendered="{!!isLoggedIn}" onchange="verifyInputs(event);"/>&nbsp;
+                                                                <apex:inputfield value="{!stdContact.FirstName}" styleclass="form-control nullValidatorCls first-name-field" id="conFName" rendered="{!!isLoggedIn}" onchange="verifyInputs(event);"/>
+                                                                <apex:inputText value="{!stdContact.Salutation}" styleclass="form-control" disabled="true" rendered="{!isLoggedIn}" />&nbsp;
+                                                                <apex:inputText value="{!stdContact.FirstName}" styleclass="form-control first-name-field" disabled="true" rendered="{!isLoggedIn}"/>
+
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="email">Last Name</label>
+                                                                <apex:inputfield value="{!stdContact.LastName}" styleclass="form-control nullValidatorCls" id="conLName" rendered="{!!isLoggedIn}" onchange="verifyInputs(event);"/>
+                                                                <apex:inputText value="{!stdContact.LastName}" styleclass="form-control" disabled="true" rendered="{!isLoggedIn}"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <div class="form-group">
+                                                                <label for="email" >Date of Birth</label>
+        <!--                                                         <apex:input type="date" value="{!conDOBDate}" id="conDOB" styleclass="form-control"  onchange="verifyInputs(event);" />  -->
+        <!--                                                             <apex:input type="date" value="{!conDOBDate}" id="conDOB" styleclass="form-control nullValidatorCls"  onchange="verifyInputs(event);" /> -->
+                                                                    <apex:inputText value="{!conDOBDate}" id="datepicker" styleclass="form-control nullValidatorCls dobCls"
+                                                                     onchange="verifyInputs(event);" onfocus="DatePicker.pickDate(false, this , false);"
+                                                                     onMouseDown="DisableRightClick(event);" onKeyDown="return DisableCtrlKey(event)" />
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <apex:outputPanel rendered="{!!isLoggedIn}">
+                                                        <div class="row">
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label for="email">Password
+                                                                         <!-- <i class="fa fa-question-circle tooltip-icon" title="1. Password must contain 8 to 20 characters. 2. At least one special character (!#$%-_=+<>) and number!" /> -->
+                                                                         <button type="button" class="fa fa-question-circle" data-toggle="tooltip" data-placement="right"
+                                                                         title="Password must contain 8 to 20 characters. At least one special character (!#$%-_=+<>) and number!"/>
+                                                                     </label>
+                                                                    <apex:inputSecret value="{!passwordStr}" styleclass="form-control nullValidatorCls pass1" id="conPswrd" onchange="verifyInputs(event);" />
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label for="email">Confirm Password</label>
+                                                                    <apex:inputSecret value="{!confirmPswrdStr}" styleclass="form-control nullValidatorCls pass2" id="conCnfrmPswrd"
+                                                                        onKeyDown="return DisableCtrlKey(event)" onMouseDown="DisableRightClick(event)" onchange="verifyInputs(event);" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </apex:outputPanel>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label for="email">Address</label>
+        <!--                                                         <apex:inputtext value="{!conAddress1Str}" styleclass="form-control" id="conAddr1" /> -->
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control  nullValidatorCls" value="{!stdContact.Address1__c}" id="conAddr1" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12 css-flex">
+                                                            <div class="form-group">
+                                                                <label for="email">Address 2</label>
+        <!--                                                         <apex:inputtext value="{!conAddress2Str}" styleclass="form-control" id="conAddr2" /> -->
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control" value="{!stdContact.Address2__c}" id="conAddr2" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="email">City/ Town</label>
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control  nullValidatorCls" value="{!stdContact.MailingCity}" id="conCity" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="email"> Current State/Province </label>
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control  nullValidatorCls" value="{!stdContact.MailingState}" id="conState" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="email">ZIP/Postal Code</label>
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control  nullValidatorCls" value="{!stdContact.MailingPostalCode}" id="conZipCode" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="form-group">
+                                                                <label for="phone">Phone Number</label>
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputfield styleclass="form-control  nullValidatorCls phn" value="{!stdContact.Phone}" id="conPhone" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="{!IF(isLoggedIn, 'col-md-12', 'col-md-6')}">
+                                                            <div class="form-group">
+                                                                <label for="email">Email Address</label>
+                                                                <apex:inputtext value="{!emailStr}" styleclass="form-control nullValidatorCls email1" id="conEmail"
+                                                                    disabled="{!IF(isLoggedIn, true, false)}" onchange="verifyInputs(event);"/>
+        <!--                                                         <apex:inputtext value="{!emailStr}" styleclass="form-control" id="conEmail" onchange="verifyInputs(event);" /> -->
+                                                            </div>
+                                                        </div>
+                                                        <apex:outputPanel rendered="{!!isLoggedIn}">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label for="email">Confirm Email Address</label>
+                                                                    <apex:inputtext value="{!confirmEmailStr}" styleclass="form-control nullValidatorCls email2" id="conCnfrmEmail" onKeyDown="return DisableCtrlKey(event)" onMouseDown="DisableRightClick(event)" onchange="verifyInputs(event);" />
+                                                                </div>
+                                                            </div>
+                                                        </apex:outputPanel>
+                                                    </div>
+
+                                                    <h4>2. Education Level (if 'other' indicate in the box below)</h4>
+                                                    <div class="row">
+                                                        <div class="col-md-12 css-flex">
+                                                            <div class="form-group">
+                                                                <label for="email">Education</label>
+                                                                <apex:actionRegion >
+                                                                    <apex:outputPanel styleclass="form-control noPadding">
+
+                                                                        <apex:inputfield styleclass="form-control  nullValidatorCls noPadding" value="{!stdContact.Education__c}">
+                                                                            <apex:actionSupport event="onchange" reRender="educationPanel" oncomplete="verifyInputs(event); return false;"/>
+                                                                        </apex:inputField>
+                                                                    </apex:outputPanel>
+                                                                </apex:actionRegion>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <apex:outputPanel id="educationPanel">
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group">
+                                                                    <label for="email"></label>
+                                                                    <apex:outputPanel styleclass="form-control noPadding" rendered="{!stdContact.Education__c == 'Other (please specify)'}">
+                                                                        <apex:inputField styleclass="form-control nullValidatorCls" value="{!stdContact.Other_Education__c}" onchange="verifyInputs(event);" />
+                                                                    </apex:outputPanel>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </apex:outputPanel>
+
+                                                    <h4>3. Most Recent Employment</h4>
+        <!--                                             <apex:actionFunction name="propertySetter" action="{!setParam}" rerender="none"/> -->
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label for="positionautoComplete">Position/ Title</label>
+                                                                <apex:inputHidden id="hdnOccupationValue" value="{!occupationTitle}" />
+                                                                <apex:inputText value="{!occupationString}" id="positionautoComplete" styleclass="form-control nullValidatorCls" onchange="verifyInputs(event);" />
+
+                                                                <script>
+                                                                    //Occupation autocomplete
+
+                                                                    var autoCompleteTextBoxId = "input[id$='positionautoComplete']";
+                                                                    var queryTerm;
+                                                                    //auto complete method
+                                                                    $(autoCompleteTextBoxId).autocomplete({
+                                                                    minLength: 1,
+                                                                    source: function(request, response) {
+                                                                        queryTerm = request.term;
+                                                                        var sObjects;
+                                                                        var searchText = $(autoCompleteTextBoxId).val();
+                                                                        DETE_ProfilePageController.getOccupations(searchText,function(result, event){
+                                                                            if(event.type == 'exception') {
+                                                                                  alert(event.message);
+                                                                            } else {
+                                                                                 sObjects = result;
+                                                                                 response($.map(sObjects , function (value, key) {
+                                                                            return {
+                                                                                label: value.Title__c,
+                                                                                value: value.Title__c
+                                                                            }
+                                                                        }));
+                                                                            }
+                                                                        });
+                                                                    },
+                                                                    focus: function( event, ui ) {
+                                                                        $(autoCompleteTextBoxId).val(ui.item.value);
+                                                                        return false;
+                                                                    },
+                                                                    select: function( event, ui ) {
+                                                                            $(autoCompleteTextBoxId).val(ui.item.value);
+                                                                            $('user').val(ui.item.value);
+                                                                            return false;
+                                                                        }
+                                                                    }).data( "ui-autocomplete" )._renderItem = function( ul, item ) {
+                                                                        ul.style="";
+                                                                        return $( "<li style="+"background-color:WHITE;"+"></li>" ).data( "ui-autocomplete-item", item ).append( "<span>" + item.value+ "</span>" ).appendTo( ul );
+                                                                        // For now which just want to show the person.given_name in the list.
+                                                                        };
+                                                                </script>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label for="email">Company</label>
+        <!--                                                         <input type="input" class="form-control" id="email" /> -->
+                                                                <apex:outputPanel styleclass="form-control noPadding">
+                                                                    <apex:inputField styleclass="form-control nullValidatorCls"  value="{!stdContact.Company__c}" id="email" onchange="verifyInputs(event);" />
+                                                                </apex:outputPanel>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <h4>4. Select all technology from the list below that most closely aligns with your experience.</h4>
+                                                    <p>Please enter a minimum of 3.</p>
+                                                    <div class="row">
+                                                        <apex:repeat value="{!hotTechnologies}" var="technology">
+                                                            <div class="checkbox-block col-md-4">
+                                                                <apex:inputCheckbox value="{!technology.isSelected}" styleclass="form-control checkbox-custom"  />
+                                                                <label class="checkbox-custom-label">{!technology.title}</label>
+                                                            </div>
+                                                        </apex:repeat>
+                                                        <div class="checkbox-block col-md-4">
+                                                                <label class="checkbox-custom-label">Other (please specify)</label>
+                                                                <apex:inputText styleclass="form-control nullValidatorCls otherOpt" value="{!otherTech}" onchange="verifyInputs(event);" />
+                                                            </div>
+                                                    </div>
+<!--                                             <apex:outputPanel id="technologyPanel"> -->
+<!--                                                 <div class="row"> -->
+<!--                                                     <div class="col-md-12"> -->
+<!--                                                         <div class="form-group"> -->
+<!--                                                             <label for="email"></label> -->
+<!-- <!--                                                             <apex:outputPanel styleclass="form-control noPadding" rendered="{!isOtherTech}"> -->
+<!-- <!--                                                                 <apex:inputText styleclass="nullValidatorCls" value="{!otherTech}" onchange="verifyInputs(event);" /> -->
+<!-- <!--                                                             </apex:outputPanel> -->
+<!--                                                             <apex:inputText styleclass="form-control nullValidatorCls" value="{!otherTech}" rendered="{!isOtherTech}" onchange="verifyInputs(event);" /> -->
+<!--                                                         </div> -->
+<!--                                                     </div> -->
+<!--                                                 </div> -->
+<!--                                             </apex:outputPanel> -->
+                                                </div>
+                                            <button class="btn btn-md btn-submit nextBtn pull-right" type="button" id="next1" onclick="validateInputs('#step-1');">Next</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row setup-content" id="step-2">
+                                        <div class="col-md-12">
+                                            <h4>5. Select the general technology groups from the list below that most closely aligns with your experience.</h4>
+                                            <p>Please enter a minimum of 3.</p>
+                                            <div class="row" id="gTech">
+                                                <apex:repeat value="{!generalTechnologies}" var="technology">
+                                                    <div class="checkbox-block col-md-4">
+                                                        <apex:inputCheckbox value="{!technology.isSelected}" styleclass="form-control checkbox-custom" />
+                                                        <label class="checkbox-custom-label">{!technology.title}</label>
+                                                    </div>
+                                                </apex:repeat>
+    <!--                                             <apex:actionRegion > -->
+                                                    <div class="checkbox-block col-md-4">
+    <!--                                                     <apex:inputCheckbox value="{!isOtherGeneralTechnology}" styleclass="form-control checkbox-custom"  > -->
+    <!--                                                         <apex:actionSupport event="onchange" reRender="generalTechnologyPanel"/> -->
+    <!--                                                     </apex:inputCheckbox> -->
+                                                        <label class="checkbox-custom-label">Other (please specify)</label>
+                                                        <apex:inputText styleclass="form-control nullValidatorCls otherOpt" value="{!otherGeneralTechnology}" onchange="verifyInputs(event);" />
+                                                    </div>
+    <!--                                             </apex:actionRegion> -->
+                                            </div>
+
+                                        <!-- <apex:outputPanel id="generalTechnologyPanel"> -->
+                                            <!-- <div class="row"> -->
+                                                <!-- <div class="col-md-12"> -->
+                                                    <!-- <div class="form-group"> -->
+                                                        <!-- <label for="email"></label> -->
+                                                        <!-- <apex:inputText styleclass="form-control nullValidatorCls" value="{!otherGeneralTechnology}" rendered="{!isOtherGeneralTechnology}" onchange="verifyInputs(event);" /> -->
+                                                    <!-- </div> -->
+                                                <!-- </div> -->
+                                            <!-- </div> -->
+                                        <!-- </apex:outputPanel> -->
+
+                                            <h4>6. Select all knowledge from the list below that most closely aligns with your experience.</h4>
+                                            <div class="row" id="sTech">
+                                                <apex:repeat value="{!knowledgeList}" var="technology">
+                                                    <div class="checkbox-block col-md-4">
+                                                        <apex:inputCheckbox value="{!technology.isSelected}" styleclass="form-control checkbox-custom" />
+                                                        <label class="checkbox-custom-label">{!technology.title}</label>
+                                                    </div>
+                                                </apex:repeat>
+    <!--                                             <apex:actionRegion > -->
+                                                    <div class="checkbox-block col-md-4">
+    <!--                                                     <apex:inputCheckbox value="{!isOtherKnowledge}" styleclass="form-control checkbox-custom"  > -->
+    <!--                                                         <apex:actionSupport event="onchange" reRender="knowledgePanel"/> -->
+    <!--                                                     </apex:inputCheckbox> -->
+                                                        <label class="checkbox-custom-label">Other (please specify)</label>
+                                                        <apex:inputText styleclass="form-control nullValidatorCls otherOpt" value="{!otherKnowledge}" onchange="verifyInputs(event);" />
+                                                    </div>
+    <!--                                             </apex:actionRegion> -->
+                                            </div>
+<!--                                         <apex:outputPanel id="knowledgePanel"> -->
+<!--                                             <div class="row"> -->
+<!--                                                 <div class="col-md-12"> -->
+<!--                                                     <div class="form-group"> -->
+<!--                                                         <label for="email"></label> -->
+<!--                                                         <apex:inputText styleclass="form-control nullValidatorCls" value="{!otherKnowledge}" rendered="{!isOtherKnowledge}" onchange="verifyInputs(event);" /> -->
+<!--                                                     </div> -->
+<!--                                                 </div> -->
+<!--                                             </div> -->
+<!--                                         </apex:outputPanel> -->
+
+                                            <h4>7. Please list any additional skills, knowledge, or technology here:</h4>
+                                            <div>
+                                                <div class="form-group">
+    <!--                                                 <apex:outputPanel styleclass="form-control"> -->
+    <!--                                                     <apex:inputfield styleclass="form-control" value="{!stdContact.Additional_Abilities__c}"  id="conAbilities"/> -->
+    <!--                                                 </apex:outputPanel> -->
+                                                    <apex:inputfield styleclass="form-control nullValidatorCls" value="{!stdContact.Additional_Abilities__c}"  id="conAbilities" onchange="verifyInputs(event);" />
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-md btn-submit prevBtn pull-left" type="button">Previous</button>
+                                            <button class="btn btn-md btn-submit nextBtn pull-right" type="button" onclick="validateInputs('#step-2');">Next</button>
+                                        </div>
+                                    </div>
+
+                                    <div class="row setup-content" id="step-3">
+                                        <div class="col-md-12">
+
+                                            <h4>8. What salary range would you consider for your next role?</h4>
+                                            <div class="row" id="salarySec">
+                                                <apex:repeat value="{!salaryRangeLst}" var="salary">
+                                                <div class="checkbox-block col-md-4">
+                                                    <apex:inputCheckbox value="{!salary.isSelected}" styleclass="form-control checkbox-custom" />
+                                                    <label class="checkbox-custom-label">{!salary.title}</label>
+                                                </div>
+                                            </apex:repeat>
+                                        </div>
+
+                                        <h4>9. Which industries would you consider for your next role</h4>
+                                        <div class="row" id="industrySec">
+                                            <apex:repeat value="{!industryLst}" var="industry">
+                                                <div class="checkbox-block col-md-4">
+                                                    <apex:inputCheckbox value="{!industry.isSelected}" styleclass="form-control checkbox-custom" />
+                                                    <label class="checkbox-custom-label">{!industry.title}</label>
+                                                </div>
+                                            </apex:repeat>
+                                        </div>
+
+
+                                        <h4>10. What are your major priorities for your next role?</h4>
+                                        <div class="form-group">
+                                            <apex:inputfield value="{!stdContact.Priorities_for_next_Role__c}" styleclass="form-control nullValidatorCls" id="conPriority" onchange="verifyInputs(event);"/>
+                                        </div>
+
+                                        <h4>11. What is your willingness to travel to your next job?</h4>
+                                        <p>Select the highest amount you are willing to travel.</p>
+                                        <div class="form-group">
+                                            <apex:inputfield value="{!stdContact.Travelling_Distance__c}" styleclass="form-control nullValidatorCls" id="conTravel" onchange="verifyInputs(event);"/>
+                                        </div>
+
+                                        <h4>12. What method of communication would you prefer for any additional correspondence?</h4>
+                                        <div class="form-group">
+                                            <!-- <apex:inputfield value="{!stdContact.Mode_of_Communication__c}" styleclass="form-control nullValidatorCls" id="conCommunication" onchange="verifyInputs(event);"/> -->
+                                            <apex:actionRegion >
+                                                <apex:inputfield value="{!stdContact.Mode_of_Communication__c}" styleclass="form-control nullValidatorCls" id="conCommunication">
+                                                    <apex:actionSupport event="onchange" reRender="OtherCommPanel" oncomplete="verifyInputs(event);"/>
+                                                </apex:inputField>
+                                            </apex:actionRegion>
+                                        </div>
+
+                                        <apex:outputPanel id="OtherCommPanel">
+                                            <div class="form-group">
+                                                <apex:outputPanel styleclass="form-control noPadding" rendered="{!stdContact.Mode_of_Communication__c == 'Other(please specify)'}">
+                                                    <apex:inputField styleclass="form-control nullValidatorCls" value="{!stdContact.Other_Mode_of_Communication__c}" onchange="verifyInputs(event);" />
+                                                </apex:outputPanel>
+                                            </div>
+                                        </apex:outputPanel>
+
+                                        <h4>13. Would you like to be included in future outreach opportunities (such as job alerts or postings)?</h4>
+                                        <div class="form-group">
+                                            <apex:inputfield value="{!stdContact.Enable_Notifications__c}" styleclass="form-control nullValidatorCls" id="conNotifications" onchange="verifyInputs(event);"/>
+                                        </div>
+
+                                        <h4>14. Would you be interested in joining a community of entrepreneurs?</h4>
+                                        <div class="form-group">
+                                            <apex:inputfield value="{!stdContact.Interested_in_community_of_entrepreneurs__c}"
+                                            styleclass="form-control nullValidatorCls" onchange="verifyInputs(event);"/>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-lg-12">
+                                        <div>
+                                            <div class="checkbox-block">
+                                                <button class="btn btn-md btn-submit prevBtn pull-left" type="button">Previous</button>
+<!--                                                 <apex:commandButton styleclass="btn btn-md btn-submit nextBtn pull-right" value="Submit" action="{!submitprofile}" /> -->
+                                                <!-- <button class="btn btn-md btn-submit nextBtn pull-right" type="button" onclick="submitProfile();">Submit</button> -->
+                                                <button class="btn btn-md btn-submit nextBtn pull-right" type="button" onclick="validateInputs('#step-3'); return false;" rerender="none" >Submit</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                               </div>
+                            </form>
+
+                            <!-- <apex:inputHidden id="onSaveMsg" value="{!messageStr}"/> -->
+
+<!--                             <apex:actionFunction name="saveOnSubmit" action="{!submitprofile}" rerender="profileForm"> -->
+                            <apex:actionFunction name="saveOnSubmit" action="{!submitprofile}" rerender="errorMessages,onSaveMsg" oncomplete="showMessage();">
+                          </apex:actionFunction>
+                        </div>
+
+                        <!-- <apex:actionFunction name="submitProfile" action="{!submitprofile}" rerender="none"/>-->
+
+                    </apex:form>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade " id="errorPopup" role="dialog" >
+                <div class="modal-dialog">
+                <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"> &times;</button>
+                        </div>
+                            <p class="modal-body">
+                            </p>
+                        <div class="modal-footer">
+                            <button type="button" data-dismiss="modal" class="btn btn-default btn-submit btn-jobs"> Ok </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Footer -->
+       <c:DETE_PageFooter />
+
+    </body>
+
+<!--     </html> -->
+
+    <script>
+         $(document).ready(function () {
+
+             $("[data-toggle='tooltip']").tooltip();
+            $(".profile-block").on("change", ".hasDatepicker", function () {
+                   $(".ui-datepicker").hide();
+            });
+
+            $('input[id$=datepicker]').datepicker({
+                dateFormat: 'mm/dd/yy',
+                changeMonth: true,
+                changeYear: true,
+                yearRange: "1960:2016" /*,
+                showButtonPanel : true */
+            });
+
+            $('input.hasDatepicker').on('drop', function(event) {
+                event.preventDefault();
+              });
+
+                var navListItems = $('div.setup-panel div a'),
+                allWells = $('.setup-content'),
+                allPrevBtn = $('.prevBtn'),
+                allNextBtn = $('.nextBtn');
+
+              allWells.hide();
+
+              navListItems.click(function (e) {
+                  e.preventDefault();
+                  var $target = $($(this).attr('href')),
+                          $item = $(this);
+                if (!$item.attr("disabled")) {
+                      navListItems.removeClass('btn-primary').addClass('btn-default');
+                      $item.addClass('btn-primary');
+                      //$(this).addClass('disabled');
+                      allWells.hide();
+                      $target.show();
+                      $target.find('input:eq(0)').focus();
+                  }
+              });
+
+
+          allNextBtn.click(function(){
+              var curStep = $(this).closest(".setup-content"),
+                  curStepBtn = curStep.attr("id"),
+                  nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+                  curInputs = curStep.find("input[type='text'],input[type='url']"),
+                  isValid = true;
+
+                //   $(".form-group").removeClass("has-error");
+                //   for(var i=0; i<curInputs.length; i++){
+                //       if (!curInputs[i].validity.valid){
+                //           isValid = false;
+                //           $(curInputs[i]).closest(".form-group").addClass("has-error");
+                //       }
+                //   }
+
+                if(validationErrorMsg != '') {
+                     isValid = false;
+                }
+
+                  if (isValid) {
+                      console.log('>>>',curStep);
+                      console.log('>>>',curStepBtn);
+                      $(".stepwizard-step." + curStepBtn ).addClass("success");
+                      nextStepWizard.removeAttr('disabled').trigger('click');
+                      $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().children("a").attr("disabled", "disabled");
+
+                  }
+
+                  if(isValid && curStepBtn == "step-3") {
+                      console.log('No error.. Go for Submit');
+                      saveOnSubmit();
+                  }
+              });
+
+              allPrevBtn.click(function(){
+              var curStep = $(this).closest(".setup-content"),
+                  curStepBtn = curStep.attr("id"),
+                  prevStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().prev().children("a"),
+                  curInputs = curStep.find("input[type='text'],input[type='url']"),
+                  isValid = true;
+
+                  $(".form-group").removeClass("has-error");
+                  for(var i=0; i<curInputs.length; i++){
+                      if (!curInputs[i].validity.valid){
+                          isValid = false;
+                          $(curInputs[i]).closest(".form-group").addClass("has-error");
+                      }
+                  }
+
+                  if (isValid) {
+
+                      prevStepWizard.removeAttr('disabled').trigger('click');
+                      $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().children("a").attr("disabled", "disabled");
+                  }
+              });
+
+              $('div.setup-panel div a.btn-primary').trigger('click');
+
+
+        });
+
+        $('.disabled a').on('click', function(e) { console.log('11111'); e.preventDefault() });
+          function DisableRightClick(event){
+        if (event.button==2)
+        {
+            alert("Right Click is not Allowed");
+        }
+      }
+     function DisableCtrlKey(e){
+
+        var code = (document.all) ? event.keyCode:e.which;
+         if (parseInt(code)==17){
+            alert("Please type your input");
+        }
+    }
+
+       var techCount;
+       var gTechCount;
+       var sTechCount;
+       var industryCount;
+       var salaryCount;
+       var validationErrorMsg;
+       var msgStr;
+       var redirectUrl;
+
+    var validateInputs = function(selector) {
+
+        validationErrorMsg = '';
+       //$($(selector).find("input.form-control")).each(function(index, value) {
+       $($(selector).find("input.nullValidatorCls")).each(function(index, value) {
+            if ( !$(value).val().trim() && !$(value).hasClass("otherOpt") ) {
+                $(value).addClass('error-highlight');
+            } else {
+                $(value).removeClass('error-highlight msg-Added');
+            }
+        });
+
+        $($(selector).find("select.nullValidatorCls")).each(function(index, value) {
+            if ( !$(value).val() ) {
+                $(value).addClass('error-highlight');
+            } else {
+                $(value).removeClass('error-highlight');
+            }
+        });
+
+        $($(selector).find("textarea.nullValidatorCls")).each(function(index, value) {
+
+            if ( !$(value).val().trim() ) {
+                $(value).addClass('error-highlight');
+            } else {
+                $(value).removeClass('error-highlight msg-Added');
+            }
+        });
+
+        if(selector == '#step-1') {
+            techCount = $($(selector).find('.checkbox-custom:checked')).length;
+
+            if('{!strUserName}' == null || '{!strUserName}' =='') {
+                
+                if(false == isPasswordValid( $('#step-1 .pass1').val() ) ){
+                    $('#step-1 .pass1, #step-1 .pass2').addClass('error-highlight msg-Added');
+                    validationErrorMsg = validationErrorMsg + 'Password policies are not satisfed. <br/>';
+                        // + '(Password must contain 8 to 20 characters. At least one special character (!#$%-_=+<>) and number!) <br/>';
+
+                } else if(false == validatePassword()) {
+                    $('#step-1 .pass1, #step-1 .pass2').addClass('error-highlight msg-Added');
+                    validationErrorMsg = validationErrorMsg + 'Password does not match. <br/>';
+                }
+
+                var validEmail = true;
+
+                if( false == isValidEmailAddress( $('#step-1 .email1').val() ) ) {
+                    $('#step-1 .email1').addClass('error-highlight msg-Added');
+                    validationErrorMsg = validationErrorMsg + 'Email is not Valid<br/>';
+                    validEmail = false;
+                }
+
+                if( false == isValidEmailAddress( $('#step-1 .email2').val() ) ) {
+                    $('#step-1 .email2').addClass('error-highlight msg-Added');
+                    validationErrorMsg = validationErrorMsg + 'Confirm Email is not Valid<br/>';
+                    validEmail = false;
+                }
+
+                if(validEmail == true && !validateEmail()) {
+                    $('#step-1 .email1, #step-1 .email2').addClass('error-highlight msg-Added');
+                    validationErrorMsg = validationErrorMsg + 'Emails does not match.<br/>';
+                }
+            }
+            
+            if(false == isDOBValid( $('#step-1 .dobCls').val() ) ) {
+	            $('#step-1 .dobCls').addClass('error-highlight msg-Added');
+	            validationErrorMsg = validationErrorMsg + 'Birthdate should be in MM/DD/YYYY format. <br/>';
+            }
+
+            if ( $($(selector).find('.otherOpt')).val().trim().length == 0 && techCount < 3 ) {
+                validationErrorMsg = validationErrorMsg + 'Select minimum of 3 Technologies.<br/>';
+            }
+        }
+        if(selector == '#step-2') {
+            if($($(selector)).find('#gTech')){
+                gTechCount = $($('#gTech').find('.checkbox-custom:checked')).length;
+            }
+            if($($(selector)).find('#sTech') ){
+                sTechCount = $($('#sTech').find('.checkbox-custom:checked')).length;
+            }
+
+            if ( $($(selector).find("#gTech").find('.otherOpt')).val().trim().length == 0
+              && gTechCount <3 ) {
+                validationErrorMsg = validationErrorMsg + 'Select minimum of 3 Technologies.<br/>';
+            }
+
+            if ( $($(selector).find("#sTech").find('.otherOpt')).val().trim().length == 0
+               && sTechCount < 1 ) {
+                validationErrorMsg = validationErrorMsg + 'Select minimum of 1 knowledge.<br/>';
+            }
+        }
+
+        if(selector == '#step-3') {
+            if($($(selector)).find('#industrySec')){
+                industryCount = $($('#industrySec').find('.checkbox-custom:checked')).length;
+            }
+
+            if($($(selector)).find('#salarySec')){
+                salaryCount = $($('#salarySec').find('.checkbox-custom:checked')).length;
+            }
+
+            if ( industryCount < 1) {
+                validationErrorMsg = validationErrorMsg + 'Select Industry.<br/>';
+            }
+
+            if ( salaryCount < 1) {
+                validationErrorMsg = validationErrorMsg + 'Select Salary range.<br/>';
+            }
+        }
+
+        if ( $($($(selector).find('.error-highlight')).not('.msg-Added')).length > 0 ) {
+            validationErrorMsg = validationErrorMsg + 'Complete all highlighted information.<br/>';
+        }
+
+        if(validationErrorMsg != '') {
+            validationErrorMsg = '<h4>Looks like you need to provide a bit more information as specified '+
+            ' below and click next to proceed further:</h4><br/><br/>' + validationErrorMsg;
+
+            var errorPopup = $('#errorPopup');
+            errorPopup.find('.modal-body').html(validationErrorMsg);
+            errorPopup.modal('show');
+        }
+
+    }
+
+    var verifyInputs = function(event) {
+        var inputVal =  $(event.target) || {};
+            inputVal.removeClass('msg-Added');
+            if ( inputVal.val().trim() ) {
+                inputVal.removeClass('error-highlight');
+            }
+    }
+
+    var validatePassword = function() {
+        return ($('#step-1 .pass1').val() == $('#step-1 .pass2').val());
+    }
+
+    var validateEmail = function() {
+        return ($('#step-1 .email1').val() == $('#step-1 .email2').val());
+    }
+
+    var isValidEmailAddress = function(emailAdd) {
+        if(emailAdd == '') {
+            return true;
+        }
+
+        var pattern = /^\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b$/i;
+        return(pattern.test(emailAdd));
+    }
+
+    var isPasswordValid = function(pswd) {
+        if(pswd == '') {
+            return true;
+        }
+        var pattern = /(?=.*[A-Za-z])(?=.*\d)(?=.*[!#$%+=<>_\-])[A-Za-z\d!#$%+=<>_\-]{8,20}/;
+        return(pattern.test(pswd));
+    }
+    
+    var isDOBValid = function(birthdate) {
+        if(birthdate == '') {
+            return true;
+        }
+        var pattern = /^([0]?[1-9]|[1][0-2])[./-]([0]?[1-9]|[1|2][0-9]|[3][0|1])[./-]([0-9]{4})$/;
+        return(pattern.test(birthdate));
+    }
+    
+    var showMessage = function() {
+        console.log('Complete' , msgStr, "{!isLoggedIn}", redirectUrl);
+        if(msgStr == '') {
+            window.scroll(0, 810);
+            return;
+        }
+
+        var errorPopup = $('#errorPopup');
+        errorPopup.find('.modal-body').html(msgStr);
+
+        if("{!isLoggedIn}" != "true" && redirectUrl != '') {
+            errorPopup.find('.btn-submit').text('Continue');
+            errorPopup.find('.btn-submit').addClass('redirect');
+            redirectToJobResult(redirectUrl);
+        }
+
+        errorPopup.modal('show');
+    }
+    var redirectToJobResult = function(redirectUrl) {
+        $('.modal .btn-submit.redirect').on("click", function(){
+            window.open(''+redirectUrl, '_self');
+        });
+    }
+
+    </script>
+
+</apex:page>

@@ -1,0 +1,1082 @@
+<apex:component controller="GRIDAttachmentController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!attchmntEditAllFlag}" access="global" />
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+    <apex:includeScript value="/support/console/30.0/integration.js"/>
+
+    <apex:form id="Attachmentform" styleClass="records" title="attachment">
+        <style>
+            .buttons {
+                text-align: center;
+            }
+
+            #attachmentButtons {
+                padding: 8px 20px;
+                padding-bottom: 10px;
+            }
+
+            #dragDropSection {
+                text-align: center;
+                padding: 1.125em;
+            }
+
+            #droplabel {
+                padding-left: 43%;
+            }
+
+            /*#dropbox {
+                width: 80%;
+                height:22px;
+                padding: 1.145em;
+                margin: 0 auto;
+                margin-bottom:14px;
+                border: 6px white double;
+                color:white;
+                font:weight:bold;
+                font-size:14px;
+                border-color: white !important;
+                border-radius:20px;
+                background-color:#69c;
+            }*/
+
+            #dropbox {
+                width: 90%;
+                /*height:30px;*/
+                padding: 1.145em;
+                margin: 0 auto;
+                margin-bottom:14px;
+                border: 6px white double;
+                color:white;
+                font-weight:bold;
+                font-size:14px;
+                border-color: white !important;
+                border-radius:20px;
+                background-color:#69c;
+            }
+
+            #dropbox {
+                width: 80% !important;
+                padding: 25px !important;
+                margin: 0 auto !important;
+                margin-bottom: 14px !important;
+                border: 1px dashed #6d6d6d !important;
+                color: #69c !important;
+                border-radius: 10px !important;
+                background-color: white !important;
+            }
+
+            #droplabel{
+                font-weight: 600!important;
+                font-size: 15px!important;
+                color: #909090;
+            }
+
+            #preview {
+                display: none;
+                margin: 1.125em auto;
+                border: 1px solid pink;
+            }
+
+            #loading{
+                color:#32B2DB;
+            }
+
+            [title~=attachment] .fundApp table, [title~=attachment] th, [title~=attachment] td {
+                line-height: 1.6em!important;
+            }
+
+            [title~=attachment] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+                margin-top: -3px!important;
+            }
+
+            th a {
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+            }
+
+            [title~=attachment] .btn {
+                font-size: 12px !important;
+                /*line-height: 1.875rem!important;*/
+                height: 29px;
+                text-decoration: none !important;
+                color: #fff !important;
+                transition: color 50ms linear, background-color 50ms linear;
+                background: #0070d2 !important;
+                font-family: 'Salesforce Sans', Arial, sans-serif !important;
+                vertical-align: middle !important;
+                padding: 0px 10px !important;
+                font-weight: 500 !important;
+                border-radius: 0.25rem !important;
+                margin: 0 4px !important;
+                border-color: #d8dde6 !important;
+            }
+
+            [title~=attachment] .attachmentOtherButton {
+                background: #4bca81 !important;
+            }
+
+            [title~=attachment] .btnNextPreviPage {
+                left: 115px;
+                position: relative;
+                height: 25px;
+                /*line-height: initial!important;*/
+                font-size: 12px!important;
+                color: #0070d2!important;
+                background: #fff!important;
+            }
+
+            [title~=attachment] .btnNextPreviPage:hover {
+                background-color: #f4f6f9!important;
+            }
+
+            [title~=attachment] input[type="email"],
+            [title~=attachment] input[type="number"],
+            [title~=attachment] input[type="password"],
+            [title~=attachment] input[type="tel"],
+            [title~=attachment] input[type="url"],
+            [title~=attachment] input[type="text"] {
+                background-color: #fff!important;
+                color: #16325c!important;
+                border: 1px solid #d8dde6!important;
+                border-radius: 4px!important;
+                transition: border .1s linear,background-color .1s linear!important;
+                height:28px!important;
+                padding-left: 8px!important;
+                padding-right: 8px!important;
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+                font-size: 12px;
+            }
+
+            [title~=attachment] select{
+                background-color: #fff!important;
+                color: #16325c!important;
+                border: 1px solid #d8dde6!important;
+                border-radius: 4px!important;
+                transition: border .1s linear,background-color .1s linear!important;
+                height:28px!important;
+                padding-left: 8px!important;
+                padding-right: 8px!important;
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+                font-size: 12px;
+            }
+
+
+            [title~=attachment] a {
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+            }
+
+            [title~=attachment] input[type="email"]:focus,
+            [title~=attachment] input[type="number"]:focus,
+            [title~=attachment] input[type="password"]:focus,
+            [title~=attachment] input[type="tel"]:focus,
+            [title~=attachment] input[type="url"]:focus,
+            [title~=attachment] input[type="text"]:focus,
+            [title~=attachment] select:focus{
+                outline: 0!important;
+                border-color: #1589ee!important;
+                background-color: #fff!important;
+                box-shadow: 0 0 3px #0070D2!important;
+            }
+
+            [title~=attachment] .dateOnlyInput input {
+                width: 7em !important;
+            }
+
+            [title~=attachment] textarea{
+                background-color: #fff!important;
+                color: #16325c!important;
+                border: 1px solid #d8dde6!important;
+                border-radius: 4px!important;
+                width: 100px;
+                transition: border .1s linear,background-color .1s linear!important;
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+                padding-left: 8px!important;
+                padding-right: 8px!important;
+                padding-top:5px!important;
+            }
+
+            [title~=attachment] .bPageBlock {
+                background:#f4f6f9!important;
+                padding:5px!important;
+                border-radius: .25rem!important;
+            }
+
+            [title~=attachment] .bPageBlock{
+                background : #fff!important;
+            }
+
+            [title~=attachment] .headerRow {
+                color: #54698d!important;
+                /*text-transform: uppercase;*/
+                font-weight: 300!important;
+                letter-spacing: .0625rem;
+                /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+                line-height: 1.25;
+                font-size: 12px;
+                background-color: #fff!important;
+            }
+
+            [title~=attachment] .headerRow [title~=attachment] th {
+                font-size: .75rem;
+                line-height: 1.25;
+                /*color: #54698d!important;
+                text-transform: uppercase;*/
+                color: #fff!important;
+                letter-spacing: .0625rem;
+                background-color: #fff!important;
+            }
+
+            [title~=attachment] body [title~=attachment] .bPageBlock{
+                background-color: #fff!important;
+            }
+
+            [title~=attachment] .pbBody [title~=attachment] a{
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+            }
+
+            [title~=attachment] body [title~=attachment] .pbBody [title~=attachment] table.list
+            [title~=attachment] tr.headerRow [title~=attachment] th {
+                border: none!important;
+                border-bottom: 1px solid #d8dde6!important;
+                padding: 8px 2px 8px 5px!important;
+                border-color:#d8dde6!important;
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+                color: #54698d!important;
+            }
+
+            [title~=attachment] .list [title~=attachment] td{
+                padding: 10px 2px 10px 5px!important;
+                font-family:'Salesforce Sans', Arial, sans-serif!important;
+            }
+
+            [title~=attachment] body [title~=attachment] .pbBody
+            [title~=attachment] table.list [title~=attachment] tr.headerRow [title~=attachment] td,
+            [title~=attachment] body [title~=attachment] .pbBody
+            [title~=attachment] table.list [title~=attachment] tr.headerRow [title~=attachment] th {
+                background: #fff!important;
+                border:none!important;
+                border-bottom: 1px solid #ddd!important;
+            }
+
+            [title~=attachment] .pagination-btn-grp button {
+                padding-left: 10px!important;
+                padding-right: 10px!important;
+                line-height: 2em!important;
+            }
+
+            [title~=attachment] .pagination-btn-grp-wrapper {
+                text-align: center;
+                width: 200px;
+                margin: 0 auto;
+                margin-top: -20px;
+            }
+
+            #attachmentTableInner .boolean-field {
+                text-align: center !important;
+            }
+
+            #attachmentTableInner .reference-field {
+                padding-right: 20px !important;
+            }
+
+            .cmb .slds-table td, .cmb .slds-table th {
+                position: static !important;
+            }
+
+            .dateFormat a {
+                color: black !important;
+                text-decoration: underline !important;
+            }
+
+            .maindiv {
+                border-width:2px;
+                border:4px #69c;
+                height:auto;
+                width:auto;
+                border-radius:17px;
+            }
+            
+            .footerMSG {
+                font-size: small;
+                color: tomato;
+            }
+        </style>
+
+        <apex:actionFunction action="{!CollectData}" 
+                             name="collectDataBase64" 
+                             reRender="Attachmentform"
+                             status="loadingPanel"
+                             oncomplete="refreshTable();">
+            <apex:param name="data" id="data" value="" />
+            <apex:param name="name" id="name" value="" />
+        </apex:actionFunction>
+
+        <apex:outputPanel id="attchmntTable">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='attachmentTab_lbl']").text( 'Attachments'+' ({!attchmntRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='attachments']");
+                    tabTitle.text('Attachments'+' ({!attchmntRecordCount})');
+                    t$('#attachmentTableInner tr').hover(
+                        function() {
+                            t$(this).addClass('hoverhighlight');
+                        }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallAttachment();
+                    setEventListenersAttachment();
+                });
+
+                function rerenderHandlerAttachment() {
+                    if(typeof rerenderHandler == "function") {
+                        rerenderHandler('attachments');
+                    }
+                    t$(".ckbCheckAll").removeAttr("checked");
+                    setEventListenersAttachment();
+                }
+                //save functionalty
+            </script>
+
+            <apex:outputPanel id="dragDropSection">
+                <div class="maindiv">  &nbsp;
+                    <div id="dropbox">
+                        <span id="droplabel">Drop files to attach</span>
+                    </div>
+                    <!--
+                    apex:outputPanel id="Op1">
+                        <img id="preview" src="" alt="[ image will display here ]" />
+                    </apex:outputPanel
+                    -->
+                </div>
+            </apex:outputPanel>
+            <apex:pageBlock mode="inlineEdit">
+                <div class="buttons" id="attachmentButtons">
+                    <apex:CommandButton action="{!refreshAttachments}"
+                                        onclick="attachFile()"
+                                        value="Attach File"
+                                        immediate="true"
+                                        disabled="{!attchmntIsDisable}"
+                                        rerender="Attachmentform"
+                                        oncomplete="rerenderHandlerAttachment();"
+                                        status="loadingPanel" />
+                    <apex:CommandButton action="{!editAllAttachments}"
+                                        value="Edit All"
+                                        disabled="{!attchmntIsDisable}"
+                                        rerender="Attachmentform"
+                                        oncomplete="rerenderHandlerAttachment();"
+                                        status="loadingPanel"
+                                        rendered="{!AND($ObjectType.attachment.updateable,
+                                                NOT(attchmntEditAllFlag))}"
+                                        immediate="true"/>
+<!--                     <apex:commandButton onclick="create_zip(false)"  -->
+<!--                                         value=" Download"  -->
+<!--                                         rerender="none" -->
+<!--                                         status="loadingPanel" -->
+<!--                                         oncomplete="rerenderHandlerAttachment();" /> -->
+                    <input type="button"
+                           onclick="runSaveAttachments()"
+                           class="{!if(attchmntIsDisable,'btnDisabled disBtn','btn')}"
+                           value="Save"
+                           status="loadingPanel" />
+                    <apex:CommandButton action="{!refreshAttachments}"
+                                        value="Refresh"
+                                        disabled="{!attchmntIsDisable}"
+                                        rerender="Attachmentform"
+                                        oncomplete="rerenderHandlerAttachment();"
+                                        status="loadingPanel"
+                                        immediate="true"/>
+                    <apex:CommandButton action="{!refreshAttachments}"
+                                        value="Cancel"
+                                        disabled="{!attchmntIsDisable}"
+                                        rerender="Attachmentform"
+                                        oncomplete="rerenderHandlerAttachment();"
+                                        status="loadingPanel"
+                                        immediate="true"/>
+                    <apex:commandButton value="Submission Wizard"
+                                        onclick="submissionWizard()"
+                                        immediate="true"
+                                        disabled="{!attchmntIsDisable}"
+                                        oncomplete="rerenderHandlerAttachment();"
+                                        rerender="Attachmentform"
+                                        styleClass="attachmentOtherButton"/>
+                </div>
+                <apex:pageMessages id="attchmntpgMsgId" escape="false" />
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                        <table class="contentTable slds-table slds-table--bordered slds-table--striped" 
+                               border="0" cellpadding="0" cellspacing="0" id="attachmentTableInner">
+                            <tbody>
+                                <tr class="headerRow">
+                                    <th class="widthRecordSub">#</th>
+                                    <th class="widthActionSub">Action</th>
+<!--                                     <th class="widthRecordSub"> -->
+<!--                                         <apex:inputCheckbox styleClass="ckbCheckAll" onclick="SelectAllAttachment();" /> -->
+<!--                                     </th> -->
+                                    <th class="width10Sub"><div>
+                                        <apex:outputLabel value="Name"/>
+                                        <img src="{!IF(attchmntSortExprFieldApi=='Name',
+                                                IF(attchmntSortDirection=='ASC',
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Asc.png'),
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Desc.png')),
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Both.png'))}"
+                                            style="height:11px;"
+                                            name ="Name"
+                                            class="sorting" 
+                                            onclick="sortCallAttachments('text');" />
+                                    </div></th>
+                                    <th class="width10Sub"><div>
+                                        <apex:outputLabel value="Private"/>
+                                        <img src="{!IF(attchmntSortExprFieldApi=='IsPrivate',
+                                                IF(attchmntSortDirection=='ASC',
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Asc.png'),
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Desc.png')),
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Both.png'))}"
+                                            style="height:11px;"
+                                            name ="IsPrivate"
+                                            class="sorting"
+                                            onclick="sortCallAttachments('Boolean');" />
+                                    </div></th>
+                                    <th class="width10Sub"><div>{!attchmntSortExprFieldApi}
+                                        <apex:outputLabel value="Description"/>
+                                            <img src="{!IF(attchmntSortExprFieldApi=='Description',
+                                                        IF(attchmntSortDirection=='ASC',
+                                                        urlfor($Resource.GRIDResource,
+                                                        'GRIDResource/Images/Sort_Asc.png'),
+                                                        urlfor($Resource.GRIDResource,
+                                                        'GRIDResource/Images/Sort_Desc.png')),
+                                                        urlfor($Resource.GRIDResource,
+                                                        'GRIDResource/Images/Sort_Both.png'))}"
+                                                style="height:11px;"
+                                                name ="Description"
+                                                class="sorting"
+                                                onclick="sortCallAttachments('textarea');" />
+                                    </div></th>
+                                    <th class="width10Sub"><div>
+                                        <apex:outputLabel value="Last Modified"/>
+                                        <img src="{!IF(attchmntSortExprFieldApi=='SystemModstamp',
+                                                    IF(attchmntSortDirection=='ASC',
+                                                    urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Asc.png'),
+                                                    urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Desc.png')),
+                                                    urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Both.png'))}"
+                                            style="height:11px;"
+                                            name ="SystemModstamp"
+                                            class="sorting"
+                                            onclick="sortCallAttachments('datetime');" />
+                                    </div></th>
+                                    <th class="width10Sub"><div>
+                                        <apex:outputLabel value="Uploaded"/>
+                                        <img src="{!IF(attchmntSortExprFieldApi=='CreatedDate',
+                                                IF(attchmntSortDirection=='ASC',
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Asc.png'),
+                                                urlfor($Resource.GRIDResource,
+                                                'GRIDResource/Images/Sort_Desc.png')),
+                                                urlfor($Resource.GRIDResource,'GRIDResource/Images/Sort_Both.png'))}"
+                                             style="height:11px;"
+                                             name ="CreatedDate"
+                                             class="sorting"
+                                             onclick="sortCallAttachments('datetime');" />
+                                    </div></th>
+                                </tr>
+                                <apex:repeat value="{!attchmntWrapperLst}" var="attchmntWraper" >
+                                    <tr class="dataRow">
+                                        <td class="widthRecordTdSub">
+                                            <apex:outputtext value="{!attchmntWraper.attchmntIndex + 1}"/>
+                                        </td>
+                                        <td class="widthActionTdSub">
+                                        <apex:outputLink value="/servlet/servlet.FileDownload?file={!attchmntWraper.attchmnt.Id}"
+                                                         target="blank"
+                                                         rendered="{!NOT(ISBLANK(attchmntWraper.attchmnt.Id))}">
+                                            View
+                                        </apex:outputLink>
+                                        <apex:outputLabel value="| "
+                                                          rendered="{!NOT(ISBLANK(attchmntWraper.attchmnt.Id))}"/>
+                                        <apex:commandLink action="{!deleteAttachment}"
+                                                          value="Del"
+                                                          rerender="Attachmentform"
+                                                          rendered="{!NOT(ISBLANK(attchmntWraper.attchmnt.Id))}"
+                                                          status="loadingPanel">
+                                            <apex:param name="attchmntIndexToRemove"
+                                                        value="{!attchmntWraper.attchmntIndex}"
+                                                        assignTo="{!attchmntIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        <apex:commandLink action="{!deleteAttachment}"
+                                                          value="Remove"
+                                                          rerender="Attachmentform"
+                                                          rendered="{!(ISBLANK(attchmntWraper.attchmnt.Id))}"
+                                                          styleClass="removeRow"
+                                                          status="loadingPanel"
+                                                          immediate="true">
+                                            <apex:param name="attchmntIndexToRemove"
+                                                        value="{!attchmntWraper.attchmntIndex}"
+                                                        assignTo="{!attchmntIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+<!--                                     <td> -->
+<!--                                         <apex:inputCheckbox styleclass="checkBoxClass"  -->
+<!--                                             title="{!attchmntWraper.attchmnt.Id}" -->
+<!--                                             onclick="AllCheckBoxesClick();" -->
+<!--                                             rendered="{!if(attchmntWraper.sizeKB < 5000, true, false)}" /> -->
+<!--                                     </td> -->
+                                    <td class="width10TdSub">
+                                        <apex:outputField value="{!attchmntWraper.attchmnt.Name}"
+                                                          rendered="{!AND(IF(attchmntWraper.attchmntEdit = false, true, false),
+                                                                    NOT(ISBLANK(attchmntWraper.attchmnt.Id)))}" >
+                                        </apex:outputField>
+                                        <apex:inputField value="{!attchmntWraper.attchmnt.Name}"
+                                                         rendered="{!OR(IF(attchmntWraper.attchmntEdit = true, true, false),
+                                                                    ISBLANK(attchmntWraper.attchmnt.Id))}" />
+                                    </td>
+                                    <td class="width10TdSub boolean-field">
+                                        <apex:outputField value="{!attchmntWraper.attchmnt.IsPrivate}"
+                                                          rendered="{!AND(IF(attchmntWraper.attchmntEdit = false, true, false),
+                                                                    NOT(ISBLANK(attchmntWraper.attchmnt.Id)))}" />
+                                        <apex:inputField value="{!attchmntWraper.attchmnt.IsPrivate}"
+                                                         rendered="{!OR(IF(attchmntWraper.attchmntEdit = true, true, false),
+                                                                    ISBLANK(attchmntWraper.attchmnt.Id))}"/>
+                                    </td>
+                                    <td class="width10TdSub">
+                                        <apex:outputField value="{!attchmntWraper.attchmnt.Description}"
+                                                          rendered="{!AND(IF(attchmntWraper.attchmntEdit = false, true, false),
+                                                                    NOT(ISBLANK(attchmntWraper.attchmnt.Id)))}" />
+                                        <apex:inputField value="{!attchmntWraper.attchmnt.Description}"
+                                                         rendered="{!OR(IF(attchmntWraper.attchmntEdit = true, true, false),
+                                                                    ISBLANK(attchmntWraper.attchmnt.Id))}"/>
+                                    </td>
+                                    <td class="width10TdSub">
+                                        <apex:outputField value="{!attchmntWraper.attchmnt.SystemModstamp}"
+                                                          rendered="{!AND(IF(attchmntWraper.attchmntEdit = false, true, false),
+                                                                    NOT(ISBLANK(attchmntWraper.attchmnt.Id)))}" />
+                                        <apex:inputField value="{!attchmntWraper.attchmnt.SystemModstamp}"
+                                                         rendered="{!OR(IF(attchmntWraper.attchmntEdit = true, true, false),
+                                                                ISBLANK(attchmntWraper.attchmnt.Id))}"/>
+                                    </td>
+                                    <td class="width10TdSub">
+                                        <apex:outputField value="{!attchmntWraper.attchmnt.CreatedDate}"
+                                                          rendered="{!AND(IF(attchmntWraper.attchmntEdit = false, true, false),
+                                                                    NOT(ISBLANK(attchmntWraper.attchmnt.Id)))}" />
+                                        <apex:inputField value="{!attchmntWraper.attchmnt.CreatedDate}"
+                                                         rendered="{!OR(IF(attchmntWraper.attchmntEdit = true, true, false),
+                                                                    ISBLANK(attchmntWraper.attchmnt.Id))}"/>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    {!IF((attchmntOffsetsize + 1) > attchmntRecordCount,
+                    IF(attchmntRecordCount - attchmntBlockSize <= 0, 0, 
+                    attchmntRecordCount - attchmntBlockSize), attchmntOffsetsize + 1)} -
+                    {!attchmntWrapperLst.size + attchmntOffsetsize} of {!attchmntRecordCount}
+                </div>
+
+                <div class="pagination-btn-grp-wrapper">
+                    <div class="slds-button-group pagination-btn-grp" role="group">
+                        <button class="slds-button slds-button--neutral first"
+                                onclick="beginningAttachments(); return false;">&lt;&lt;</button>
+                        <button class="slds-button slds-button--neutral previous"
+                                onclick="previousAttachments(); return false;">&lt;</button>
+                        <button class="slds-button slds-button--neutral next"
+                                onclick="nextAttachments(); return false;">&gt;</button>
+                        <button class="slds-button slds-button--neutral last"
+                                onclick="endAttachments(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            t$ = jQuery.noConflict();
+                            if("{!attchmntOffsetsize != 0}" == 'false') {
+                                t$('[title~=attachment] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                                t$('[title~=attachment] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=attachment] .pagination-btn-grp .first').removeAttr('disabled');
+                                t$('[title~=attachment] .pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!attchmntWrapperLst.size + attchmntOffsetsize < attchmntRecordCount}" == 'false') {
+                                t$('[title~=attachment] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                                t$('[title~=attachment] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=attachment] .pagination-btn-grp .next').removeAttr('disabled');
+                                t$('[title~=attachment] .pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+                </div>
+                <div class="footerMSG">
+                    <apex:outputText rendered="{!isLargerAttachSize}"
+                        value="**Please click on the view link for files greater than 5 MB." />
+                </div>
+                <apex:actionFunction name="beginningAttachments" oncomplete="rerenderHandlerAttachment();"
+                        rerender="attchmntTable, Attachmentform" action="{!beginningAttachments}"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="previousAttachments" oncomplete="rerenderHandlerAttachment();"
+                        rerender="attchmntTable, Attachmentform" action="{!previousAttachments}"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="nextAttachments" oncomplete="rerenderHandlerAttachment();"
+                        rerender="attchmntTable, Attachmentform" action="{!nextAttachments}"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="endAttachments" oncomplete="rerenderHandlerAttachment();"
+                        rerender="attchmntTable, Attachmentform" action="{!endAttachments}"
+                        status="loadingPanel"/>
+            </apex:pageBlock>
+            <apex:inputHidden value="{!attchmntSortExpression}" id="attchmntSortHiddencriterian"/>
+            <apex:inputHidden value="{!attchmntSortDirection}" id="attchmntSortHiddenOrder"/>
+            <apex:inputHidden value="{!attchmntSortExprFieldApi}" id="attchmntSortHiddenFieldApi"/>
+        </apex:outputPanel>
+
+        <apex:actionFunction action="{!saveAttachments}" 
+                             name="saveAttachments"
+                             rerender="Attachmentform"
+                             oncomplete="rerenderHandlerAttachment();"
+                             status="loadingPanel" />
+        <apex:actionFunction action="{!sortAttachments}"
+                             name="sortAllAttachments"
+                             rerender="Attachmentform"
+                             oncomplete="rerenderHandlerAttachment();"
+                             status="loadingPanel" >
+            <apex:param name="attchmntTypeParam" value="" />
+        </apex:actionFunction>
+        <apex:actionFunction action="{!refreshAttachments}"
+                             name="refreshAttachmentTable"
+                             rerender="Attachmentform"
+                             oncomplete="rerenderHandlerAttachment();"
+                             status="loadingPanel"/>
+    </apex:form>
+    <script type="text/javascript">
+        var fName = new Array();
+        var dropbox = document.getElementById('dropbox');
+        var count = 0;
+        var isInConsoleAttachment = false;
+        var tabIdAttachment;
+        var finalURL;
+
+        function setEventListenersAttachment() {
+            t$("[id$=attchmntTable] .width10TdSub a").click(function() {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleAttachment) {
+                        openConsoleTabAttachmentNewTab(event.target.href);
+                    } else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=attchmntTable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function SelectAllAttachment() {
+            var allCheckboxes = document.getElementsByClassName('checkBoxClass');
+            var singleCheckboxToSelectAll = document.getElementsByClassName('ckbCheckAll')[0];
+            if(singleCheckboxToSelectAll.checked) {
+                for(var i=0; i<allCheckboxes.length; i++){
+                    if(allCheckboxes[i].type=='checkbox') {
+                        allCheckboxes[i].checked=true;
+                    }
+                }
+            } else {
+                for(var i=0; i<allCheckboxes.length; i++){
+                    if(allCheckboxes[i].type=='checkbox') {
+                        allCheckboxes[i].checked=false;
+                    }
+                }
+            }
+        }
+
+        function AllCheckBoxesClick() {
+            var allCheckboxes = document.getElementsByClassName('checkBoxClass');
+            var singleCheckboxToSelectAll = document.getElementsByClassName('ckbCheckAll')[0];
+            for(var i=0; i<allCheckboxes.length; i++){
+                if(allCheckboxes[i].type=='checkbox') {
+                    if(!allCheckboxes[i].checked) {
+                        singleCheckboxToSelectAll.checked = false;
+                        break;
+                    } else {
+                        singleCheckboxToSelectAll.checked = true;
+                    }
+                }
+            }
+        }
+
+        function initCallAttachment() {
+            setIsConsoleAttachment();
+            getFocusedPrimaryTabIdAttachment();
+        }
+
+        function setIsConsoleAttachment() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleAttachment = inConsole;
+            } else {
+                isInConsoleAttachment = sforce.console.isInConsole();
+            }
+        }
+
+        function getFocusedPrimaryTabIdAttachment() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdAttachment);
+        }
+
+        var showTabIdAttachment = function showTabIdAttachment(result) {
+            //Display the tab ID
+            tabIdAttachment = result.id;
+        };
+
+        function openConsoleTabAttachment(url)
+        {
+            /*
+            sforce.console.openPrimaryTab(tabIdAttachment, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdAttachment);
+            */
+            sforce.console.getEnclosingPrimaryTabId(
+            sforce.console.openSubtab(
+                tabIdAttachment, url, true, 'Attach file', null, openSuccess, 'salesforceSubtab')
+            );
+        }
+
+        function openConsoleTabAttachmentNewTab(url, tabLabel)
+        {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        var openSubtab = function openSubtab(result) {
+            //Now that we have the primary tab ID, we can open a new subtab in it
+            var primaryTabId = result.id;
+            /*;*/
+        };
+
+        var openSuccess = function openSuccess(result) {
+            //Report whether we suc ceeded in opening the subtab
+            console.log('-- result: ', result);
+            if (result.success == true) {
+                console.log('Tab successfully opened');
+            } else {
+                console.log('Tab cannot be opened');
+            }
+        };
+
+        function runSaveAttachments()
+        {
+            setTimeout(function()
+            {
+                saveAttachments();
+            }, 100);
+        }
+
+        /*var zip;
+        function create_zip(isdownloadAll) {
+            console.log('create_zip----');
+            zip = new JSZip();
+            var attID = [], attachmentName = [];
+            var content, noCall = 0;
+            //var listAtt = [];
+            //alert('isdownloadAll ---->'+isdownloadAll);
+
+            // Get all checked attchment id
+            t$('.checkBoxClass').each(function () {
+            //var sThisVal = (this.checked ? $(this).prop('title')  :"");
+                if(this.checked || isdownloadAll)
+                    attID.push(t$(this).prop('title'));
+            });
+            isdownloadAll = false;
+            //alert(attID);
+            if(attID.length > 0) {
+                try {
+                    for(var count = 0; count < attID.length; count++) {
+                        noCall++;
+                        var listAtt = [];
+                        if(attID[count] != null && attID[count] != '')
+                            listAtt.push(attID[count]);
+                            count++;
+                        if(attID[count] != null && attID[count] != '')
+                            listAtt.push(attID[count]);
+                            count++;
+                        if(attID[count] != null && attID[count] != '')
+                            listAtt.push(attID[count]);
+                        console.log('---listAtt---',listAtt);
+                        Visualforce.remoting.Manager.invokeAction(
+                            '{!$RemoteAction.GRIDAttachmentController.getAttachments}',
+                            '{!oppId}', listAtt,
+                            function(result, event){
+                                if(!event.status) {
+                                    alert('File size is too large to download');
+                                }
+                                
+                                if (event.status) {
+                                    // add files into zip
+                                    noCall--;
+                                    for (var i = 0; i < result.length; i++) {
+                                        var count = 0;
+                                        for(var nameIndex = 0; nameIndex < attachmentName.length;
+                                            nameIndex++) {
+                                            if(attachmentName[nameIndex] == result[i].attName )
+                                                count++;
+                                        }
+                                        if(count != 0){
+                                            zip.file(result[i].attName+count+'.'+result[i].nameExt, 
+                                            result[i].attchBody, {base64: true});
+                                        }else{
+                                            zip.file(
+                                                result[i].attName+'.'+result[i].nameExt,
+                                                result[i].attchBody, {base64: true});
+                                        }
+                                        attachmentName.push(result[i].attName);
+                                    }// end For
+                                    if(noCall == 0) {
+                                        zip_Creation();
+                                    }
+                                }// End If
+                            }// End return function of vf remoting
+                        );// End vf remoting invoke function
+                    }
+                } catch(err) {
+                    alert('Please select less file. Error Is '+err.message);
+                }
+            } else {
+                alert('Please select at least one attachment');
+            }
+        }// End create_zip()*/
+
+        // Create zip.
+        /*function zip_Creation() {
+            console.log('In zip creation');
+            // Check browser and perform download operation
+            var isIE = /*@cc_on!@*/false;
+            /*if(isIE){
+                //alert('hiii out side safari');
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Opportunity_Attachment.zip");
+                console.log('File saved successfully1');
+            }else if(navigator.vendor.indexOf("Apple")==0 && /\sSafari\
+                content = zip.generate();
+                location.href="data:application/zip;base64," + content;
+                console.log('File saved successfully2');
+            } else {
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Opportunity_Attachment.zip");
+                alert('Started Downloading file..');
+                console.log('File saved successfully3');
+            }// End Else If
+        //t$("#assign-action-spinner-main").hide();
+        //progress(0, t$('#progressBar'));
+        }*/
+
+        function sortCallAttachments(attchmntFieldDataType)
+        {
+            /*
+            event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+            pick up native html id of the selector
+            */
+            var attchmntElement= event.target;
+            var newattchmntSortCol = t$(attchmntElement).attr("Name"); // new sort field
+            t$("input[id$='attchmntSortHiddenFieldApi']").val(newattchmntSortCol);
+            var oldattchmntSortCol = t$("input[id$='attchmntSortHiddencriterian']").val();
+            var indexAttchmnt;
+            var attchmntTempSortExpr;
+            if(newattchmntSortCol.endsWith('__c'))
+            {
+                indexAttchmnt = newattchmntSortCol.indexOf('__');
+            }
+            else if(newattchmntSortCol.endsWith('Id'))
+            {
+                indexAttchmnt = newattchmntSortCol.indexOf('Id');
+            }
+            if(indexAttchmnt != null) {
+                attchmntTempSortExpr = newattchmntSortCol.substring(0, indexAttchmnt);
+            }
+            else
+            {
+                attchmntTempSortExpr = newattchmntSortCol;
+            }
+
+            if(oldattchmntSortCol.indexOf(attchmntTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='attchmntSortHiddenOrder']").val()) == "ASC")
+                {
+                    t$("input[id$='attchmntSortHiddenOrder']").val("DESC");
+                    t$(attchmntElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                    t$("input[id$='attchmntSortHiddenOrder']").val("ASC");
+                    t$(attchmntElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                t$("input[id$='attchmntSortHiddencriterian']").val(newattchmntSortCol);
+                sortAllAttachments(attchmntFieldDataType);
+            }
+            else
+            {
+                t$("input[id$='attchmntSortHiddencriterian']").val(newattchmntSortCol);
+                t$("input[id$='attchmntSortHiddenOrder']").val("ASC");
+                t$(attchmntElement).removeClass('sorting').addClass('SortAsc');
+                sortAllAttachments(attchmntFieldDataType);
+            }
+        }
+
+        function refreshTable()
+        {
+            refreshAttachmentTable();
+        }
+
+        function attachFile()
+        {
+            var oppName = '{!JSENCODE(opportunity.Name)}';
+            setIsConsoleAttachment();
+            var url = "/p/attach/NoteAttach?pid={!opportunity.Id}&parentname="+oppName+"&retURL=%2F{!oppId}";
+
+            if(isInConsoleAttachment)
+            {
+                url += '&isdtp=vw&isConsole=1';
+                openConsoleTabAttachment(url);
+            }
+            else
+            {
+                url += '&isConsole=0';
+                window.open(url, '_parent');
+            }
+        }
+
+        function submissionWizard()
+        {
+            var pagePrefix = '{!$Page.SubmissionWizard}';
+            setIsConsoleAttachment();
+            pagePrefix +=  '?id={!opportunity.Id}&accId={!opportunity.AccountId}';
+            if(isInConsoleAttachment)
+            {
+                pagePrefix += '&isConsole=1';
+                openConsoleTabAttachment(pagePrefix);
+            }
+            else
+            {
+                pagePrefix += '&isConsole=0';
+                window.open(pagePrefix, '_parent');
+            }
+        }
+        var singleError = false;
+        // # Using an EventListener object
+        var dropListener =
+        {
+            handleEvent: function(event)
+            {
+                if (event.type === 'dragenter') { this.onDragEnter(event); }
+                if (event.type === 'dragexit') { this.onDragExit(event); }
+                if (event.type === 'dragover') { this.onDragOver(event); }
+                if (event.type === 'drop') { this.onDragDrop(event); }
+            },
+            onDragEnter: function(event)
+            {
+                event.dataTransfer.dropEffect = 'move';
+                event.preventDefault();
+                event.stopPropagation();
+            },
+            onDragExit: function(event)
+            {
+                event.preventDefault();
+                event.stopPropagation();
+            },
+            onDragOver: function(event)
+            {
+                event.preventDefault();
+                event.stopPropagation();
+            },
+            onDragDrop: function(event)
+            {
+                event.preventDefault();
+                event.stopPropagation();
+                var files = event.dataTransfer.files,
+                file = files;
+                if (files.length == 1 )
+                {
+                    document.getElementById('droplabel').innerHTML ='Uploading ' + files[0].name;
+                }
+                else if (files.length  >  1)
+                {
+                    document.getElementById('droplabel').innerHTML ='Uploading ' + files.length + ' files';
+                }
+                if (files.length)
+                {
+                    for (i = 0; i < files.length; i++)
+                    {
+                        file = files[i];
+                        if((files[i].size)/(1024*1024) < 4)
+                        {
+                            this.processImage(file, i);
+                        }
+                        else
+                        {
+                           alert(
+                            'File name '+file.name
+                            +' is too large for Drag and drop.Please use Attach File button to upload the file.');
+                           document.getElementById('droplabel').innerHTML ='Drop files to attach';
+                           singleError = true;
+                        }
+                    }
+                }
+            },
+
+            processImage: function(file, i)
+            {
+                fName.push(file.name);
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                //reader.onloadend = this.onReaderLoadEnd(this.reader);
+                reader.onloadend = function(event)
+                {
+                    if(reader.result.length < 8000000)
+                    {
+                      collectDataBase64(reader.result, file.name);
+                      count++;
+                    }
+                    else
+                    {
+                       alert('File name '
+                             +file.name
+                             +' is too large for Drag and drop.Please use Attach File button to upload the file.');
+                       document.getElementById('droplabel').innerHTML ='Drop files to attach';
+                       singleError = true;
+                    }
+                }
+            },
+
+            onReaderLoadEnd: function(event)
+            {
+                if(event.target.result.length < 5859300)
+                {
+                  collectDataBase64( event.target.result, fName[count]);
+                  count++;
+                }
+                else
+                {
+                   alert('File name '+fName[count]+' is too large for Drag and drop.Please use Attach File button to upload the file.');
+                   document.getElementById('droplabel').innerHTML ='Drop files to attach';
+                }
+            }
+        };
+
+        // ## Adding drag and drop event listeners
+        dropbox.addEventListener('dragenter', dropListener, false);
+        dropbox.addEventListener('dragexit', dropListener, false);
+        dropbox.addEventListener('dragover', dropListener, false);
+        dropbox.addEventListener('drop', dropListener, false);
+    </script>
+</apex:component>

@@ -1,0 +1,57 @@
+<apex:page controller="DemoAttachmentDownloadController" docType="html-5.0">
+    <!-- <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" />
+    <apex:includeScript value="https://rawgit.com/johnculviner/jquery.fileDownload/blob/master/src/Scripts/jquery.fileDownload.js"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="https://jqueryfiledownload.apphb.com/Scripts/jquery.fileDownload.js"></script>
+    <script type="text/javascript">
+    //$.fileDownload('/servlet/servlet.FileDownload?file=00P9000000gXKSs')
+    //.done(function () { alert('File download a success!'); })
+    //.fail(function () { alert('File download failed!'); });
+    $(document).on("click", "a.fileDownloadLink", function () {
+    $.fileDownload("/servlet/servlet.FileDownload?file=00P9000000fbGQe");
+    $.fileDownload("https://jqueryfiledownload.apphb.com/FileDownload/DownloadReport/2");
+});
+    </script>
+        <a class="fileDownloadLink" href="javascript:;">Download NEW</a>
+  <apex:form >
+      <apex:commandbutton value="Download"/>
+      <apex:outputLink value="{!URLFOR($Action.Attachment.Download, '00P9000000gXlyD')}" >test</apex:outputLink>
+      <a href="/servlet/servlet.FileDownload?file=00P9000000gXlyD" target="_blank" download="cmb1.png">Download me!</a>
+  </apex:form>
+  <form method="get" action="/servlet/servlet.FileDownload?file=00P9000000gXlyD">
+<button type="submit">Download!</button>
+</form> -->
+
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.js"></script>
+
+ 
+<BODY>
+ 
+    <input type="button" onclick="create_zip()" value="Create Zip"></input>
+ 
+</BODY>
+<SCRIPT>
+ 
+function create_zip() {
+
+    Visualforce.remoting.Manager.invokeAction(
+        '{!$RemoteAction.DemoAttachmentDownloadController.getAttachments}',
+        function(result, event){
+             var zip = new JSZip();
+            zip.file("NBC Application.pdf", result, {base64: true});
+            zip.file("hello2.txt", "Hello Second World\n");
+            content = zip.generate();
+            location.href="data:application/zip;base64," + content;
+        }
+    );
+    //var zip = new JSZip();
+    //zip.file("Estimates for Grid Extension copy 2.xls", "/servlet/servlet.FileDownload?file=00P9000000gXKSi");
+    //zip.file("hello2.txt", "Hello Second World\n");
+   // content = zip.generate();
+   // location.href="data:application/zip;base64," + content;
+}
+ 
+</SCRIPT>
+
+</apex:page>

@@ -1,0 +1,563 @@
+<apex:component controller="DETE_JobResultController">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.4.4/underscore-min.js"/>
+
+
+        <style>
+           .loader, .loader:after {
+              border-radius: 50%;
+              width: 10em;
+              height: 10em;
+            }
+            .loader {
+              margin: 60px auto;
+              font-size: 4px;
+              position: relative;
+              text-indent: -9999em;
+              border-top: 1.1em solid #ffd166;
+                border-right: 1.1em solid rgba(255, 255, 255, 0.2);
+                border-bottom: 1.1em solid rgba(255, 255, 255, 0.2);
+                border-left: 1.1em solid #ffd166;
+              -webkit-transform: translateZ(0);
+              -ms-transform: translateZ(0);
+              transform: translateZ(0);
+              -webkit-animation: load8 1.1s infinite linear;
+              animation: load8 1.1s infinite linear;
+            }
+            @-webkit-keyframes load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+            @keyframes load8 {
+              0% {
+                -webkit-transform: rotate(0deg);
+                transform: rotate(0deg);
+              }
+              100% {
+                -webkit-transform: rotate(360deg);
+                transform: rotate(360deg);
+              }
+            }
+
+            #span.job-row {
+                width:300px;
+            }
+
+            .easyPaginateNav a {
+                padding:5px;
+            }
+
+            .easyPaginateNav a.current {
+                font-weight : bold;
+                text-decoration : underline;
+            }
+
+            .clickable.modal-header {
+                cursor: pointer !important;
+            }
+
+        </style>
+
+        <header>
+            <div class="slider">
+                <h1>Jobs Results</h1>
+                <apex:image url="{!URLFOR($Resource.DETE_Style, 'img/jobs-banner.jpg')}" styleClass="img-responsive" alt=""/>
+                <!-- <img class="img-responsive" src="img/jobs-banner.jpg" alt=""/> -->
+            </div>
+        </header>
+        <apex:pagemessages />
+
+
+        <!-- Portfolio Grid Section -->
+        <section id="learn-more">
+<!--             <div class="container"> -->
+            <div class="jobResultSection container">
+                 <div class="panel-group">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" onclick="getMainOccupationJob();">
+                            <h4 class="panel-title">
+                              <a data-toggle="collapse" href="#collapse1" class="collapsed">
+                                  <apex:image id="occupationId" url="{!URLFOR($Resource.DETE_Style, 'img/down-arrow.png')}" />
+                                  <span>  Main Occupation </span>
+                                </a>
+                            </h4>
+                        </div>
+
+                        <div id="collapse1" class="panel-collapse collapse">
+                            <div class="loader" id="loader1"></div>
+                            <div class="panel-body">
+                                  <div id="targetMain"></div>
+                            </div>
+                        </div>
+                    </div>
+               </div>
+
+               <div class="panel-group">
+                   <div class="panel panel-default">
+                       <div class="panel-heading" onclick="getRelatedOccupationJob();">
+                           <h4 class="panel-title">
+                             <a data-toggle="collapse" href="#collapse2" class="collapsed">
+                                 <apex:image id="relatedOccupationId" url="{!URLFOR($Resource.DETE_Style, 'img/down-arrow.png')}"/>
+                                 <span>  Matching Occupations… </span>
+                               </a>
+                           </h4>
+                       </div>
+
+                       <div id="collapse2" class="panel-collapse collapse">
+                           <div class="loader" id="loader2"></div>
+                           <div class="panel-body">
+                               <div id="targetRelated"></div>
+                            </div>
+                        </div>
+                    </div>
+               </div>
+
+               <div class="panel-group">
+                   <div class="panel panel-default">
+                       <div class="panel-heading" onclick="getOtherOccupationJob();">
+                           <h4 class="panel-title">
+                             <a data-toggle="collapse" href="#collapse3" class="collapsed">
+                                 <apex:image id="otherOccupationId" url="{!URLFOR($Resource.DETE_Style, 'img/down-arrow.png')}"/>
+                                 <span> Occupations you may also want to explore… </span>
+                               </a>
+                           </h4>
+                       </div>
+
+                       <div id="collapse3" class="panel-collapse collapse">
+                           <div class="loader" id="loader3"></div>
+                           <div class="panel-body">
+                                <div id="targetOther"></div>
+                            </div>
+                        </div>
+                    </div>
+               </div>
+
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade " id="onApply" role="dialog" >
+                <div class="modal-dialog">
+                <!-- Modal content-->
+                    <div class="modal-content">
+                        <div class="clickable modal-header">
+                            <button type="button" class="close" data-dismiss="modal"> &times;</button>
+                        </div>
+                            <p class="modal-body">You are now leaving the Talent
+                                 Exchange website and entering the Delaware JobLink where
+                                you can apply for this position.
+                            </p>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default btn-submit btn-jobs" data-job-Id=""> Continue </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <script>
+
+        var de = de || {};
+        de.jobResult = de.jobResult || {};
+
+         de.jobResult.initialize = function() {
+             showHide();
+         }
+
+        //  $(document).on("rerender-done",function(event,data) {
+        //      debugger;
+        //      de.jobResult.initialize();
+        //  });
+
+         $(document).ready(function() {
+              //debugger;
+             de.jobResult.initialize();
+         });
+
+
+        //
+        (function($){
+        $.fn.easyPaginate = function (options) {
+            var defaults = {
+                paginateElement: 'li',
+                hashPage: 'page',
+                elementsPerPage: 10,
+                effect: 'default',
+                slideOffset: 200,
+                firstButton: true,
+                firstButtonText: 'First',
+                lastButton: true,
+                lastButtonText: 'Last',
+                prevButton: false,
+                prevButtonText: 'Previous',
+                nextButton: false,
+                nextButtonText: 'Next'
+            }
+
+            return this.each (function (instance) {
+
+                var plugin = {};
+                plugin.el = $(this);
+                plugin.el.addClass('easyPaginateList');
+
+                plugin.settings = {
+                    pages: 0,
+                    objElements: Object,
+                    currentPage: 1
+                }
+
+                var getNbOfPages = function() {
+                    return Math.ceil(plugin.settings.objElements.length / plugin.settings.elementsPerPage);
+                };
+
+                var displayNav = function() {
+                    htmlNav = '<div class="easyPaginateNav text-center"> <ul class="pagination">';
+
+                    if(plugin.settings.firstButton) {
+                        htmlNav += '<li class="page-item">'
+                        + '<a href="#'+plugin.settings.hashPage+':1" title="First page" rel="1" class="first">'+plugin.settings.firstButtonText+'</a>'
+                        + '</li>';
+                    }
+
+                    if(plugin.settings.prevButton) {
+                        htmlNav += '<li class="page-item">'
+                        + '<a href="" title="Previous" rel="" class="prev">'+plugin.settings.prevButtonText+'</a>'
+                        + '</li>';
+                    }
+
+                    for(i = 1;i <= plugin.settings.pages;i++) {
+                        htmlNav += '<li class="page-item">'
+                        + '<a href="#'+plugin.settings.hashPage+':'+i+'" title="Page '+i+'" rel="'+i+'" class="page">'+i+'</a>'
+                        + '</li>';
+
+                    };
+
+                    if(plugin.settings.nextButton) {
+                        htmlNav += '<li class="page-item">'
+                        + '<a href="" title="Next" rel="" class="next">'+plugin.settings.nextButtonText+'</a>'
+                        + '</li>';
+                    }
+
+                    if(plugin.settings.lastButton) {
+                        htmlNav += '<li class="page-item">'
+                        + '<a href="#'+plugin.settings.hashPage+':'+plugin.settings.pages+'" title="Last page" rel="'+plugin.settings.pages+'" class="last">'+plugin.settings.lastButtonText+'</a>'
+                        + '</li>';
+                    }
+
+                    htmlNav += '</ul></div>';
+                    plugin.nav = $(htmlNav);
+                    plugin.nav.css({
+                        'width': plugin.el.width()
+                    });
+                    plugin.el.after(plugin.nav);
+
+
+                    var elSelector = '#' + plugin.el.get(0).id + ' + ';
+                    $(elSelector + ' .easyPaginateNav a.page,'
+                        + elSelector + ' .easyPaginateNav a.first,'
+                        + elSelector + ' .easyPaginateNav a.last').on('click', function(e) {
+                        e.preventDefault();
+                        displayPage($(this).attr('rel'));
+                    });
+
+                    $(elSelector + ' .easyPaginateNav a.page,'
+                    + elSelector + ' .easyPaginateNav a.prev', plugin).on('click', function(e) {
+                        e.preventDefault();
+                        page = plugin.settings.currentPage > 1?parseInt(plugin.settings.currentPage) - 1:1;
+                        displayPage(page);
+                    });
+
+                    $(elSelector + ' .easyPaginateNav a.next', plugin).on('click', function(e) {
+                        e.preventDefault();
+                        page = plugin.settings.currentPage < plugin.settings.pages?parseInt(plugin.settings.currentPage) + 1:plugin.settings.pages;
+                        displayPage(page);
+                    });
+                };
+
+                var displayPage = function(page, forceEffect) {
+                    if(plugin.settings.currentPage != page) {
+                        plugin.settings.currentPage = parseInt(page);
+                        offsetStart = (page - 1) * plugin.settings.elementsPerPage;
+                        offsetEnd = page * plugin.settings.elementsPerPage;
+                        if(typeof(forceEffect) != 'undefined') {
+                            eval("transition_"+forceEffect+"("+offsetStart+", "+offsetEnd+")");
+                        }else {
+                            eval("transition_"+plugin.settings.effect+"("+offsetStart+", "+offsetEnd+")");
+                        }
+
+                        plugin.nav.find('.current').removeClass('current');
+                        plugin.nav.find('a.page:eq('+(page - 1)+')').addClass('current');
+
+                        switch(plugin.settings.currentPage) {
+                            case 1:
+                                $('.easyPaginateNav a', plugin).removeClass('disabled');
+                                $('.easyPaginateNav a.first, .easyPaginateNav a.prev', plugin).addClass('disabled');
+                                break;
+                            case plugin.settings.pages:
+                                $('.easyPaginateNav a', plugin).removeClass('disabled');
+                                $('.easyPaginateNav a.last, .easyPaginateNav a.next', plugin).addClass('disabled');
+                                break;
+                            default:
+                                $('.easyPaginateNav a', plugin).removeClass('disabled');
+                                break;
+                        }
+                    }
+                };
+
+                var transition_default = function(offsetStart, offsetEnd) {
+                    plugin.currentElements.hide();
+                    plugin.currentElements = plugin.settings.objElements.slice(offsetStart, offsetEnd).clone();
+                    plugin.el.html(plugin.currentElements);
+                    plugin.currentElements.show();
+                };
+
+                var transition_fade = function(offsetStart, offsetEnd) {
+                    plugin.currentElements.fadeOut();
+                    plugin.currentElements = plugin.settings.objElements.slice(offsetStart, offsetEnd).clone();
+                    plugin.el.html(plugin.currentElements);
+                    plugin.currentElements.fadeIn();
+                };
+
+                var transition_slide = function(offsetStart, offsetEnd) {
+                    plugin.currentElements.animate({
+                        'margin-left': plugin.settings.slideOffset * -1,
+                        'opacity': 0
+                    }, function() {
+                        $(this).remove();
+                    });
+
+                    plugin.currentElements = plugin.settings.objElements.slice(offsetStart, offsetEnd).clone();
+                    plugin.currentElements.css({
+                        'margin-left': plugin.settings.slideOffset,
+                        'display': 'block',
+                        'opacity': 0,
+                        'min-width': plugin.el.width() / 2
+                    });
+                    plugin.el.html(plugin.currentElements);
+                    plugin.currentElements.animate({
+                        'margin-left': 0,
+                        'opacity': 1
+                    });
+                };
+
+                var transition_climb = function(offsetStart, offsetEnd) {
+                    plugin.currentElements.each(function(i) {
+                        var $objThis = $(this);
+                        setTimeout(function() {
+                            $objThis.animate({
+                                'margin-left': plugin.settings.slideOffset * -1,
+                                'opacity': 0
+                            }, function() {
+                                $(this).remove();
+                            });
+                        }, i * 200);
+                    });
+
+                    plugin.currentElements = plugin.settings.objElements.slice(offsetStart, offsetEnd).clone();
+                    plugin.currentElements.css({
+                        'margin-left': plugin.settings.slideOffset,
+                        'display': 'block',
+                        'opacity': 0,
+                        'min-width': plugin.el.width() / 2
+                    });
+                    plugin.el.html(plugin.currentElements);
+                    plugin.currentElements.each(function(i) {
+                        var $objThis = $(this);
+                        setTimeout(function() {
+                            $objThis.animate({
+                                'margin-left': 0,
+                                'opacity': 1
+                            });
+                        }, i * 200);
+                    });
+                };
+
+                plugin.settings = $.extend({}, defaults, options);
+
+                plugin.currentElements = $([]);
+                plugin.settings.objElements = plugin.el.find(plugin.settings.paginateElement);
+                plugin.settings.pages = getNbOfPages();
+                if(plugin.settings.pages > 1) {
+                    plugin.el.html();
+
+                    // Here we go
+                    displayNav();
+
+                    page = 1;
+                    if(document.location.hash.indexOf('#'+plugin.settings.hashPage+':') != -1) {
+                        page = parseInt(document.location.hash.replace('#'+plugin.settings.hashPage+':', ''));
+                        if(page.length <= 0 || page < 1 || page > plugin.settings.pages) {
+                            page = 1;
+                        }
+                    }
+
+                    displayPage(page, 'default');
+                }
+            });
+        };
+        })(jQuery);
+
+        //
+
+            function hideLoader(loader) {
+                $("#"+loader).hide();
+            }
+
+            function fadeOutOnLoad() {
+                $(".jobs-accordion").not(".expanded").fadeOut("200ms");
+            }
+
+            var timeoutID;
+
+            function showHide() {
+
+                $( "body" ).on("click",".showJobs", function(event) {
+                    console.log('...event: ' , event);
+
+                    //debugger;
+
+                    var parent = $( event.target ).closest( ".occ-detail" );
+                    var childJob = $( parent ).children(".jobs-accordion");
+
+                    $(".showJobs").text("See Jobs");
+
+                    if ( $( childJob ).hasClass( "expanded" ) ) {
+                        console.log('...in if expanded collapse now');
+
+                        $(".jobs-accordion.expanded").removeClass("expanded").fadeOut("100ms");
+                    } else {
+                        console.log('...in else expand now');
+                        $(".jobs-accordion.expanded").removeClass("expanded").fadeOut("100ms");
+                        $( childJob ).addClass("expanded").fadeIn( "300ms");
+                        $(this).text("Hide Jobs");
+
+                        $('.jobs-accordion.expanded .page-item').on("click",function() { delayedScroll(); });
+
+                        timeoutID = window.setTimeout(delayedScroll, 500);
+                    }
+
+                });
+            }
+
+            var delayedScroll = function() {
+                $('body').scrollTo($('.jobs-accordion.expanded').parent(), 200);
+            }
+
+
+            // $('.modal').on('show.bs.modal', function(e) {
+            //     console.log('...modal show ' + e + ',,' + e.relatedTarget );
+            //     //var jobId = $(event.target).data('job-id');
+            //     //$(e.currentTarget).find(".btn-jobs").attr("data-job-Id", jobId)
+            // });
+
+            $(".modal-dialog .btn-jobs").on( "click", function(event) {
+                var jobId = $(event.target).attr("data-job-id")
+                $("#onApply").modal("hide");
+                window.open('https://joblink.delaware.gov/ada/r/jobs/'+jobId, '_blank');
+            });
+
+            var redirectToJob = function(jobId) {
+                $("#onApply").modal("show");
+                $("#onApply").find(".btn-jobs").attr("data-job-Id", jobId);
+            };
+
+            function getMainOccupationJob() {
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.DETE_JobResultController.getmainOccupationJobResultList}',
+                    '{!userPosition}' ,
+                    function(result, event) {
+
+                        if (event.status) {
+                           console.log('...data Success: ', result);
+                            buildTable(result, 'Main');
+                            fadeOutOnLoad();
+                            hideLoader('loader1');
+                        } else {
+                           console.log('...data Status: ', event.status);
+                           console.log('...data Error: ', result);
+                        }
+
+                    },
+                    {escape: true}
+                );
+            }
+
+            function getRelatedOccupationJob() {
+
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.DETE_JobResultController.getrelatedOccupationJobResultList}',
+                    '{!userPosition}' ,
+                    function(result, event) {
+
+                        if (event.status) {
+                           console.log('...data Success: ', result);
+                            buildTable(result, 'Related');
+                            fadeOutOnLoad();
+                            hideLoader('loader2');
+                        } else {
+                           console.log('...data Status: ', event.status);
+                           console.log('...data Error: ', result);
+                        }
+
+                    },
+                    {escape: true}
+                );
+            }
+
+            function getOtherOccupationJob() {
+                console.log('...', '{!specificTechnologies}');
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.DETE_JobResultController.getOtherOccupationJobResultList}',
+                    '{!specificTechnologies}' ,
+                    function(result, event) {
+
+                        if (event.status) {
+                           console.log('...data Success: ', result);
+                            buildTable(result, 'Other');
+                            fadeOutOnLoad();
+                            hideLoader('loader3');
+
+                        } else {
+                           console.log('...data Status: ', event.status);
+                           console.log('...data Error: ', result);
+                        }
+
+                    },
+                    {escape: true}
+                );
+            }
+
+            var buildTable = function(tableItems, forName) {
+                console.log('...Inside buildTable' ,  tableItems);
+
+                tableItems = tableItems || '';
+                forName = forName || '';
+                var templateId = 'occupationList';
+                var targetId = 'target' + forName;
+
+                var template = $("#" + templateId).html();
+                $("#" + targetId).html(
+                    _.template(
+                        template
+                        ,{
+                            items: tableItems
+                        }
+                    )
+                );
+
+                //add pagination
+                $("#" + targetId).find(".jobs-Result").easyPaginate({
+                    paginateElement: 'span.job-row',
+                    elementsPerPage: 10,
+                    effect: 'climb'
+                });
+
+            };
+        </script>
+</apex:component>

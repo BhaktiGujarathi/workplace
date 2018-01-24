@@ -1,0 +1,602 @@
+<apex:component controller="GRIDReceivablesController" allowDML="true" access="global">
+
+    <style>
+        [title~=Receivable] .btn{
+            font-size: 12px!important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none!important;
+            color: #fff!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #0070d2!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        [title~=Receivable] .btnNextPreviPage {
+            left: 115px;
+            position: relative;
+            height: 25px;
+            /*line-height: initial!important;*/
+            font-size: 12px!important;
+            color: #0070d2!important;
+            background: #fff!important;
+        }
+
+        [title~=Receivable] .btnNextPreviPage:hover{
+            background-color: #f4f6f9!important;
+        }
+
+        [title~=Receivable] input[type="email"],
+        [title~=Receivable] input[type="number"],
+        [title~=Receivable] input[type="password"],
+        [title~=Receivable] input[type="tel"],
+        [title~=Receivable] input[type="url"],
+        [title~=Receivable] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=Receivable] select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=Receivable] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Receivable] input[type="email"]:focus,
+        [title~=Receivable] input[type="number"]:focus,
+        [title~=Receivable] input[type="password"]:focus,
+        [title~=Receivable] input[type="tel"]:focus,
+        [title~=Receivable] input[type="url"]:focus,
+        [title~=Receivable] input[type="text"]:focus,
+        [title~=Receivable] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=Receivable] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=Receivable] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=Receivable] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=Receivable] .bPageBlock{
+            background : #fff!important;
+        }
+
+        [title~=Receivable] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+            background-color: #fff!important;
+        }
+
+        [title~=Receivable] .headerRow [title~=Receivable] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            /*color: #54698d!important;
+            text-transform: uppercase;*/
+            color: #fff!important;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=Receivable] body [title~=Receivable] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=Receivable] .pbBody [title~=Receivable] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Receivable] body [title~=Receivable] .pbBody [title~=Receivable] table.list
+        [title~=Receivable] tr.headerRow [title~=Receivable] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=Receivable] .list [title~=Receivable] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Receivable] body [title~=Receivable] .pbBody
+        [title~=Receivable] table.list [title~=Receivable] tr.headerRow [title~=Receivable] td,
+        [title~=Receivable] body [title~=Receivable] .pbBody
+        [title~=Receivable] table.list [title~=Receivable] tr.headerRow [title~=Receivable] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        [title~=Receivable] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+                margin-top: -3px!important;
+        }
+
+        [title~=Receivable] .buttons {
+            text-align: center;
+        }
+
+        [title~=Receivable] #receivableButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        [title~=Receivable] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=Receivable] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        #receivablesTableInner .boolean-field {
+            text-align: center !important;
+        }
+
+        #receivablesTableInner .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+        
+        [title~=Receivable] tfoot {
+            border-top: 1px solid gainsboro;
+        }
+    </style>
+
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!recEditAllFlag}" access="global" />
+
+    <apex:form id="Receivablesform" styleClass="records" title="Receivable">
+        <apex:outputLabel rendered="{!recIsRefrenceField }">
+            Please remove '{!recRefrenceFieldLabel}' field from the 'GRIDReceivableFieldSet' 
+            field set, as referenced fields are not allowed.
+        </apex:outputLabel>
+        <apex:outputPanel id="rectable" title="Receivables" rendered="{!NOT(recIsRefrenceField)}">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='receivableTab_lbl']").text( 'Receivables'+' ({!recRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='receivables']");
+                    tabTitle.text('Receivables'+' ({!recRecordCount})');
+                    t$('#receivablesTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallReceivables();
+                    setEventListenersReceivable();
+                });
+
+                //save functionality
+	            function rerenderHandlerReceivable() {
+	                if(typeof rerenderHandler == "function") {
+	                    rerenderHandler('receivables');
+	                }
+	                setEventListenersReceivable();
+	            }
+            </script>
+            <apex:pageBlock mode="inlineEdit">
+
+	            <div class="buttons" id="receivableButtons">
+	                <apex:outputpanel rendered="{!$ObjectType.Receivable__c.createable}">
+	                    <input type="button"
+	                           onclick="runNewReceivable()"
+	                           class="{!if(recIsDisable,'btnDisabled disBtn','btn')}"
+	                           value="New"
+	                           status="loadingPanel"/>
+	                </apex:outputPanel>
+	                <apex:outputpanel rendered="{!AND($ObjectType.Receivable__c.updateable,
+	                                           NOT(recEditAllFlag))}">
+	                    <apex:CommandButton action="{!editAllReceivables}"
+	                                        oncomplete="rerenderHandlerReceivable();"
+	                                        value="Edit All"
+	                                        disabled="{!recIsDisable}"
+	                                        rerender="rectable"
+	                                        status="loadingPanel"
+	                                        immediate="true"/>
+	                </apex:outputPanel>
+	                <apex:outputpanel rendered="{!OR($ObjectType.Receivable__c.updateable,
+	                                           $ObjectType.Receivable__c.createable)}">
+	                    <input type="button"
+	                           onclick="runSaveReceivables()"
+	                           class="{!if(recIsDisable,'btnDisabled disBtn','btn')}"
+	                           value="Save"
+	                           status="loadingPanel" />
+	                </apex:outputPanel>
+	                <apex:CommandButton action="{!refreshReceivables}"
+	                                    oncomplete="rerenderHandlerReceivable();"
+	                                    value="Refresh"
+	                                    disabled="{!recIsDisable}"
+	                                    rerender="rectable"
+	                                    status="loadingPanel"
+	                                    immediate="true" />
+	                <apex:CommandButton action="{!refreshReceivables}"
+	                                    oncomplete="rerenderHandlerReceivable();"
+	                                    value="Cancel"
+	                                    disabled="{!recIsDisable}"
+	                                    rerender="rectable"
+	                                    status="loadingPanel"
+	                                    immediate="true" />
+	            </div>
+
+                <apex:pageMessages id="recpgMsgId" escape="false" />
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                        <table class="contentTable slds-table slds-table--bordered slds-table--striped"
+                                border="0" cellpadding="0" cellspacing="0" id="receivablesTableInner">
+                            <tbody>
+                                <tr class="headerRow">
+                                    <th class="widthRecordSub">#</th>
+                                    <th class="widthActionSub">Action</th>
+                                    <apex:repeat value="{!recFieldsetList}" var="recField">
+                                        <th class="width10Sub">
+                                            <div>
+                                                <apex:outputLabel value="{!recField.label}"/>
+                                                <apex:OutputPanel rendered="{!AND(fieldPathResult != recField.fieldPath,
+                                                                            displaySortingArrow ,
+                                                                            recField.type != 'multipicklist',
+                                                                            recField.type != 'phone')}">
+                                                    <img src= "{!IF(recSortExprFieldApi==recField.fieldPath,
+                                                            IF(recSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                                            ,'GRIDResource/Images/Sort_Asc.png'),
+                                                            urlfor($Resource.GRIDResource,
+                                                            'GRIDResource/Images/Sort_Desc.png')),
+                                                            urlfor($Resource.GRIDResource
+                                                            ,'GRIDResource/Images/Sort_Both.png'))}"
+                                                        style="height:11px;"
+                                                        name ="{!recField.fieldPath}"
+                                                        class="sorting"
+                                                        onclick="sortCallReceivables('{!recField.type}');" />
+                                                </apex:OutputPanel>
+                                            </div>
+                                        </th>
+                                    </apex:repeat>
+                                </tr>
+                                <apex:repeat value="{!recWrapperLst}" var="recWraper" >
+                                    <tr class="dataRow">
+                                        <td class="widthRecordTdSub">
+                                            <apex:outputtext value="{!recWraper.recIndex + 1}"/>
+                                        </td>
+                                        <td class="widthActionTdSub">
+                                            <apex:outputLink value="#"
+                                                             target="_blank"
+                                                             onclick="openReceivablePage('{!recWraper.rec.Id}');"
+                                                             rendered="{!NOT(ISBLANK(recWraper.rec.Id))}">
+                                                View
+                                            </apex:outputLink>
+                                            <apex:outputLabel value="| " 
+                                                              rendered="{!AND(NOT(ISBLANK(recWraper.rec.Id)),
+                                                                        $ObjectType.Receivable__c.deletable)}"/>
+                                                <apex:commandLink action="{!deleteRec}"
+                                                                  value="Del"
+                                                                  rerender="rectable"
+                                                                  rendered="{!AND(NOT(ISBLANK(recWraper.rec.Id)),
+                                                                            $ObjectType.Receivable__c.deletable)}"
+                                                                  status="loadingPanel">
+                                                    <apex:param name="recIndexToRemove"
+                                                                value="{!recWraper.recIndex}"
+                                                                assignTo="{!recIndexToRemove}"></apex:param>
+                                                </apex:commandLink>
+                                                <apex:commandLink action="{!deleteRec}" 
+                                                                  value="Remove"
+                                                                  rerender="rectable"
+                                                                  rendered="{!(ISBLANK(recWraper.rec.Id))}"
+                                                                  styleClass="removeRow"
+                                                                  status="loadingPanel"
+                                                                  immediate="true">
+                                                    <apex:param name="recIndexToRemove"
+                                                                value="{!recWraper.recIndex}"
+                                                                assignTo="{!recIndexToRemove}"></apex:param>
+                                                </apex:commandLink>
+                                            </td>
+                                            <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                                <td class="width10TdSub {!recfield.type}-field">
+                                                    <apex:outputField value="{!recWraper.rec[recfield]}"
+                                                                      rendered="{!AND(IF(recWraper.recEdit = false, true, false),
+                                                                                NOT(ISBLANK(recWraper.rec.Id)))}" />
+                                                    <apex:inputField value="{!recWraper.rec[recfield]}"
+                                                                    rendered="{!OR(IF(recWraper.recEdit = true, true, false),
+                                                                            ISBLANK(recWraper.rec.Id))}"/>
+                                                </td>
+                                            </apex:repeat>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                                <tfoot>
+                                    <tr class = "headerRow">
+                                        <td class="widthRecordSub"><b>Total</b></td>
+                                        <td class="widthActionSub"></td>
+                                        <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                            <td class="width10Sub">
+                                                <b>
+                                                    <apex:outputText value="{!currencySymbolReceivables}{0, number, ###,###,###,##0.00}"
+                                                                    rendered="{!AND(recFieldToSumMap[recfield.fieldPath] != -999.999,
+                                                                            recfield.type== 'currency')}" >
+                                                        <apex:param value="{!recFieldToSumMap[recfield.fieldPath]}" />
+                                                    </apex:outputText>
+                                                </b>
+                                                <b>
+                                                    <apex:outputText value="{0, number, ###,###,###,##0.00}"
+                                                                    rendered="{!AND(recFieldToSumMap[recfield.fieldPath] != -999.999,
+                                                                            recfield.type!= 'currency')}" >
+                                                        <apex:param value="{!recFieldToSumMap[recfield.fieldPath]}" />
+                                                    </apex:outputText>
+                                                </b>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+	                    <div style="margin-top: 10px;">
+	                        {!IF((recOffsetsize + 1) > recRecordCount,
+	                        IF(recRecordCount - recBlockSize <= 0, 0, recRecordCount - recBlockSize),
+	                        recOffsetsize + 1)} - {!recWrapperLst.size + recOffsetsize}
+	                        of {!recRecordCount}
+	                    </div>
+	                    <div class="pagination-btn-grp-wrapper">
+	                        <div class="slds-button-group pagination-btn-grp" role="group">
+	                            <button class="slds-button slds-button--neutral first"
+	                                    onclick="beginningReceivable(); return false;">&lt;&lt;</button>
+	                            <button class="slds-button slds-button--neutral previous"
+	                                    onclick="previousReceivable(); return false;">&lt;</button>
+	                            <button class="slds-button slds-button--neutral next"
+	                                    onclick="nextReceivable(); return false;">&gt;</button>
+	                            <button class="slds-button slds-button--neutral last"
+	                                    onclick="endReceivable(); return false;">&gt;&gt;</button>
+	                        </div>
+	                        <script>
+	                            t$ = jQuery.noConflict();
+	                            if("{!recOffsetsize != 0}" == 'false') {
+	                                t$('[title~=Receivable] .pagination-btn-grp .first').attr('disabled', 'disabled');
+	                                t$('[title~=Receivable] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+	                            } else {
+	                                t$('[title~=Receivable] .pagination-btn-grp .first').removeAttr('disabled');
+	                                t$('[title~=Receivable] .pagination-btn-grp .previous').removeAttr('disabled');
+	                            }
+	                            if("{!recWrapperLst.size + recOffsetsize < recRecordCount}" == 'false') {
+	                                t$('[title~=Receivable] .pagination-btn-grp .next').attr('disabled', 'disabled');
+	                                t$('[title~=Receivable] .pagination-btn-grp .last').attr('disabled', 'disabled');
+	                            } else {
+	                                t$('[title~=Receivable] .pagination-btn-grp .next').removeAttr('disabled');
+	                                t$('[title~=Receivable] .pagination-btn-grp .last').removeAttr('disabled');
+	                            }
+	                        </script>
+	                    </div>
+	                </div>
+	                <apex:actionFunction name="beginningReceivable" action="{!beginningReceivable}"
+	                        rerender="rectable" oncomplete="rerenderHandlerReceivable();"
+	                        status="loadingPanel"/>
+	                <apex:actionFunction name="previousReceivable" action="{!previousReceivable}"
+	                        rerender="rectable" oncomplete="rerenderHandlerReceivable();"
+	                        status="loadingPanel"/>
+	                <apex:actionFunction name="nextReceivable" action="{!nextReceivable}"
+	                        rerender="rectable" oncomplete="rerenderHandlerReceivable();"
+	                        status="loadingPanel"/>
+	                <apex:actionFunction name="endReceivable" action="{!endReceivable}"
+	                        rerender="rectable" oncomplete="rerenderHandlerReceivable();"
+	                        status="loadingPanel"/>
+             </apex:pageBlock>
+              <apex:inputHidden value="{!recSortExpression}" id="recSortHiddencriterian"/>
+              <apex:inputHidden value="{!recSortDirection}" id="recSortHiddenOrder"/>
+              <apex:inputHidden value="{!recSortExprFieldApi}" id="recSortFieldApi"/>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newRec}" name="newRec" rerender="rectable" 
+            oncomplete="rerenderHandlerReceivable();" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveReceivables}" name="saveReceivables" 
+            rerender="rectable" oncomplete="rerenderHandlerReceivable();" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortReceivables}" name="sortAllReceivables" 
+            rerender="rectable" oncomplete="rerenderHandlerReceivable();" status="loadingPanel" >
+            <apex:param name="recTypeParam" value="" />
+        </apex:actionFunction>
+    </apex:form>
+    <script>
+        var isInConsoleReceivables = false;
+        var tabIdReceivables;
+
+        function setEventListenersReceivable() {
+            t$("[id$='rectable'] .width10TdSub a").click(function() {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleReceivables) {
+                        openConsoleTabReceivablesNewTab(event.target.href);
+                    } else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=rectable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function initCallReceivables() {
+            setIsConsoleReceivables();
+            getFocusedPrimaryTabIdReceviables();
+        }
+
+        function setIsConsoleReceivables() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleReceivables = inConsole;
+            } else {
+                isInConsoleReceivables = sforce.console.isInConsole();
+            }
+        }
+
+        function getFocusedPrimaryTabIdReceviables() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdReceivables);
+        }
+
+        var showTabIdReceivables = function showTabIdSubmission(result) {
+            //Display the tab ID
+            tabIdReceivables = result.id;
+        };
+
+        function openConsoleTabReceivables(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdReceivables, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdReceivables);
+        }
+
+        function openConsoleTabReceivablesNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        function openReceivablePage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleReceivables) {
+                openConsoleTabReceivablesNewTab('/'+recordIdToOpen, 'Receivable');
+            } else  {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+
+        function runNewReceivable()
+        {
+            setTimeout(function()
+            {
+                newRec();
+            }, 100);
+        }
+
+        function runSaveReceivables()
+        {
+            setTimeout(function()
+            {
+                saveReceivables();
+            }, 100);
+        }
+
+        function sortCallReceivables(recFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             var recElement = event.target;
+             var newRecSortCol = t$(recElement).attr("Name"); // new sort field
+             t$("input[id$='recSortFieldApi']").val(newRecSortCol);
+             var oldRecSortCol = t$("input[id$='recSortHiddencriterian']").val();
+             var indexRec;
+             var recTempSortExpr;
+             if(newRecSortCol.endsWith('__c'))
+             {
+                 indexRec = newRecSortCol.indexOf('__');
+             }
+             else if(newRecSortCol.endsWith('Id'))
+             {
+                 indexRec = newRecSortCol.indexOf('Id');
+             }
+
+            if(indexRec != null) {
+                recTempSortExpr = newRecSortCol.substring(0, indexRec);
+            }
+            else
+            {
+                recTempSortExpr = newRecSortCol;
+            }
+
+           //if(String(newRecSortCol) == String(oldRecSortCol))
+           if(oldRecSortCol.indexOf(recTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='recSortHiddenOrder']").val()) == "ASC")
+                {
+                  t$("input[id$='recSortHiddenOrder']").val("DESC");
+                  t$(recElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                  t$("input[id$='recSortHiddenOrder']").val("ASC");
+                  t$(recElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+
+                t$("input[id$='recSortHiddencriterian']").val(newRecSortCol);
+                sortAllReceivables(recFieldDataType);
+
+            }
+            else
+            {
+                t$("input[id$='recSortHiddencriterian']").val(newRecSortCol);
+                t$("input[id$='recSortHiddenOrder']").val("ASC");
+                t$(recElement).removeClass('sorting').addClass('SortAsc');
+                sortAllReceivables(recFieldDataType);
+            }
+        }
+    </script>
+</apex:component>

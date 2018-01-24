@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>DETE_Notify_Internal_User</fullName>
+        <ccEmails>bhaktigujarathi27@gmail.com</ccEmails>
+        <ccEmails>vrsa.srada@gmail.com</ccEmails>
+        <description>DETE_Notify_Internal_User</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>DETE_Internal_Users</recipient>
+            <type>group</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>unfiled$public/DETE_Contact_Us</template>
+    </alerts>
+    <rules>
+        <fullName>DETE_Community_Case_Submitted</fullName>
+        <actions>
+            <name>DETE_Notify_Internal_User</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Case.CommunityCase__c</field>
+            <operation>equals</operation>
+            <value>True</value>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

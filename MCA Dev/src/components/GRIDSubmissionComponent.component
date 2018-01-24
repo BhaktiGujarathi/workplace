@@ -1,0 +1,628 @@
+<apex:component controller="GRIDSubmissionController" allowDML="true" access="global">
+
+    <style>
+        body, .noProgramStyle, h3, .popupBackground, .attachmentSection, h2, #droplabel, .dataCell span {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        .buttons {
+            text-align: center;
+        }
+
+        #submissionButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        /*[title~=Submission] .fundApp table, [title~=Submission] th, [title~=Submission] td {
+            line-height: 1.6em !important;
+        }*/
+
+        [title~=Submission] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin-top: -3px !important;
+        }
+
+        th a {
+            font-family:'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        [title~=Submission] .btn {
+            font-size: 12px !important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none !important;
+            color: #fff !important;
+            transition: color 50ms linear, background-color 50ms linear;
+            background: #0070d2 !important;
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+            vertical-align: middle !important;
+            padding: 0px 10px !important;
+            font-weight: 500 !important;
+            border-radius: 0.25rem !important;
+            margin: 0 4px !important;
+            border-color: #d8dde6 !important;
+        }
+
+        [title~=Submission] .subWizardBtn {
+            background: #4bca81 !important;
+        }
+
+        [title~=Submission] .btnNextPreviPage {
+            left: 115px;
+            position: relative;
+            height: 25px;
+            /*line-height: initial!important;*/
+            font-size: 12px!important;
+            color: #0070d2!important;
+            background: #fff!important;
+        }
+
+        [title~=Submission] .btnNextPreviPage:hover {
+            background-color: #f4f6f9 !important;
+        }
+
+        [title~=Submission] input[type="email"],
+        [title~=Submission] input[type="number"],
+        [title~=Submission] input[type="password"],
+        [title~=Submission] input[type="tel"],
+        [title~=Submission] input[type="url"],
+        [title~=Submission] input[type="text"] {
+            background-color: #fff !important;
+            color: #16325c !important;
+            border: 1px solid #d8dde6 !important;
+            border-radius: 4px !important;
+            transition: border .1s linear,background-color .1s linear !important;
+            height:28px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+            font-family:'Salesforce Sans', Arial, sans-serif !important;
+            font-size: 12px;
+        }
+
+        [title~=Submission] select {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        /*[title~=Submission] select{
+            width: 85%!important;
+        }
+
+        [title~=Submission] .datePicker select {
+            width: 36%!important;
+        }*/
+
+        [title~=Submission] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Submission] input[type="email"]:focus,
+        [title~=Submission] input[type="number"]:focus,
+        [title~=Submission] input[type="password"]:focus,
+        [title~=Submission] input[type="tel"]:focus,
+        [title~=Submission] input[type="url"]:focus,
+        [title~=Submission] input[type="text"]:focus,
+        [title~=Submission] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=Submission] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=Submission] textarea {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=Submission] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=Submission] .bPageBlock{
+            background : #fff!important;
+        }
+
+         [title~=Submission] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+            background-color: #fff!important;
+        }
+          [title~=Submission] .headerRow [title~=Submission] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            /*color: #54698d!important;
+            text-transform: uppercase;*/
+            color: #fff!important;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=Submission] body [title~=Submission] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=Submission] .pbBody [title~=Submission] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Submission] body [title~=Submission] .pbBody [title~=Submission] table.list
+        [title~=Submission] tr.headerRow [title~=Submission] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=Submission] .list [title~=Submission] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Submission] body [title~=Submission] .pbBody
+        [title~=Submission] table.list [title~=Submission] tr.headerRow [title~=Submission] td,
+        [title~=Submission] body [title~=Submission] .pbBody
+        [title~=Submission] table.list [title~=Submission] tr.headerRow [title~=Submission] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        [title~=Submission] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=Submission] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        [title~=Submission] .lookupInput input {
+            width: 180px !important;
+        }
+
+        [title~=Submission] .lookupInput {
+            width: 200px !important;
+        }
+
+        #submissionTableInner .boolean-field {
+            text-align: center !important;
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+    </style>
+
+    <apex:attribute name="isEditAll" 
+                    description="This is decides the Editall of records on component."
+                    type="Boolean"
+                    assignTo="{!submisionEditAllFlag}"
+                    access="global"/>
+
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+
+    <apex:form id="Submissionform" styleClass="records">
+        <apex:outputLabel rendered="{!submisionIsRefrenceField }">
+            Please remove '{!submisionRefrenceFieldLabel}'
+            field from the 'GRIDSubmissionFieldSet' field set, as referenced fields are not allowed.
+        </apex:outputLabel>
+
+        <apex:actionStatus id="loadingPanel" layout="block">
+            <apex:facet name="start">
+                <div class="cmb">
+                    <div class="slds-spinner_container">
+                        <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:outputPanel id="submisiontable" title="Submission" rendered="{!NOT(submisionIsRefrenceField)}">
+            <apex:pageBlock mode="inlineEdit">
+                <div class="buttons" id="submissionButtons">
+                    <apex:outputpanel rendered="{!$ObjectType.Submission__c.createable}" id="newSubmsn">
+                        <input type="button"
+                               onclick="runNewSubmission()"
+                               class="{!if(submisionIsDisable,'btnDisabled disBtn','btn')}"
+                               value="New"
+                               status="loadingPanel"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!AND($ObjectType.Submission__c.updateable, NOT(submisionEditAllFlag))}">
+                        <apex:CommandButton action="{!editAllSubmissions}"
+                                            oncomplete="rerenderHandlerSubmission();"
+                                            value="Edit All"
+                                            disabled="{!submisionIsDisable}"
+                                            rerender="submisiontable"
+                                            status="loadingPanel"
+                                            immediate="true"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!OR($ObjectType.Submission__c.updateable,
+                                                $ObjectType.Submission__c.createable)}">
+                        <input type="button" 
+                                onclick="runSaveSubmissions()"
+                                class="{!if(submisionIsDisable,'btnDisabled disBtn','btn')}"
+                                value="Save"
+                                status="loadingPanel"/>
+                    </apex:outputPanel>
+                    <apex:CommandButton action="{!refreshSubmissions}"
+                                        oncomplete="rerenderHandlerSubmission();"
+                                        value="Refresh"
+                                        disabled="{!submisionIsDisable}"
+                                        rerender="submisiontable"
+                                        status="loadingPanel"
+                                        immediate="true"/>
+                    <apex:CommandButton action="{!refreshSubmissions}"
+                                        oncomplete="rerenderHandlerSubmission();"
+                                        value="Cancel"
+                                        disabled="{!submisionIsDisable}"
+                                        rerender="submisiontable"
+                                        status="loadingPanel"
+                                        immediate="true"
+                                        id="canclBtn"/>
+                    <apex:commandButton value="Submission Wizard" 
+                                        disabled="{!submisionIsDisable}"
+                                        onclick="submissionWizardPage()"
+                                        oncomplete="rerenderHandlerSubmission();"
+                                        rerender="submisiontable"
+                                        status="loadingPanel"
+                                        immediate="true"
+                                        styleClass="subWizardBtn"/>
+                </div>
+                <apex:pageMessages id="submisionpgMsgId" escape="false"/>
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                    <table class="contentTable slds-table slds-table--bordered slds-table--striped"
+                            border="0" 
+                            cellpadding="0"
+                            cellspacing="0"
+                            id="submissionTableInner">
+                        <tbody>
+                            <tr class="headerRow">
+                                <th>#</th>
+                                <th>Action</th>
+                                <apex:repeat value="{!submisionFieldsetList}" var="submisionField">
+                                    <th>
+                                        <div>
+                                            <apex:outputLabel value="{!submisionField.label}"/>
+                                            <apex:outputPanel rendered="{!AND(fieldPathResult != submisionField.fieldPath,
+                                                    displaySortingArrow ,submisionField.type != 'multipicklist',
+                                                    submisionField.type != 'phone')}">
+                                                <img src="{!IF(submisionSortExprFieldApi==submisionField.fieldPath,
+                                                    IF(submisionSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                                    ,'GRIDResource/Images/Sort_Asc.png'),
+                                                    urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Desc.png')),
+                                                    urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Both.png'))}"
+                                                    style="height:11px;"
+                                                    name="{!submisionField.fieldPath}"
+                                                    class="sorting"
+                                                    onclick="sortCallSubmissions('{!submisionField.type}');"/>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </th>
+                                </apex:repeat>
+                            </tr>
+                            <apex:repeat value="{!submisionWrapperLst}" var="submisionWraper">
+                                <tr class="dataRow">
+                                    <td>
+                                        <apex:outputtext value="{!submisionWraper.submisionIndex + 1}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputLink value="#"
+                                            target="_blank"
+                                            onclick="openSubmissionPage('{!submisionWraper.submision.Id}');"
+                                            rendered="{!NOT(ISBLANK(submisionWraper.submision.Id))}">
+                                            View
+                                        </apex:outputLink>
+                                        <apex:outputLabel value=" | " 
+                                                          rendered="{!AND(NOT(ISBLANK(submisionWraper.submision.Id)),
+                                            $ObjectType.Submission__c.deletable)}"/>
+                                        <apex:commandLink action="{!deleteSubmission}"
+                                                          value="Del"
+                                                          status="loadingPanel"
+                                                          rerender="submisiontable"
+                                                          rendered="{!AND(NOT(ISBLANK(submisionWraper.submision.Id)),
+                                                                $ObjectType.Submission__c.deletable)}" >
+                                            <apex:param name="submisionIndexToRemove"
+                                                        value="{!submisionWraper.submisionIndex}"
+                                                        assignTo="{!submisionIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        <apex:commandLink action="{!deleteSubmission}"
+                                                          value="Remove"
+                                                          rerender="submisiontable"
+                                                          rendered="{!(ISBLANK(submisionWraper.submision.Id))}"
+                                                          styleClass="removeRow"
+                                                          status="loadingPanel"
+                                                          immediate="true">
+                                            <apex:param name="submisionIndexToRemove"
+                                                        value="{!submisionWraper.submisionIndex}"
+                                                        assignTo="{!submisionIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <apex:repeat value="{!submisionFieldsetList}" var="submisionfield">
+                                        <td class="width10TdSub {!submisionfield.type}-field">
+                                            <apex:outputField value="{!submisionWraper.submision[submisionfield]}"
+                                                rendered="{!AND(IF(submisionWraper.submisionEdit = false, true, false),
+                                                NOT(ISBLANK(submisionWraper.submision.Id)))}"/>
+                                            <apex:inputField value="{!submisionWraper.submision[submisionfield]}"
+                                                styleclass="" type="text" id="text-input-01"
+                                                rendered="{!OR(IF(submisionWraper.submisionEdit = true, true, false),
+                                                ISBLANK(submisionWraper.submision.Id))}"/>
+                                        </td>
+                                    </apex:repeat>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        {!IF((submisionOffsetsize + 1) > submisionRecordCount,
+                        IF(submisionRecordCount - submisionBlockSize <= 0, 0, submisionRecordCount - submisionBlockSize),
+                        submisionOffsetsize + 1)} - {!submisionWrapperLst.size + submisionOffsetsize} of
+                        {!submisionRecordCount}
+                    </div>
+
+                    <div class="pagination-btn-grp-wrapper">
+                        <div class="slds-button-group pagination-btn-grp" role="group">
+                            <button class="slds-button slds-button--neutral first"
+                                    onclick="beginningSubmissions(); return false;">&lt;&lt;</button>
+                            <button class="slds-button slds-button--neutral previous"
+                                    onclick="previousSubmissions(); return false;">&lt;</button>
+                            <button class="slds-button slds-button--neutral next"
+                                    onclick="nextSubmissions(); return false;">&gt;</button>
+                            <button class="slds-button slds-button--neutral last"
+                                    onclick="endSubmissions(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            t$ = jQuery.noConflict();
+                            if("{!submisionOffsetsize != 0}" == 'false') {
+                                t$('[title~=Submission] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                                t$('[title~=Submission] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Submission] .pagination-btn-grp .first').removeAttr('disabled');
+                                t$('[title~=Submission] .pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!submisionWrapperLst.size + submisionOffsetsize < submisionRecordCount}" == 'false') {
+                                t$('[title~=Submission] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                                t$('[title~=Submission] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Submission] .pagination-btn-grp .next').removeAttr('disabled');
+                                t$('[title~=Submission] .pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+                </div>
+
+                <apex:actionFunction name="beginningSubmissions" action="{!beginningSubmissions}"
+                        rerender="submisiontable" oncomplete="rerenderHandlerSubmission();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="previousSubmissions" action="{!previousSubmissions}"
+                        rerender="submisiontable" oncomplete="rerenderHandlerSubmission();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="nextSubmissions" action="{!nextSubmissions}"
+                        rerender="submisiontable" oncomplete="rerenderHandlerSubmission();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="endSubmissions" action="{!endSubmissions}"
+                        rerender="submisiontable" oncomplete="rerenderHandlerSubmission();"
+                        status="loadingPanel"/>
+            </apex:pageBlock>
+            <apex:inputHidden value="{!submisionSortExpression}" id="submisionSortHiddencriterian"/>
+            <apex:inputHidden value="{!submisionSortDirection}" id="submisionSortHiddenOrder"/>
+            <apex:inputHidden value="{!submisionSortExprFieldApi}" id="submisionSortFieldApi"/>
+        </apex:outputPanel>
+
+        <apex:actionFunction action="{!newSubmission}" name="newSubmission"
+            rerender="submisiontable" oncomplete="rerenderHandlerSubmission();"
+            status="loadingPanel"/>
+        <apex:actionFunction action="{!saveSubmissions}" name="saveSubmissions"
+            rerender="submisiontable" oncomplete="rerenderHandlerSubmission();" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortSubmissions}" name="sortAllSubmissions" 
+            rerender="submisiontable" oncomplete="rerenderHandlerSubmission();" status="loadingPanel">
+            <apex:param name="submisionTypeParam" value=""/>
+        </apex:actionFunction>
+    </apex:form>
+
+    <script type="text/javascript">
+
+        t$ = jQuery.noConflict();
+        t$(document).ready(function () {
+            t$(".disBtn").prop('disabled', true);
+            t$("a").attr("onmouseover", "");
+            t$("[id*='submissionTab_lbl']").text('Submissions ({!submisionRecordCount})');
+            // Added following two lines for new grid home page
+            var tabTitle = t$("[data-tabname='submissions']");
+            tabTitle.text('Submissions ({!submisionRecordCount})');
+            t$('#submissionTableInner tr').hover(function () {
+                t$(this).addClass('hoverhighlight');
+            }, function () {
+                t$(this).removeClass('hoverhighlight');
+            });
+            initCallSubmission();
+            setEventListenersSubmission();
+        });
+
+        var isInConsoleSubmission = false;
+        var tabIdSubmission;
+        var inConsole = false;
+
+        function rerenderHandlerSubmission() {
+            if (typeof rerenderHandler == "function") {
+                rerenderHandler('submissions');
+            }
+            setEventListenersSubmission();
+        }
+
+        function setEventListenersSubmission() {
+            t$("[id$='submisiontable'] .width10TdSub a").click(function(event) {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleSubmission) {
+                        openConsoleTabSubmissionNewTab(event.target.href);
+                    } else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=submisiontable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function runNewSubmission() {
+            setTimeout(function () {
+                newSubmission();
+            }, 100);
+        }
+
+        function runSaveSubmissions() {
+            setTimeout(function () {
+                saveSubmissions();
+            }, 100);
+        }
+
+        function initCallSubmission() {
+            setIsConsoleSubmission();
+            getFocusedPrimaryTabIdSubmission();
+        }
+
+        function setIsConsoleSubmission() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleSubmission = inConsole;
+            } else {
+                isInConsoleSubmission = sforce.console.isInConsole();
+            }
+        }
+
+        function getFocusedPrimaryTabIdSubmission() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdSubmission);
+        }
+
+        var showTabIdSubmission = function showTabIdSubmission(result) {
+            //Display the tab ID
+            tabIdSubmission = result.id;
+        };
+
+        function openConsoleTabSubmission(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdSubmission, url, true, tabLabel, function (r) {});
+            sforce.console.closeTab(tabIdSubmission);
+        }
+
+        function openConsoleTabSubmissionNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function (r) {});
+        }
+
+        function sortCallSubmissions(submisionFieldDataType) {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+            var submisionElement = event.target;
+            var newsubmisionSortCol = t$(submisionElement).attr("Name"); // new sort field
+            t$("input[id$='submisionSortFieldApi']").val(newsubmisionSortCol);
+            var oldsubmisionSortCol = t$("input[id$='submisionSortHiddencriterian']").val();
+            var indexSubmision;
+            var submisionTempSortExpr;
+            if (newsubmisionSortCol.endsWith('__c')) {
+                indexSubmision = newsubmisionSortCol.indexOf('__');
+            } else if (newsubmisionSortCol.endsWith('Id')) {
+                indexSubmision = newsubmisionSortCol.indexOf('Id');
+            }
+            if (indexSubmision != null) {
+                submisionTempSortExpr = newsubmisionSortCol.substring(0, indexSubmision);
+            } else {
+                submisionTempSortExpr = newsubmisionSortCol;
+            }
+
+            //if(String(newsubmisionSortCol) == String(oldsubmisionSortCol))
+            if (oldsubmisionSortCol.indexOf(submisionTempSortExpr) != -1) {
+                if (String(t$("input[id$='submisionSortHiddenOrder']").val()) == "ASC") {
+                    t$("input[id$='submisionSortHiddenOrder']").val("DESC");
+                    t$(submisionElement).removeClass('SortAsc').addClass('SortDesc');
+                } else {
+                    t$("input[id$='submisionSortHiddenOrder']").val("ASC");
+                    t$(submisionElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                t$("input[id$='submisionSortHiddencriterian']").val(newsubmisionSortCol);
+                sortAllSubmissions(submisionFieldDataType);
+            } else {
+                t$("input[id$='submisionSortHiddencriterian']").val(newsubmisionSortCol);
+                t$("input[id$='submisionSortHiddenOrder']").val("ASC");
+                t$(submisionElement).removeClass('sorting').addClass('SortAsc');
+                sortAllSubmissions(submisionFieldDataType);
+            }
+        }
+
+        function submissionWizardPage() {
+            var submissionUrl = '{!$Page.SubmissionWizard}';
+            submissionUrl += '?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}';
+            if (isInConsoleSubmission) {
+                submissionUrl += '&isConsole=1';
+                openConsoleTabSubmission(submissionUrl, 'SubmissionWizard');
+            } else {
+                submissionUrl += '&isConsole=0';
+                window.open(submissionUrl, '_parent');
+            }
+        }
+
+        function openSubmissionPage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleSubmission) {
+                openConsoleTabSubmissionNewTab('/'+recordIdToOpen, 'Submission');
+            } else {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+    </script>
+</apex:component>

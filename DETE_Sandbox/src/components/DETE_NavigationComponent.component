@@ -1,0 +1,178 @@
+<apex:component controller="DETE_LoginService">
+
+    <style>
+        .lastElement:after {
+            content:'' !important;
+        }
+
+        .message {
+            width: 100% !important;
+            padding: 1% !important;
+        }
+
+        .message .messageText {
+            font-size: 75% !important;
+        }
+    </style>
+
+    <head> </head>
+
+    <apex:attribute name="myValue" type="String" description="To get login details" />
+    <apex:attribute name="username" type="String" assignTo="{!strUserName}" 
+                    description="Username of logged in user"/>
+
+    <apex:outputText value="{!usersName}" style="display:hidden;"/>
+
+    <!-- Navigation -->
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top navbar-custom">
+        <div>
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" 
+                        data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span> <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand" href="{!$Site.Prefix}/DETE_HomePage">
+                    <apex:image url="{!URLFOR($Resource.DETE_Style, 'img/logo.png')}" />
+                </a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse navbarCls" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="">
+                        <a href="{!$Site.Prefix}/DETE_HomePage">Home</a>
+                    </li>
+                    <li class="page-scroll resourceCls">
+                        <a href="{!$Site.Prefix}/DETE_HomePage#portfolio" >Resources</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="{!$Site.Prefix}/DETE_LearnMore">Learn More</a>
+                    </li>
+                    <li class="page-scroll" style="{!IF(OR(strUserName == null, strUserName == ''), 
+                                                                            '', 'display:none;')}">
+                         <a href="{!$Site.Prefix}/DETE_ProfilePage">Create Profile</a>
+                    </li>
+                    <li class="page-scroll">
+                        <a href="{!$Site.Prefix}/DETE_ContactUs">Contact Us</a>
+                    </li>
+                    <li class="page-scroll" style="{!IF(OR(strUserName == null, strUserName == ''),
+                                                                            'display:none;', '')}">
+                        <a class="dropdown-toggle lastElement logged-in" data-toggle="dropdown" href="#" >
+                            Welcome {!strName}
+                        </a>
+                        <ul class="dropdown-menu welcome-dropdown" style="padding: 15px;">
+                            <li>
+                                <a href="{!$Site.Prefix}/DETE_ProfilePage" class="lastElement">
+                                    My Profile
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{!$Site.Prefix}/DETE_JobResultPage" class="lastElement">
+                                    Search Jobs
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{!$Site.Prefix}/DETE_ChangePassword" class="lastElement">
+                                    Change Password
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{!$Site.Prefix}/secur/logout.jsp?retUrl={!$Site.Prefix}/DETE_HomePage">
+                                    Log Out
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="page-scroll dropdown loginPanel" style="{!IF(OR(strUserName == null,
+                                                        strUserName == ''), '', 'display:none;')}">
+                         <a href="#" class="dropdown-toggle" data-toggle="dropdown"
+                            onclick="if($(this).prop('aria-expanded') === 'false')">Log in</a>
+                         <ul class="dropdown-menu" style="padding: 15px;min-width: 250px;">
+                         <apex:form id="loginForm">
+                         <li>
+                            <h4>Already Have an Account?</h4>
+                            <i class="fa fa-close"></i> <br/>
+                            <p>If you already created a username and password, just log in.</p>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <form class="form" role="form" method="post" action="login" 
+                                          accept-charset="UTF-8" id="login-nav">
+                                        <apex:outputPanel id="msgPnl" >
+                                            <apex:pageMessages id="errorMessages" />
+                                        </apex:outputPanel>
+                                        <div class="form-group">
+                                            <label class="sr-only" for="exampleInputEmail2">Email</label>
+                                            <apex:inputtext value="{!usernameStr}" 
+                                                            html-placeholder="Username (Email address)" 
+                                                            styleclass="form-control" />
+                                        </div>
+                                        <div class="form-group">
+                                        <label class="sr-only" for="exampleInputPassword2">Password</label>
+                                        <apex:inputSecret value="{!passwordStr}" 
+                                                         html-placeholder="Password" 
+                                                         styleclass="form-control" />
+                                        </div>
+
+                                        <div class="form-group">
+                                        <apex:commandButton value="Log In" 
+                                                            action="{!userLogin}" 
+                                                            reRender="errorMessages" 
+                                                            styleClass="btn btn-success btn-block" />
+                                     </div>
+                                     <apex:actionFunction name="clearErrorMessage" 
+                                                          action="{!clearPageMessages}" 
+                                                          rerender="msgPnl" />
+                                  </form>
+                              </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h6>Is this Your First Time Accessing this Site?</h6>
+                                    <br/>
+                                    <p>Create a username (email) and password so you can save your
+                                        <a href="{!$Site.Prefix}/DETE_ProfilePage" 
+                                           style="font-size: inherit; color: black;" 
+                                           class="login-anchor" >
+                                            <u>Talent Exchange Profile</u>
+                                        </a>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <a href="#login-modal" data-toggle="modal" class="login-anchor" 
+                                       data-target="#login-modal" style="{!IF(OR(strUserName == null, 
+                                                        strUserName == ''), '', 'display:none;')}">
+                                        <u>Forgot your password?</u>
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                        </apex:form>
+                        </ul>
+                  </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <script>
+
+        $(".fa.fa-close").on( "click", function() {
+            $(".dropdown.loginPanel").removeClass( "open" );
+            clearErrorMessage();
+        });
+        
+        $(".resourceCls").on( "click", function() {
+            $(".navbarCls").removeClass( "in" );
+        });
+        
+        $('.dropdown').on('hidden.bs.dropdown', function(){
+            clearErrorMessage();
+        });
+
+    </script>
+</apex:component>

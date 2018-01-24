@@ -1,0 +1,621 @@
+<apex:component controller="GRIDCreditCardsController" allowDMl="true" access="global">
+    <style>
+        [title~=merchntStatements] .btn{
+            font-size: 12px!important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none!important;
+            color: #fff!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #0070d2!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        [title~=merchntStatements] .btnNextPreviPage {
+            left: 115px;
+            position: relative;
+            height: 25px;
+            /*line-height: initial!important;*/
+            font-size: 12px!important;
+            color: #0070d2!important;
+            background: #fff!important;
+        }
+
+        [title~=merchntStatements] .btnNextPreviPage:hover{
+            background-color: #f4f6f9!important;
+        }
+
+        [title~=merchntStatements] input[type="email"],
+        [title~=merchntStatements] input[type="number"],
+        [title~=merchntStatements] input[type="password"],
+        [title~=merchntStatements] input[type="tel"],
+        [title~=merchntStatements] input[type="url"],
+        [title~=merchntStatements] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=merchntStatements] select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+            }
+
+        [title~=merchntStatements] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=merchntStatements] input[type="email"]:focus,
+        [title~=merchntStatements] input[type="number"]:focus,
+        [title~=merchntStatements] input[type="password"]:focus,
+        [title~=merchntStatements] input[type="tel"]:focus,
+        [title~=merchntStatements] input[type="url"]:focus,
+        [title~=merchntStatements] input[type="text"]:focus,
+        [title~=merchntStatements] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=merchntStatements] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=merchntStatements] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=merchntStatements] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=merchntStatements] .bPageBlock{
+            background : #fff!important;
+        }
+
+        [title~=merchntStatements] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+            background-color: #fff!important;
+        }
+
+        [title~=merchntStatements] .headerRow [title~=merchntStatements] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            /*color: #54698d!important;
+            text-transform: uppercase;*/
+            color: #fff!important;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=merchntStatements] body [title~=merchntStatements] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=merchntStatements] .pbBody [title~=merchntStatements] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=merchntStatements] body [title~=merchntStatements] .pbBody [title~=merchntStatements] table.list
+        [title~=merchntStatements] tr.headerRow [title~=merchntStatements] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=merchntStatements] .list [title~=merchntStatements] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=merchntStatements] body [title~=merchntStatements] .pbBody
+        [title~=merchntStatements] table.list [title~=merchntStatements] tr.headerRow [title~=merchntStatements] td,
+        [title~=merchntStatements] body [title~=merchntStatements] .pbBody
+        [title~=merchntStatements] table.list [title~=merchntStatements] tr.headerRow [title~=merchntStatements] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        [title~=merchntStatements] .creditCardOtherBtn {
+            background: #4bca81 !important;
+        }
+
+        [title~=merchntStatements] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin-top: -3px!important;
+        }
+
+        [title~=merchntStatements] .buttons {
+            text-align: center;
+        }
+
+        [title~=merchntStatements] #creditcardsButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        [title~=merchntStatements] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=merchntStatements] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        #creditCardsTableInner .boolean-field {
+            text-align: center !important;
+        }
+
+        #creditCardsTableInner .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+        
+        [title~=merchntStatements] tfoot {
+            border-top: 1px solid gainsboro;
+        }
+    </style>
+
+    <apex:attribute name="isEditAll"
+                    description="This is decides the Editall of records on component."
+                    type="Boolean" 
+                    assignTo="{!cardEditAllFlag}" 
+                    access="global" />
+    <apex:form id="CreditCardform" styleClass="records" title="merchntStatements">
+        <apex:outputLabel rendered="{!cardIsRefrenceField}">
+            Please remove '{!cardRefrenceFieldLabel}' field from the 'GRIDCreditCardFieldSet' 
+            field set, as referenced fields are not allowed.
+        </apex:outputLabel>
+        <apex:outputPanel id="cardTable" rendered="{!NOT(cardIsRefrenceField)}">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function(){
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='creditcardTab_lbl']").text( 'Merchant Statements'+' ({!cardRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='merchantStatements']");
+                    tabTitle.text('Merchant Statements'+' ({!cardRecordCount})');
+                    t$('#creditCardsTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallCreditCard();
+                    setEventListenersBankStatement();
+                });
+
+                function rerenderHandlerMerchantStmnt() {
+                    if(typeof rerenderHandler == "function") {
+                        rerenderHandler('merchantStatements');
+                    }
+                    setEventListenersBankStatement();
+                }
+            </script>
+            <apex:pageBlock mode="inlineEdit">
+                <div class="buttons" id="creditcardsButtons">
+                    <apex:outputpanel rendered="{!$ObjectType.Credit_Card__c.createable}">
+                        <input type="button"
+                               onclick="runNewCreditCard()"
+                               class="{!if(isDisable,'btnDisabled disBtn','btn')}"
+                               value="New"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!AND($ObjectType.Credit_Card__c.updateable, NOT(cardEditAllFlag))}">
+                        <apex:CommandButton action="{!editAllCreditCards}"
+                                            value="Edit All"
+                                            rerender="cardTable"
+                                            oncomplete="rerenderHandlerMerchantStmnt();"
+                                            status="loadingPanel"
+                                            disabled="{!isDisable}"
+                                            immediate="true"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!OR($ObjectType.Credit_Card__c.updateable,$ObjectType.Credit_Card__c.createable)}">
+                        <input type="button"
+                               onclick="runSaveCreditCards()"
+                               class="{!if(isDisable,'btnDisabled disBtn','btn')}"
+                               value="Save"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:CommandButton action="{!refreshCreditCards}"
+                                        value="Refresh"
+                                        rerender="cardTable"
+                                        oncomplete="rerenderHandlerMerchantStmnt();"
+                                        status="loadingPanel"
+                                        disabled="{!isDisable}"
+                                        immediate="true" />
+                    <apex:CommandButton action="{!refreshCreditCards}"
+                                        value="Cancel"
+                                        rerender="cardTable"
+                                        oncomplete="rerenderHandlerMerchantStmnt();"
+                                        status="loadingPanel"
+                                        disabled="{!isDisable}"
+                                        immediate="true" />
+                    <apex:CommandButton onclick="merchantStmntSummaryPage()"
+                                        value="Sales Summary"
+                                        rerender="cardTable"
+                                        oncomplete="rerenderHandlerMerchantStmnt();"
+                                        status="loadingPanel"
+                                        styleClass="creditCardOtherBtn"
+                                        disabled="{!isDisable}" />
+                </div>
+
+                <apex:pageMessages id="cardpgMsgId" escape="false" />
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                        <table class="contentTable slds-table slds-table--bordered slds-table--striped"
+                               border="0" cellpadding="0" cellspacing="0" id="creditCardsTableInner">
+                            <tbody>
+                              <tr class="headerRow">
+                                  <th class="widthRecordSub">#</th>
+                                  <th class="widthActionSub">Action</th>
+                                  <apex:repeat value="{!cardFieldsetList}" var="cardField">
+                                      <th class="width10Sub">
+                                          <div>
+                                              <apex:outputLabel value="{!cardField.label}" />
+                                              <apex:OutputPanel rendered="{!AND(fieldPathResult != cardField.fieldPath,
+                                                displaySortingArrow ,cardField.type != 'multipicklist',
+                                                cardField.type != 'phone')}">
+                                                  <img
+                                                    src="{!IF(cardSortExprFieldApi==cardField.fieldPath,
+                                                    IF(cardSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                                    ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource,
+                                                    'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                                    ,'GRIDResource/Images/Sort_Both.png'))}"
+                                                    style="height: 11px;" 
+                                                    name="{!cardField.fieldPath}"
+                                                    class="sorting"
+                                                    onclick="sortCallCreditCards('{!cardField.type}');" />
+                                              </apex:OutputPanel>
+                                          </div>
+                                      </th>
+                                  </apex:repeat>
+                              </tr>
+                              <apex:repeat value="{!cardWrapperLst}" var="cardWraper">
+                                  <tr class="dataRow">
+                                      <td class="widthRecordTdSub">
+                                          <apex:outputtext value="{!cardWraper.cardIndex + 1}" />
+                                      </td>
+                                      <td class="widthActionTdSub">
+                                          <apex:outputLink value="#"
+                                                           target="_blank"
+                                                           onclick="openCreditCardPage('{!cardWraper.Card.Id}');"
+                                                           rendered="{!NOT(ISBLANK(cardWraper.Card.Id))}">
+                                               View
+                                          </apex:outputLink>
+                                          <apex:outputLabel value="| "
+                                                              rendered="{!AND(NOT(ISBLANK(cardWraper.Card.Id)),
+                                                                      $ObjectType.Credit_Card__c.deletable)}" />
+                                          <apex:commandLink action="{!deleteCreditCard}"
+                                                            value="Del"
+                                                            rerender="cardTable"
+                                                            rendered="{!AND(NOT(ISBLANK(cardWraper.Card.Id)),
+                                                                     $ObjectType.Credit_Card__c.deletable)}"
+                                                            status="loadingPanel">
+                                              <apex:param name="cardIndexToRemove"
+                                                            value="{!cardWraper.cardIndex}"
+                                                            assignTo="{!CardIndexToRemove}">
+                                              </apex:param>
+                                          </apex:commandLink>
+                                          <apex:commandLink action="{!deleteCreditCard}"
+                                                            value="Remove"
+                                                            rerender="cardTable"
+                                                            rendered="{!(ISBLANK(cardWraper.Card.Id))}"
+                                                            styleClass="removeRow"
+                                                            status="loadingPanel"
+                                                            immediate="true">
+                                              <apex:param name="cardIndexToRemove"
+                                                          assignTo="{!cardIndexToRemove}"
+                                                          value="{!cardWraper.cardIndex}">
+                                              </apex:param>
+                                          </apex:commandLink></td>
+                                          <apex:repeat value="{!cardFieldsetList}" var="cardfield">
+                                              <td class="width10TdSub {!cardfield.type}-field">
+                                                  <apex:outputField value="{!cardWraper.Card[cardfield]}"
+                                                                    rendered="{!AND(IF(cardWraper.cardEdit = false, true, false),
+                                                                              NOT(ISBLANK(cardWraper.Card.Id)))}" />
+                                                      <apex:inputField value="{!cardWraper.Card[cardfield]}"
+                                                                       rendered="{!OR(IF(cardWraper.cardEdit = true, true, false),
+                                                                                  ISBLANK(cardWraper.Card.Id))}" />
+                                              </td>
+                                          </apex:repeat>
+                                      </tr>
+                                  </apex:repeat>
+                              </tbody>
+                        <tfoot>
+                            <tr class="headerRow">
+                                <td class="widthRecordSub"><b>Average</b></td>
+                                <td class="widthActionSub"></td>
+                                <apex:repeat value="{!cardFieldsetList}" var="cardfield">
+                                    <td class="width10Sub">
+                                        <b>
+                                            <apex:outputText value="{!currencyMerchantStatement}{0, number, ###,###,###,##0.00}"
+                                                            rendered="{!AND(cardFieldToSumMap[cardfield.fieldPath] != -999.999,
+                                                                    cardfield.type=='currency')}">
+                                                <apex:param value="{!cardFieldToSumMap[cardfield.fieldPath]}" />
+                                            </apex:outputText>
+                                            <apex:outputText value="{0, number, ###,###,###,##0.00}"
+                                                            rendered="{!AND(cardFieldToSumMap[cardfield.fieldPath] != -999.999,
+                                                                cardfield.type!='currency')}">
+                                                <apex:param value="{!cardFieldToSumMap[cardfield.fieldPath]}" />
+                                            </apex:outputText>
+                                        </b>
+                                    </td>
+                                </apex:repeat>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div style="margin-top: 10px;">
+                    {!IF((cardOffsetsize + 1) > cardRecordCount,
+                     IF(cardRecordCount - cardBlockSize <= 0, 0, cardRecordCount - cardBlockSize),
+                    cardOffsetsize + 1)} - {!IF(cardWrapperLst != null,cardWrapperLst.size + cardOffsetsize,0)}
+                    of {!cardRecordCount}
+                </div>
+                <!-- panel grid for pagination buttons -->
+                <div class="pagination-btn-grp-wrapper">
+                    <div class="slds-button-group pagination-btn-grp" role="group">
+                        <button class="slds-button slds-button--neutral first"
+                            onclick="beginningCreditCards(); return false;">&lt;&lt;</button>
+                        <button class="slds-button slds-button--neutral previous"
+                            onclick="previousCreditCards(); return false;">&lt;</button>
+                        <button class="slds-button slds-button--neutral next"
+                            onclick="nextCreditCards(); return false;">&gt;</button>
+                        <button class="slds-button slds-button--neutral last"
+                            onclick="endCreditCards(); return false;">&gt;&gt;</button>
+                    </div>
+                    <script>
+                        t$ = jQuery.noConflict();
+                        if("{!cardOffsetsize != 0}" == 'false') {
+                            t$('[title~=merchntStatements] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                            t$('[title~=merchntStatements] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                        } else {
+                            t$('[title~=merchntStatements] .pagination-btn-grp .first').removeAttr('disabled');
+                            t$('[title~=merchntStatements] .pagination-btn-grp .previous').removeAttr('disabled');
+                        }
+                        if("{!cardWrapperLst.size + cardOffsetsize < cardRecordCount}" == 'false') {
+                            t$('[title~=merchntStatements] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                            t$('[title~=merchntStatements] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                        } else {
+                            t$('[title~=merchntStatements] .pagination-btn-grp .next').removeAttr('disabled');
+                            t$('[title~=merchntStatements] .pagination-btn-grp .last').removeAttr('disabled');
+                        }
+                    </script>
+                </div>
+            </div>
+            <apex:actionFunction name="beginningCreditCards" action="{!beginningCreditCards}"
+                    rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();"
+                    status="loadingPanel"/>
+            <apex:actionFunction name="previousCreditCards" action="{!previousCreditCards}"
+                    rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();"
+                    status="loadingPanel"/>
+            <apex:actionFunction name="nextCreditCards" action="{!nextCreditCards}"
+                    rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();"
+                    status="loadingPanel"/>
+            <apex:actionFunction name="endCreditCards" action="{!endCreditCards}"
+                    rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();"
+                    status="loadingPanel"/>
+        </apex:pageBlock>
+            <apex:inputHidden value="{!cardSortExpression}"
+                id="cardSortHiddencriterian" />
+            <apex:inputHidden value="{!cardSortDirection}"
+                id="cardSortHiddenOrder" />
+            <apex:inputHidden value="{!cardSortExprFieldApi}"
+                id="cardSortFieldApi" />
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newCreditCard}" name="newCreditCard"
+            rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();" status="loadingPanel" />
+        <apex:actionFunction action="{!saveCreditCards}"
+            name="saveCreditCards" rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();" status="loadingPanel" />
+        <apex:actionFunction action="{!sortCreditCards}"
+            name="sortAllCreditCards" rerender="cardTable" oncomplete="rerenderHandlerMerchantStmnt();" status="loadingPanel">
+            <apex:param name="cardTypeParam" value="" />
+        </apex:actionFunction>
+    </apex:form>
+
+    <script>
+
+        var isInConsoleCreditCard = false;
+        var tabIdLoanBalance;
+
+        function setEventListenersBankStatement() {
+            t$("[id$=cardTable] .width10TdSub a").click(function() {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleCreditCard) {
+                        openConsoleTabCreditCardNewTab(event.target.href);
+                    } else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=cardTable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function initCallCreditCard()
+        {
+            setIsConsoleCreditCard();
+            getFocusedPrimaryTabIdLoanBalance();
+        }
+
+        function setIsConsoleCreditCard() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleCreditCard = inConsole;
+            } else {
+                isInConsoleCreditCard = sforce.console.isInConsole();
+            }
+        }
+        function runNewCreditCard()
+        {
+            setTimeout(function()
+            {
+                newCreditCard();
+            }, 200);
+        }
+
+        function runSaveCreditCards()
+        {
+            setTimeout(function()
+            {
+                saveCreditCards();
+            }, 100);
+        }
+
+        function getFocusedPrimaryTabIdLoanBalance() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdLoanBalance);
+        }
+
+        var showTabIdLoanBalance = function showTabIdLoanBalance(result) {
+            //Display the tab ID
+            tabIdLoanBalance = result.id;
+        };
+
+        function openConsoleTabCreditCard(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdLoanBalance, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdLoanBalance);
+        }
+
+        function openConsoleTabCreditCardNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        function openCreditCardPage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleCreditCard) {
+                openConsoleTabCreditCardNewTab('/'+recordIdToOpen, 'Merchant Statement');
+            } else  {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+
+        function sortCallCreditCards(cardFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             var cardElement= event.target;
+             var newcardSortCol = t$(cardElement).attr("Name"); // new sort field
+             t$("input[id$='cardSortFieldApi']").val(newcardSortCol);
+             var oldcardSortCol = t$("input[id$='cardSortHiddencriterian']").val();
+             var indexCard;
+             var cardTempSortExpr;
+             if(newcardSortCol.endsWith('__c'))
+             {
+                 indexCard = newcardSortCol.indexOf('__');
+             }
+             else if(newcardSortCol.endsWith('Id'))
+             {
+                 indexCard = newcardSortCol.indexOf('Id');
+             }
+            if(indexCard != null) {
+                cardTempSortExpr = newcardSortCol.substring(0, indexCard);
+            }
+            else
+            {
+                cardTempSortExpr = newcardSortCol;
+            }
+
+           //if(String(newcardSortCol) == String(oldcardSortCol))
+            if(oldcardSortCol.indexOf(cardTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='cardSortHiddenOrder']").val()) == "ASC")
+                {
+                  t$("input[id$='cardSortHiddenOrder']").val("DESC");
+                  t$(cardElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                  t$("input[id$='cardSortHiddenOrder']").val("ASC");
+                  t$(cardElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                t$("input[id$='cardSortHiddencriterian']").val(newcardSortCol);
+                sortAllCreditCards(cardFieldDataType);
+            }
+            else
+            {
+                t$("input[id$='cardSortHiddencriterian']").val(newcardSortCol);
+                t$("input[id$='cardSortHiddenOrder']").val("ASC");
+                t$(cardElement).removeClass('sorting').addClass('SortAsc');
+                sortAllCreditCards(cardFieldDataType);
+            }
+        }
+
+        function merchantStmntSummaryPage()
+        {
+            var merchantStmntSummaryPageUrl = '{!$Page.Sales_Summary}';
+            merchantStmntSummaryPageUrl += '?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}&isAccountView=false';
+            //merchantStmntSummaryPageUrl += '&isConsole=0';
+            //window.open(merchantStmntSummaryPageUrl, '_parent');
+            if(isInConsoleBankStmnt) {
+                openConsoleTabBankStmntNewTab(merchantStmntSummaryPageUrl, 'Sales Summary');
+            } else  {
+                window.open(merchantStmntSummaryPageUrl);
+            }
+        }
+    </script>
+</apex:component>

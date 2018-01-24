@@ -1,0 +1,1418 @@
+<apex:page docType="html-5.0" Controller="MovingRenewalController" action="{!init}"
+        title="Renewal Management" sidebar="false" showHeader="false">
+
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS213, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+    <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" / >
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+    <link rel="stylesheet" href="/resources/demos/style.css" />
+    <apex:includescript value="https://code.jquery.com/jquery-1.12.4.js" />
+    <apex:includescript value="https://code.jquery.com/ui/1.12.1/jquery-ui.js" />
+
+    <style type="text/css">
+        .custPopup {
+            border-radius: 5px;
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            /*z-index: 9999;*/
+            left: 50%;
+            padding: 10px;
+            position: fixed;
+            /**
+             * These are the 3 css properties you will need to change so the popup
+             * displays in the center of the screen. First set the width. Then set
+             * margin-left to negative half of what the width is. You can add
+             * the height property for a fixed size pop up if you want.
+             */
+            width: 500px;
+            margin-left: -250px;
+            top: 50%;
+            margin-top: -100px;
+        }
+
+        .popupBackground {
+            background-color: rgba(0,0,0,0.4);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .darkenTHClass {
+            background-color: #E0E3E6 !important;
+            color: #41A6D2 !important;
+        }
+
+        .sortedColumn {
+            background-color: #EEE !important;
+        }
+
+        #filterTable {
+            width: 100%;
+            padding-top: 10px;
+        }
+
+        .table-top {
+            padding-bottom: 10px;
+        }
+
+        #pageSizeContainer {
+            float: left;
+            padding-left: 10px;
+        }
+
+        #searchBoxContainer {
+            text-align: right;
+            padding-right: 10px;
+        }
+
+        /* LDS styling below */
+        #manageRenewalContainer .slds-spinner {
+            position: fixed !important;
+        }
+
+        #manageRenewalContainer .slds-spinner_container {
+            position: fixed !important;
+        }
+
+        #manageRenewalContainer body, #manageRenewalContainer h3,
+        #manageRenewalContainer .popupBackground,
+        #manageRenewalContainer .attachmentSection,
+        #manageRenewalContainer h2,
+        #manageRenewalContainer #droplabel,
+        #manageRenewalContainer .dataCell span,
+        body {
+            font-family:'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        #manageRenewalContainer table, #manageRenewalContainer th, #manageRenewalContainer td {
+            line-height: 1.6em!important;
+        }
+
+        #manageRenewalContainer th label {
+            font-family:'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        body, td {
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        #manageRenewalContainer .btn, #template_dialog .btn {
+            font-size: 12px!important;
+            line-height: 1.875rem!important;
+            text-decoration: none!important;
+            color: white !important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #0070d2 !important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        #manageRenewalContainer .btn:hover {
+            background-color: #005fb2 !important;
+        }
+
+        #manageRenewalContainer input[type="email"],
+        #manageRenewalContainer input[type="number"],
+        #manageRenewalContainer input[type="password"],
+        #manageRenewalContainer input[type="tel"],
+        #manageRenewalContainer input[type="url"],
+        #manageRenewalContainer input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        #manageRenewalContainer select, #template_dialog select {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        #manageRenewalContainer a {
+            font-family: 'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        #manageRenewalContainer input[type="email"]:focus,
+        #manageRenewalContainer input[type="number"]:focus,
+        #manageRenewalContainer input[type="password"]:focus,
+        #manageRenewalContainer input[type="tel"]:focus,
+        #manageRenewalContainer input[type="url"]:focus,
+        #manageRenewalContainer input[type="text"]:focus,
+        #manageRenewalContainer select:focus {
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        #manageRenewalContainer textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 80%;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        #manageRenewalContainer .bPageBlock {
+            /*background:#f4f6f9!important;*/
+            /*padding:5px!important;*/
+            border-radius: .25rem!important;
+            border-top:1px solid #eaeaea!important;
+        }
+
+        /*#manageRenewalContainer .bPageBlock {
+            background : #f7f9fb !important;
+        }*/
+
+        #manageRenewalContainer .headerRow th {
+            border-bottom: 1px solid #d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size:13px!important;
+            font-weight:600!important;
+        }
+
+        #manageRenewalContainer body .pbBody table.list tr.headerRow th {
+            font-size: 11px!important;
+            font-weight: bold !important;
+            background: #fff!important;
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            border-top: 1px solid #d8dde6!important;
+            padding-top: 8px;
+            padding-bottom: 4px;
+            color: #54698d;
+            letter-spacing: 0px;
+        }
+
+        body {
+            max-width: 100%;
+        }
+
+        #manageRenewalContainer .dateOnlyInput input {
+            width: 8em !important;
+        }
+
+        .cmb img {
+            /*height: 18px !important;*/
+        }
+
+        .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        .cmb .slds-page-header__title {
+            font-size: 25px !important;
+        }
+
+        .cmb body, .cmb:not(html) {
+            font-size: 100% !important;
+        }
+
+        .slds-page-header {
+            /*background-color: ghostwhite !important;*/
+            background-color: #f7f9fb !important;
+            /*color: white !important;*/
+        }
+
+        [id$='chartpageblock'] {
+            background-color: #16325c !important;
+            margin-bottom: 0px !important;
+            padding-bottom: 25px !important;
+        }
+
+        .pbHeader, .pbBottomButtons {
+            background-color: white !important;
+        }
+
+        body .bDetailBlock.bPageBlock .pbBody .pbSubheader, 
+        body.FindSimilarOppsSearchUi .bPageBlock .pbBody .pbSubheader {
+            color: ghostwhite !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+
+        #fundingoLogo {
+            height: 20px !important;
+        }
+
+        #headerValue {
+            padding-left: 3px;
+            display: initial;
+            height: 50px !important;
+            vertical-align: middle;
+        }
+        /* LDS styling ends */
+
+        [id$='assignTaskOwnerId'] .pbTitle {
+            width: 75%;
+        }
+
+        [id$='backlink'] a {
+            text-decoration: none !important;
+        }
+        .assignOwner {
+            padding: 12px;
+            font-size: initial;
+            font-weight: bold;
+            border-bottom: 1px solid #eaeaea;
+        }
+    </style>
+    <div id="manageRenewalContainer" >
+
+        <!-- Page header -->
+        <div class="cmb">
+            <div class="slds-page-header">
+                <div class="slds-grid">
+                    <div class="slds-col slds-has-flexi-truncate">
+                        <div class="slds-media slds-no-space slds-grow">
+                            <div class="slds-media__body">
+                                <p class="slds-text-title--caps slds-line-height--reset"></p>
+                                <h1 class="slds-page-header__title slds-m-right--small slds-align-middle slds-truncate"
+                                    title="Renewal Management">
+                                    <img src="{!$Resource.FundingoLogo}" id="fundingoLogo"/>
+                                    <div id="headerValue">
+                                        Renewal Management
+                                    </div>
+                                </h1>
+                            </div>
+                        </div>
+                    </div>
+                    <apex:outputPanel id="backlink">
+                        <apex:outputPanel rendered="{!!renderedBasePage} {!!checkInConsole}">
+                            <div class="slds-col slds-no-flex slds-grid slds-align-middle">
+                                <apex:outputlink value="{!$Page.ManageRenewal}">
+                                    <button class="slds-button slds-button--neutral" 
+                                            >
+                                        <apex:outputText value="<< Back to Manage Renewal" />
+                                    </button>
+                                </apex:outputlink>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </div>
+            </div>
+        </div>
+
+    <apex:form id="formId" enctype="multipart/form-data" >
+        <apex:inputHidden html-class="hiddenValueConsole" value="{!checkInConsole}" />
+        <!-- Code for the Delay eligibility popup -->
+        <apex:outputPanel id="delayEligibilityId">
+            <apex:outputPanel styleClass="popupBackground" layout="block"
+                rendered="{!displaydelayPopUp}" >
+            <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displaydelayPopUp}">
+                <apex:pageBlock title="Delay Eligibility">
+                    <apex:selectList id="SelectDelayTime" value="{!DelayTime}" size="1">
+                        <apex:selectOption itemLabel="--None--" itemValue="0" />
+                        <apex:selectOption itemLabel="1 Week" itemValue="1" />
+                        <apex:selectOption itemLabel="2 Week" itemValue="2" />
+                        <apex:selectOption itemLabel="3 Week" itemValue="3" />
+                        <apex:selectOption itemLabel="4 Week" itemValue="4" />
+                        <apex:selectOption itemLabel="5 Week" itemValue="5" />
+                        <apex:selectOption itemLabel="6 Week" itemValue="6" />
+                        <apex:selectOption itemLabel="7 Week" itemValue="7" />
+                        <apex:selectOption itemLabel="8 Week" itemValue="8" />
+                    </apex:selectList>
+                </apex:pageBlock>
+                <div align="center">
+                    <apex:commandButton value="Delay Time" action="{!delayDuration}"
+                                        rerender="pgmTable,pageMessageId,delayEligibilityId"
+                                        status="loadingAttachment" 
+                                        oncomplete="rerenderHandler();" />
+                    <apex:CommandButton value="Cancel" action="{!CloseUserPopup}"
+                                        rerender="pageMessageId,delayEligibilityId"
+                                        status="loadingAttachment"
+                                        oncomplete="rerenderHandler();" />
+                </div>
+            </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!--  End of the Delay eligibility popup -->
+
+        <!-- Code for the popup Of Users -->
+        <apex:outputPanel id="assignOwnerId" >
+            <apex:outputPanel styleClass="popupBackground" 
+                              layout="block" 
+                              rendered="{!displayUserPopUp}">
+            <apex:outputPanel styleClass="custPopup" 
+                              layout="block" 
+                              rendered="{!displayUserPopUp}">
+                <apex:pageBlock title="Assign Opportunity Owner">
+                    <apex:facet name="header">
+                        <div class="assignOwner">
+                            Assign Opportunity Owner
+                        </div>
+                    </apex:facet>
+                    <apex:selectList id="SelectUsers" value="{!selectedUser}" size="1">
+                        <apex:selectOptions value="{!lstUser}" />
+                    </apex:selectList>
+                </apex:pageBlock>
+                <div align="center">
+                    <apex:commandButton value="Assign & Create" 
+                                        action="{!createOpportunity}"
+                                        rerender="assignOwnerId,formId,pageMessageId,thankyouPanelId,backlink"
+                                        onComplete="CloseWindow(); rerenderHandler();"
+                                        status="loadingAttachment" />
+                    <apex:commandButton action="{!CloseUserPopup}" value="Cancel"
+                                        status="loadingAttachment" id="theCommandLinkuser"
+                                        oncomplete="rerenderHandler();"
+                                        rerender="assignOwnerId,pageMessageId,thankyouPanelId,backlink" />
+                </div>
+            </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- End of Popup Code For Users -->
+
+        <!-- Show Thank you Page Opportunities start -->
+        <apex:outputPanel rendered="{!showThankyouPage}" id="thankyouPanelId">
+            <apex:outputPanel rendered="{!newOppList.size > 0}">
+                <apex:outputText value="{!$Label.MovingRenewal_ThankyouMsg}"
+                                 style="font-size:14px;font-weight: bold; " />
+                <apex:pageBlock >
+                    <div class="cmb">
+                        <apex:dataTable value="{!newOppList}" var="opps"
+                                        styleClass="slds-table slds-table--bordered slds-table--striped">
+                            <apex:column headerValue="Opportunity Name" >
+                                <apex:image width="20" height="20"
+                                            url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/Sent.jpg')}" />
+                                <apex:commandlink value="{!opps.Name}" 
+                                                  onclick="viewRecord('{!opps.Id}');" />
+                            </apex:column>
+                            <apex:column value="{!opps.StageName}" />
+                            <apex:column onclick="viewRecord('{!opps.OwnerId}');"
+                                         value="{!opps.OwnerId}" />
+                        </apex:dataTable>
+                    </div>
+                    <br/>
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Show Thank you Page Opportunities End -->
+
+        <!-- Code for the popup For Follow Up Task -->
+        <apex:outputPanel id="assignTaskOwnerId">
+            <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayUserTaskPopUp}">
+                <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displayUserTaskPopUp}">
+                    <apex:pageBlock title="Assign Task Owner">
+                        <apex:selectList id="SelectUserTasks" value="{!selectedUser}" size="1">
+                            <apex:selectOptions value="{!lstUser}" />
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Assign & Create" 
+                                            rerender="formId,pageMessageId,backlink"
+                                            action="{!createFollowupTask}"
+                                            status="loadingAttachment"
+                                            oncomplete="rerenderHandler();" />
+                        <apex:commandButton action="{!CloseUserPopup}"
+                                            value="Cancel"
+                                            status="loadingAttachment"
+                                            id="theCommandLink"
+                                            rerender="assignTaskOwnerId"
+                                            oncomplete="rerenderHandler();"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- End of Pop up Code For Follow Up Task -->
+
+        <!-- Show Thank you Page Task -->
+        <apex:outputPanel rendered="{!showThankyouPageTask}" id="thankyouPanelTaskId">
+            <apex:outputPanel rendered="{!mailSentToOpportunityList.size > 0}">
+                <apex:pageBlock >
+                    <apex:outputText value="{!$Label.MovingRenewal_ThankyouMsgTask}"
+                                     style="color:Green; font-weight: bold;" />
+                    <div class="cmb">
+                        <apex:dataTable value="{!mailSentToOpportunityList}" var="oppInstance"
+                                        styleClass="slds-table slds-table--bordered slds-table--striped">
+                            <apex:column headerValue="Opportunity" styleclass="viewlookupfields">
+                                <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/Sent.jpg')}"
+                                    width="20" height="20" />&nbsp;
+                                    <a href="/{!oppInstance.Id}">{!oppInstance.Name}</a>
+                            </apex:column>
+                            <apex:column headerValue="Owner Name">
+                                <apex:outputText value="{!oppInstance.Owner_1__r.Name}" />
+                            </apex:column>
+                            <apex:column headerValue="Owner Email">
+                                <apex:outputText value="{!oppInstance.Owner_1__r.Email}" />
+                            </apex:column>
+                        </apex:dataTable>
+                    </div>
+                    <br />
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Show Thank you Page Task End -->
+
+        <!-- Show Send An Email Page Start -->
+        <apex:outputPanel id="sendEmailPanel" rendered="{!displayMailPopUp}" style="height:100%">
+            <apex:pageblock mode="edit">
+                <apex:pageMessages />
+                <apex:pageblocksection columns="1">
+                    <apex:pageblockSectionItem >
+                        <apex:outputText value="BCC:" />
+                        <apex:inputtext id="AdditionalTo" value="{!strBcc}"
+                                        style="margin: 2px;width: 400px;height: 20px;" />
+                    </apex:pageblockSectionItem>
+
+                    <apex:pageblockSectionItem >
+                        <apex:outputText value="Subject" />
+                        <apex:inputtext id="Subject" value="{!strSubject}"
+                                        style="margin: 2px;width: 400px;height: 20px;" />
+                    </apex:pageblockSectionItem>
+
+                    <apex:pageblockSectionItem >
+                        <apex:outputText value="Body" />
+                        <apex:inputTextArea value="{!strBody}"
+                                            style="margin: 2px; height: 200px; width: 450px;" />
+                    </apex:pageblockSectionItem>
+                </apex:pageblocksection>
+                <apex:pageblockbuttons >
+                    <apex:commandbutton value="Attach File" action="{!attachFile}"
+                                        rerender="sendEmailPanel"
+                                        oncomplete="rerenderHandler();" />
+                    <apex:commandbutton value="Cancel" action="{!CloseUserPopup}"
+                                        rerender="formId"
+                                        oncomplete="rerenderHandler();" />
+                </apex:pageblockbuttons>
+            </apex:pageblock>
+            <apex:outputpanel rendered="{!blnAttachFile}">
+                <apex:pageBlock title="Upload Attachment" mode="edit">
+                    <apex:inputFile style="width:100%; margin-left: 69px;" 
+                                    filename="{!fileName}"
+                                    id="fileToUpload" 
+                                    value="{!fileBody}" />
+                    <apex:commandButton value="Upload Attachment" 
+                                        action="{!uploadFile}"
+                                        style="margin-top: 20px; margin-left: 10px;"
+                                        oncomplete="rerenderHandler();" />
+                    <apex:commandButton value="Cancel" 
+                                        action="{!cancelTemplate}"
+                                        style="margin-top: 17px; margin-left: 10px;"
+                                        oncomplete="rerenderHandler();"/>
+                </apex:pageBlock>
+            </apex:outputpanel>
+            <apex:outputpanel rendered="{!blnAttachment}">
+                <apex:pageBlock title="Attachments" mode="edit">
+                    <apex:pageBlockTable value="{!Attachments}" var="item" rows="1">
+                        <apex:column value="{!item.name}" />
+                        <apex:column headerValue="Action">
+                            <apex:commandLink action="{!removeAttachment}" value="Remove">
+                                <apex:param name="AttachmentName" value="{!item.Id}"
+                                            assignTo="{!attachment_name}" />
+                            </apex:commandLink>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:outputpanel>
+        </apex:outputPanel>
+        <!-- Show Send An Email Page End-->
+
+        <apex:pageBlock mode="maindetail" id="chartpageblock" rendered="{!renderedBasePage}">
+            <apex:pageblockSection collapsible="true" title="Renewal Charts" columns="1">
+                <apex:outputPanel id="chart">
+                    <table width="100%">
+                        <tr>
+                            <td class="viewReportChart1" width="33%">
+                                <analytics:reportChart cacheResults="false" 
+                                                       size="small" 
+                                                       reportId="{!$Label.ReportChart1}">
+                                </analytics:reportChart>
+                            </td>
+                            <td class="viewReportChart2"  width="33%">
+                                <analytics:reportChart cacheResults="false"
+                                                       size="small" 
+                                                       reportId="{!$Label.ReportChart2}">
+                                </analytics:reportChart>
+                            </td>
+                            <td class="viewReportChart3"  width="33%">
+                                <analytics:reportChart cacheResults="false" 
+                                                       size="small" 
+                                                       reportId="{!$Label.ReportChart3}">
+                                </analytics:reportChart>
+                            </td>
+                        </tr>
+                    </table>
+                </apex:outputPanel>
+            </apex:pageblockSection>
+        </apex:pageBlock>
+
+        <apex:pageMessages id="pageMessageId" escape="false" />
+
+        <apex:actionStatus id="loadingAttachment" stopText="">
+            <apex:facet name="start">
+                <div class="cmb">
+                    <div class="slds-spinner_container">
+                        <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+
+        <apex:pageBlock id="pageBlockId" rendered="{!renderedBasePage}">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Create Renewal" 
+                                    action="{!assignOwner}" 
+                                    status="loadingAttachment"
+                                    rendered="{!AND($ObjectType.Opportunity.createable,createRenewal)}"
+                                    rerender="pageMessageId,delayEligibilityId,assignOwnerId,
+                                                assignTaskOwnerId,sendEmailPanel" 
+                                    oncomplete="rerenderHandler();" />
+                <apex:commandButton action="{!delayOpportunity}" 
+                                    rendered="{!AND($ObjectType.Opportunity.updateable,delayEligibility)}"
+                                    value="Delay Eligibility" 
+                                    status="loadingAttachment"
+                                    rerender="pageMessageId,delayEligibilityId,assignOwnerId,
+                                            assignTaskOwnerId,sendEmailPanel"
+                                    oncomplete="rerenderHandler();" />
+                <apex:commandButton action="{!assignOwnerTask}"
+                                    rendered="{!AND($ObjectType.Opportunity.createable,
+                                        $ObjectType.Opportunity.updateable,followUpTask)}"
+                                    value="Create Follow Up Task" 
+                                    status="loadingAttachment"
+                                    oncomplete="rerenderHandler();"
+                                    rerender="pageMessageId,delayEligibilityId,assignOwnerId,
+                                        assignTaskOwnerId,sendEmailPanel" />
+                <apex:outputPanel rendered="{!AND($ObjectType.Opportunity.createable,
+                                            $ObjectType.Opportunity.updateable,massEmail)}">
+                    <input type="button" class="btn massEmailBtn" value="Mass Email"
+                            onclick="validateEmail();" oncomplete="rerenderHandler();" ></input>
+                </apex:outputPanel>
+                <apex:commandButton value="Remove" 
+                                    action="{!removeOpportunity}" 
+                                    status="loadingAttachment"
+                                    rerender="formId,pageMessageId,delayEligibilityId,
+                                            assignOwnerId,assignTaskOwnerId,sendEmailPanel"
+                                    rendered="{!AND($ObjectType.Opportunity.updateable,remove)}" 
+                                    oncomplete="rerenderHandler();"/>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="filters">
+                <table id="filterTable">
+                    <tr>
+                        <td width="2%"></td>
+                        <td>
+                            <b><apex:outputLabel value="Term % " /></b>&nbsp;
+                            <apex:selectList id="SelectRenewalEligibiltyPer" styleclass="termdropdown"
+                                             value="{!renewalEligibilityPer}" size="1">
+                                <apex:selectOption itemLabel="--None--" itemValue="" />
+                                <apex:selectOption itemLabel="0-25%" itemValue="0" />
+                                <apex:selectOption itemLabel="26-50%" itemValue="26" />
+                                <apex:selectOption itemLabel="51-75%" itemValue="51" />
+                                <apex:selectOption itemLabel="76-100%" itemValue="76" />
+                            </apex:selectList>
+                        </td>
+                        <td>
+                            <b><apex:outputLabel value="Paid % " /></b>&nbsp;
+                            <apex:selectList id="selectPaidPercent" styleclass="termdropdown"
+                                             value="{!renewalPaidPer}" size="1">
+                                <apex:selectOption itemLabel="--None--" itemValue="" />
+                                <apex:selectOption itemLabel="0-25%" itemValue="0" />
+                                <apex:selectOption itemLabel="26-50%" itemValue="26" />
+                                <apex:selectOption itemLabel="51-75%" itemValue="51" />
+                                <apex:selectOption itemLabel="76-100%" itemValue="76" />
+                            </apex:selectList>
+                        </td>
+                        <td>
+                            <b><apex:outputLabel value="Funded" /></b>&nbsp;
+                            <apex:selectList id="SelectRenewalDateFunded" styleclass="fundedDropDown"
+                                             value="{!renewalDateFunded}" size="1">
+                                <apex:selectOption itemLabel="--None--" itemValue="--None--" />
+                                <apex:selectOption itemLabel="1-3 Months Ago"
+                                                   itemValue="1-3 Months Ago" />
+                                <apex:selectOption itemLabel="4-6 Months Ago"
+                                                   itemValue="4-6 Months Ago" />
+                                <apex:selectOption itemLabel="7-9 Months Ago"
+                                                   itemValue="7-9 Months Ago" />
+                                <apex:selectOption itemLabel="10-12 Months ago"
+                                                   itemValue="10-12 Months ago" />
+                                <apex:selectOption itemLabel="12+ Months"
+                                                   itemValue="12+ Months" />
+                            </apex:selectList>
+                        </td>
+                        <td>
+                            <b><apex:outputLabel value="Renewal Date" /></b>&nbsp;
+                            <apex:inputField value="{!oppFilter.Estimated_Renewal_Date__c}"/>
+                        </td>
+                        <td>
+                            <b><apex:outputLabel value="Bank" /></b>&nbsp;
+                            <apex:inputField value="{!oppFilter.Bank_Name__c}" />
+                        </td>
+                        <td>
+                            <b><apex:outputLabel value="My Deals" /></b>&nbsp;
+                            <apex:inputCheckbox styleClass="myDeal" value="{!myDealsCheckbox}" />
+                        </td>
+                        <input id="hiddenElement" type="hidden" />
+                    </tr>
+                </table>
+                <table width="100%">
+                    <tr align="Center">
+                        <td>
+                            <apex:commandButton value="Apply Filters"
+                                                action="{!callOnFilter}" 
+                                                rerender="pgmTable,pageMessageId"
+                                                status="loadingAttachment" 
+                                                style="width:90px;"
+                                                oncomplete="rerenderHandler();" />
+                        <!-- need of on complete function --> &nbsp; 
+                            <apex:commandButton value="Clear Filters" 
+                                                oncomplete="clearfilterFields(); rerenderHandler();"
+                                                action="{!clearFilter}"
+                                                rerender="pgmTable,filters,pageMessageId"
+                                                status="loadingAttachment" /></td>
+                    </tr>
+                </table>    
+            </apex:outputPanel>
+            <!-- <body> -->
+
+            <apex:outputPanel id="pgmTable">
+                <div class="table-top">
+                    <div id="pageSizeContainer">
+                        <b><apex:outputLabel value="Show"/></b>&nbsp;
+                        <apex:selectList id="limitQuery" value="{!limitQuery}" size="1">
+                            <apex:selectOption itemLabel="10" itemValue="10" />
+                            <apex:selectOption itemLabel="25" itemValue="25" />
+                            <apex:selectOption itemLabel="50" itemValue="50" />
+                            <apex:selectOption itemLabel="100" itemValue="100" />
+                            <apex:actionSupport event="onchange"
+                                                reRender="pgmTable,pageMessageId" 
+                                                action="{!applyFilter}"
+                                                status="loadingAttachment"
+                                                oncomplete="rerenderHandler();" />
+                        </apex:selectList>&nbsp;
+                        <b><apex:outputLabel value="entries"/></b>
+                    </div>
+                    <div id="searchBoxContainer">
+                        <b>
+                            <apex:outputLabel value="Search" 
+                                              for="SearchOpp"
+                                              onclick="callSearch();"/>
+                        </b>
+                        &nbsp;
+                        <apex:inputText style="border-radius:1px;" 
+                                        id="SearchOpp" 
+                                        value="{!universalSearch}"
+                                        onkeypress="return callGenericSearch();"/>
+                    </div>
+                </div>
+
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="width: 100%;">
+                    <table id="allopps" class="display slds-table slds-table--bordered slds-table--striped"
+                        name="alloppsTable" style="width: 100%;" cellpadding="5" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th><apex:inputCheckbox onclick="checkAll();"
+                                                        id="theChkbx"
+                                                        styleClass="masterCheck">
+                                    </apex:inputCheckbox></th>
+                                <th name="tempName" 
+                                    class="sorting" 
+                                    title="Sort Ascending"
+                                    onclick="sortCall();" 
+                                    onmouseover="darkenTH();"
+                                    onmouseout="normalTH();">
+                                    <apex:outputtext value="Opportunity Name {!IF(sortCriteria=='Name',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempBank_Name__r.Name" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Bank {!IF(sortCriteria=='Bank_Name__r.Name',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempDate_Funded__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Date Funded {!IF(sortCriteria=='Date_Funded__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempFunding_Amount__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Funding $ {!IF(sortCriteria=='Funding_Amount__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempPayback_Amount__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Payback $ {!IF(sortCriteria=='Payback_Amount__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempTerm_Months__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Terms {!IF(sortCriteria=='Term_Months__c',
+                                            IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempEstimated_Renewal_Date__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Renewal Date {!IF(sortCriteria=='Estimated_Renewal_Date__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempCurrent_Balance__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Balance $ {!IF(sortCriteria=='Current_Balance__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempCurrent_Balance_Date__c" 
+                                    class="sorting"
+                                    title="Sort Ascending"
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();"
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Balance Date {!IF(sortCriteria=='Current_Balance_Date__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                </th>
+                                <th name="tempTerm_Completed__c" 
+                                    class="sorting"
+                                    title="Sort Ascending" 
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Term %         {!IF(sortCriteria=='Term_Completed__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}" />
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                        &nbsp;&nbsp;
+                                </th>
+                                <th name="tempPaid_Percentage__c"
+                                    class="sorting"
+                                    title="Sort Ascending"
+                                    onclick="sortCall();"
+                                    onmouseover="darkenTH();" 
+                                    onmouseout="normalTH();">
+                                    <apex:outputText value="Paid % {!IF(sortCriteria=='Paid_Percentage__c',
+                                        IF(sortOrder='ASC','↑','↓'),'')}"/>
+                                    <!-- Placeholder text to have more width for the header
+                                        This needs to be done because slds styling -->
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                    &nbsp;&nbsp;
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!renewalWrapperLst}" var="renwWrapper">
+                                <tr>
+                                    <td><apex:inputCheckbox value="{!renwWrapper.isSelected}"
+                                            styleClass="iptCheckbox" onclick="selectOne();"
+                                            html-data-oppId="{!renwWrapper.opp.Id}">
+                                        </apex:inputCheckbox></td>
+                                    <td class="viewlookupfields">
+                                        <a href="{!baseUrlOrg}/{!renwWrapper.opp['Id']}"
+                                        id="{!renwWrapper.opp['Id']}"
+                                        onblur="LookupHoverDetail.getHover('{!renwWrapper.opp['Id']}').hide();"
+                                        onfocus="LookupHoverDetail.getHover('{!renwWrapper.opp['Id']}',
+                                            '{!baseUrlOrg}/{!renwWrapper.opp['Id']}/m?retURL=%2F{!renwWrapper.opp['Id']}&isAjaxRequest=1').show();"
+                                        onmouseout="LookupHoverDetail.getHover('{!renwWrapper.opp['Id']}').hide();"
+                                        onmouseover="LookupHoverDetail.getHover('{!renwWrapper.opp['Id']}',
+                                        '{!baseUrlOrg}/{!renwWrapper.opp['Id']}/m?retURL=%2F{!renwWrapper.opp['Id']}&isAjaxRequest=1').show();">
+                                        {!renwWrapper.opp['Name']}
+                                    </a></td>
+                                    <td class="viewlookupfields">
+                                        <a href="{!baseUrlOrg}/{!renwWrapper.opp['Bank_Name__c']}"
+                                        id="{!renwWrapper.opp['AccountId']}"
+                                        onblur="LookupHoverDetail.getHover('{!renwWrapper.opp['AccountId']}').hide();"
+                                        onfocus="LookupHoverDetail.getHover('{!renwWrapper.opp['AccountId']}',
+                                        '{!baseUrlOrg}/{!renwWrapper.opp['AccountId']}/m?retURL=%2F{!renwWrapper.opp['AccountId']}&isAjaxRequest=1').show();"
+                                        onmouseout="LookupHoverDetail.getHover('{!renwWrapper.opp['AccountId']}').hide();"
+                                        onmouseover="LookupHoverDetail.getHover('{!renwWrapper.opp['AccountId']}',
+                                        '{!baseUrlOrg}/{!renwWrapper.opp['AccountId']}/m?retURL=%2F{!renwWrapper.opp['AccountId']}&isAjaxRequest=1').show();">
+                                        {!renwWrapper.opp['Bank_Name__r.Name']}</a>
+                                        <!--                                    {!renwWrapper.opp['Bank_Name__r.Name']} -->
+                                    </td>
+                                    <td><apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                            <apex:param value="{!renwWrapper.opp['Date_Funded__c']}" />
+                                        </apex:outputText></td>
+                                    <td>$ <apex:outputText iD="fundingAmt" value="{0}">
+                                            <apex:param value="{!renwWrapper.opp['Funding_Amount__c']}" />
+                                        </apex:outputText>
+                                    </td>
+                                    <td>$ <apex:outputText iD="paybackAmt" value="{0}">
+                                            <apex:param value="{!renwWrapper.opp['Payback_Amount__c']}" />
+                                        </apex:outputText>
+                                    </td>
+                                    <td>{!renwWrapper.opp['Term_Months__c']}</td>
+                                    <td><apex:inputField iD="renewalDate"
+                                            value="{!renwWrapper.opp['Estimated_Renewal_Date__c']}"
+                                            onchange="onChangeRenewalDate('{!renwWrapper.opp.Id}',this.value);"
+                                            styleClass="balance{!renwWrapper.opp.Id}" /></td>
+                                    <td><apex:inputField styleClass="ratePerDayMarker"
+                                            Id="Bal"
+                                            onchange="onChangeBalance('{!renwWrapper.opp.Id}',this.value);"
+                                            value="{!renwWrapper.opp['Current_Balance__c']}"
+                                            style="float:left;width:100px;" /></td>
+                                    <td><apex:inputField value="{!renwWrapper.opp['Current_Balance_Date__c']}"
+                                            onchange="onChangeBalanceDate('{!renwWrapper.opp.Id}',this.value);"
+                                            styleClass="balance{!renwWrapper.opp.Id}" /></td>
+                                    <td style="padding: 0;">
+                                        <span>
+                                            <apex:outputField id="theImage"
+                                                value="{!renwWrapper.opp['PaidImage__c']}" />
+                                        </span>
+                                        <span>
+                                            {!renwWrapper.opp['Term_Completed__c']}%
+                                        </span>
+                                    </td>
+                                    <td style="padding: 0;">
+                                        <span>
+                                            <apex:outputField id="paidImage"
+                                                value="{!renwWrapper.opp['Paid_Image__c']}" />
+                                        </span>
+                                        <span>
+                                            {!renwWrapper.opp['Paid_Percentage__c']}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <b>{!recordDetails}</b>
+                    </div>
+
+                    <div class="pagination-btn-grp-wrapper">
+                        <div class="slds-button-group pagination-btn-grp" role="group">
+                            <button class="slds-button slds-button--neutral first"
+                                    onclick="firstPage(); return false;">&lt;&lt;</button>
+                            <button class="slds-button slds-button--neutral previous"
+                                    onclick="previousPage(); return false;">&lt;</button>
+                            <button class="slds-button slds-button--neutral next"
+                                    onclick="nextPage(); return false;">&gt;</button>
+                            <button class="slds-button slds-button--neutral last"
+                                    onclick="lastPage(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            if("{!offsetQuery > 1}" == 'false') {
+                                $('.pagination-btn-grp .first').attr('disabled', 'disabled');
+                                $('.pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                $('.pagination-btn-grp .first').removeAttr('disabled');
+                                $('.pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!OR(recordcount<=(offsetQuery+limitQuery), 2000<=(offsetQuery+limitQuery))}" == 'true') {
+                                $('.pagination-btn-grp .next').attr('disabled', 'disabled');
+                                $('.pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                $('.pagination-btn-grp .next').removeAttr('disabled');
+                                $('.pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+
+                    <apex:actionFunction name="firstPage" 
+                                         action="{!callFirst}"
+                                         rerender="pgmTable"
+                                         status="loadingAttachment"
+                                         oncomplete="rerenderHandler();" />
+                    <apex:actionFunction name="previousPage"
+                                         action="{!callPrevious}"
+                                         rerender="pgmTable"
+                                         status="loadingAttachment"
+                                         oncomplete="rerenderHandler();" />
+                    <apex:actionFunction name="nextPage"
+                                         action="{!callNext}"
+                                         rerender="pgmTable"
+                                         status="loadingAttachment"
+                                         oncomplete="rerenderHandler();" />
+                    <apex:actionFunction name="lastPage"
+                                         action="{!callLast}"
+                                         rerender="pgmTable"
+                                         status="loadingAttachment"
+                                         oncomplete="rerenderHandler();" />
+                </div>
+                <!--this script will run after render of page for sorting cursor  -->
+                <script>
+                    var sortcriterian='temp{!sortCriteria}';
+                    var element=document.getElementsByName(sortcriterian);
+                    $(element).addClass('sortedColumn');
+                    if ('{!sortOrder}'=='ASC') {
+                        //var element=document.getElementsByName(sortcriterian);
+                        //$(element).removeClass('sorting').addClass('SortAsc');
+                        $(element).removeClass('sorting').addClass('SortAsc');
+                        $(element).attr('title', 'Sort Descending');
+                    }
+                    if ('{!sortOrder}'=='DESC'){
+                        //var element=document.getElementsByName(sortcriterian);
+                        $(element).removeClass('sorting').addClass('SortDesc');
+                        $(element).attr('title', 'Sort Ascending');
+                    }
+                    $('.masterCheck').each(function() { //loop through each checkbox
+                        this.checked = false;  //select all checkboxes with class "checkbox1"
+                    });
+                    window.onload = setFocus
+                    function setFocus() {
+                    }
+                </script>
+            </apex:outputPanel>
+
+            <!--  action function  for sorting -->
+            <apex:actionFunction name="callOnSort" 
+                                 action="{!callOnSort}"
+                                 rerender="pgmTable"
+                                 status="loadingAttachment"
+                                 oncomplete="rerenderHandler();" ></apex:actionFunction>
+            <apex:actionFunction name="genericSearch" 
+                                 action="{!genericSearch}"
+                                 rerender="pgmTable" 
+                                 status="loadingAttachment"
+                                 oncomplete="rerenderHandler();" >
+            </apex:actionFunction>
+            <apex:inputHidden value="{!sortCriteria}" id="sortHiddencriterian" />
+            <apex:inputHidden value="{!sortOrder}" id="sortHiddenOrder" />
+        </apex:pageBlock>
+
+        <apex:inputHidden html-class="hiddenTemplate" value="{!templateIdHidden}" />
+        <apex:actionFunction name="sendEmails" 
+                             action="{!massMailvalidation}"
+                             rerender="formId, backlink"
+                             status="loadingAttachment"
+                             oncomplete="setConsole(); rerenderHandler();"/>
+        <apex:actionFunction name="validateMassEmail"
+                             action="{!validateMassEmail}"
+                             rerender="hiddenSelectedOppsPanel" status="loadingAttachment"
+                             oncomplete="massEmailClickHandler(); rerenderHandler();" />
+
+        <div id="hiddenSelectedOpps" class="hidden">
+            <apex:outputPanel id="hiddenSelectedOppsPanel">
+                <apex:inputhidden value="{!isAllSelectedOppNoOwner}" id="hiddenboolean" />
+                <apex:repeat id="oppLst" 
+                             value="{!selectedOppWithoutOwnerOREmail}"
+                             var="opp" >
+                    <li data-oppid="{!opp.Id}" data-oppname="{!opp.Name}" class="noowner"></li>
+                </apex:repeat>
+                <apex:inputhidden value="{!selectedOppCount}" id="hiddencount" />
+            </apex:outputPanel>
+        </div>
+    </apex:form>
+
+    <apex:form id="dialogFrm">
+        <div id="validation_message" title="Warning message">
+            <p>{!$Label.ManageRenealNoEmailOppOwner}</p>
+        </div>
+        <div id="validation_with_noownerlst" title="Warning message" style="overflow-y: scroll;">
+            <p>{!$Label.ManageRenealNoEmailOppOwnerList}</p>
+            <apex:outputtext styleclass="opprtname" value="" />
+        </div>
+        <div class="dialog" id="template_dialog"
+            title="Choose an email template to send mass email">
+            <div>
+                <apex:selectlist id="emailTemplateSlctLst" value="{!emailTemplate}" size="1"
+                                 onchange="previewSelectedTemplate(event);" >
+                    <apex:selectOptions value="{!templateOptions}"/>
+                </apex:selectlist>
+                <br/>
+                <br/>
+                <div class="cmb">
+                    <div id="templatePreview" title="Preview" class="slds-scrollable">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </apex:form>
+    </div>
+
+    <script>
+
+        var NONE_VALUE = '--None--';
+        var renewalIsInConsole = false;
+        $(document).ready(function() {
+            $(function() {
+                initializePreviewDialog();
+                setConsole();
+                viewReferenceRecords();
+            });
+        })
+        function setConsole() {
+            renewalIsInConsole = sforce.console.isInConsole();
+            console.log('>>renewalIsInConsole>>>',renewalIsInConsole);
+            var isConsoleChedk = document.getElementsByClassName('hiddenValueConsole')[0];
+            isConsoleChedk.value = renewalIsInConsole;
+        }
+        function viewRecord(Id) {
+            url = '/'+Id;
+            if(renewalIsInConsole) {
+                openConsoleTabForRenewal(url, '');
+            } else {
+                window.open(url);
+            }
+            event.preventDefault();
+        }
+
+        function rerenderHandler() {
+            viewReferenceRecords();
+        }
+        function initializePreviewDialog() {
+            $("#validation_with_noownerlst").dialog({
+                autoOpen: false,
+                modal: true,
+                buttons: {
+                    "Continue ": function() {
+                        $(this).dialog("close");
+                        $( "#template_dialog" ).dialog( "open" );
+                    },
+                    "Cancel ": function() {
+                        $(this).dialog("close");
+                    }
+                },
+                close: function(event, ui) {
+                    $(this).dialog("close");
+                }
+            });
+
+            $("#validation_message").dialog({
+                autoOpen: false,
+                modal: true,
+                buttons: {
+                    "OK ": function() {
+                        $(this).dialog("close");
+                    }
+                },
+                close: function(event, ui) {
+                    $(this).dialog("close");
+                }
+            });
+
+            $("#template_dialog").dialog({
+                autoOpen: false,
+                width: 800,
+                height: 400,
+                modal: true,
+                buttons: {
+                    "Send": function() {
+                        if($("[id$='emailTemplateSlctLst']").val() != NONE_VALUE) {
+                            sendEmails();
+                            $(this).dialog("close");
+                        }
+                        else {
+                            alert('Please select an email template.');
+                        }
+                    }
+                },
+                close: function(event, ui) {
+                    $("[id$='emailTemplateSlctLst']").val(NONE_VALUE);
+                    var storeTemplateId = document.getElementsByClassName('hiddenTemplate')[0];
+                    storeTemplateId.value = NONE_VALUE;
+                    $("#templatePreview").html("");
+                }
+            });
+        }
+
+        function validateEmail() {
+            var selectedOppCount = $('.iptCheckbox:checked').length;
+            // Check at least one opportunity is selected
+            if(selectedOppCount) {
+                validateMassEmail();
+            }
+            else {
+                alert('Please select at least one Opportunity.');
+            }
+        }
+
+        function massEmailClickHandler() {
+            var liWithNoEmail = $('.noowner');
+            var opps='';
+            for(var count = 0; count < liWithNoEmail.length; count++) {
+                opps += "<li>" + liWithNoEmail[count].dataset.oppname+ "</li>";
+            }
+            //$(".opprtname").append(opps);
+            //var opprtunityname = $('.noowner').data("oppname");
+            document.getElementsByClassName('opprtname')[0].innerHTML = opps;
+            var selectedCount = parseInt($('input[id$="hiddencount"]').val());
+            if(liWithNoEmail.length == 0) {
+                $( "#template_dialog" ).dialog( "open" );
+            } else if(liWithNoEmail.length < selectedCount) {
+                $( "#validation_with_noownerlst" ).dialog( "open" );
+            } else if(liWithNoEmail.length == selectedCount){
+                $( "#validation_message" ).dialog( "open" );
+            }
+        }
+
+        //var EXPRESSION_REGEX = new RegExp("\{\![^\}]*\}", "g");
+        var EXPRESSION_REGEX = /\{\![^\}]*\}/g;
+        //To display selected email template preview
+        function previewSelectedTemplate(event) {
+            var selectedTemplateId = event.target.value;
+            $("#templatePreview").html('Loading preview...');
+            // Get the template Id
+            var storeTemplateId = document.getElementsByClassName('hiddenTemplate')[0];
+            storeTemplateId.value = event.target.value;
+            // Get the first selected Opportunity
+            var selectedRow = $('.iptCheckbox:checked')[0];
+            var oppId = $(selectedRow).data('oppid');
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MovingRenewalController.previewSelectedTemplate}',
+                event.target.value,
+                oppId,
+                function(result, event) {
+                    if(!result) {
+                        $("#templatePreview").html('');
+                        return;
+                    }
+                    var resultConvertedToHtml = $("<div/>").html(result);
+                    var resultConvertedToText = resultConvertedToHtml.text();
+                    resultConvertedToText = makeExpressionsBold(resultConvertedToText);
+                    $("#templatePreview").html("").append(resultConvertedToText);
+                }
+            );
+        }
+
+        function makeExpressionsBold(result) {
+            var modifiedResult = '';
+            var lines = result.split('\n');
+            for(var i=0; i < lines.length; i++) {
+                var expressions = lines[i].match(EXPRESSION_REGEX);
+                if(expressions) {
+                    for(var j=0; j < expressions.length; j++) {
+                        result = makeSingleExpressionBold(expressions[j], result);
+                    }
+                }
+            }
+            return result;
+        }
+
+        function makeSingleExpressionBold(expression, result) {
+            return result.replace(expression, ('<b>' + expression + '</b>'));
+        }
+
+        function sortCall(){
+            var element = event.target;
+            var sortCol=$(element).attr("Name");
+            sortCol=sortCol.split('temp')[1];
+            $("input[id$='sortHiddencriterian']").val(sortCol);
+            if ($(element).hasClass("sorting")==true) {
+                $(element).addClass("SortAsc").removeClass("sorting");
+                $(element).attr('title', 'Sort Descending');
+                $("input[id$='sortHiddenOrder']").val("ASC");
+            } else if($(element).hasClass("SortAsc")==true) {
+                $(element).addClass("SortDesc").removeClass("SortAsc");
+                $(element).attr('title', 'Sort Ascending');
+                $("input[id$='sortHiddenOrder']").val("Desc");
+            } else{
+                $(element).attr('title', 'Sort Ascending');
+                $("input[id$='sortHiddenOrder']").val("ASC");
+            }
+            callOnSort();
+            viewReferenceRecords();
+        }
+
+        function darkenTH() {
+            var element = event.target;
+            $(element).addClass("darkenTHClass");
+        }
+
+        function normalTH() {
+            var element = event.target;
+            $(element).removeClass("darkenTHClass");
+        }
+
+        function callGenericSearch(){
+            var element= event.target;
+            code= (event.keyCode ? event.keyCode : event.which);
+            if(code == 13) { //Enter keycode
+                genericSearch();
+                return false;
+            }
+        }
+
+        function callSearch(){
+            genericSearch();
+        }
+
+        function checkAll(){
+            var element=event.target;
+            if(element.checked) { // check select status
+                $('.iptCheckbox').each(function() { //loop through each checkbox
+                    this.checked = true;  //select all checkboxes with class "checkbox1"
+                });
+            }else{
+                $('.iptCheckbox').each(function() { //loop through each checkbox
+                    this.checked = false; //deselect all checkboxes with class "checkbox1"
+                });
+            }
+        }
+
+        function selectOne(){
+            var element=event.target;
+            if (element.checked){
+                if($('.iptCheckbox:checked').length == $('.iptCheckbox').length){
+                    $('.masterCheck').each(function() { //loop through each checkbox
+                        this.checked = true;  //select all checkboxes with class "checkbox1"
+                    });
+                }
+            } else{
+            $('.masterCheck').each(function() { //loop through each checkbox
+                this.checked = false;  //select all checkboxes with class "checkbox1"
+            });
+            }
+        }
+
+        // method to save change in renewal date to DB
+        function onChangeRenewalDate(id, value){
+            //Parse Date to convert it into format "yyyy-mm-dd"
+            var date_regex = /^(0?[1-9]|1[0-2])\/(0?[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/;
+            if (date_regex.test(value)== true || value==""){
+                var thisDate = new Date(value);
+                var year = thisDate.getFullYear();
+                var month = thisDate.getMonth() + 1;
+                var date = thisDate.getDate();
+                var parsedDate = year + '-' + month + '-' + date;
+            }else{
+                alert ("Please enter a valid date ");
+            }
+            //Check if Date is Null
+            if(parsedDate == "NaN-NaN-NaN"){
+                parsedDate = null;
+            }//EndIf
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MovingRenewalController.saveOpportRenewalDate}',
+                id,parsedDate,
+                function(){},
+                {escape: true}
+            );
+        }
+
+        function onChangeBalance(id, value){
+            //Parse Balance to remove','
+            var parsedbalance = parseFloat(value.replace(',','')).toFixed(2);
+            if(parsedbalance == "NaN"){
+                parsedbalance = null;
+            }//End If
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MovingRenewalController.saveOpportBal}',
+                id,parsedbalance,
+                function(){},
+                {escape: true}
+            );
+        }
+
+        function onChangeBalanceDate(id, value){
+            //Parse Date to convert it into format "yyyy-mm-dd"
+            var date_regex = /^(0?[1-9]|1[0-2])\/(0?[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/ ;
+            if (date_regex.test(value)== true || value==""){
+                var thisDate = new Date(value);
+                var year = thisDate.getFullYear();
+                var month = thisDate.getMonth() + 1;
+                var date = thisDate.getDate();
+                var parsedDate = year + '-' + month + '-' + date;
+            }else{
+                alert ("Please enter a valid date ");
+            }
+            //Check if Date is Null
+            if(parsedDate == "NaN-NaN-NaN"){
+            parsedDate = null;
+            }//EndIf
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.MovingRenewalController.saveOpportBalDate}',
+                id,parsedDate,
+                function(){},
+                {escape: true}
+            );
+        }
+
+        function clearfilterFields(){
+            $(".termdropdown").val($(".termdropdown option:first").val());
+            $(".fundedDropDown ").val($(".fundedDropDown  option:first").val());
+            $('.myDeal').each(function() { //loop through each checkbox
+                this.checked = false;  //select all checkboxes with class "checkbox1"
+            });
+        }
+
+        function openConsoleTabForRenewal(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function (r) {});
+        }
+
+        function openrenewalpage() {
+            var renewalURL = '/apex/ManageRenewal';
+            if(renewalIsInConsole) {
+                openConsoleTabForRenewal(renewalURL, '');
+            }else {
+                window.open(renewalURL);
+            }
+            event.preventDefault();
+        }
+
+        function viewReferenceRecords() {
+            $("[id$='manageRenewalContainer'] .viewlookupfields a").click(function() {
+                var hrefdata = $(this).attr("href");
+                if(renewalIsInConsole) {
+                    openConsoleTabForRenewal(hrefdata, '');
+                }
+                else {
+                    window.open(hrefdata);
+                }
+                event.preventDefault();
+            });
+        }
+    </script>
+</apex:page>

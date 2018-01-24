@@ -1,0 +1,172 @@
+<apex:component controller="AttachmentOnSubmissionWizardController" id="pid" allowDML="true">  
+        <style>
+            #dropbox {
+                    width: 90%; 
+                    height:30px;
+                    padding: 1.145em;
+                    margin: 0 auto;
+                    margin-bottom:14px;
+                    border: 6px white double;
+                    color:white;
+                    font:weight:bold;
+                    font-size:14px;
+                    border-color: white !important;
+                    border-radius:20px;
+                    background-color:#69c;
+            }
+            
+            #preview {
+                    display: none;
+                    margin: 1.125em auto;
+                    border: 1px solid pink;
+                }
+            #assign-action-spinner-main {
+                position: fixed;
+                left: 0;
+                top: 0;
+                background-color:rgba(0,0,0,.6);
+                height: 100%;
+                width: 100%;
+                z-index: 999;
+                align: center;
+                vertical-align: middle;
+            }
+            #assign-action-spinner-content {
+                position: absolute; 
+                top: 50%;
+                left: 50%;
+                z-index: 1000;
+                background-color: #F5FCFF;
+                width: 204;
+                height: 94; 
+                border-radius: 1em;
+                border: 1px solid #CEECFF;
+                padding: 20px 40px 20px 40px;
+                margin-left: -116px;
+                margin-top: -36px;
+            }
+            #assign-action-spinner-content img {
+                width: 32;
+                height: 32;
+                align: center;
+                vertical-align: middle;
+            }
+            #assign-action-spinner-content p {
+                display: inline;
+                font-size: 135%;
+                font-weight: bold;
+            }
+            
+            
+        </style>
+    <body>
+        <apex:outputPanel id="dragDropSection">
+            <div style="border-width:2px;border:4px #69c;height:auto;width:auto;border-radius:17px;">  &nbsp; 
+            <div id="dropbox">
+                <center><span id="droplabel">Drop files to attach</span></center>
+            </div>
+            <apex:outputPanel id="Op1">
+                <img id="preview" src="" alt="[ image will display here ]" />
+            </apex:outputPanel>
+        </div>
+        </apex:outputPanel>
+           
+    </body>
+
+    <apex:actionFunction action="{!CollectData}" name="collectDataBase64" reRender="Op,frmId" status="loadingPanel" oncomplete="resetAtt();">
+        <apex:param name="data" id="data" value="" />
+        <apex:param name="name" id="name" value="" />
+        
+    </apex:actionFunction>
+    <apex:actionStatus id="loadingPanel" layout="block">
+        <apex:facet name="start">
+            <div id="assign-action-spinner-main">
+                <div id="assign-action-spinner-content">
+                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <script type="text/javascript">
+        var fName = new Array();
+        var dropbox = document.getElementById('dropbox');
+        var count = 0;
+        // # Using an EventListener object
+        var dropListener = {
+    
+            handleEvent: function(event){
+                if (event.type === 'dragenter') { this.onDragEnter(event); }
+                if (event.type === 'dragexit') { this.onDragExit(event); }
+                if (event.type === 'dragover') { this.onDragOver(event); }
+                if (event.type === 'drop') { this.onDragDrop(event); }
+            },
+    
+            onDragEnter: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+                console.debug('enter')
+            },
+    
+            onDragExit: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            },
+    
+            onDragOver: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            },
+    
+            onDragDrop: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            
+                var files = event.dataTransfer.files,
+                file = files;
+                if (files.length == 1 ) {
+                    console.log('11111111111'+files[0].size);
+                    document.getElementById('droplabel').innerHTML ='Uploading ' + files[0].name;
+                }else if (files.length  >  1) {
+                    document.getElementById('droplabel').innerHTML ='Uploading ' + files.length + ' files';
+                }
+                if (files.length) {
+                    for (i = 0; i < files.length; i++) { 
+                        file = files[i];
+                        //document.getElementById('droplabel').innerHTML = 'Uploading ' + file.name;                        
+                        this.processImage(file, i);
+                    }
+                }
+            },
+    
+            processImage: function(file, i){
+                fName.push(file.name);
+                
+                if (! file.type.match('image.*')) {
+                    //document.getElementById('droplabel').innerHTML ='Uploading ' + file.name;
+                   // return;
+                }
+    
+                var reader = new FileReader();
+            
+                reader.onloadend = this.onReaderLoadEnd;
+                reader.readAsDataURL(file);
+            },
+            
+            onReaderLoadEnd: function(event){
+                var img = document.getElementById("preview");
+                img.src = event.target.result;
+                collectDataBase64(img.src, fName[count]);
+                count++;
+            }
+        };
+    
+        // ## Adding drag and drop event listeners
+    
+        dropbox.addEventListener('dragenter', dropListener, false);
+        dropbox.addEventListener('dragexit', dropListener, false);
+        dropbox.addEventListener('dragover', dropListener, false);
+        dropbox.addEventListener('drop', dropListener, false);
+    
+    </script>
+</apex:component>

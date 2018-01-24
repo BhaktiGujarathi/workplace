@@ -1,0 +1,641 @@
+<apex:component controller="GRIDBankStatementsController" allowDML="true" access="global">
+
+    <style>
+        .buttons {
+            text-align: center;
+        }
+
+        #BankStatementButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        [title~=BankStatement] .btn{
+            font-size: 12px!important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none!important;
+            color: #fff!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #0070d2!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        [title~=BankStatement] .btnNextPreviPage {
+            left: 115px;
+            position: relative;
+            height: 25px;
+            /*line-height: initial!important;*/
+            font-size: 12px!important;
+            color: #0070d2!important;
+            background: #fff!important;
+        }
+
+        [title~=BankStatement] .btnNextPreviPage:hover{
+            background-color: #f4f6f9!important;
+        }
+
+        [title~=BankStatement] input[type="email"],
+        [title~=BankStatement] input[type="number"],
+        [title~=BankStatement] input[type="password"],
+        [title~=BankStatement] input[type="tel"],
+        [title~=BankStatement] input[type="url"],
+        [title~=BankStatement] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=BankStatement] select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=BankStatement] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=BankStatement] input[type="email"]:focus,
+        [title~=BankStatement] input[type="number"]:focus,
+        [title~=BankStatement] input[type="password"]:focus,
+        [title~=BankStatement] input[type="tel"]:focus,
+        [title~=BankStatement] input[type="url"]:focus,
+        [title~=BankStatement] input[type="text"]:focus,
+        [title~=BankStatement] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=BankStatement] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=BankStatement] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=BankStatement] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=BankStatement] .bPageBlock{
+            background : #fff!important;
+        }
+
+        [title~=BankStatement] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin-top: -3px!important;
+        }
+
+        [title~=BankStatement] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+            background-color: #fff!important;
+        }
+        [title~=BankStatement] .headerRow [title~=BankStatement] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            /*color: #54698d!important;
+            text-transform: uppercase;*/
+            color: #fff!important;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=BankStatement] body [title~=BankStatement] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=BankStatement] .pbBody [title~=BankStatement] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=BankStatement] body [title~=BankStatement] .pbBody [title~=BankStatement] table.list
+        [title~=BankStatement] tr.headerRow [title~=BankStatement] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=BankStatement] .list [title~=BankStatement] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=BankStatement] body [title~=BankStatement] .pbBody
+        [title~=BankStatement] table.list [title~=BankStatement] tr.headerRow [title~=BankStatement] td,
+        [title~=BankStatement] body [title~=BankStatement] .pbBody
+        [title~=BankStatement] table.list [title~=BankStatement] tr.headerRow [title~=BankStatement] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        [title~=BankStatement] .bankStatmntOtherBtn {
+            background: #4bca81 !important;
+        }
+
+        [title~=BankStatement] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+                margin-top: -3px!important;
+        }
+
+        [title~=BankStatement] .buttons {
+            text-align: center;
+        }
+
+        [title~=BankStatement] #bnkStatementButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        [title~=BankStatement] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=BankStatement] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        #bankStatmentTableInner .boolean-field {
+            text-align: center !important;
+        }
+
+        #bankStatmentTableInner .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+        
+        [title~=BankStatement] tfoot {
+            border-top: 1px solid gainsboro;
+        }
+    </style>
+
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!bankStmntEditAllFlag}" access="global" />
+    <apex:form id="BankStatementform" styleClass="records" title="BankStatement">
+
+        <apex:outputLabel rendered="{!bankStmntIsRefrenceField}" id="id1" >
+            Please remove '{!bankStmntRefrenceFieldLabel}' field from the 'GRIDBankStatementFieldSet' 
+            field set, as referenced fields are not allowed.
+        </apex:outputLabel>
+        <apex:outputPanel id="bankStmntTable" rendered="{!NOT(bankStmntIsRefrenceField)}">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function() {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='bankstatementTab_lbl']").text( 'Bank Statements'+' ({!bankStmntRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='bankStatements']");
+                    tabTitle.text('Bank Statements'+' ({!bankStmntRecordCount})');
+                    t$('#bankStatmentTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    
+                    t$("[id$='bankStmntTable'] .width10TdSub a").click(function() {
+                        var elementId = event.target.id;
+                        if(elementId.indexOf('lookup') == 0) {
+                            if(isInConsoleBankStmnt) {
+                                openConsoleTabOpenBalanceNewTab(event.target.href);
+                            }
+                            else {
+                                window.open(event.target.href);
+                            }
+                            event.preventDefault();
+                        }
+                    });
+                    initCallBankStmnt();
+                    setEventListenersBankStatement();
+                });
+
+                function rerenderHandlerBankStmnt() {
+                    if(typeof rerenderHandler == "function") {
+                        rerenderHandler('bankStatements');
+                    }
+                    /*setEventListenersBankStatement();*/
+                }
+            </script>
+            <apex:pageBlock mode="inlineEdit">
+                <div class="buttons" id="bnkStatementButtons">
+                    <apex:outputpanel rendered="{!$ObjectType.Bank_Account__c.createable}">
+                        <input type="button"
+                               onclick="runNewBankStatement()"
+                               class="{!if(isDisable,'btnDisabled disBtn','btn')}"
+                               value="New"
+                               status="loadingPanel"/>
+                    </apex:outputpanel>
+                    <apex:outputpanel rendered="{!AND($ObjectType.Bank_Account__c.updateable,
+                                                NOT(bankStmntEditAllFlag))}">
+                        <apex:CommandButton action="{!editAllBankStatements}" 
+                                            value="Edit All"
+                                            disabled="{!isDisable}"
+                                            rerender="bankStmntTable"
+                                            immediate="true"
+                                            oncomplete="rerenderHandlerBankStmnt();"
+                                            status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!OR($ObjectType.Bank_Account__c.updateable,
+                                                $ObjectType.Bank_Account__c.createable)}">
+                        <input type="button"
+                               onclick="runSaveBankStatements()"
+                               class="{!if(isDisable,'btnDisabled disBtn','btn')}"
+                               value="Save"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:CommandButton action="{!refreshBankStatements}"
+                                        value="Refresh"
+                                        disabled="{!isDisable}"
+                                        rerender="bankStmntTable"
+                                        oncomplete="rerenderHandlerBankStmnt();"
+                                        status="loadingPanel"
+                                        immediate="true"/>
+                    <apex:CommandButton action="{!refreshBankStatements}" 
+                                        value="Cancel"
+                                        disabled="{!isDisable}" 
+                                        rerender="bankStmntTable"
+                                        oncomplete="rerenderHandlerBankStmnt();"
+                                        status="loadingPanel"
+                                        immediate="true"/>
+                    <apex:commandButton value="Sales Summary" 
+                                        onclick="BankAccountWizardSummaryPage()"
+                                        oncomplete="rerenderHandlerBankStmnt();"
+                                        disabled="{!isDisable}"
+                                        immediate="true"
+                                        styleClass="bankStatmntOtherBtn"
+                                        rerender="bankStmntTable"
+                                        status="loadingPanel"/>
+                </div>
+                <apex:pageMessages id="bankStmntpgMsgId" escape="false" />
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                        <table class="contentTable slds-table slds-table--bordered slds-table--striped"
+                               border="0" cellpadding="0" cellspacing="0" id='bankStatmentTableInner'>
+                            <tbody>
+                                <tr class="headerRow">
+                                    <th class="widthRecordSub">#</th>
+                                    <th class="widthActionSub">Action</th>
+                                    <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntField">
+                                        <th class="width10Sub">
+                                            <div>
+                                                <apex:outputLabel value="{!bankStmntField.label}"/>
+                                                <apex:OutputPanel rendered="{!AND(fieldPathResult != bankStmntField.fieldPath,
+                                                                            displaySortingArrow,
+                                                                            bankStmntField.type != 'multipicklist',
+                                                                            bankStmntField.type != 'phone')}">
+                                                    <img src="{!IF(bankStmntSortExprFieldApi==bankStmntField.fieldPath,
+                                                                IF(bankStmntSortDirection=='ASC',
+                                                                urlfor($Resource.GRIDResource
+                                                                ,'GRIDResource/Images/Sort_Asc.png'),
+                                                                urlfor($Resource.GRIDResource,
+                                                                'GRIDResource/Images/Sort_Desc.png')),
+                                                                urlfor($Resource.GRIDResource
+                                                                ,'GRIDResource/Images/Sort_Both.png'))}"
+                                                        style="height:11px;"
+                                                        name ="{!bankStmntField.fieldPath}" class="sorting"
+                                                        onclick="sortCallBankStatements('{!bankStmntField.type}');" />
+                                                </apex:OutputPanel>
+                                            </div>
+                                        </th>
+                                    </apex:repeat>
+                                </tr>
+                                <apex:repeat value="{!bankStmntWrapperLst}" var="bankStmntWraper" >
+                                    <tr class="dataRow">
+                                        <td class="widthRecordTdSub">
+                                            <apex:outputtext value="{!bankStmntWraper.bankStmntIndex + 1}"/>
+                                        </td>
+                                        <td class="widthActionTdSub">
+                                            <apex:outputLink value="#"
+                                                             target="_blank"
+                                                             onclick="openStatementPage('{!bankStmntWraper.BankStmnt.Id}');"
+                                                             rendered="{!NOT(ISBLANK(bankStmntWraper.BankStmnt.Id))}">
+                                                View
+                                            </apex:outputLink>
+                                            <apex:outputLabel value="| "
+                                                              rendered="{!AND(NOT(ISBLANK(bankStmntWraper.bankStmnt.Id)),
+                                                                        $ObjectType.Bank_Account__c.deletable)}"/>
+                                            <apex:commandLink action="{!deleteBankStatement}"
+                                                              value="Del"
+                                                              rerender="bankStmntTable"
+                                                              rendered="{!AND(NOT(ISBLANK(bankStmntWraper.BankStmnt.Id)),
+                                                                        $ObjectType.Bank_Account__c.deletable)}"
+                                                              status="loadingPanel">
+                                                <apex:param name="bankStmntIndexToRemove"
+                                                            value="{!bankStmntWraper.bankStmntIndex}"
+                                                            assignTo="{!bankStmntIndexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                            <apex:commandLink action="{!deleteBankStatement}"
+                                                              value="Remove"
+                                                              rerender="bankStmntTable"
+                                                              rendered="{!(ISBLANK(bankStmntWraper.bankStmnt.Id))}"
+                                                              styleClass="removeRow"
+                                                              status="loadingPanel"
+                                                              immediate="true">
+                                                <apex:param name="bankStmntIndexToRemove" 
+                                                            value="{!bankStmntWraper.bankStmntIndex}"
+                                                            assignTo="{!bankStmntIndexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                        </td>
+                                        <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntfield">
+                                            <td class="width10TdSub {!bankStmntfield.type}-field">
+                                                <apex:outputField value="{!bankStmntWraper.BankStmnt[bankStmntfield]}"
+                                                                  rendered="{!AND(IF(bankStmntWraper.bankStmntEdit = false, true, false),
+                                                                            NOT(ISBLANK(bankStmntWraper.bankStmnt.Id)))}" />
+                                                    <apex:inputField value="{!bankStmntWraper.BankStmnt[bankStmntfield]}"
+                                                                    rendered="{!OR(IF(bankStmntWraper.bankStmntEdit = true, true, false),
+                                                                            ISBLANK(bankStmntWraper.bankStmnt.Id))}"/>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                            <tfoot>
+                                <tr class="headerRow">
+                                    <td class="widthRecordSub"><b>Average</b></td>
+                                    <td class="widthActionSub"></td>
+                                    <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntfield">
+                                        <td class="width10Sub">
+                                            <b>
+                                              <apex:outputText value="{!currencySymbolBnkStmnt}{0, number, ###,###,###,##0.00}"
+                                                               rendered="{!AND(bankStmntFieldToSumMap[bankStmntfield.fieldPath] != -999.999,
+                                                                      bankStmntfield.type=='currency')}" >
+                                                  <apex:param value="{!bankStmntFieldToSumMap[bankStmntfield.fieldPath]}" />
+                                              </apex:outputText>
+                                            </b>
+                                            <b>
+                                              <apex:outputText value="{0, number, ###,###,###,##0.00}"
+                                                             rendered="{!AND(bankStmntFieldToSumMap[bankStmntfield.fieldPath] != -999.999,
+                                                                      bankStmntfield.type !='currency')}" >
+                                                  <apex:param value="{!bankStmntFieldToSumMap[bankStmntfield.fieldPath]}" />
+                                              </apex:outputText>
+                                            </b>
+                                        </td>
+                                    </apex:repeat>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        {!IF((bankStmntOffsetsize + 1) > bankStmntRecordCount,
+                        IF(bankStmntRecordCount - bankStmntBlockSize <= 0, 0, bankStmntRecordCount - bankStmntBlockSize),
+                        bankStmntOffsetsize + 1)} - {!IF(bankStmntWrapperLst!= null,
+                        bankStmntWrapperLst.size + bankStmntOffsetsize,0)}
+                        of {!bankStmntRecordCount}
+                    </div>
+                    <!-- panel grid for pagination buttons -->
+                    <div class="pagination-btn-grp-wrapper">
+                        <div class="slds-button-group pagination-btn-grp" role="group">
+                            <button class="slds-button slds-button--neutral first"
+                                    onclick="beginningBankStatements(); return false;">&lt;&lt;</button>
+                            <button class="slds-button slds-button--neutral previous"
+                                    onclick="previousBankStatements(); return false;">&lt;</button>
+                            <button class="slds-button slds-button--neutral next"
+                                    onclick="nextBankStatements(); return false;">&gt;</button>
+                            <button class="slds-button slds-button--neutral last"
+                                    onclick="endBankStatements(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            t$ = jQuery.noConflict();
+                            if("{!bankStmntOffsetsize != 0}" == 'false') {
+                                t$('[title~=BankStatement] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                                t$('[title~=BankStatement] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=BankStatement] .pagination-btn-grp .first').removeAttr('disabled');
+                                t$('[title~=BankStatement] .pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!bankStmntWrapperLst.size + bankStmntOffsetsize < bankStmntRecordCount}" == 'false') {
+                                t$('[title~=BankStatement] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                                t$('[title~=BankStatement] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=BankStatement] .pagination-btn-grp .next').removeAttr('disabled');
+                                t$('[title~=BankStatement] .pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+                </div>
+                <apex:actionFunction name="beginningBankStatements" action="{!beginningBankStatements}"
+                        rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="previousBankStatements" action="{!previousBankStatements}"
+                        rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="nextBankStatements" action="{!nextBankStatements}"
+                        rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="endBankStatements" action="{!endBankStatements}"
+                        rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+                        status="loadingPanel"/>
+            </apex:pageBlock>
+
+            <apex:inputHidden value="{!bankStmntSortExpression}" id="bankStmntSortHiddencriterian"/>
+            <apex:inputHidden value="{!bankStmntSortDirection}" id="bankStmntSortHiddenOrder"/>
+            <apex:inputHidden value="{!bankStmntSortExprFieldApi}" id="bankStmntSortFieldApi"/>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newBankStatement}" name="newBankStatement"
+            rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+            status="loadingPanel"/>
+        <apex:actionFunction action="{!saveBankStatements}" name="saveBankStatements"
+            rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+            status="loadingPanel"/>
+        <apex:actionFunction action="{!sortBankStatements}" name="sortAllBankStatements"
+            rerender="bankStmntTable" oncomplete="rerenderHandlerBankStmnt();"
+            status="loadingPanel" >
+            <apex:param name="bankStmntTypeParam" value="" />
+        </apex:actionFunction>
+    </apex:form>
+
+    <script>
+        var isInConsoleBankStmnt = false;
+        var tabIdLoanBalance;
+
+        function setEventListenersBankStatement() {
+            t$('[id$=bankStmntTable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function initCallBankStmnt() {
+            setIsConsoleBankStmnt();
+            getFocusedPrimaryTabIdBankStmnt();
+        }
+
+        function runNewBankStatement()
+        {
+            setTimeout(function()
+            {
+                newBankStatement();
+            }, 200);
+        }
+
+        function runSaveBankStatements()
+        {
+            setTimeout(function()
+            {
+                saveBankStatements();
+            }, 100);
+        }
+
+        function getFocusedPrimaryTabIdBankStmnt() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdSubmission);
+        }
+
+        var showTabIdSubmission = function showTabIdSubmission(result) {
+            //Display the tab ID
+            tabIdLoanBalance = result.id;
+        };
+
+        function setIsConsoleBankStmnt() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleBankStmnt = inConsole;
+            } else {
+                isInConsoleBankStmnt = sforce.console.isInConsole();
+            }
+        }
+
+        function openConsoleTabBankStmnt(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdLoanBalance, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdLoanBalance);
+        }
+
+        function openConsoleTabBankStmntNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        function openStatementPage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleBankStmnt) {
+                openConsoleTabBankStmntNewTab('/'+recordIdToOpen, 'Bank Statement');
+            } else  {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+
+        function BankAccountWizardSummaryPage()
+        {
+            var BankAccountWizardSummaryPageUrl = '{!$Page.Sales_Summary}';
+            BankAccountWizardSummaryPageUrl 
+            += '?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}&isAccountView=false';
+            if(isInConsoleBankStmnt) {
+                openConsoleTabBankStmntNewTab(BankAccountWizardSummaryPageUrl, 'Sales Summary');
+            } else  {
+                window.open(BankAccountWizardSummaryPageUrl);
+            }
+        }
+
+        function sortCallBankStatements(bankStmntFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             var bankStmntElement= event.target;
+             var newbankStmntSortCol = t$(bankStmntElement).attr("Name"); // new sort field
+             t$("input[id$='bankStmntSortFieldApi']").val(newbankStmntSortCol);
+             var oldbankStmntSortCol = t$("input[id$='bankStmntSortHiddencriterian']").val();
+             var indexBankStmnt;
+             var bankStmntTempSortExpr;
+             if(newbankStmntSortCol.endsWith('__c'))
+             {
+                 indexBankStmnt = newbankStmntSortCol.indexOf('__');
+             }
+             else if(newbankStmntSortCol.endsWith('Id'))
+             {
+                 indexBankStmnt = newbankStmntSortCol.indexOf('Id');
+             }
+
+            if(indexBankStmnt != null) {
+                bankStmntTempSortExpr = newbankStmntSortCol.substring(0, indexBankStmnt);
+            }
+            else
+            {
+                bankStmntTempSortExpr = newbankStmntSortCol;
+            }
+               //if(String(newbankStmntSortCol) == String(oldbankStmntSortCol))
+            if(oldbankStmntSortCol.indexOf(bankStmntTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='bankStmntSortHiddenOrder']").val()) == "ASC")
+                {
+                  t$("input[id$='bankStmntSortHiddenOrder']").val("DESC");
+                  t$(bankStmntElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                  t$("input[id$='bankStmntSortHiddenOrder']").val("ASC");
+                  t$(bankStmntElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+
+                t$("input[id$='bankStmntSortHiddencriterian']").val(newbankStmntSortCol);
+                sortAllBankStatements(bankStmntFieldDataType);
+
+            }
+            else
+            {
+                t$("input[id$='bankStmntSortHiddencriterian']").val(newbankStmntSortCol);
+                t$("input[id$='bankStmntSortHiddenOrder']").val("ASC");
+                t$(bankStmntElement).removeClass('sorting').addClass('SortAsc');
+                sortAllBankStatements(bankStmntFieldDataType);
+            }
+        }
+    </script>
+</apex:component>

@@ -1,0 +1,98 @@
+<apex:component controller="autoCompleteController">
+  <!-- JQuery Files -->
+  <script src='https://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js'/>
+<script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/jquery-ui.min.js'/>
+<!--<apex:stylesheet value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.12/themes/ui-smoothness/jquery-ui.css"/>-->
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"/>
+  
+  <!-- <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>-->
+     
+  <!-- Attributes Required For Component -->
+  <apex:attribute name="objectname" description="The object name you want to look for."     type="String" required="true"/>
+  <apex:attribute name="additionalfield" description="Any additional fields  like to search and include in the display."     type="String" required="false"/>
+  <apex:attribute name="autocomplete_textbox" description="The ID for the Autocomplete List Textbox."     type="String" required="true"/>
+  
+
+  <style>
+    .ui-autocomplete-loading { background: white url({!$Resource.circleIndicator}) right center no-repeat; }
+ </style>
+
+
+  <script type='text/javascript'>
+    var j$ = jQuery.noConflict();
+    j$(document).ready(function() {
+ 
+        var sObjects;
+        var queryTerm;
+        var array1;
+        
+      
+                   
+                       
+        j$("[id*='account']").autocomplete({source:fetchResponse})  //autocomplete
+                             .data( 'autocomplete' )._renderItem = renderOnTyping;
+                                                                      
+       
+                                                                    function renderOnTyping( ul, item ) 
+                                                                    {
+                                                                        //onclick is use due to browser issue.
+                                                                        var entry = '<a href="#"  onclick="window.open(\'https://ap1.salesforce.com/'+item.Id+'\');return false;">' + item.Name;
+                                                                                                                                                
+                                                                        // for additional fields
+                                                                        /*j$.each('{!additionalfield}'.split(',') , function(key, value) {
+                                                                            entry = entry + ' ' + item[value];
+                                                                        });*/
+                                                                        
+                                                                                                                                       
+                                                                        entry = entry + '</a>';
+                                                                        entry = entry.replace(queryTerm, '<b>' + queryTerm + '</b>'); // the make the search keywor bold
+                                                                        return j$( '<li></li>' ).data( 'item.autocomplete', item )
+                                                                                                .append( entry )
+                                                                                                .appendTo( ul );
+                                                                        
+                                                                    }
+       
+       
+        
+       function fetchResponse(request, response) 
+       {
+                                  
+                                    queryTerm = request.term;
+                                    
+                                    //JS invocation
+                                    Visualforce.remoting.Manager.invokeAction
+                                     ('{!$RemoteAction.autoCompleteController.findSObjects}',
+                                                       '{!objectname}',
+                                                       request.term,
+                                                       '{!additionalfield}', 
+                                                       function(result, event)
+                                                       {
+                                                           if(event.type == 'exception') {
+                                                                  alert(event.message);
+                                                            } else {
+                                                                 sObjects = result;
+                                                                 response(sObjects);
+                                                            }
+                                                       }, 
+                                                       {escape: true}
+                                     );
+                
+                                
+                                
+        }
+       
+       
+       
+       
+        
+        
+   
+    });// End of ready function.
+ 
+ 
+ 
+ 
+ 
+ 
+  </script>
+</apex:component>

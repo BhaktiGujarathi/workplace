@@ -1,0 +1,1237 @@
+<apex:component controller="GRIDStipsController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!stipsEditAllFlag}" access="global" />
+
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+
+    <style>
+        .inpufield {
+            width:99px;
+        }
+
+        .columnWidth {
+            width: 99px;
+        }
+        .stipDropbox {
+            /*height:8px;
+            margin: 0 auto;
+            margin-bottom:14px;
+            border: 6px white double;
+            color:white;
+            border-color: white !important;
+            padding: 20px!important;*/
+            font: 100%/30px 'Helvetica Neue', helvetica, arial, sans-serif;
+        }
+
+        .buttons {
+            text-align: center;
+        }
+
+        #stipButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        #action-spinner-main-StipProgress
+        {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+        }
+        .assign-action-spinner-content
+        {
+
+            position: absolute;
+            top: 50%;
+            left: 35%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94;
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+
+        #progressBar {
+            width: 400px;
+            height: 22px;
+            border: 1px solid #111;
+            //background-color: #FFD80F;
+        }
+
+        #progressBar div {
+            height: 100%;
+            color: #fff;
+            text-align: right;
+            line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+            width: 0;
+            background-color: #0099ff;
+        }
+
+        /******************************LDS CSS Started here*****************/
+
+        body, .noProgramStyle, h3, .popupBackground, .attachmentSection, h2, #droplabel, .dataCell span  {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        /*[title~=Stips] .fundApp table, [title~=Stips] th, [title~=Stips] td {
+            line-height: 1.6em!important;
+        }*/
+
+        [title~=Stips] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+            margin-top: -3px!important;
+        }
+
+        /*[title~=Stips] th label {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }*/
+
+        .width10Sub a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Stips] .btn {
+            font-size: 12px !important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none !important;
+            color: #fff !important;
+            transition: color 50ms linear, background-color 50ms linear;
+            background: #0070d2 !important;
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+            vertical-align: middle !important;
+            padding: 0px 10px !important;
+            font-weight: 500 !important;
+            border-radius: 0.25rem !important;
+            margin: 0 4px !important;
+            border-color: #d8dde6 !important;
+        }
+
+        [title~=Stips] .stipOtherBtn {
+            background: #4bca81 !important;
+        }
+
+        [title~=Stips] input[type="email"],
+        [title~=Stips] input[type="number"],
+        [title~=Stips] input[type="password"],
+        [title~=Stips] input[type="tel"],
+        [title~=Stips] input[type="url"],
+        [title~=Stips] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=Stips] select {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        /*[title~=Stips] select{
+            width: 85%!important;
+        }
+
+        [title~=Stips] .datePicker select {
+            width: 36%!important;
+        }*/
+
+        [title~=Stips] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Stips] input[type="email"]:focus,
+        [title~=Stips] input[type="number"]:focus,
+        [title~=Stips] input[type="password"]:focus,
+        [title~=Stips] input[type="tel"]:focus,
+        [title~=Stips] input[type="url"]:focus,
+        [title~=Stips] input[type="text"]:focus,
+        [title~=Stips] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=Stips] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=Stips] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            /*width: 100px;*/
+            height:40px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=Stips] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=Stips] .bPageBlock{
+            background : #fff!important;
+        }
+
+         [title~=Stips] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+        }
+          [title~=Stips] .headerRow [title~=Stips] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            color: #54698d!important;
+            text-transform: uppercase;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=Stips] body [title~=Stips] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=Stips] .pbBody [title~=Stips] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Stips] body [title~=Stips] .pbBody [title~=Stips] table.list
+        [title~=Stips] tr.headerRow [title~=Stips] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=Stips] .list [title~=Stips] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Stips] body [title~=Stips] .pbBody
+        [title~=Stips] table.list [title~=Stips] tr.headerRow [title~=Stips] td,
+        [title~=Stips] body [title~=Stips] .pbBody
+        [title~=Stips] table.list [title~=Stips] tr.headerRow [title~=Stips] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        /******************************LDS CSS END ************************/
+        .tableDataonDragfile{
+            color: transparent !important;
+            text-shadow: 0 0 3px #aaa !important;
+        }
+        .greyouttr {
+            /*background:#dcdcdc;*/
+            /*background-color:rgba(0,0,0,.4);*/
+            background-color:red;
+            opacity:1;
+            z-index:100;
+            position:relative;
+        }
+
+        [title~=Stips] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=Stips] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        [title~=Stips] .btnDisabled {
+            font-size: 12px!important;
+            height: 29px;
+            text-decoration: none!important;
+            color: #fff!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: grey !important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        #stipsTableInner .boolean-field {
+            text-align: center !important;
+        }
+
+        #stipsTableInner .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+
+        .dragText {
+            color: white!important;
+            font-size: 18px;
+            margin-left: -35em !important;
+            color: #000;
+            font-family: Salesforce Sans;
+            z-index: -1!important;
+            pointer-events: none;
+            /*box-shadow: 0px 2px 175px 0px;*/
+        }
+
+        .cmb .contentTable tbody tr:nth-of-type(even) {
+            background-color: #f4f6f9;
+        }
+        
+        .hiddenStip {
+            display: none;
+        }
+    </style>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.js"></script>
+    <!-- <apex:includeScript value="{!URLFOR($Resource.FileSaver)}"  /> -->
+    <apex:includeScript value="{!urlfor($Resource.GRIDResource, 'GRIDResource/JS/FileSaver.js')}" />
+
+    <apex:form id="stipsform" styleClass="records">
+        <apex:outputLabel rendered="{!stipsIsRefrenceField}"
+            title="Stips">
+            Please remove '{!stipsRefrenceFieldLabel}' field from the 'GRIDStipsFieldSet' field set, 
+            as referenced fields are not allowed.
+        </apex:outputLabel>
+        <apex:outputPanel id="stipsTable" rendered="{!NOT(stipsIsRefrenceField)}"
+            title="Stips">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='stipTab_lbl']").text( 'Stips'+' ({!stipsRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='stips']");
+                    tabTitle.text('Stips'+' ({!stipsRecordCount})');
+                    t$('#stipsTableInner tr').hover(
+                    function() {
+                        t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallStips();
+                    setEventListenersStip();
+                });
+
+                //save functionality start
+                function rerenderHandlerStips() {
+                    if(typeof rerenderHandler == "function") {
+                        rerenderHandler('stips');
+                    }
+                    //setEventListenersStip();
+                }
+            </script>
+            <apex:actionFunction action="{!collectStipData}"
+                                 name="collectStipDataBase64"
+                                 reRender="stipsTable"
+                                 status="loadingPanel" >
+                <apex:param name="data" id="data" value="" />
+                <apex:param name="name" id="name" value="" />
+                <apex:param name="stipID" id="stipID" value="" />
+            </apex:actionFunction>
+
+            <div id="action-spinner-main-StipProgress">
+                <div id="progressBar" class="assign-action-spinner-content">
+                    Please Wait Files are Compressing.
+                    <div></div>
+                </div>
+            </div>
+
+            <apex:pageBlock mode="inlineEdit">
+                <div class="buttons" id="stipButtons">
+                    <apex:outputpanel rendered="{!$ObjectType.Stips__c.createable}">
+                        <input type="button" 
+                               onclick="runNewStips()"
+                               value="New"
+                               class="{!if(stipsIsDisable,'btnDisabled disBtn','btn')}"
+                               status="loadingPanel"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!AND($ObjectType.Stips__c.updateable,
+                                                NOT(stipsEditAllFlag))}">
+                        <apex:CommandButton action="{!editAllStips}"
+                                            oncomplete="rerenderHandlerStips();"
+                                            value="Edit All"
+                                            disabled="{!stipsIsDisable}"
+                                            rerender="stipsTable"
+                                            status="loadingPanel"
+                                            immediate="true"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!OR($ObjectType.Stips__c.updateable,
+                                                $ObjectType.Stips__c.createable)}">
+                        <input type="button"
+                               onclick="runSaveStips()" 
+                               value="Save"
+                               class="{!if(stipsIsDisable,'btnDisabled disBtn','btn')}"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:CommandButton action="{!refreshStips}"
+                                        value="Refresh"
+                                        disabled="{!stipsIsDisable}"
+                                        rerender="stipsTable"
+                                        oncomplete="rerenderHandlerStips();"
+                                        status="loadingPanel"
+                                        immediate="true" />
+                    <apex:CommandButton action="{!refreshStips}"
+                                        value="Cancel"
+                                        disabled="{!stipsIsDisable}"
+                                        rerender="stipsTable"
+                                        oncomplete="rerenderHandlerStips();"
+                                        status="loadingPanel"
+                                        immediate="true" />
+                    <apex:commandButton onclick="confirmEmailStips();"
+                                        value="Email Stips"
+                                        disabled="{!stipsRecordCount < 1 || stipsIsDisable}"
+                                        styleClass="stipOtherBtn"
+                                        oncomplete="rerenderHandlerStips();"
+                                        rerender="stipsTable"/>
+                    <apex:commandButton value="Stips Bulk Update"
+                                        onclick="openStipBulkUpdate();"
+                                        rendered="{!displayBulkUpdateBtn}"
+                                        disabled="{!stipsIsDisable}"
+                                        styleClass="stipOtherBtn"/>
+                </div>
+                <apex:pageMessages escape="false" id="stipsMsgId"/>
+                    <div class="cmb">
+                        <div class="slds-scrollable--x" style="position: relative;">
+                            <table class="contentTable slds-table slds-table--bordered"
+                                   border="0" cellpadding="0" cellspacing="0" id="stipsTableInner">
+                                <tbody>
+                                    <tr class="headerRow">
+                                        <th class="widthRecordSub">#</th>
+                                        <th class="widthActionSub">Action</th>
+                                        <th class="width10Sub">Name
+                                            <img src="{!IF(stipsSortExprFieldApi=='Name',IF(stipsSortDirection=='ASC'
+                                                , urlfor($Resource.GRIDResource
+                                                ,'GRIDResource/Images/Sort_Asc.png')
+                                                , urlfor($Resource.GRIDResource
+                                                , 'GRIDResource/Images/Sort_Desc.png'))
+                                                , urlfor($Resource.GRIDResource
+                                                ,'GRIDResource/Images/Sort_Both.png'))}"
+                                                style="height:11px;"
+                                                name ="Name"
+                                                class="sorting"
+                                                onclick="sortCallStips('text');" />
+                                        </th>
+                                        <th class="width10Sub">Attachments</th>
+                                        <apex:repeat value="{!stipsFieldsetList}" var="stipsfield">
+                                            <th class="width10Sub">
+                                                <div>
+                                                <apex:outputLabel value="{!stipsfield.label}"/>
+                                                <apex:OutputPanel rendered="{!AND(fieldPathResult != stipsField.fieldPath
+                                                                        , displaySortingArrow
+                                                                        , stipsfield.type != 'multipicklist'
+                                                                        , stipsfield.type != 'phone')}">
+                                                    <img src="{!IF(stipsSortExprFieldApi==stipsField.fieldPath
+                                                        ,IF(stipsSortDirection=='ASC'
+                                                        ,urlfor($Resource.GRIDResource
+                                                        ,'GRIDResource/Images/Sort_Asc.png')
+                                                        ,urlfor($Resource.GRIDResource
+                                                        ,'GRIDResource/Images/Sort_Desc.png'))
+                                                        ,urlfor($Resource.GRIDResource
+                                                        ,'GRIDResource/Images/Sort_Both.png'))}"
+                                                        style="height:11px;"
+                                                        name ="{!stipsfield.fieldPath}" class="sorting"
+                                                        onclick="sortCallStips('{!stipsfield.type}');" />
+                                                </apex:OutputPanel>
+                                            </div>
+                                        </th>
+                                    </apex:repeat>
+                                </tr>
+
+                                <apex:repeat value="{!stipsWrapperLst}" var="stipWraper" >
+                                    <tr class="dataRow" ondragover="getDragover(event);"
+                                        ondragenter="getDragenter(event);"
+                                        ondrop="getDropFiles(event,'{!stipWraper.stips.Id}',
+                                        '{!stipWraper.stipsIndex}');"
+                                        ondragexit="getDragexit(event);"
+                                        ondragleave = "getDragleave(event);"
+                                        ondragend="getDragend(event);">
+                                        <td class="widthRecordTdSub stipDropbox">
+                                          <apex:outputtext value="{!stipWraper.stipsIndex + 1}"/>
+                                        </td>
+                                        <td class="widthActionTdSub stipDropbox">
+                                            <apex:outputLink value="#"
+                                                target="_blank"
+                                                onclick="openStipPage('{!stipWraper.stips.Id}');"
+                                                rendered="{!NOT(ISBLANK(stipWraper.stips.Id))}">
+                                                View
+                                            </apex:outputLink>
+                                            <apex:outputLabel value="| "
+                                                rendered="{!AND(NOT(ISBLANK(stipWraper.stips.Id)),
+                                                            $ObjectType.Stips__c.deletable)}"/>
+                                            <apex:commandLink action="{!deleteStips}"
+                                                              value="Del"
+                                                              rerender="stipsTable"
+                                                              rendered="{!AND(NOT(ISBLANK(stipWraper.stips.Id)),
+                                                                $ObjectType.Stips__c.deletable)}"
+                                                              status="loadingPanel">
+                                                <apex:param name="stipsIndexToRemove"
+                                                            value="{!stipWraper.stipsIndex}"
+                                                            assignTo="{!stipsIndexToRemove}">
+                                                </apex:param>
+                                            </apex:commandLink>
+
+                                            <apex:outputLabel value=" | "
+                                                              rendered="{!NOT(ISBLANK(stipWraper.stips.Id))}"/>
+                                            <apex:outputLink onclick="callAddAttachment('{!stipWraper.stips.Id}'); return false;"
+                                                             rendered="{!NOT(ISBLANK(stipWraper.stips.Id))}">
+                                                Attach
+                                            </apex:outputLink>
+
+                                            <apex:commandLink action="{!deleteStips}"
+                                                              value="Remove"
+                                                              rerender="stipsTable"
+                                                              rendered="{!(ISBLANK(stipWraper.stips.Id))}"
+                                                              styleClass="removeRow"
+                                                              status="loadingPanel"
+                                                              immediate="true">
+                                                <apex:param name="stipsIndexToRemove"
+                                                            value="{!stipWraper.stipsIndex}"
+                                                            assignTo="{!stipsIndexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                        </td>
+
+                                        <td class="stipDropbox">
+                                            <apex:outputField value="{!stipWraper.stips.Name}"
+                                                              rendered="{!AND(IF(stipWraper.stipsEdit = false, true, false)
+                                                                    ,NOT(ISBLANK(stipWraper.stips.Name)))}" />
+                                            <apex:inputField value="{!stipWraper.stips.Name}"
+                                                             rendered="{!OR(IF(stipWraper.stipsEdit = true, true, false)
+                                                                        ,ISBLANK(stipWraper.stips.Name))}"
+                                                             required="true"/>
+                                        </td>
+
+                                        <td class="stipDropbox width10TdSub">
+                                            <apex:commandLink value="{!stipWraper.noOfAttachmentString}"
+                                                              onclick="create_zip_stip('{!stipWraper.noAttachment}',
+                                                                    '{!stipWraper.listAttachID}',
+                                                                    '{!stipWraper.stips.Id}');"
+                                                              oncomplete="rerenderHandlerStips();"
+                                                              status="loadingPanel">
+                                            </apex:commandLink>
+                                        </td>
+
+                                        <apex:repeat value="{!stipsFieldsetList}" var="field">
+                                            <td class="width10TdSub {!field.type}-field">
+                                                <apex:outputField value="{!stipWraper.stips[field]}"
+                                                                  rendered="{!AND(IF(stipWraper.stipsEdit = false, true, false),
+                                                                        NOT(ISBLANK(stipWraper.stips.Id)))}" />
+                                                <apex:inputField value="{!stipWraper.stips[field]}"
+                                                                 rendered="{!OR(IF(stipWraper.stipsEdit = true, true, false),
+                                                                        ISBLANK(stipWraper.stips.Id))}"/>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        {!IF((stipsOffsetsize + 1) > stipsRecordCount,
+                        IF(stipsRecordCount - stipsBlockSize <= 0, 0, stipsRecordCount - stipsBlockSize),
+                        stipsOffsetsize + 1)} - {!stipsWrapperLst.size + stipsOffsetsize}
+                        of {!stipsRecordCount}
+                    </div>
+                    <!-- panel grid for pagination buttons -->
+                    <div class="pagination-btn-grp-wrapper">
+                        <div class="slds-button-group pagination-btn-grp" role="group">
+                            <button class="slds-button slds-button--neutral first"
+                                    onclick="beginningStips(); return false;">&lt;&lt;</button>
+                            <button class="slds-button slds-button--neutral previous"
+                                    onclick="previousStips(); return false;">&lt;</button>
+                            <button class="slds-button slds-button--neutral next"
+                                    onclick="nextStips(); return false;">&gt;</button>
+                            <button class="slds-button slds-button--neutral last"
+                                    onclick="endStips(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            t$ = jQuery.noConflict();
+                            if("{!stipsOffsetsize != 0}" == 'false') {
+                                t$('[title~=Stips] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                                t$('[title~=Stips] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Stips] .pagination-btn-grp .first').removeAttr('disabled');
+                                t$('[title~=Stips] .pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!stipsWrapperLst.size + stipsOffsetsize < stipsRecordCount}" == 'false') {
+                                t$('[title~=Stips] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                                t$('[title~=Stips] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Stips] .pagination-btn-grp .next').removeAttr('disabled');
+                                t$('[title~=Stips] .pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+                </div>
+
+                <apex:actionFunction name="beginningStips" action="{!beginningStips}"
+                        rerender="stipsTable" oncomplete="rerenderHandlerStips();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="previousStips" action="{!previousStips}"
+                        rerender="stipsTable" oncomplete="rerenderHandlerStips();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="nextStips" action="{!nextStips}"
+                        rerender="stipsTable" oncomplete="rerenderHandlerStips();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="endStips" action="{!endStips}"
+                        rerender="stipsTable" oncomplete="rerenderHandlerStips();"
+                        status="loadingPanel"/>
+            </apex:pageBlock>
+
+            <apex:inputHidden value="{!stipsSortExpression}" id="stipsSortHiddencriterian"/>
+            <apex:inputHidden value="{!stipsSortDirection}" id="stipsSortHiddenOrder"/>
+            <apex:inputHidden value="{!stipsSortExprFieldApi}" id="stipsSortHiddenFieldApi"/>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newStips}" name="newStips"
+            oncomplete="rerenderHandlerStips();" rerender="stipsTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveAllStips}" name="saveStips"
+            oncomplete="rerenderHandlerStips();" rerender="stipsTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortStips}" name="sortAllStips"
+            oncomplete="rerenderHandlerStips();" rerender="stipsTable" status="loadingPanel" >
+            <apex:param name="stipsTypeParam" value="" />
+        </apex:actionFunction>
+        <apex:actionStatus id="loadingPanel" layout="block">
+            <apex:facet name="start">
+                <div class="cmb">
+                    <div class="slds-spinner_container">
+                        <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                            <span class="slds-assistive-text">Loading</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </apex:form>
+
+
+    <!-- Modal box for confirmation -->
+    <div class="cmb">
+        <div role="dialog" id="confirmmodalStip" tabindex="-1" aria-labelledby="header43"
+            class="slds-modal slds-fade-in-open hiddenStip">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header">
+                    <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close">
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+                    <h2 id="header43" class="slds-text-heading--medium">Confirmation</h2>
+                </div>
+                <div class="slds-modal__content slds-p-around--medium">
+                    <p id="confirmmessageStip"></p>
+                </div>
+                <div class="slds-modal__footer">
+                    <button class="slds-button slds-button--neutral" onclick="closeConfirmModalStip();"
+                        id="cancelSendStipbtn">
+                        Cancel
+                    </button>
+                    <button class="slds-button slds-button--brand" id="confirmSendStipbtn">
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open hiddenStip backdropStip" id="confirmModalBgStip"></div>
+    </div>
+
+    <!-- Notification toast for success -->
+    <div class="cmb">
+        <div role="alertdialog" tabindex="-1" aria-labelledby="prompt-heading-id"
+            aria-describedby="prompt-message-wrapper" id="successModalStip"
+            class="slds-modal slds-fade-in-open slds-modal--prompt hiddenStip">
+            <div class="slds-modal__container">
+                <div class="slds-modal__header slds-theme--success slds-theme--alert-texture">
+                    <button class="slds-button slds-modal__close slds-button--icon-inverse" title="Close">
+                    </button>
+                    <h2 class="slds-text-heading--medium" id="prompt-heading-id">Email Sent</h2>
+                </div>
+                <div class="slds-modal__content slds-p-around--medium">
+                    LIST OF RECIPIENTS: <br/>
+                    <p id="mailReceipientListStip"></p>
+                </div>
+                <div class="slds-modal__footer slds-theme--default">
+                    <button class="slds-button slds-button--neutral" onclick="closeSuccessModalStip();">
+                        Ok
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open hiddenStip backdropStip" id="backdropStipSuccess"></div>
+    </div>
+
+    <!-- Notification toast for error -->
+    <div class="cmb">
+        <div class="slds-notify_container hiddenStip" id="errorModalStip">
+            <div class="slds-notify slds-notify--toast slds-theme--error" role="alert">
+                <span class="slds-assistive-text">Error</span>
+                <button class="slds-button slds-notify__close slds-button--icon-inverse"
+                    title="Close" onclick="closeerrorModalStip();">
+
+                    <span>X</span>
+                </button>
+                <div class="slds-notify__content slds-grid">
+                    <!--<svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hiddenStip="true">
+                        <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#warning"></use>
+                    </svg> -->
+
+                    <div class="slds-col slds-align-middle">
+                        <h2 class="slds-text-heading--small" id="sldsErrorMessageStip">
+                        </h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop--open hiddenStip backdropStip" id="backdropStipErr"></div>
+    </div>
+
+    <script Language="JavaScript">
+        function setEventListenersStip() {
+            t$("[id$='stipsTable'] .width10TdSub a").click(function(event) {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleStips) {
+                        openConsoleTabStipsNewTab(event.target.href);
+                    }
+                    else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=stipsTable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function initCallStips() {
+            setIsConsoleStips();
+            getFocusedPrimaryTabIdStips();
+        }
+
+        function setIsConsoleStips() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleStips = inConsole;
+            } else {
+                isInConsoleStips = sforce.console.isInConsole();
+            }
+        }
+
+        function getFocusedPrimaryTabIdStips() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdStips);
+        }
+
+        //save functionality end
+        function callAddAttachment(stipID) {
+            var url = '{!addAttachmentURL}'+stipID;
+            if(isInConsoleStips) {
+                url += '&isConsole=1';
+                //openConsoleTabStips(url, 'Add attachment');
+                sforce.console.openSubtab(tabIdStips, url, true, 'Add Attachment', null, function(r){});
+            } else {
+                url += '&isConsole=0';
+                window.open(url);
+            }
+
+            /*var url = '{!addAttachmentURL}'+stipID;
+            if(sforce.console.isInConsole()) {
+                url += '&isConsole=1';
+                openConsoleTabStips(url, 'Add attachment');
+            } else {
+                url += '&isConsole=0';
+                window.open(url);
+            }*/
+            //openAddAttachment();
+        }// end openAddAttachment()
+
+        var showTabIdStips = function showTabIdStips(result) {
+            //Display the tab ID
+            tabIdStips = result.id;
+        };
+
+        function openConsoleTabStips(url, tabLabel) {
+            //testGenerateConsoleURL();
+            sforce.console.openPrimaryTab(tabIdStips, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdStips);
+        }
+
+        function openConsoleTabStipsNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        function openConsoleTabEmailStips(url, tabLabel) {
+            //sforce.console.openPrimaryTab(null, url, true, tabLabel, null, 'salesforceTab');
+            sforce.console.getEnclosingPrimaryTabId(sforce.console.openSubtab(tabIdAttachment, url, true,
+                'Email Stips', null, openSuccess, 'salesforceSubtab'));
+        }
+
+        function openStipPage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleStips) {
+                openConsoleTabStipsNewTab('/'+recordIdToOpen, 'Stips');
+            } else  {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+
+        function testGenerateConsoleURL() {
+            sforce.console.generateConsoleUrl(['/{!opportunity.Id}', '{!DestURL}'], showConsoleUrl);
+        }
+
+        function showConsoleUrl(result) {
+         }
+
+        function openStipBulkUpdate() {
+            var opportunityIdVal = '{!opportunityId}';
+            var url = "{!$Label.gridstipbulkupdateurl}"+'id='+opportunityIdVal;
+            if(isInConsoleStips) {
+                url += '&isConsole=1';
+                openConsoleTabStips(url);
+            } else {
+                url += '&isConsole=0';
+                window.open(url);
+            }
+        }
+
+        function closeConfirmModalStip() {
+            t$("#confirmmodalStip").addClass("hiddenStip");
+            t$(".backdropStip").addClass("hiddenStip");
+        }
+
+        function closeSuccessModalStip() {
+            t$("#successModalStip").addClass("hiddenStip");
+            t$(".backdropStip").addClass("hiddenStip");
+            t$("#confirmmodalStip").addClass("hiddenStip");
+        }
+
+        function closeerrorModalStip() {
+            t$("#errorModalStip").addClass("hiddenStip");
+            t$(".backdropStip").addClass("hiddenStip");
+        }
+
+        t$('#confirmSendStipbtn').click(function(event) {
+                t$('.backdropStip').addClass('hiddenStip');
+                t$("#confirmmodalStip").addClass("hiddenStip");
+                EmailStips();
+            });
+
+        function confirmEmailStips() {
+            var errorMsgStips = '{!errorMsgStips}';
+            var isConfirmMsgStips = '{!isConfirmMsgStips}';
+            var configureSettingStipFromAddress;
+            configureSettingStipFromAddress = '{!configureSettingStipFromAddress}';
+            if(configureSettingStipFromAddress && !errorMsgStips) {
+                t$("#confirmmessageStip").html(errorMsgStips);
+                t$("#confirmmodalStip").removeClass("hiddenStip");
+                t$("#confirmModalBgStip").removeClass("hiddenStip");
+            } else if(errorMsgStips) {
+                if(isConfirmMsgStips == 'false') {
+                    t$("#sldsErrorMessageStip").html(errorMsgStips);
+                    t$("#errorModalStip").removeClass("hiddenStip");
+                    t$("#backdropStipErr").removeClass("hiddenStip");
+                } else if(isConfirmMsgStips == 'true'){
+                    t$("#confirmmodalStip").removeClass("hiddenStip");
+                    t$("#confirmModalBgStip").removeClass("hiddenStip");
+                    t$("#confirmmessageStip").html(errorMsgStips);
+                }
+            } else {
+                if(isConfirmMsgStips == 'false' || errorMsgStips != null || errorMsgStips != ''
+                   ) {
+                    EmailStips();
+                }
+            }
+        }
+        function EmailStips()
+        {
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            var query = "Select Name, Id, StageName,(Select Id,{!$Label.GRIDStipStatusApi} "
+                            +" From {!$Label.GRIDStipOpportunityMDApi} "
+                            +" where {!$Label.GRIDStipStatusApi} != 'Completed' " 
+                            +" AND {!$Label.GRIDStipStatusApi} != 'Cancelled') " 
+                            +" From Opportunity where Id ='{!opportunityId}'";
+            var result = sforce.connection.query(query);
+            var error = false;
+            records = result.getArray("records");
+            var oppId='{!$CurrentPage.parameters.id}';
+            if(records[0]["{!$Label.GRIDStipOpportunityMDApi}"] == null)
+            {
+                alert("{!$Label.GRIDEmailOpenStipsNoStips}");
+                error = true;
+            }
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.GRIDStipsController.getSenderReceipient}',
+                oppId,
+                function(result, event){
+                    var dataStip = t$('<div/>').html(result).text();
+                    if(result.indexOf('exception') > -1) {
+                        t$("#sldsErrorMessageStip").html(dataStip);
+                        t$("#errorModalStipStip").removeClass("hiddenStip");
+                        t$("#backdropStipErr").removeClass("hiddenStip");
+                    } else {
+                        var mailReceipientListdataStip = JSON.parse(dataStip);
+                        var listData = getEmailReceipientsAsULStip(mailReceipientListdataStip);
+                        console.log('>>listData>>>',listData);
+                        t$("#mailReceipientListStip").html(listData);
+                        t$("#successModalStip").removeClass("hiddenStip");
+                        t$("#backdropStipSuccess").removeClass("hiddenStip");
+                        
+                    }
+                },{escape: true});
+            }
+        function getEmailReceipientsAsULStip(mailReceipientListdataStip) {
+            var stringlabelStip = '';
+            for(var i=0; i < mailReceipientListdataStip.length; i++) {
+                stringlabelStip += mailReceipientListdataStip[i] + '<br/> ';
+            }
+            console.log(stringlabelStip);
+            return stringlabelStip;
+        }
+    </script>
+
+    <script type="text/javascript">
+        function runNewStips()
+        {
+            setTimeout(function()
+            {
+                newStips();
+            }, 100);
+        }
+
+        function sortCallStips(stipsFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+
+            var stipsElement= event.target;
+            var newstipsSortCol = t$(stipsElement).attr("Name"); // new sort field
+            t$("input[id$='stipsSortHiddenFieldApi']").val(newstipsSortCol);
+            var oldstipsSortCol = t$("input[id$='stipsSortHiddencriterian']").val();
+            var indexStips;
+            var stipsTempSortExpr;
+            if(newstipsSortCol.endsWith('__c'))
+            {
+                indexStips = newstipsSortCol.indexOf('__');
+            }
+            else if(newstipsSortCol.endsWith('Id'))
+            {
+                indexStips = newstipsSortCol.indexOf('Id');
+            }
+            if(indexStips != null) {
+                stipsTempSortExpr = newstipsSortCol.substring(0, indexStips);
+            }
+            else
+            {
+                stipsTempSortExpr = newstipsSortCol;
+            }
+
+            //if(String(newstipsSortCol) == String(oldstipsSortCol))
+            if(oldstipsSortCol.indexOf(stipsTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='stipsSortHiddenOrder']").val()) == "ASC")
+                {
+                    t$("input[id$='stipsSortHiddenOrder']").val("DESC");
+                    t$(stipsElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                    t$("input[id$='stipsSortHiddenOrder']").val("ASC");
+                    t$(stipsElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                t$("input[id$='stipsSortHiddencriterian']").val(newstipsSortCol);
+                sortAllStips(stipsFieldDataType);
+            }
+            else
+            {
+                t$("input[id$='stipsSortHiddencriterian']").val(newstipsSortCol);
+                t$("input[id$='stipsSortHiddenOrder']").val("ASC");
+                t$(stipsElement).removeClass('sorting').addClass('SortAsc');
+                sortAllStips(stipsFieldDataType);
+            }
+        }
+
+        function runSaveStips()
+        {
+            setTimeout(function()
+            {
+                saveStips();
+            }, 100);
+        }
+        var dragDropText = t$('<p class="dragText"><b>Drop here to attach</b></p>');
+        /*var dragDropText = t$('<p ><b>Drop file here to attach</b></p>');*/
+        var fName = new Array();
+
+        function getDragenter(event) {
+            t$(event.target).closest("tr").addClass('greyouttr');
+            t$(event.target).closest("tr").append(dragDropText);
+            if(t$(".dragText").html().length == 0) {
+                t$(".dragText").html('<b>Drop here to attach</b>');
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function getDragexit(event) {
+            console.log('drag getDragexit');
+           event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function getDragleave(event) {
+            console.log('drag getDragleave');
+            
+            t$('tr:nth-of-type(even)').css('background-color','#f4f6f9');
+            t$('tr:nth-of-type(odd)').css('background-color','#fff');
+            t$(".dragText").html('');
+            //t$(".dragText").remove();
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function getDragover(event) {
+            console.log('drag getDragover');
+            t$(event.target).closest("tr").css('background-color','rgba(0,0,0,.4)');
+            t$(event.target).closest("tr").append(dragDropText);
+            if(t$(".dragText").html().length == 0) {
+                t$(".dragText").html('<b>Drop here to attach</b>');
+            }
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function getDragend(event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+
+        function getDropFiles(event, stipID) {
+            var element = event.target;
+            var tempFile = event.dataTransfer.files;
+            var isProcess = false;
+            event.preventDefault();
+            event.stopPropagation();
+            var files = event.dataTransfer.files,
+            file = files;
+            if (files.length == 1 ) {
+                /*document.getElementById('stripDropLabel'+stipID).innerHTML ='Uploading ' + files[0].name;*/
+            }
+            else if (files.length  >  1) {
+                /*document.getElementById('stripDropLabel'+stipID).innerHTML ='Uploading ' + files.length + ' files';*/
+            }
+            if (files.length) {
+                for (i = 0; i < files.length; i++) {
+                    file = files[i];
+                    if((files[i].size)/(1024*1024) < 4) {
+                        processImage(file, i, stipID);
+                    }
+                    else {
+                        alert('File name '+file.name+' is too large for Drag and drop.'
+                            +'Please use Attach File button to upload the file.');
+                        t$('tr:nth-of-type(even)').css('background-color','#f4f6f9');
+                        t$('tr:nth-of-type(odd)').css('background-color','#fff');
+                        t$(".dragText").html('');
+                        document.getElementById('stripDropLabel'+stipID).innerHTML ='Drop files to attach';
+                        singleError = true;
+                    }
+                }
+            }
+        }
+
+        function processImage(file, i, stipID) {
+            fName.push(file.name);
+            var reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = function(event)
+            {
+                if(event.target.result.length < 5859300)
+                {
+                    collectStipDataBase64( reader.result, file.name,stipID);
+                    count++;
+                }
+                else
+                {
+                    alert('File name '+file.name+' is too large for Drag and drop.Please use Attach File button to upload the file.');
+                    t$('tr:nth-of-type(even)').css('background-color','#f4f6f9');
+                    t$('tr:nth-of-type(odd)').css('background-color','#fff');
+                    t$(".dragText").html('');
+                    document.getElementById('stripDropLabel'+stipID).innerHTML ='Drop files to attach';
+                    singleError = true;
+                }
+            }
+        }
+    </script>
+
+     <script type="text/javascript">
+        var zip;
+        var barPercentage = 10;
+
+        function test12() {
+        }
+        //Download attachment into zip
+        function create_zip_stip(noAttachmentRecords, stringAttID, stipID)
+        {
+            zip = new JSZip();
+            attachmentName = [];
+            var content, noCall = 0;
+
+            t$("#action-spinner-main-StipProgress").show();
+            stringAttID = stringAttID.replace("[","");
+            stringAttID = stringAttID.replace("]","");
+            var listAttID = stringAttID.split(",");
+
+            try
+            {
+                for(var count = 0; count < listAttID.length; count++)
+                {
+                    noCall++;
+                    var listAtt = [];
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]);
+                    count++;
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]);
+                    count++;
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]);
+                     if(barPercentage < 80) {
+                        progress(90, t$('#progressBar'));
+                        barPercentage +=10;
+                    }
+                    // Vf remoting start
+                    Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.GRIDStipsController.getAttachments}',
+                    '{!opportunity.id}', listAtt,
+                        function(result, event)
+                        {
+                            if (event.status)
+                            {
+                                // add files into zip
+                                noCall--;
+                                for (var i = 0; i < result.length; i++)
+                                {
+                                        //zip.file(result[i].attName, result[i].attchBody, {base64: true});
+                                         var count = 0;
+                                        for(var nameIndex = 0; nameIndex < attachmentName.length; nameIndex++)
+                                        {
+                                            if(attachmentName[nameIndex] == result[i].attName )
+                                                count++;
+                                        }
+
+                                        if(count != 0)
+                                        {
+                                            zip.file(result[i].attName+count+'.'+result[i].nameExt, result[i].attchBody, {base64: true});
+                                        }
+                                        else
+                                        {
+                                            zip.file(result[i].attName+'.'+result[i].nameExt, result[i].attchBody, {base64: true});
+                                        }
+                                        attachmentName.push(result[i].attName);
+                                    progress(90, t$('#progressBar'));
+                                    if(noCall == 0)
+                                    {
+                                        progress(100, t$('#progressBar'));
+                                    }
+                                }
+                                if(noCall == 0) {
+                                    zip_Creation_Stip();
+                                }
+                            }
+                        }
+                    );// End vf remoting invoke function
+                }
+            }
+            catch(err)
+            {
+                alert('Please select less file. Error Is '+err.message);
+            }
+        }
+
+        function progress(percent, t$element)
+        {
+            var progressBarWidth = percent * t$element.width() / 100;
+            t$element.find('div').animate({ width: progressBarWidth }, 500).html();
+        }
+
+        function zip_Creation_Stip()
+        {
+            //Check browser and perform download operation
+            var isIE = /*@cc_on!@*/false;
+            if(isIE)
+            {
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Stip_Attachments.zip");
+            }
+            else if(navigator.vendor.indexOf("Apple")==0 && /\sSafari\//.test(navigator.userAgent))
+            {
+                content = zip.generate();
+                location.href="data:application/zip;base64," + content;
+            }
+            else
+            {
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Stip_Attachments.zip");
+            }
+           t$("#action-spinner-main-StipProgress").hide();
+          progress(0, t$('#progressBar'));
+        }
+    </script>
+</apex:component>

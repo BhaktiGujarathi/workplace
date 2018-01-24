@@ -1,0 +1,40 @@
+<apex:page controller="PieChartController">
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+
+    <script type="text/javascript">
+      google.load("visualization", "1", {packages:["corechart"]});
+      google.setOnLoadCallback(initCharts);
+      function initCharts() {          
+          UFHT.PieChartController.FetchContainerData( 
+                 function(result, event){    
+                              
+          var data = new google.visualization.DataTable();
+          data.addColumn('string', 'ObjectName');
+          data.addColumn('string', 'ObjectLabel');    
+          data.addColumn('number', 'Size');
+    
+          for(var i =0; i<result.length;i++)
+          {
+              var r = result[i];
+              data.addRow([r.objContainer.UFHT__Object_Name__c]); 
+              data.addRow([r.objContainer.UFHT__Object_Label__c]);
+              data.addRow([r.bodylength]);
+          }
+          
+          var options = 
+          {
+              title: 'Storage Usage'   
+          };
+          var formatter = new google.visualization.NumberFormat({suffix: 'kb'});
+          formatter.format(data, 1); 
+          var view = new google.visualization.DataView(data);
+          view.setColumns([0, 1]);
+          var chart = new google.visualization.PieChart(document.getElementById('piechart'));
+          chart.draw(data, options);
+          }, {escape:true});
+      }
+    </script>
+    <div class="container">
+        <div id="piechart" style="width: 900px; height: 500px;"></div>
+    </div>
+</apex:page>

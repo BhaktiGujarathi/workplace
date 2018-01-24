@@ -1,0 +1,125 @@
+<apex:page contentType="text/html"  sidebar="false" docType="html-5.0" controller="UsersWithHotSkillsController" readonly="true">
+<html lang="en">
+<style>
+.select2 {
+width: 80% !important;
+    //height: 85px !important;
+}
+</style>
+    <head>
+<!--       <c:DETE_PageHeader />  -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.1/css/select2.min.css" rel="stylesheet"/>
+            <!-- Theme CSS -->
+    <!-- link href="css/freelancer.css" rel="stylesheet" /> -->
+    <apex:stylesheet value="{!URLFOR($Resource.DETE_Style, 'css/freelancer.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.DETE_Style, 'css/simple-sidebar.css')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.DETE_Style, 'vendor/bootstrap/css/bootstrap.min.css')}" />
+    
+    <script src="https://code.jquery.com/jquery-1.12.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.1/js/select2.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.13/js/dataTables.bootstrap.min.js"></script>
+       
+    <title>Report</title>
+    </head>
+<apex:form >
+    <body id="page-top" class="index">           
+
+        <!-- Header -->
+<!--         <header> -->
+            <div class="form-group">
+                 <apex:selectList styleclass="js-example-placeholder-multipleSubmitter" 
+                 multiselect="true" tabindex="-1" value="{!selectedContacts}" >
+                     <apex:selectOptions value="{!allOptions}"/>
+                 </apex:selectList>
+
+                 <button  id="btnShow" value="Filter" 
+                 class="btn-submit" onclick="saveOnSubmit();return false;">Submit</button>
+             </div>
+             <apex:actionFunction name="saveOnSubmit" action="{!save}" rerender="data" oncomplete="test();"/>
+<!--         </header> -->
+       
+        <apex:outputPanel id="data">
+        <!-- Portfolio Grid Section -->
+        <section id="learn-more">
+            <div class="container">
+				<apex:variable value="{!1}" var="rowNum"/>
+                <apex:repeat value="{!contactWrapperLst}" var="final" id="finalRepeat">
+                <div class="panel-group">
+                    <div class="panel panel-default">
+                      <div class="panel-heading datapoint" data-popout="{!FLOOR(rowNum)}">
+                        <h4 class="panel-title">
+                          <a data-toggle="collapse" class="collapsed">
+                              <apex:image url="{!URLFOR($Resource.DETE_Style, 'img/down-arrow.png')}"/>
+                              <!-- <img src="img/down-arrow.png" /> -->
+<!--                               <span>{!final.selectedStr}<div class="pull-right">Count: {!final.uCount}</div></span> -->
+                              <span>
+                              		{!final.selectedStr}
+                              		<label class="pull-right">
+                              			Count: {!final.uCount}
+                              		</label>
+                              </span>
+                            </a>
+                        </h4>
+                        
+                      </div>
+                      <div id="collapse2" class="panel-collapse popout-{!FLOOR(rowNum)}" >
+                        <div class="panel-body">
+                            <table class="table table-striped table-bordered exampleBootLeg" cellspacing="0" width="100%" id="example">
+                            	<thead>
+                                <tr>
+                                    <th>People</th>
+                                    <th>Occupation</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <apex:repeat value="{!final.contactList}" var="skill" id="theRepeat">
+                                <tr>
+                                    <td><apex:outputText value="{!skill.Name}" id="theValueName"/></td>
+                                    <td><apex:outputText value="{!skill.Position_Title__c}" id="theValue"/></td>                                 
+                                </tr>
+                                </apex:repeat> 
+                                </tbody>                          
+                                
+                            </table>
+                        </div>
+                      </div>
+                    </div>
+                </div>
+                <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+        </apex:repeat>
+			
+            </div>
+            
+        </section>
+    </apex:outputPanel>
+       
+        
+
+    </body>
+    <script>
+    $(document).ready(function () {
+    
+        $(".js-example-placeholder-multipleSubmitter").select2({placeholder: "Select Skills/Technologies/Industries..."});
+       
+    });
+    function test(){
+        $('.panel-collapse').hide();
+    	$('.exampleBootLeg').DataTable({"searching" : false, "bLengthChange": false, "bSort" : false, "bProcessing": true});
+            
+        test2();
+        
+    }
+	function test2(){
+		 $('.datapoint').click(function() {
+	    	console.log('11111111'+$(this).data('popout'));
+	  		var popout = $(this).data('popout');
+	  		$(".popout-" + popout).toggle();
+		});
+	}
+	
+	
+    </script>
+    </apex:form>
+</html>
+</apex:page>

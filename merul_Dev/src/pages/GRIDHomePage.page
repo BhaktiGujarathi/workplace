@@ -1,0 +1,92 @@
+<apex:page standardController="Opportunity" cache="true" sidebar="false" extensions="GRIDHomePageExtension" > 
+<!--  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" /> -->
+<style type="text/css">
+    #assign-action-spinner-main 
+    {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+    }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        
+        .hoverhighlight
+        {
+             background-color:#BFEFFF;
+        }
+        
+        
+
+/*td:hover .inlineEditWriteOn{background:url("http://free-121d5f44d20-121d603d1c5-121ee2b8103.force.com/img/func_icons/util/pencil12.gif") no-repeat right; padding-right:15px;cursor:pointer;float:left: width: 200px}*/
+td:hover .inlineEditWriteOn{background:url("{!URLFor($Resource.GRIDResource,'GRIDResource/Images/GRIDpencil.gif')}") no-repeat right; padding-right:15px;cursor:pointer;float:left: width: 200px}
+        </style>
+
+<apex:includeScript value="{!urlfor($Resource.GRIDResource, 'GRIDResource/JS/jquery-1.11.1.min.js')}" />
+
+        <script type="text/javascript">
+        t$ = jQuery.noConflict();
+
+        t$('body').on("click","a",function()
+        {
+                  
+                   if(t$(this).attr('href').search("https:") >= 0)
+                    {
+                        window.open(t$(this).attr('href'));
+                        return false;
+                    }
+                    
+         });
+       
+       </script> 
+        <apex:tabPanel switchType="client" id="tabpanel">
+
+            <apex:tab id="stipTab" label="Stips" rendered="{!AND(tabToSettingMap['Stips'].Display_Tab__c, $ObjectType.Stips__c.accessible)}" > <c:GRIDStipsComponent /></apex:tab> 
+            <apex:tab id="syndicationTab" label="Syndications" rendered="{!AND(tabToSettingMap['Syndications'].Display_Tab__c, $ObjectType.Syndication__c.accessible)}"> <c:GRIDSyndicationsComponent /></apex:tab>
+            <apex:tab id="attachmentTab" label="Attachments" rendered="{!tabToSettingMap['Attachments'].Display_Tab__c}"> <c:GRIDAttachmentComponent /></apex:tab>      
+         
+        </apex:tabPanel>
+    
+    <apex:actionStatus id="loadingPanel" layout="block">
+        <apex:facet name="start">
+            <div id="assign-action-spinner-main">
+                <div id="assign-action-spinner-content">
+                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    
+   
+    
+
+</apex:page>

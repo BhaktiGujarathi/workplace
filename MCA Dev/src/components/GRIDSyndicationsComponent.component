@@ -1,0 +1,616 @@
+<apex:component controller="GRIDSyndicationsController" allowDML="true" access="global">
+
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+    <apex:includeScript value="/support/console/30.0/integration.js"/>
+
+    <style>
+        [title~=Syndication] .btn{
+            font-size: 12px!important;
+            /*line-height: 1.875rem!important;*/
+            height: 29px;
+            text-decoration: none!important;
+            color: #fff!important;
+            transition: color 50ms linear,background-color 50ms linear;
+            background: #0070d2!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            vertical-align: middle!important;
+            padding: 0px 10px!important;
+            font-weight: 500!important;
+            border-radius: 0.25rem!important;
+            margin:0 4px!important;
+            border-color:#d8dde6!important;
+        }
+
+        [title~=Syndication] .btnNextPreviPage {
+            left: 115px;
+            position: relative;
+            height: 25px;
+            /*line-height: initial!important;*/
+            font-size: 12px!important;
+            color: #0070d2!important;
+            background: #fff!important;
+        }
+
+        [title~=Syndication] .btnNextPreviPage:hover{
+            background-color: #f4f6f9!important;
+        }
+
+        [title~=Syndication] input[type="email"],
+        [title~=Syndication] input[type="number"],
+        [title~=Syndication] input[type="password"],
+        [title~=Syndication] input[type="tel"],
+        [title~=Syndication] input[type="url"],
+        [title~=Syndication] input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=Syndication] select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        [title~=Syndication] a {
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Syndication] input[type="email"]:focus,
+        [title~=Syndication] input[type="number"]:focus,
+        [title~=Syndication] input[type="password"]:focus,
+        [title~=Syndication] input[type="tel"]:focus,
+        [title~=Syndication] input[type="url"]:focus,
+        [title~=Syndication] input[type="text"]:focus,
+        [title~=Syndication] select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        [title~=Syndication] .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        [title~=Syndication] textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        [title~=Syndication] .bPageBlock {
+            background:#f4f6f9!important;
+            padding:5px!important;
+            border-radius: .25rem!important;
+        }
+
+        [title~=Syndication] .bPageBlock{
+            background : #fff!important;
+        }
+
+        [title~=Syndication] .headerRow {
+            color: #54698d!important;
+            /*text-transform: uppercase;*/
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            /*font-family:'Salesforce Sans', Arial, sans-serif!important;*/
+            line-height: 1.25;
+            font-size: 12px;
+            background-color: #fff!important;
+        }
+
+        [title~=Syndication] .headerRow [title~=Syndication] th {
+            font-size: .75rem;
+            line-height: 1.25;
+            /*color: #54698d!important;
+            text-transform: uppercase;*/
+            color: #fff!important;
+            letter-spacing: .0625rem;
+            background-color: #fff!important;
+        }
+
+        [title~=Syndication] body [title~=Syndication] .bPageBlock{
+            background-color: #fff!important;
+        }
+
+        [title~=Syndication] .pbBody [title~=Syndication] a{
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Syndication] body [title~=Syndication] .pbBody [title~=Syndication] table.list
+        [title~=Syndication] tr.headerRow [title~=Syndication] th {
+            border: none!important;
+            border-bottom: 1px solid #d8dde6!important;
+            padding: 8px 2px 8px 5px!important;
+            border-color:#d8dde6!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            color: #54698d!important;
+        }
+
+        [title~=Syndication] .list [title~=Syndication] td{
+            padding: 10px 2px 10px 5px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+        }
+
+        [title~=Syndication] body [title~=Syndication] .pbBody
+        [title~=Syndication] table.list [title~=Syndication] tr.headerRow [title~=Syndication] td,
+        [title~=Syndication] body [title~=Syndication] .pbBody
+        [title~=Syndication] table.list [title~=Syndication] tr.headerRow [title~=Syndication] th {
+            background: #fff!important;
+            border:none!important;
+            border-bottom: 1px solid #ddd!important;
+        }
+
+        [title~=Syndication] .apexp .bPageBlock.apexDefaultPageBlock .pbBody {
+                margin-top: -3px!important;
+        }
+
+        [title~=Syndication] .buttons {
+            /*width: 58%;*/
+            text-align: center;
+        }
+
+        [title~=Syndication] #SyndicationButtons {
+            padding: 8px 20px;
+            padding-bottom: 10px;
+        }
+
+        [title~=Syndication] .pagination-btn-grp button {
+            padding-left: 10px!important;
+            padding-right: 10px!important;
+            line-height: 2em!important;
+        }
+
+        [title~=Syndication] .pagination-btn-grp-wrapper {
+            text-align: center;
+            width: 200px;
+            margin: 0 auto;
+            margin-top: -20px;
+        }
+
+        #syndicationsTableInner .boolean-field {
+            text-align: center !important;
+        }
+
+        #syndicationsTableInner .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .cmb .slds-table td, .cmb .slds-table th {
+            position: static !important;
+        }
+
+        .dateFormat a {
+            color: black !important;
+            text-decoration: underline !important;
+        }
+        
+        [title~=Syndication] tfoot {
+            border-top: 1px solid gainsboro;
+        }
+    </style>
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!syndEditAllFlag}" access="global" />
+
+    <apex:form id="syndform" styleClass="records" title="Syndication">
+        <apex:outputLabel rendered="{!syndIsRefrenceField}">
+            Please remove '{!syndRefrenceFieldLabel}' field from the 'GRIDSyndicationsFieldSet' field set,
+            as referenced fields are not allowed.
+        </apex:outputLabel>
+
+        <apex:outputPanel id="syndTable" rendered="{!NOT(syndIsRefrenceField)}">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='syndicationTab_lbl']").text( 'Syndications'+' ({!syndRecordCount})');
+                    // Added following two lines for new grid home page
+                    var tabTitle = t$("[data-tabname='syndications']");
+                    tabTitle.text('Syndications'+' ({!syndRecordCount})');
+                    t$('#syndicationsTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallSyndication();
+                    setEventListenersSyndication();
+                });
+                //save functionality
+                function rerenderHandlerSyndication() {
+                    if(typeof rerenderHandler == 'function') {
+                        rerenderHandler('syndications');
+                    }
+                    setEventListenersSyndication();
+                }
+            </script>
+            <apex:pageblock mode="inlineEdit">
+                <div class="buttons" id="SyndicationButtons">
+                    <apex:outputpanel rendered="{!$ObjectType.Syndication__c.createable}">
+                        <input type="button" 
+                               id="newsynd"
+                               onclick="runNewSynd(); return true;"
+                               class="{!if(syndIsDisable,'btnDisabled disBtn','btn')}"
+                               value="New"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!AND($ObjectType.Syndication__c.updateable, 
+                                                NOT(syndEditAllFlag))}">
+                        <apex:CommandButton id="editsynd"
+                                            action="{!editAllSynd}"
+                                            value="Edit All"
+                                            disabled="{!syndIsDisable}"
+                                            rerender="syndTable"
+                                            oncomplete="rerenderHandlerSyndication();"
+                                            status="loadingPanel"
+                                            immediate="true"/>
+                    </apex:outputPanel>
+                    <apex:outputpanel rendered="{!OR($ObjectType.Syndication__c.updateable,
+                                                $ObjectType.Syndication__c.createable)}">
+                        <input type="button"
+                               onclick="runSaveSynd()"
+                               class="{!if(syndIsDisable,'btnDisabled disBtn','btn')}"
+                               value="Save"
+                               status="loadingPanel" />
+                    </apex:outputPanel>
+                    <apex:CommandButton action="{!refreshSynd}"
+                                        value="Refresh"
+                                        disabled="{!syndIsDisable}"
+                                        rerender="syndTable"
+                                        oncomplete="rerenderHandlerSyndication();"
+                                        status="loadingPanel"
+                                        immediate="true" />
+                    <apex:CommandButton action="{!refreshSynd}"
+                                        value="Cancel"
+                                        disabled="{!syndIsDisable}"
+                                        rerender="syndTable"
+                                        oncomplete="rerenderHandlerSyndication();"
+                                        status="loadingPanel"
+                                        immediate="true" />
+                </div>
+                <apex:pageMessages id="syndpgMsgId" escape="false" />
+                <div class="cmb">
+                    <div class="slds-scrollable--x" style="position: relative;">
+                        <table class="contentTable slds-table slds-table--bordered slds-table--striped"
+                               border="0" cellpadding="0" cellspacing="0"
+                               id="syndicationsTableInner">
+                            <tbody>
+                                <tr class="headerRow" >
+                                    <th class="widthRecordSub">#</th>
+                                    <th class="widthActionSub">Action</th>
+                                    <apex:repeat value="{!syndFieldsetList}" var="syndField">
+                                        <th class="width10Sub">
+                                            <div>
+                                                <apex:outputLabel value="{!syndField.label}"/>
+                                                <apex:OutputPanel rendered="{!AND(fieldPathResult != syndField.fieldPath,
+                                                                            displaySortingArrow,
+                                                                            syndField.type != 'multipicklist',
+                                                                            syndField.type != 'phone')}">
+                                                    <img src= "{!IF(syndSortExprFieldApi==syndField.fieldPath,
+                                                            IF(syndSortDirection=='ASC',
+                                                            urlfor($Resource.GRIDResource,
+                                                            'GRIDResource/Images/Sort_Asc.png'),
+                                                            urlfor($Resource.GRIDResource,
+                                                            'GRIDResource/Images/Sort_Desc.png')),
+                                                            urlfor($Resource.GRIDResource,
+                                                            'GRIDResource/Images/Sort_Both.png'))}" 
+                                                     style="height:11px;"
+                                                     name="{!syndField.fieldPath}"
+                                                     class="sorting"
+                                                     onclick="sortCallSynd('{!syndField.type}');" />
+                                                </apex:OutputPanel>
+                                            </div>
+                                        </th>
+                                    </apex:repeat>
+                                </tr>
+
+                                <apex:repeat value="{!syndWrapperLst}" var="syndWraper" >
+                                    <tr class="dataRow">
+                                        <td class="widthRecordTdSub">
+                                            <apex:outputtext value="{!syndWraper.syndIndex + 1}"/>
+                                        </td>
+                                        <td class="widthActionTdSub">
+                                            <apex:outputLink value="#"
+                                                             target="_blank"
+                                                             onclick="openSyndicationPage('{!syndWraper.synd.Id}');"
+                                                             rendered="{!NOT(ISBLANK(syndWraper.synd.Id))}">
+                                                View
+                                            </apex:outputLink>
+                                            <apex:outputLabel value="| "
+                                                              rendered="{!AND(NOT(ISBLANK(syndWraper.synd.Id)),
+                                                                        $ObjectType.Syndication__c.deletable)}" />
+                                            <apex:commandLink action="{!deleteSynd}"
+                                                              value="Del"
+                                                              rerender="syndTable"
+                                                              rendered="{!AND(NOT(ISBLANK(syndWraper.synd.Id)),
+                                                                        $ObjectType.Syndication__c.deletable)}"
+                                                              status="loadingPanel">
+                                                <apex:param name="syndIndexToRemove"
+                                                            value="{!syndWraper.syndIndex}"
+                                                            assignTo="{!syndIndexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                            <apex:commandLink action="{!deleteSynd}"
+                                                              value="Remove"
+                                                              rerender="syndTable"
+                                                              rendered="{!(ISBLANK(syndWraper.synd.Id))}"
+                                                              styleClass="removeRow"
+                                                              status="loadingPanel"
+                                                              immediate="true">
+                                                <apex:param name="syndIndexToRemove"
+                                                            value="{!syndWraper.syndIndex}"
+                                                            assignTo="{!syndIndexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                        </td>
+                                        <apex:repeat value="{!syndFieldsetList}" var="syndfield">
+                                            <td class="width10TdSub {!syndfield.type}-field">
+                                                <apex:outputField value="{!syndWraper.synd[syndfield]}"
+                                                                  rendered="{!AND(IF(syndWraper.syndEdit = false, true, false),
+                                                                            NOT(ISBLANK(syndWraper.synd.Id)))}" />
+                                                <apex:inputField value="{!syndWraper.synd[syndfield]}"
+                                                                 rendered="{!OR(IF(syndWraper.syndEdit = true, true, false),
+                                                                            ISBLANK(syndWraper.synd.Id))}"/>
+                                            </td>
+                                        </apex:repeat>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                            <tfoot>
+                                <tr class="headerRow">
+                                    <td class="widthRecordSub"><b>Total</b></td>
+                                    <td class="widthActionSub"></td>
+                                    <apex:repeat value="{!syndFieldsetList}" var="syndfield">
+                                        <td class="width10Sub">
+                                            <b>
+                                                <apex:outputText value="{!currencySymbolSyndication}{0, number, ###,###,###,##0.00}"
+                                                    rendered="{!AND(syndFieldToSumMap[syndfield.fieldPath] != -999.999,
+                                                                syndfield.type== 'currency')}" >
+                                                    <apex:param value="{!syndFieldToSumMap[syndfield.fieldPath]}" />
+                                                </apex:outputText>
+                                            </b>
+                                            <b>
+                                                <apex:outputText value="{0, number, ###,###,###,##0.00}"
+                                                    rendered="{!AND(syndFieldToSumMap[syndfield.fieldPath] != -999.999,
+                                                                syndfield.type!= 'currency')}" >
+                                                    <apex:param value="{!syndFieldToSumMap[syndfield.fieldPath]}" />
+                                                </apex:outputText>
+                                            </b>
+                                        </td>
+                                    </apex:repeat>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        {!IF((syndOffsetsize + 1) > syndRecordCount,
+                        IF(syndRecordCount - syndBlockSize <= 0, 0, syndRecordCount - syndBlockSize),
+                        syndOffsetsize + 1)} - {!syndWrapperLst.size + syndOffsetsize}
+                        of {!syndRecordCount}
+                    </div>
+                <!-- panel grid for pagination buttons -->
+                    <div class="pagination-btn-grp-wrapper">
+                        <div class="slds-button-group pagination-btn-grp" role="group">
+                            <button class="slds-button slds-button--neutral first"
+                                    onclick="beginningSynd(); return false;">&lt;&lt;</button>
+                            <button class="slds-button slds-button--neutral previous"
+                                    onclick="previousSynd(); return false;">&lt;</button>
+                            <button class="slds-button slds-button--neutral next"
+                                    onclick="nextSynd(); return false;">&gt;</button>
+                            <button class="slds-button slds-button--neutral last"
+                                    onclick="endSynd(); return false;">&gt;&gt;</button>
+                        </div>
+                        <script>
+                            t$ = jQuery.noConflict();
+                            if("{!syndOffsetsize != 0}" == 'false') {
+                                t$('[title~=Syndication] .pagination-btn-grp .first').attr('disabled', 'disabled');
+                                t$('[title~=Syndication] .pagination-btn-grp .previous').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Syndication] .pagination-btn-grp .first').removeAttr('disabled');
+                                t$('[title~=Syndication] .pagination-btn-grp .previous').removeAttr('disabled');
+                            }
+                            if("{!syndWrapperLst.size + syndOffsetsize < syndRecordCount}" == 'false') {
+                                t$('[title~=Syndication] .pagination-btn-grp .next').attr('disabled', 'disabled');
+                                t$('[title~=Syndication] .pagination-btn-grp .last').attr('disabled', 'disabled');
+                            } else {
+                                t$('[title~=Syndication] .pagination-btn-grp .next').removeAttr('disabled');
+                                t$('[title~=Syndication] .pagination-btn-grp .last').removeAttr('disabled');
+                            }
+                        </script>
+                    </div>
+                </div>
+                <apex:actionFunction name="beginningSynd" action="{!beginningSynd}"
+                        rerender="syndTablesyndTable" oncomplete="rerenderHandlerSyndication();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="previousSynd" action="{!previousSynd}"
+                        rerender="syndTable" oncomplete="rerenderHandlerSyndication();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="nextSynd" action="{!nextSynd}"
+                        rerender="syndTable" oncomplete="rerenderHandlerSyndication();"
+                        status="loadingPanel"/>
+                <apex:actionFunction name="endSynd" action="{!endSynd}"
+                        rerender="syndTable" oncomplete="rerenderHandlerSyndication();"
+                        status="loadingPanel"/>
+            </apex:pageblock>
+            <apex:inputHidden value="{!syndSortExpression}" id="syndSortHiddencriterian"/>
+            <apex:inputHidden value="{!syndSortDirection}" id="syndSortHiddenOrder"/>
+            <apex:inputHidden value="{!syndSortExprFieldApi}" id="syndSortFieldApi"/>
+        </apex:outputPanel>
+
+        <apex:actionFunction action="{!newSynd}" 
+                             name="newSynd" 
+                             rerender="syndTable"
+                             oncomplete="rerenderHandlerSyndication();"
+                             status="loadingPanel" />
+        <apex:actionFunction action="{!saveAllSynd}"
+                             name="saveSynd"
+                             rerender="syndTable"
+                             oncomplete="rerenderHandlerSyndication();"
+                             status="loadingPanel" />
+        <apex:actionFunction action="{!sortSynd}"
+                             name="sortAllSynd"
+                             rerender="syndTable"
+                             oncomplete="rerenderHandlerSyndication();"
+                             status="loadingPanel" >
+            <apex:param name="syndTypeParam" value="" />
+        </apex:actionFunction>
+    </apex:form>
+    <script type="text/javascript">
+        var isInConsoleSyndication = false;
+        var tabIdSyndication;
+        t$ = jQuery.noConflict();
+
+        function setEventListenersSyndication() {
+            t$("[id$=syndTable] .width10TdSub a").click(function() {
+                var elementId = event.target.id;
+                if(elementId.indexOf('lookup') == 0) {
+                    if(isInConsoleSyndication) {
+                        openConsoleTabSyndicationNewTab(event.target.href);
+                    } else {
+                        window.open(event.target.href);
+                    }
+                    event.preventDefault();
+                }
+            });
+
+            t$('[id$=syndTable] .slds-scrollable--x').on('scroll', function() {
+                t$(':focus').blur();
+                t$('.datePicker').css('display', 'none');
+            });
+        }
+
+        function initCallSyndication() {
+            setIsConsoleSyndication();
+            getFocusedPrimaryTabIdSyndication();
+        }
+
+        function getFocusedPrimaryTabIdSyndication() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdSyndications);
+        }
+
+        var showTabIdSyndications = function showTabIdSubmission(result) {
+            //Display the tab ID
+            tabIdSyndication = result.id;
+        };
+
+        function setIsConsoleSyndication() {
+            var inConsole = false;
+            var url = document.location.href;
+            inConsole = url.indexOf('isConsole=1') > -1;
+            if(inConsole) {
+                isInConsoleSyndication = inConsole;
+            } else {
+                isInConsoleSyndication = sforce.console.isInConsole();
+            }
+        }
+
+        function openConsoleTabSyndication(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdSyndication, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdSyndication);
+        }
+
+        function openConsoleTabSyndicationNewTab(url, tabLabel) {
+            sforce.console.openPrimaryTab(null, url, true, tabLabel, function(r){});
+        }
+
+        function openSyndicationPage(recordIdToOpen) {
+            event.preventDefault();
+            if(isInConsoleSyndication) {
+                openConsoleTabSyndicationNewTab('/'+recordIdToOpen, 'Syndication');
+            } else  {
+                window.open('/'+recordIdToOpen);
+            }
+        }
+
+        function runNewSynd()
+        {
+            setTimeout(function()
+            {
+                newSynd();
+            }, 100);
+        }
+
+        function runSaveSynd()
+        {
+            setTimeout(function()
+            {
+                saveSynd();
+            }, 100);
+        }
+
+       function sortCallSynd(syndFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+            var syndElement = event.target;
+            var newSyndSortCol = t$(syndElement).attr("Name"); // new sort field
+            t$("input[id$='syndSortFieldApi']").val(newSyndSortCol);
+            var oldSyndSortCol = t$("input[id$='syndSortHiddencriterian']").val();
+            var indexSynd;
+            var syndTempSortExpr;
+            if(newSyndSortCol.endsWith('__c'))
+            {
+                indexSynd = newSyndSortCol.indexOf('__');
+            }
+            else if(newSyndSortCol.endsWith('Id'))
+            {
+                indexSynd = newSyndSortCol.indexOf('Id');
+            }
+            if(indexSynd != null) {
+                syndTempSortExpr = newSyndSortCol.substring(0, indexSynd);
+            }
+            else
+            {
+                syndTempSortExpr = newSyndSortCol;
+            }
+
+            //if(String(newSyndSortCol) == String(oldSyndSortCol))
+            if(oldSyndSortCol.indexOf(syndTempSortExpr) != -1)
+            {
+                if(String(t$("input[id$='syndSortHiddenOrder']").val()) == "ASC")
+                {
+                    t$("input[id$='syndSortHiddenOrder']").val("DESC");
+                    t$(syndElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                    t$("input[id$='syndSortHiddenOrder']").val("ASC");
+                    t$(syndElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                t$("input[id$='syndSortHiddencriterian']").val(newSyndSortCol);
+                sortAllSynd(syndFieldDataType);
+            }
+            else
+            {
+                t$("input[id$='syndSortHiddencriterian']").val(newSyndSortCol);
+                t$("input[id$='syndSortHiddenOrder']").val("ASC");
+                t$(syndElement).removeClass('sorting').addClass('SortAsc');
+                sortAllSynd(syndFieldDataType);
+            }
+        }
+    </script>
+</apex:component>

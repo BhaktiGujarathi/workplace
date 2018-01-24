@@ -1,0 +1,97 @@
+<apex:page contentType="text/html" showHeader="false" sidebar="false" docType="html-5.0" controller="DETE_BaseClass">
+    <html lang="en">
+
+        <head>
+            <c:DETE_PageHeader />
+            <title>Jobs Results</title>
+        </head>
+
+        <body id="page-top" class="index">
+
+
+        <c:DETE_NavigationComponent username="{!strUserName}"/>
+        <c:DETE_JobResult />
+
+
+    <script type="text/html" id='occupationList'>
+        <% if ( items.length != 0 ) { %>
+            <% _.each(items, function(item, key, list) { %>
+                <div class="occ-detail">
+                    <div class="profile-form">
+                        <div class="row">
+                            <div class="col-lg-12">
+                               <h5> <%= item.occupation.Title__c %> </h5>
+                                <p> <%= item.occupation.Title__c %>:
+                                    <%= item.occupation.Description__c %>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="pull-right">
+                                    <button class="btn btn-md btn-submit btn-jobs showJobs"> See Jobs </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="jobs-accordion">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <h4>Open Positions for <%= item.occupation.Title__c %> : </h4>
+                            </div>
+                        </div>
+
+                        <% if ( item.jobResultList.length == 0 ) { %>
+                            <span> No position match found for now. </span>
+                        <% } else {%>
+                            <div class="jobs-Result" id="jobRes<%= key %>">
+                                <% _.each(item.jobResultList, function(innerItem, key, list) { %>
+                                <span class="job-row">
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <h4> <%= innerItem.title %>  </h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <p><b>Employer:</b> <%= innerItem.employer %> </p>
+                                        </div>
+
+                                        <div class="col-lg-6">
+                                            <p class="pull-right"><b>Location:</b> <%= innerItem.location %> </p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <p> <%= innerItem.description.replace(/(?:\r\n|\r|\n)+/g, '<br />') %></p>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="pull-right">
+                                                <button class="btn btn-md btn-submit btn-jobs" data-job-id = "<%= innerItem.id %>"
+                                                 onclick="redirectToJob( <%= innerItem.id %>)"> Apply </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr/>
+                                </span>
+                                <% });%>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% });%>
+        <% } else {%>
+            <span> No Related Occupation match found for now. </span>
+        <% } %>
+    </script>
+            <!-- Footer -->
+            <c:DETE_PageFooter username="{!strUserName}" />
+        </body>
+    </html>
+</apex:page>

@@ -1,0 +1,916 @@
+<apex:component controller="BankAccountSummaryController" allowDML="true">
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS214, 'assets/styles/salesforce-lightning-design-system.min.css')}"
+    />
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS213, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"
+    />
+<!--     <apex:includeScript value="/soap/ajax/29.0/connection.js"/> -->
+    <apex:includeScript value="/support/console/26.0/integration.js"/>
+    <style type="text/css">
+        .bankStatemntContainer .width10TdSub {
+            max-width: 150px!important;
+            white-space: nowrap!important;
+            border-bottom: 1px solid #f1f1f1!important;
+            boder-spacing: 0px!important;
+            padding-right: 1px!important;
+            text-overflow: ellipsis!important;
+            overflow: hidden!important;
+            font-size: 11px;
+            border-top: 1px solid #ecebe9!important;
+            // text-align:right;
+        }
+
+        .bankStatemntContainer .width10TdSub:after {
+            //content: " ...";
+        }
+
+        .bankStatemntContainer .blockbox {
+            display: block;
+        }
+
+        .bankStatemntContainer .grey_overlay {
+            // display: none;
+            position: absolute;
+            top: 0%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 2;
+            -moz-opacity: 0.4;
+            opacity: .40;
+            filter: alpha(opacity=40);
+        }
+
+        .bankStatemntContainer .custPopup {
+            border-width: 2px;
+            max-width: 1000px;
+            max-height: 10000px;
+            /*border-style: solid;*/
+            z-index: 2;
+            left: 50%;
+            padding: 10px;
+            position: fixed;
+            margin-left: -500px;
+            top: 100px;
+            left: 50%;
+            background: #F7F9FB;
+        }
+
+        .bankStatemntContainer .popupBackground {
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .bankStatemntContainer .bankStatmentMainModuleCls {
+            border-top: 1px solid #b3b3b3!important;
+            border-left: 1px solid #b3b3b3;
+            border-right: 1px solid #b3b3b3!important;
+        }
+
+        .bankStatemntContainer #header-fixed {
+            position: fixed;
+            top: 0px;
+            display: none;
+            background-color: white;
+        }
+
+        .bankStatemntContainer th,
+        .bankStatemntContainer td
+        {
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+        }
+
+        .bankStatemntContainer .tableHeaderBnkStmnt {
+            color: #54698d!important;
+            text-transform: uppercase;
+            font-weight: 300!important;
+            letter-spacing: .0625rem;
+            line-height: 1.25;
+            font-size: 12px;
+            white-space: normal!important;
+            text-align: center;
+            height: 15px!important;
+        }
+
+        .bankStatemntContainer .tableHeaderBnkStmnt b {
+            font-size: 10px;
+            font-weight: 1000!important;
+            // word-wrap: break-word!important;
+        }
+
+        .bankStatemntContainer .pgHeading {
+            font-family: 'Salesforce Sans', Arial, sans-serif !important;
+            font-size: 15px;
+            color: #666;
+            font-weight: normal;
+        }
+
+         .bPageBlock {
+            border: none !important;
+            background: #fff !important;
+        }
+
+        .bankStatemntContainer .headerButton {
+            font-size: 11px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+        }
+
+        .bankStatemntContainer .newBankNumberPopupBnkStmnt
+        {
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 2;
+            left: 84%;
+            padding: 10px 0px 10px 15px;
+            /*position: absolute;*/
+            position: fixed;
+            width: 370px;
+            margin-left: -600px;
+            top: 210px;
+        }
+        .slds-spinner, .slds-spinner_container{
+            position: fixed !important;
+        }
+
+        .bankStatemntContainer input[type="email"],
+        .bankStatemntContainer input[type="number"],
+        .bankStatemntContainer input[type="password"],
+        .bankStatemntContainer input[type="tel"],
+        .bankStatemntContainer input[type="url"],
+        .bankStatemntContainer input[type="text"] {
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+            width: 90px;
+        }
+
+        .bankStatemntContainer input[type="email"]:focus,
+        .bankStatemntContainer input[type="number"]:focus,
+        .bankStatemntContainer input[type="password"]:focus,
+        .bankStatemntContainer input[type="tel"]:focus,
+        .bankStatemntContainer input[type="url"]:focus,
+        .bankStatemntContainer input[type="text"]:focus,
+        .bankStatemntContainer select:focus{
+            outline: 0!important;
+            border-color: #1589ee!important;
+            background-color: #fff!important;
+            box-shadow: 0 0 3px #0070D2!important;
+        }
+
+        .bankStatemntContainer .dateOnlyInput input {
+            width: 7em !important;
+        }
+
+        .bankStatemntContainer textarea{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            width: 100px;
+            transition: border .1s linear,background-color .1s linear!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            padding-top:5px!important;
+        }
+
+        .bankStatemntContainer select{
+            background-color: #fff!important;
+            color: #16325c!important;
+            border: 1px solid #d8dde6!important;
+            border-radius: 4px!important;
+            transition: border .1s linear,background-color .1s linear!important;
+            height:28px!important;
+            padding-left: 8px!important;
+            padding-right: 8px!important;
+            font-family:'Salesforce Sans', Arial, sans-serif!important;
+            font-size: 12px;
+        }
+
+        .bankStatemntContainer .reference-field {
+            padding-right: 20px !important;
+        }
+
+        .btn{
+           font-size: 12px!important;
+           /*line-height: 1.875rem!important;*/
+           height: 29px;
+           text-decoration: none!important;
+           color: #fff!important;
+           transition: color 50ms linear,background-color 50ms linear;
+           background: #0070d2!important;
+           font-family:'Salesforce Sans', Arial, sans-serif!important;
+           vertical-align: middle!important;
+           padding: 0px 10px!important;
+           font-weight: 500!important;
+           border-radius: 0.25rem!important;
+           margin:0 4px!important;
+           border-color:#d8dde6!important;
+       }
+       
+       .tableFooter {
+            background-color:#f2f2f2;
+       }
+    </style>
+
+    <div class="bankStatemntContainer">
+        <apex:outputPanel id="bankStatementPanel">
+            <table >
+                <tr>
+                    <td>
+                        <h1 class="pgHeading">
+                            Bank Account
+                        </h1>
+                    </td>
+                    <td >
+                        <div style="text-align: -webkit-right;" >
+                            <apex:outputPanel rendered="{!!displayAccountView}">
+                                <button class="slds-button slds-button--neutral headerButton btn"
+                                    onclick="NewBankStatment();return false;">
+                                    New
+                                </button>
+                                 <button class="slds-button slds-button--neutral headerButton btn"
+                                     onclick="onClickOfSaveBankStatment();return false;">
+                                   Save
+                                 </button>
+                                 <button class="slds-button slds-button--neutral headerButton btn"
+                                     onclick="refreshBankStatements();return false;">
+                                   Cancel
+                                 </button>
+                            </apex:outputPanel>
+                        </div>
+                    </td>
+                    <td style="text-align:right;">
+                        <apex:outputlabel StyleClass="pgHeading" style="font-size:14px;!important">
+                            Bank Account #:
+                        </apex:outputlabel>
+                        &nbsp;&nbsp;
+                        <apex:selectList multiselect="false" size="1" value="{!bankAccountNo}"
+                            onchange="filterByBankAccountNo()">
+                            <apex:selectoption itemValue="All" itemLabel="All" />
+                            <apex:selectoptions value="{!lstBankAccNos}" />
+                        </apex:selectList>
+                    </td>
+                </tr>
+            </table>
+
+            <div id="divPMsg">
+                <apex:pagemessages rendered="{!(renderBnkStmntPageMessage && !errorRecordsPopup) }"
+                    id="pMsg" />
+            </div>
+            <apex:actionStatus id="loadingnewbnkStmntSection" layout="block">
+                <apex:facet name="start">
+                    <div class="cmb">
+                        <div class="slds-spinner_container">
+                            <div role="status" class="slds-spinner slds-spinner--medium slds-spinner--brand">
+                                <span class="slds-assistive-text">Loading</span>
+                                <div class="slds-spinner__dot-a"></div>
+                                <div class="slds-spinner__dot-b"></div>
+                            </div>
+                        </div>
+                    </div>
+                -</apex:facet>
+            </apex:actionStatus>
+            <div>
+                <apex:actionfunction name="filterByBankAccountNo" action="{!filterByBankAccountNo}"
+                    reRender="bankStatementPanel" status="loadingnewbnkStmntSection"/>
+                <apex:actionfunction name="NewBankStatment" action="{!showNewPopupBankStmnt}"
+                    reRender="newSectionPopUp"
+                    status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="saveBankStatment" action="{!saveBankStatment}"
+                    reRender="bankStatementPanel,newSectionPopUp,errorSectionBnkPopup"
+                    status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="newSaveBankStatment" action="{!newSaveBankStmnt}"
+                    rerender="newSectionPopUp,bankStatementPanel"
+                    status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="closeNewBankStmntPopup" action="{!closeNewBankStmntPopup}"
+                    rerender="newSectionPopUp" status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="refreshBankStatements" action="{!refreshBankStatements}"
+                    rerender="bankStatementPanel" status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="errorSaveBankStmnt" action="{!errorSaveBankStmnt}"
+                    rerender="bankStatementPanel, newSectionPopUp" status="loadingnewbnkStmntSection"/>
+                <apex:actionfunction name="closeErrorPopup" action="{!closeErrorPopup}"
+                    rerender="errorSectionBnkPopup,bankStatementPanel" status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="backToParentRecord" action="{!backToParentRecord}"
+                    rerender="newSectionPopUp,bankStatementPanel" />
+                <apex:actionfunction name="doneForAllBankStments" action="{!doneForAllBankStments}"
+                    rerender="newSectionPopUp,newBankAccountNo" status="loadingnewbnkStmntSection" />
+                <apex:actionfunction name="closeBankAccountPopup" action="{!closeBankAccountPopup}"
+                    rerender="newSectionPopUp,newBankAccountNo" status="loadingnewbnkStmntSection" />
+
+                <!--br/-->
+                <apex:outputPanel id="bankStatmentMainModule">
+                <div style="width:40%;min-height:600px!important;" id="bnkStmntListSection">
+                    <table
+                        class="slds-table slds-table--bordered slds-table--cell-buffer"
+                        style="width:40%" cellspacing="4">
+                        <thead>
+                            <tr>
+                                <td class="expColBnkStmMain">
+                                    <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}"
+                                        style="margin-top:7px;float:left;cursor:pointer;width:15px;"
+                                        title="Collapse" id="colpsImgBnkStm" />
+                                </td>
+                                <td class="tableHeaderBnkStmnt">
+                                    <b> Month </b>
+                                </td>
+                                <td class="tableHeaderBnkStmnt">
+                                    <b> Year </b>
+                                </td>
+                                <td class="tableHeaderBnkStmnt">
+                                    <b> Bank Account # </b>
+                                </td>
+
+                                <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember" >
+                                    <td class="tableHeaderBnkStmnt">
+                                        <apex:outputPanel >
+                                            <b> {!fieldMember.label}</b>
+                                        </apex:outputPanel>
+                                    </td>
+                                </apex:repeat>
+                                <td class="tableHeaderBnkStmnt">
+                                    <b> Include </b>
+                                </td>
+                            </tr>
+                        </thead>
+
+                        <apex:repeat value="{!lstBnkStmMonthSumWrp}" var="bnkStmMonthSumWrp">
+                            <tr class="content" style="background:#f2f2f2;">
+                                <td class="expColBnkStm">
+                                    <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}"
+                                        title="Collapse" style="margin-top:7px;float:left;cursor:pointer;width:15px;"
+                                        id="colpsImgBnkStm" />
+                                </td>
+                                <td>
+                                    <b> {!bnkStmMonthSumWrp.Month}</b>
+                                </td>
+                                <td>
+                                    <b> {!bnkStmMonthSumWrp.Year}</b>
+                                </td>
+                                <td>
+                                    <b> </b>
+                                </td>
+                                <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember" >
+                                    <td class="{!fieldMember.type}-field">
+                                        <apex:repeat value="{!bnkStmMonthSumWrp.mapBnkStmSummaryFields}" var="keyApiName">
+                                            <apex:outputPanel rendered="{!fieldMember==keyApiName}">
+                                            <apex:outputPanel rendered="{!fieldMember.type=='currency'}"><b>$</b></apex:outputPanel>
+                                                <b>
+                                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" >
+                                                        <apex:param value="{!bnkStmMonthSumWrp.mapBnkStmSummaryFields[keyApiName]}" />
+                                                    </apex:outputText>
+                                                </b>
+                                            </apex:outputPanel>
+                                        </apex:repeat>
+                                    </td>
+                                </apex:repeat>
+                                <td>
+                                    <b> </b>
+                                </td>
+                            </tr>
+
+                            <apex:repeat value="{!bnkStmMonthSumWrp.lstBankStmntMonthSum}"
+                                var="bnkStmMonthSumWrp">
+                                <tr class="content">
+                                    <td>
+                                        <apex:outputLink value="#" 
+                                            onclick="openStatementPage('{!bnkStmMonthSumWrp.BankStmnt.Id}');"
+                                            rendered="{!NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}">
+                                            View
+                                        </apex:outputLink>
+                                        <apex:outputLabel value=" | "
+                                            rendered="{!AND(NOT(ISBLANK(bnkStmMonthSumWrp.bankStmnt.Id)),
+                                            $ObjectType.Bank_Account__c.deletable)}" />
+                                        <apex:commandLink action="{!deleteBankStatement}" value="Del"
+                                            rerender="bankStatementPanel"
+                                            status="loadingnewbnkStmntSection"
+                                                rendered="{!AND(NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                $ObjectType.Bank_Account__c.deletable)}">
+<!--                                                 <apex:param name="bankStmntIndexToRemove" value="{!bnkStmMonthSumWrp.bankStmntIndex}" /> -->
+                                            <apex:param name="bankStmntIndexToRemove"
+                                                assignTo="{!bankStmntIndexToRemove}"
+                                                value="{!bnkStmMonthSumWrp.bankStmntIndex}">
+                                            </apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <td>
+                                        <apex:outputfield value="{!bnkStmMonthSumWrp.BankStmnt.Month__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                        NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                        IF(displayAccountView = true, true, false))}">
+                                            <apex:inlineEditSupport disabled="true" />
+                                        </apex:outputfield>
+                                        <apex:outputField value="{!bnkStmMonthSumWrp.BankStmnt.Month__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                            NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                            IF(displayAccountView = false, true, false))}">
+                                        </apex:outputField>
+                                        <apex:inputField value="{!bnkStmMonthSumWrp.BankStmnt.Month__c}"
+                                            rendered="{!OR(IF(bnkStmMonthSumWrp.bankStmntEdit = true, true, false),
+                                                        ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}" />
+                                    </td>
+                                    <td>
+                                        <apex:outputfield value="{!bnkStmMonthSumWrp.BankStmnt.Year__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                        NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                        IF(displayAccountView = true, true, false))}">
+                                            <apex:inlineEditSupport disabled="true" />
+                                        </apex:outputfield>
+                                        <apex:outputField value="{!bnkStmMonthSumWrp.BankStmnt.Year__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                            NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                            IF(displayAccountView = false, true, false))}">
+                                        </apex:outputField>
+                                        <apex:inputField value="{!bnkStmMonthSumWrp.BankStmnt.Year__c}"
+                                            rendered="{!OR(IF(bnkStmMonthSumWrp.bankStmntEdit = true, true, false),
+                                                        ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}" />
+                                    </td>
+                                    <td>
+                                        <apex:outputfield value="{!bnkStmMonthSumWrp.BankStmnt.Bank_Account_Number__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                        NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                        IF(displayAccountView = true, true, false))}">
+                                            <apex:inlineEditSupport disabled="true" />
+                                        </apex:outputfield>
+                                        <apex:outputField value="{!bnkStmMonthSumWrp.BankStmnt.Bank_Account_Number__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                            NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                            IF(displayAccountView = false, true, false))}">
+                                        </apex:outputField>
+                                        <apex:inputField value="{!bnkStmMonthSumWrp.BankStmnt.Bank_Account_Number__c}"
+                                            rendered="{!OR(IF(bnkStmMonthSumWrp.bankStmntEdit = true, true, false),
+                                                        ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}" />
+                                    </td>
+                                    <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                        <td class="{!fieldMember.type}-field" >
+                                            <apex:outputfield value="{!bnkStmMonthSumWrp.BankStmnt[fieldMember]}"
+                                                rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                            NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                            IF(displayAccountView = true, true, false))}">
+                                                <apex:inlineEditSupport disabled="true" />
+                                            </apex:outputfield>
+                                            <apex:outputField value="{!bnkStmMonthSumWrp.BankStmnt[fieldMember]}"
+                                                rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                                NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                                IF(displayAccountView = false, true, false))}">
+                                            </apex:outputField>
+                                            <apex:inputField value="{!bnkStmMonthSumWrp.BankStmnt[fieldMember]}"
+                                                rendered="{!OR(IF(bnkStmMonthSumWrp.bankStmntEdit = true, true, false),
+                                                            ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}" />
+                                        </td>
+                                    </apex:repeat>
+                                    <td>
+                                        <apex:outputfield value="{!bnkStmMonthSumWrp.BankStmnt.Include_in_average__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                        NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                        IF(displayAccountView = true, true, false))}">
+                                            <apex:inlineEditSupport disabled="true" />
+                                        </apex:outputfield>
+                                        <apex:outputField value="{!bnkStmMonthSumWrp.BankStmnt.Include_in_average__c}"
+                                            rendered="{!AND(IF(bnkStmMonthSumWrp.bankStmntEdit = false, true, false),
+                                                            NOT(ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id)),
+                                                            IF(displayAccountView = false, true, false))}">
+                                        </apex:outputField>
+                                        <apex:inputField value="{!bnkStmMonthSumWrp.BankStmnt.Include_in_average__c}"
+                                            rendered="{!OR(IF(bnkStmMonthSumWrp.bankStmntEdit = true, true, false),
+                                                        ISBLANK(bnkStmMonthSumWrp.BankStmnt.Id))}" />
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </apex:repeat>
+                        <tr style="display:none !important;">
+                            <td class="expColBnkStm"></td>
+                        </tr>
+                        <tr style="height:50px!important">
+                        </tr>
+                        <tr class="tableFooter">
+                            <td >
+                                <b> Total </b>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                <td class="{!fieldMember.type}-field">
+                                    <apex:repeat value="{!mapBnkStmTotalFields}" var="keyApiNametotalBnkstmnt">
+                                        <apex:outputPanel rendered="{!fieldMember==keyApiNametotalBnkstmnt}">
+                                            <apex:outputPanel rendered="{!fieldMember.type=='currency'}">
+                                            <b>$</b></apex:outputPanel>
+                                            <b>
+                                            <apex:outputText value="{0, number, ###,###,###,##0.00} ">
+                                              <apex:param value="{!mapBnkStmTotalFields[keyApiNametotalBnkstmnt]}" />
+                                            </apex:outputText>
+                                            </b>
+                                        </apex:outputPanel>
+                                    </apex:repeat>
+                                </td>
+                            </apex:repeat>
+                            <td ></td>
+                        </tr>
+                        <tr class="tableFooter">
+                            <td>
+                                <b> Average</b>
+                            </td>
+                            <td ></td>
+                            <td></td>
+                            <td></td>
+                            <apex:repeat value="{!bankStmntFieldsetList}" var="bnkstmntfieldMember">
+                                <td >
+                                    <apex:repeat value="{!mapBnkStmTotalFields}" var="bnkStmntkeyApiName">
+                                        <apex:outputPanel rendered="{!bnkstmntfieldMember==bnkStmntkeyApiName}">
+                                            <apex:outputPanel rendered="{!bnkstmntfieldMember.type=='currency'}">
+                                            <b>$</b></apex:outputPanel>
+                                            <b>
+                                            <apex:outputText value="{0, number, ###,###,###,##0.00}" >
+                                              <apex:param value="{!mapBnkStmTotalFields[bnkStmntkeyApiName]/IF(mapIncludeCountBankStmnt[bnkStmntkeyApiName]==0
+                                                  ,1,mapIncludeCountBankStmnt[bnkStmntkeyApiName])}" />
+                                            </apex:outputText>
+                                            </b>
+                                        </apex:outputPanel>
+                                    </apex:repeat>
+                                </td>
+                            </apex:repeat>
+                            <td ></td>
+                        </tr>
+                    </table>
+                    <table id="header-fixed" style="width:40%;" cellspacing="4"></table>
+                </div>
+                </apex:outputPanel>
+            </div>
+        <!--Main Div End-->
+
+            <apex:outputPanel id="newSectionPopUp">
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayNewPopup}" />
+                <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displayNewPopup}">
+                    <apex:sectionHeader subtitle="Bank Account Entry" />
+                    <apex:variable var="count" value="{!-1}" />
+                    <div class="slds-scrollable">
+                        <table id="bankStatmentNewSectionModule" cellspacing="5"
+                            class="slds-table slds-table--bordered slds-table--cell-buffer slds-table--striped">
+                            <tr>
+                                <td class="width10TdSub">
+                                   <b> Action </b>
+                                </td>
+                                <td class="width10TdSub">
+                                    <b> Month </b>
+                                </td>
+                                <td class="width10TdSub">
+                                    <b> Year </b>
+                                </td>
+                                <td class="width10TdSub">
+                                    <b> Bank Account # </b>
+                                </td>
+                                <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                    <td class="width10TdSub">
+                                        <b> {!fieldMember.label}</b>
+                                    </td>
+                                </apex:repeat>
+                                <td class="width10TdSub">
+                                    <b> Include </b>
+                                </td>
+                            </tr>
+
+                            <apex:repeat value="{!newBankStmntLst}" var="newBankStmnt">
+                                <apex:variable var="count" value="{!count+1}" />
+                                <tr class="content">
+                                    <td>
+                                        <apex:commandLink value="Remove" action="{!removeNewRow}"
+                                            rerender="newSectionPopUp" status="loadingnewbnkStmntSection" >
+                                            <apex:param name="removeNewIndex" value="{!count}"
+                                                assignTo="{!removeNewIndex}" />
+                                        </apex:commandLink>
+                                    </td>
+                                    <td>
+                                        <apex:inputField value="{!newBankStmnt.Month__c}" />
+                                    </td>
+                                    <td>
+                                        <apex:inputField value="{!newBankStmnt.Year__c}" />
+                                    </td>
+                                    <td>
+                                        <apex:inputField value="{!newBankStmnt.Bank_Account_Number__c}" 
+                                            rendered="{!OR(bankStmntLst.size <= 0, lstBankAccNos.size <= 0)}"/>
+                                        <apex:outputPanel rendered="{!AND(bankStmntLst.size > 0, lstBankAccNos.size > 0)}">
+                                            <apex:selectList multiselect="false" size="1"
+	                                            id="newOptinSlctList"
+	                                            value="{!newBankStmnt['Bank_Account_Number__c']}">
+	                                            <apex:selectoptions value="{!lstBankAccNos}" />
+	                                            <apex:selectoption itemValue="{!newBankAccountNumber}"
+	                                                itemLabel="{!newBankAccountNumber}"
+	                                                rendered="{!newBankAccountNumber != NULL}"
+	                                            />
+	                                            <apex:selectoption itemValue="--New--" 
+	                                               itemLabel="--New--" />
+	                                            <apex:actionSupport event="onchange" 
+	                                               action="{!setNewOptionBnkPopup}"
+	                                               reRender="newSectionPopUp,newBankAccountNo,newOptinSlctList"
+	                                               status="loadingnewbnkStmntSection">
+	                                                <apex:param name="newRowIndex" value="{!count}"
+	                                                    assignTo="{!newRowIndex}" />
+	                                            </apex:actionSupport>
+	                                        </apex:selectList>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                        <td class="width10TdSub {!fieldMember.type}-field">
+                                            <apex:outputPanel rendered="{!IF(NOT(fieldMember == 'Bank_Account_Number__c'),true,false)}">
+                                                <apex:inputField value="{!newBankStmnt[fieldMember]}" />
+                                            </apex:outputPanel>
+                                        </td>
+                                    </apex:repeat>
+                                    <td>
+                                        <apex:inputField value="{!newBankStmnt.Include_in_average__c}" />
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </table>
+                    </div>
+                    <br/>
+                    <center>
+                        <button class="slds-button slds-button--neutral btn"
+                            onclick="newSaveBankStatment();return false;">
+                            Save
+                        </button>
+                        <button class="slds-button slds-button--neutral btn"
+                            onclick="closeNewBankStmntPopup();return false;">
+                            Close
+                        </button>
+                    </center>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+            <!-- Popup for New click for  Account #-->
+            <apex:outputPanel id="newBankAccountNo">
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!newBankAccountPopup}" />
+                <apex:outputPanel styleClass="newBankNumberPopupBnkStmnt" layout="block"
+                    rendered="{!newBankAccountPopup}">
+                    <apex:sectionHeader title="Bank Account # Entry" />
+                    <div>
+                        <b>Bank Account # :</b>&nbsp; &nbsp;
+                        <apex:inputText value="{!newBankAccountNumber}" />
+                    </div>
+                    <apex:outputText style="color : red;" value="{!newBankAccountError}" />
+                    <div style="height: 10px;"></div>
+                    <div>
+                        Check to apply to all new records:&nbsp; &nbsp;
+                        <apex:inputCheckbox value="{!updateAllAccountNos}"/>
+                    </div>
+                    <div>
+                        <center>
+                            <button class="slds-button slds-button--neutral btn"
+                                onclick="doneForAllBankStments();return false;">
+                                Done
+                            </button>
+                            <button class="slds-button slds-button--neutral btn"
+                                onclick="closeBankAccountPopup();return false;">
+                                Close
+                            </button>
+                        </center>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+            <!-- POPUP for error List -->
+            <apex:outputPanel id="errorSectionBnkPopup" rendered="{!errorRecordsPopup}">
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!errorRecordsPopup}" />
+                <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!errorRecordsPopup}">
+                    <apex:sectionHeader title="Bank Account Entry" />
+                    <div class="slds-scrollable" >
+                        <table class="slds-table slds-table--bordered slds-table--cell-buffer"
+                            cellspacing="5">
+                            <apex:repeat value="{!errorBankStmntLst}" var="errorBankStmnt">
+                                <tr >
+                                    <td style="color:#D21700;">
+                                        <b>{!bankStmErrorOnPopup}</b>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </table>
+                        <table id="bankStatmentErrorSectionModule"
+                            class="slds-table slds-table--bordered slds-table--cell-buffer"
+                            style="width:60%;" cellspacing="5">
+                            
+                            <tr>
+                                <td class="width10TdSub">
+                                    <b> Month </b>
+                                </td>
+                                <td class="width10TdSub">
+                                    <b> Year </b>
+                                </td>
+                                <td class="width10TdSub">
+                                    <b> Bank Account # </b>
+                                </td>
+                                <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                    <td class="width10TdSub {!fieldMember.type}-field">
+                                        <b> {!fieldMember.label}</b>
+                                    </td>
+                                </apex:repeat>
+                                <td class="width10TdSub">
+                                    <b> Include </b>
+                                </td>
+                            </tr>
+                            <apex:repeat value="{!errorBankStmntLst}" var="errorBankStmnt">
+                                <tr class="content">
+                                    <td>
+                                        <apex:inputField value="{!errorBankStmnt.Month__c}" />
+                                    </td>
+                                    <td>
+                                        <apex:inputField value="{!errorBankStmnt.Year__c}" />
+                                    </td>
+                                    <td>
+                                        <apex:selectList multiselect="false" size="1"
+                                                    value="{!errorBankStmnt['Bank_Account_Number__c']}">
+                                            <apex:selectoptions value="{!lstBankAccNos}" />
+                                        </apex:selectList>
+                                    </td>
+
+                                    <apex:repeat value="{!bankStmntFieldsetList}" var="fieldMember">
+                                        <td class="width10TdSub  {!fieldMember.type}-field">
+                                            <apex:outputPanel rendered="{!IF(NOT(fieldMember == 'Bank_Account_Number__c')
+                                                ,true,false)}">
+                                                <apex:inputField value="{!errorBankStmnt[fieldMember]}" />
+                                            </apex:outputPanel>
+                                        </td>
+                                    </apex:repeat>
+                                    <td>
+                                        <apex:inputField value="{!errorBankStmnt.Include_in_average__c}" />
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </table>
+                    </div>
+                    <br/>
+                    <center>
+                        <button class="slds-button slds-button--neutral btn"
+                            onclick="errorSaveBankStmnt();return false;">
+                            Save
+                        </button>
+                        <button class="slds-button slds-button--neutral btn"
+                            onclick="closeErrorPopup();return false;">
+                            Close
+                        </button>
+                    </center>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:outputPanel>
+    </div>
+
+    <apex:outputPanel id="scriptPnl">
+        <script type="text/javascript">
+            var isInConsolebankStmnt = false;
+            var tabIdbnkStmnt;
+            /*var tableOffset = $("#bankStatmentMainModule").offset().top;*/
+            var $header = $("#bankStatmentMainModule > thead").clone();
+            var $fixedHeader = $("#header-fixed").append($header);
+            var isInConsolebankStmnt = '{!isInConsoleBankStmnt}';
+            $(window).bind("scroll", function() {
+                /* var offset = $(this).scrollTop();
+                 $fixedHeader.width($("#bankStatmentMainModule").width());
+
+                  if (offset >= tableOffset && $fixedHeader.is(":hidden"))
+                  {
+                      $fixedHeader.show(500);
+                  }
+                  else if (offset < tableOffset)
+                  {
+                      $fixedHeader.hide(500);
+                  }*/
+            });
+            
+            $(document).ready(function() {
+                initCallBankStmnt();
+            });
+            function initCallBankStmnt() {
+                console.log('>>initCallBankStmnt>>>');
+                setIsConsoleBankStmnt();
+                getFocusedPrimaryTabIdBankStmnt();
+            }
+            
+            function setIsConsoleBankStmnt() {
+                isInConsoleBankStmnt = sforce.console.isInConsole();
+                console.log('>>isInConsoleBankStmnt>>>',isInConsoleBankStmnt);
+            }
+            
+            function getFocusedPrimaryTabIdBankStmnt() {
+                sforce.console.getFocusedPrimaryTabId(showTabIdbnk);
+            }
+            
+            var showTabIdbnk = function showTabIdbnk(result) {
+                //Display the tab ID
+                tabIdbnkStmnt = result.id;
+            };
+            
+            function openConsoleTabBankStmnt(url, tabLabel) {
+                sforce.console.openPrimaryTab(tabIdbnkStmnt, url, true, tabLabel, function(r){});
+                sforce.console.closeTab(tabIdbnkStmnt);
+            }
+            function onClickOfSaveBankStatment() {
+                setTimeout(function() {
+                    saveBankStatment();
+                }, 1000);
+            }
+
+            function openStatementPage(recordIdToOpen) {
+                event.preventDefault();
+                if(isInConsoleBankStmnt) {
+                    openConsoleTabbankStmntNewTab(recordIdToOpen, '');
+                }
+                else {
+                    window.open('/'+recordIdToOpen);
+                }
+            }
+
+            function openConsoleTabbankStmntNewTab(url, tabLabel) {
+                sforce.console.openPrimaryTab(null, url, true, tabLabel, function (r) {});
+            }
+
+            function expandCollapseBnkStmnt(img, imgParent) {
+                console.log('img expandCollapseBnkStmnt');
+                $content = $(imgParent).nextUntil($(".expColBnkStm").parent());
+                $content.slideToggle(50, function() {});
+            }
+
+            function expandCollapseBnkStmntAll(img, imgParent, mainScr, plusSrc,
+                minusSrc) {
+                console.log('img expandCollapseBnkStmntAll');
+                $content = $(imgParent).nextUntil($(".expColBnkStm").parent());
+                if (mainScr == minusSrc) {
+                    $content.hide(500);
+
+                } else if (mainScr == plusSrc) {
+                    $content.show(500);
+                }
+            }
+
+            function togglePlusMinusBnkStmnt(img, mainScr, plusSrc, minusSrc) {
+                console.log('img togglePlusMinusBnkStmnt');
+                if (mainScr == minusSrc) {
+                    $(img).children().attr("src", plusSrc);
+                } else if (mainScr == plusSrc) {
+                    $(img).children().attr("src", minusSrc);
+                }
+            }
+
+            $( ".bankStatemntContainer" ).on( "click", ".expColBnkStm,.expColBnkStmMain", function() {
+                console.log('img clicked111');
+                var mainScr = $(this).children().attr("src");
+                console.log('mainScr: ', mainScr);
+                var plusSrc =
+                    "{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}";
+                var minusSrc =
+                    "{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}";
+                var className = $(this).attr("class");
+                if (className == 'expColBnkStm') {
+                    expandCollapseBnkStmnt($(this), $(this).parent());
+                    togglePlusMinusBnkStmnt($(this), mainScr, plusSrc,
+                        minusSrc);
+                } else {
+                    $.each($(".expColBnkStm"), function(index, value) {
+                        if (index < ($(".expColBnkStm").size() -
+                                1)) {
+                            expandCollapseBnkStmntAll($(value),
+                                $(value).parent(), mainScr,
+                                plusSrc, minusSrc);
+                            togglePlusMinusBnkStmnt($(value),
+                                mainScr, plusSrc, minusSrc);
+                        }
+                    });
+                    togglePlusMinusBnkStmnt($(this), mainScr, plusSrc,
+                        minusSrc);
+                }
+            });
+
+            $("[id$='bankStatementPanel'] .reference-field a").click(function() {
+                var hrefdata = $(this).attr("href");
+                var decodedurl = decodeURIComponent(hrefdata);
+                var removedsrcup = decodedurl.replace('javascript:srcUp(\'','');
+                var url = removedsrcup.replace('\')', '');
+                if(isInConsoleBankStmnt) {
+                    openConsoleTabbankStmntNewTab(url, '');
+                }
+                else {
+                    window.open(hrefdata);
+                }
+                    event.preventDefault();
+            });
+        </script>
+    </apex:outputPanel>
+</apex:component>
