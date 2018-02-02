@@ -1,0 +1,30 @@
+<apex:page renderas="pdf" controller="NAC_OpportunityPageController">
+    <apex:form >
+        <div style="page-break-after: always">
+           <apex:include pageName="Generate_NAC_page"/>
+         </div>
+        <!--<div style="page-break-after: always"> 
+            <apex:outputPanel rendered="{!IF(opportunityObj.Referral_Instruction__c != null, true, false)}" >
+                <h4> Special Instructions for High Referrals </h4>
+                <apex:outputField value="{!opportunityObj.Referral_Instruction__c}"/>
+            </apex:outputPanel>
+        </div>-->
+        <apex:repeat value="{!OpportunityWrapperList}" var="varOpportunity">
+            <apex:repeat value="{!varOpportunity.lstPI}" var="varPI">
+            <div style="page-break-after: always">
+                <apex:detail subject="{!varPI.id}" relatedList="false"/>
+            </div>
+                <apex:repeat value="{!varPI.Insurance_Benefits__r}" var="varIB">
+                <div style="page-break-after: always">
+                    <apex:detail subject="{!varIB.id}" relatedList="false"/>
+                </div>
+                </apex:repeat>
+            </apex:repeat>
+        </apex:repeat>
+        <div style="page-break-after: always">
+        <!--    <apex:include pageName="NAC_QuotePDF" />-->
+        <apex:detail subject="{!quoteId}" relatedList="false"/>
+        </div>
+            <apex:include pageName="NAC_PrintQuotePDF" />
+    </apex:form>
+</apex:page>

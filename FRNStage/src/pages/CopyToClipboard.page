@@ -1,0 +1,82 @@
+<apex:page standardController="Opportunity" applyBodyTag="false" applyHtmlTag="false" showHeader="false" standardStylesheets="false">
+    <html>
+        <head>
+             <script src="//code.jquery.com/jquery-2.2.4.min.js" />
+             <script src="{!URLFOR($Resource.copy_to_clipboard,'clipboard.min.js')}"></script>
+             <style>
+               button {
+                    position:relative;
+                }
+            
+                button span {
+                    display: block;
+                    position: absolute;
+                    top:0;
+                    left:0;
+                }
+            
+                .copy-button {
+                    font-size: 13px;
+                    line-height: 30px;
+                    text-align: center;
+                    height: 40px;
+                    width: 300px;
+                }
+                 
+                 .copy-button img{
+                    height: 25px;
+                    margin-bottom: -7px;
+                 }
+             </style>
+        </head>
+        <body>
+             <apex:form styleClass="form" >
+                 <div id="copy-id" data-clipboard-text="{!Opportunity.Id}">
+                     <button class="copy-button">
+                         <img src="{!URLFOR($Resource.copy_to_clipboard,'copytoclipboard.png')}"    />
+                                Copy Opportunity Identifier To Clipboard 
+                     </button>
+                     <div id="response-message" style="display:none;"></div>
+                </div>
+                 
+                  <script>
+                        var frn = frn || {};
+                        frn.initializeCopyToClipboard = function(){
+                            var btn = document.getElementById('copy-id');
+                            var clipboard = new Clipboard(btn);
+                            
+                            var showResponse = function(message){
+                                $("#response-message").html(message)
+                                                      .show()
+                                                      .delay(5000)
+                                                      .fadeOut();
+                            };
+                            
+                            clipboard.on('success', function(e) {
+                                console.log(e);
+                                showResponse("ID Copied to Clipboard");
+                            });
+                            
+                            clipboard.on('error', function(e) {
+                                console.log(e);
+                                showResponse("Error Copying To Clipboard!");
+                            });
+                            
+                            //dampen form submit event
+                            $(".form").on("click",".copy-button",function(event){
+                                return false;
+                            });
+                            
+                        };      
+                 
+                        $(function(event){
+                            frn.initializeCopyToClipboard();
+                        });
+                 
+                        
+                 </script>
+            </apex:form>
+        </body>
+    </html>
+    
+</apex:page>

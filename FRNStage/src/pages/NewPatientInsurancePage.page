@@ -1,0 +1,329 @@
+<!-- NewPatientInsurancePage -->
+<apex:page standardController="Lead" extensions="walkinExt" tabstyle="Patient_Insurance__c">
+    <apex:sectionHeader title="Patient Insurance Edit" subtitle="New Patient Insurance"/>  
+   <!--  <script type="text/javascript">
+        function Callmefunc(id) {
+            var type = document.getElementById(id).value;
+            check(type);
+        }
+    </script>  -->
+    <apex:form >
+        <apex:pageBlock title="Patient Insurance Edit">
+            <apex:pageBlockButtons > 
+                 <apex:commandButton value="Save" action="{!addNewPatientInsuranceObj}" rendered="{!NOT(recordForEdit)}"/>
+                <apex:commandButton value="Save" action="{!updatePatientIontactObj}" rendered="{!recordForEdit}"/>
+                <apex:commandButton value="Cancel" action="{!updatePatientIontactObj}" /> 
+            </apex:pageBlockButtons>
+            <!-- <apex:actionFunction name="check" action="{!conDetail}" reRender="refresh,refresh1" /> -->
+            
+            <apex:pageBlockSection columns="2" collapsible="false">
+                <font><apex:facet name="header">
+                    <span style="color:black;font-size:14px;" >Information</span>
+                </apex:facet></font>        
+                
+                <apex:PageblockSectionItem >
+                    <apex:OutputLabel value="Lead"/>
+                    <apex:outputText value="{!le.FirstName + ' ' +le.LastName}" />                  
+                </apex:PageblockSectionItem>  
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Patient Social Security Number"/>
+                    <apex:inputField value="{!patIns.Patient_Social_Security_Number__c}" tabOrderHint="1"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="DOB"/>
+					<!--  <apex:inputfield value="{!patIns.Patient_DOB__c}"/> -->
+					<apex:outputPanel id="refresh" >
+                        <apex:outputText value="{0,date,MM/dd/yyyy}"> 
+                            <apex:param value="{!con.Birthdate}"/> 
+                        </apex:outputText>
+                    </apex:outputPanel> 
+                </apex:pageBlockSectionItem>            
+				<!-- Age -->
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Age"/>   
+					<apex:outputPanel id="refresh1" >                   
+						<apex:outputText value="{!conAge}" id="Info8" style="color:{!IF((conAge >=26 && conAge < 27) || redBoolead == true, 'red', 'black')};"/>
+					</apex:outputPanel>                     
+                </apex:pageBlockSectionItem>
+
+            </apex:PageblockSection>
+                
+            <apex:pageBlockSection columns="2" collapsible="false">
+				<font><apex:facet name="header">
+					<span style="color:black;font-size:14px;" >Subscriber Information</span>
+				</apex:facet></font>
+                    
+				<apex:pageBlockSectionItem >
+					<apex:outputlabel value="Subscriber is Patient"/>
+					<apex:outputPanel id="Subs">
+						<apex:inputfield value="{!patIns.Subscriber_is_Patient__c}" tabOrderHint="2"/>
+					</apex:outputPanel>
+				</apex:pageBlockSectionItem>
+				
+                <apex:pageBlockSectionItem />
+				
+				<apex:PageblockSectionItem >
+					<apex:outputlabel value="Subscriber"/>
+					<apex:outputPanel id="subsc" >
+						<apex:selectList size="1" value="{!Selectedsubscriber}" tabindex="30">
+							<apex:selectOptions value="{!subscriberName}"/>
+							<apex:actionSupport event="onchange" action="{!SubscriberEmployer}" rerender="pbs,Subs"/>
+						</apex:selectList>
+					</apex:outputPanel>
+				</apex:PageblockSectionItem>
+               
+                <apex:PageblockSectionItem >
+                    <apex:outputlabel value="Subscriber Employer"/>
+					<apex:outputPanel id="pbs">
+						<!--<apex:OutputText value="{!patconEmployer}"/>-->
+						<apex:inputfield value="{!patIns.Subscriber_Employer__c}" tabOrderHint="4"/>
+					</apex:outputPanel>
+                </apex:PageblockSectionItem>
+                
+                <apex:PageblockSectionItem >
+                    <apex:outputLabel value="&nbsp;" escape="false" />
+                    <apex:commandLink value="Add New" action="{!newPatientContact}"/> 
+                </apex:PageblockSectionItem>                                
+                
+            </apex:PageblockSection>            
+                
+            <apex:pageBlockSection columns="2" collapsible="false" id="pos1">
+                <font><apex:facet name="header">
+                    <span style="color:black;font-size:14px;" >Insurance Information (AC)</span>
+                </apex:facet></font>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Benefits Check"/>
+                    <apex:inputfield value="{!patIns.Benefits_Check__c}" tabOrderHint="5"/>
+                </apex:pageBlockSectionItem> 
+                
+                
+                <apex:PageblockSectionItem >
+                    <apex:outputlabel value="Insurance Plan"/>
+                    <apex:inputfield value="{!patIns.Insurance_Plan__c}" tabOrderHint="9"/>
+                </apex:PageblockSectionItem>
+                
+                <apex:PageblockSectionItem >
+                    <apex:outputlabel value="Insurance Company"/>
+                    <apex:selectList size="1" value="{!patIns.Insurance_Company__c}" tabindex="60">
+                        <apex:selectOptions value="{!InsuranceCompany}"/>
+						<apex:actionSupport event="onchange" action="{!OtherInsCom}" rerender="pos1"/>
+                    </apex:selectList>
+                </apex:PageblockSectionItem>
+				
+				<apex:pageBlockSectionItem rendered="{!if(IOIC == True,true,false)}">
+					<apex:outputlabel value="Other Insurance Company" />
+					<apex:inputfield value="{!patIns.Other_Insurance_Company__c}" />
+				</apex:pageBlockSectionItem>
+				
+				<apex:pageBlockSectionItem rendered="{!if(IOIC == True,false,true)}" />
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Provider Services Phone"/>
+                    <apex:inputfield value="{!patIns.Provider_Services_Phone__c}" tabOrderHint="10"/>
+                </apex:pageBlockSectionItem>            
+                
+                <apex:PageblockSectionItem >
+                    <apex:outputlabel value="Member ID"/>
+                    <apex:inputfield value="{!patIns.Member_ID__c}" tabOrderHint="7"/>
+                </apex:PageblockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="Behavioral Health Phone"/>
+                    <apex:inputfield value="{!patIns.Behavioral_Health_Phone__c}" tabOrderHint="11"/>
+                </apex:pageBlockSectionItem>            
+                
+                <apex:PageblockSectionItem >
+                    <apex:outputlabel value="Group Number"/>
+                    <apex:inputfield value="{!patIns.Group_Number__c}" tabOrderHint="8"/>
+                </apex:PageblockSectionItem>
+            
+                </apex:PageblockSection>
+                
+                <apex:pageBlockSection columns="2" collapsible="false">
+					<font><apex:facet name="header">
+						<span style="color:black;font-size:14px;" >Insurance Company (VOB)</span>
+					</apex:facet></font>
+					
+					<apex:PageblockSectionItem >
+						<apex:outputlabel value="Type/Order"/>
+						<apex:inputfield value="{!patIns.Type_Order__c}" tabOrderHint="12"/>
+					</apex:PageblockSectionItem>
+					
+					<apex:PageblockSectionItem >
+						<apex:outputlabel value="Policy Effective Date"/>
+						<apex:inputfield value="{!patIns.Policy_Effective_Date__c}" tabOrderHint="17"/>
+					</apex:PageblockSectionItem>
+					
+					 <apex:pageBlockSectionItem >
+						<apex:outputlabel value="COB Completed"/>
+						<apex:inputfield value="{!patIns.COB_Completed__c}" tabOrderHint="13"/>
+					</apex:pageBlockSectionItem>
+					
+					 <apex:PageblockSectionItem >
+						<apex:outputlabel value="Renewal Date"/>
+						<apex:inputfield value="{!patIns.Renewal_Date__c}" tabOrderHint="18"/>
+					</apex:PageblockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="COB Needed"/>
+						<apex:inputfield value="{!patIns.COB_Needed__c}" tabOrderHint="14"/>
+					</apex:pageBlockSectionItem>
+					
+					 <apex:PageblockSectionItem >
+						<apex:outputlabel value="Term Date"/>
+						<apex:inputfield value="{!patIns.Term_Date__c}" tabOrderHint="19"/>
+					</apex:PageblockSectionItem>
+					 
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="State of Origination"/>
+						<apex:inputfield value="{!patIns.State_of_Origination__c}" tabOrderHint="15"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:PageblockSectionItem />   
+
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Claims Billing Address"/>
+						<apex:inputfield value="{!patIns.Claims_Billing_Address__c}" tabOrderHint="16"/>
+					</apex:pageBlockSectionItem>
+                
+                </apex:PageblockSection>
+
+                <apex:pageBlockSection columns="2" collapsible="false" >
+					<font><apex:facet name="header">
+						<span style="color:black;font-size:14px;" >Benefit Detail Information</span>
+					</apex:facet></font> 
+					
+					  <apex:pageBlockSectionItem >
+						<apex:outputlabel value="PreCert Required"/>
+						<apex:inputfield value="{!patIns.PreCert_Required__c}" tabOrderHint="20"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:PageblockSectionItem >
+						<apex:outputlabel value="Accreditation"/>
+						<apex:inputfield value="{!patIns.Accreditation__c}" tabOrderHint="27"/>
+					</apex:PageblockSectionItem>
+					
+					  <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Vendor"/>
+						<apex:inputfield value="{!patIns.Vendor__c}" tabOrderHint="21"/>
+					</apex:pageBlockSectionItem>
+					
+					  <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Free Standing RTC Facility"/>
+						<apex:inputfield value="{!patIns.Free_Standing_RTC_Facility__c}" tabOrderHint="28"/>
+					</apex:pageBlockSectionItem>
+					
+					  <apex:pageBlockSectionItem >
+						<apex:outputlabel value="PreCert Phone"/>
+						<apex:inputfield value="{!patIns.PreCert_Phone__c}" tabOrderHint="22"/>
+					</apex:pageBlockSectionItem>
+					
+					 <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Free Standing Facility"/>
+						<apex:inputfield value="{!patIns.Free_Standing_Facility__c}" tabOrderHint="29"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="PreCert Penalty Description"/>
+						<apex:inputfield value="{!patIns.PreCert_Penalty_Description__c}" tabOrderHint="23"/>
+					</apex:pageBlockSectionItem>
+					
+					 <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Travel Out of State for Non-Emergent Tx"/>
+						<apex:inputfield value="{!patIns.Travel_Out_of_State_for_Non_Emergent_Tx__c}" tabOrderHint="30"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Accepts Assignment of Benefits"/>
+						<apex:inputfield value="{!patIns.Accepts_Assignment_of_Benefits__c}" tabOrderHint="24"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Prior Auth Before Travel"/>
+						<apex:inputfield value="{!patIns.Prior_Auth_Before_Travel__c}" tabOrderHint="31"/>
+					</apex:pageBlockSectionItem>
+					
+					 <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Referral Needed"/>
+						<apex:inputfield value="{!patIns.Referral_Needed__c}" tabOrderHint="25"/>
+					</apex:pageBlockSectionItem>
+					
+					<apex:PageblockSectionItem />
+					
+					 <apex:pageBlockSectionItem >
+						<apex:outputlabel value="Is this Medicare/Medicaid?"/>
+						<apex:inputfield value="{!patIns.Is_this_Medicare_Medicaid__c}" tabOrderHint="26"/>
+					</apex:pageBlockSectionItem>
+                
+                </apex:PageblockSection>
+                
+				<apex:pageBlockSection columns="2" collapsible="false">
+					<font><apex:facet name="header">
+						<span style="color:black;font-size:14px;" >Pharmacy Benefit Information</span>
+					</apex:facet></font>
+                
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Pharmacy Coverage" />
+						<apex:inputfield value="{!patIns.Pharmacy_Coverage__c}" tabOrderHint="32"/>
+					</apex:pageBlockSectionItem>
+                
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Rx Vendor" />
+						<apex:inputfield value="{!patIns.Rx_Vendor__c}" tabOrderHint="33"/>
+					</apex:pageBlockSectionItem>
+                
+					<apex:pageBlockSectionItem />
+                
+					<apex:pageBlockSectionItem >
+						<apex:outputlabel value="Rx Phone"/>
+						<apex:inputfield value="{!patIns.Rx_Phone__c}" tabOrderHint="34"/>
+					</apex:pageBlockSectionItem>                
+                </apex:PageblockSection>
+      
+                <apex:pageBlockSection columns="2" collapsible="false">
+                <font><apex:facet name="header">
+                    <span style="color:black;font-size:14px;" >ACA Policy Information</span>
+                </apex:facet></font>
+      
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="ACA Policy"/>
+                    <apex:inputfield value="{!patIns.ACA_Policy__c}" tabOrderHint="35"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="ACA Policy Paid Through Date"/>
+                    <apex:inputfield value="{!patIns.ACA_Policy_Paid_Through_Date__c}" tabOrderHint="36"/>
+                </apex:pageBlockSectionItem>
+                
+                </apex:PageblockSection>
+                
+                <apex:pageBlockSection columns="2" collapsible="false">
+                <font><apex:facet name="header">
+                    <span style="color:black;font-size:14px;" >COBRA Information</span>
+                </apex:facet></font>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="COBRA Account"/>
+                    <apex:inputfield value="{!patIns.COBRA_Account__c}" tabOrderHint="37"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="COBRA Effective Date"/>
+                    <apex:inputfield value="{!patIns.COBRA_Effective_Date__c}" tabOrderHint="38"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem />
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputlabel value="COBRA Paid Through Date"/>
+                    <apex:inputfield value="{!patIns.COBRA_Paid_Through_Date__c}" tabOrderHint="39"/>
+                </apex:pageBlockSectionItem>
+                
+                </apex:PageblockSection>
+                
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

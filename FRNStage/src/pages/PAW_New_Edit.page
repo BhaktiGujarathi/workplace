@@ -1,0 +1,597 @@
+<apex:page Controller="PAW_New_EditCntrllr" cache="false" action="{!initialize}">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+ <style>
+    .bEditBlock input, .bEditBlock select, .quickCreateModule input, .quickCreateModule select  {
+        vertical-align: middle;
+        margin-right: 1.40em;
+    }
+    .bPageBlock .lookupIcon, .bPageBlock .lookupIconOn, .genericPageBlockTable .lookupIcon, .genericPageBlockTable .lookupIconOn {
+        vertical-align: middle;
+        padding-bottom: 1px;
+        margin-left: -115px;
+    }
+    .apexp .bPageBlock .detailList {
+        width: 95%;
+    }
+    .editPage .bPageBlock .detailList tr th {
+        border-bottom: none;
+        left: 1.40em;
+    }
+</style>
+
+<script>
+    function onSaveDetails(validVar)
+    {
+        var validatePatientInsuranceResult = frn.validatePatientInsurance();
+        var validateInsuranceBenefitResult = frn.validateInsuranceBenefit();
+        var validateFacilityProgramResult = frn.validateFacilityProgram();
+        var validateRateAdjustmentResult = frn.validateRateAdjustment();
+        if( true == validatePatientInsuranceResult
+        || true == validateInsuranceBenefitResult
+        || true == validateFacilityProgramResult
+        || true == validateRateAdjustmentResult) {
+            if(validVar == true)
+            {
+                if (!confirm("The EDR is less that the target EDR for the selected facility. Are you sure you want to continue?")) 
+                {
+                    return false;
+                } 
+            }
+            saveClicked();
+        }
+    }
+    function onUpdateDetails(){
+        var validatePatientInsuranceResult = frn.validatePatientInsurance();
+        var validateInsuranceBenefitResult = frn.validateInsuranceBenefit();
+        var validateFacilityProgramResult = frn.validateFacilityProgram();
+        var validateRateAdjustmentResult = frn.validateRateAdjustment();
+        if( true == validatePatientInsuranceResult
+        || true == validateInsuranceBenefitResult
+        || true == validateFacilityProgramResult
+        || true == validateRateAdjustmentResult) {
+            console.log('>>> 2');
+            updateClicked();
+        }
+    }
+</script>
+
+    <apex:sectionHeader title="Pay Agreement Worksheet Edit"  subtitle="Pay Agreement Worksheet" />
+        <apex:form style="width:100%;">
+            <apex:outputPanel id="ErrorMessage">
+                <apex:pagemessages />
+            </apex:outputPanel>
+            
+            <apex:pageBlock mode="Edit" id="ac">
+            <apex:outputPanel id="btns">
+                <div align="center" draggable="false" style="margin-top:10px;">
+                    <!-- <apex:commandButton value="Update Details" action="{!createAndUpdatePAWDetailsRecords}" 
+                                            rerender="WorksheetDetail,ErrorMessage,btns,locVal,patDel,patDel1" /> -->
+                    <apex:commandButton value="Update Details" onclick="onUpdateDetails();" reRender="none"/>
+                    <!-- <input type="button" 
+                           class="btn" 
+                           onclick="onUpdateDetails();" 
+                           id="updateDetails" 
+                           value="Update Details"/> -->
+
+                    <input type="button" class="btn" onclick="onSaveDetails({!AND(wrprObj.targetEDR != null,wrprObj.pyAgrmntWrksht.Daily_Revenue__c!=null,wrprObj.pyAgrmntWrksht.Daily_Revenue__c != 0,wrprObj.pyAgrmntWrksht.Daily_Revenue__c < wrprObj.targetEDR)});" id="saveDetails" value="Save"/>
+                    <apex:commandButton value="Cancel" action="{!cancel}" />
+<!--                     <apex:commandButton value="Cancel" action="{!cancelFromOpp}" rendered="{!IF(CONTAINS(retUrl, 'CreateOpportunity'),'true','false')}"/>  -->
+                </div>
+            </apex:outputPanel>
+            
+                <apex:actionfunction name="ptntInsrncSelected" action="{!onPatientSelection}" reRender="patDel"/>
+                <apex:actionfunction name="insrncBnftSelected" action="{!onBenefitSelection}" reRender="patDel,ErrorMessage"/>
+                <apex:actionfunction name="faciltySelected" action="{!onFacilitySelection}" reRender="patDel,patDel1,ErrorMessage"/>
+                <apex:actionfunction name="rateSelected" action="{!updateWraperValues}" reRender="patDel,locVal,patDel1,ErrorMessage"/>
+                <apex:actionfunction name="fcltyPrgrmSelected" action="{!updateWraperValues}" reRender="locVal,ErrorMessage"/>
+                <apex:actionfunction name="saveClicked" action="{!saveTheUpdates}" reRender="WorksheetDetail,ErrorMessageWorksheetDetail,ErrorMessage,btns,locVal,patDel,patDel1"/>
+
+                <apex:actionfunction name="updateClicked" 
+                                     action="{!createAndUpdatePAWDetailsRecords}" 
+                                     reRender="WorksheetDetail,ErrorMessage,btns,locVal,patDel,patDel1"/>
+                
+                <apex:pageBlockSection columns="2" id="patDel">
+                    <apex:pageBlockSectionItem rendered="{!showPILookup}">
+                        <apex:outputLabel value="Patient Insurance"/> 
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Patient_Insurance__c}" 
+                                         onchange="ptntInsrncSelected()" 
+                                         style="width:140px;margin-right: 119px;"/>
+                    </apex:pageBlockSectionItem>
+                    
+                    <apex:pageBlockSectionItem rendered="{!!showPILookup}">
+                        <apex:outputLabel value="Patient Insurance"/>
+                            <apex:outputPanel >
+                                <apex:outputText value="{!ptntInsrncObj.Name}" 
+                                                 rendered="{!ptntInsrncObj.Name!=null}"
+                                                 styleClass="pntntInsrncSelected1" /> 
+                                <apex:selectList value="{!wrprObj.pyAgrmntWrksht.Patient_Insurance__c}" 
+                                                 rendered="{!ptntInsrncObj.Name==null}" 
+                                                 size="1" 
+                                                 multiselect="false" 
+                                                 onchange="ptntInsrncSelected()"
+                                                 styleClass="pntntInsrncSelected">
+                                    <apex:selectOptions value="{!ptntInsrnceOptions}"/>
+                                </apex:selectList>
+                            </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Insurance Benefit"/>
+                        <apex:selectList value="{!wrprObj.insrncBnftSelected}" 
+                                         size="1" 
+                                         multiselect="false" 
+                                         onchange="insrncBnftSelected()"
+                                         styleClass="insrncBnftSelected" >
+                            <apex:selectOptions value="{!insrncBnftOptions}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="FRN Facility"/>
+                        <apex:selectList value="{!wrprObj.facilitySelected}" 
+                                         size="1" 
+                                         multiselect="false" 
+                                         onchange="faciltySelected()" 
+                                         styleClass="frnFacilitySelected">
+                            <apex:selectOptions value="{!faciltyOptions}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Rate Adjustment Type"/>
+                        <apex:selectList value="{!wrprObj.rateAdjstmntSelected}" 
+                                         size="1" 
+                                         multiselect="false" 
+                                         onchange="rateSelected()"
+                                         styleClass="rtAdjstmntSelected" >
+                            <apex:selectOptions value="{!rtAdjstmntOptions}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem id="fpName">
+                        <apex:outputText value="Facility Program Name"/> 
+                        <apex:selectList value="{!wrprObj.fcltyPrgrmSelected}" 
+                                         size="1" 
+                                         multiselect="false" 
+                                         onchange="fcltyPrgrmSelected()"
+                                         styleClass="fcltyPrgrmSelected" >
+                            <apex:selectOptions value="{!fcltyPrgrmOptions}"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible Included in OOP"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Deductible_Included_in_OOP__c}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />                    
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Counter Offer"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Counter_Offer__c}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />                    
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection columns="4" id="locVal" >
+                    <!-- Row 1 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Deductible__c}" rendered="{!wrprObj.insrncBnft.Deductible__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Deductible__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Max_Out_of_Pocket__c}" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket__c==null}"/> 
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible&nbsp;Amount&nbsp;Requested" escape="false"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Deductible_Amount_Requested__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%">
+                        <apex:outputText value="Total&nbsp;Patient&nbsp;Contribution" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Total_Patient_Contribution__c}" rendered="{!wrprObj.pyAgrmntWrksht.Total_Patient_Contribution__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.pyAgrmntWrksht.Total_Patient_Contribution__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 2 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible&nbsp;Met" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Deductible_Met__c}" rendered="{!wrprObj.insrncBnft.Deductible_Met__c!=null}"/>
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Deductible_Met__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max&nbsp;Met" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Met__c}" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Met__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Met__c==null}"/> 
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Co&nbsp;Insurance&nbsp;Amount&nbsp;Requested" escape="false"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Co_Insurance_Amount_Requested__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Total&nbsp;EIV" escape="false"/>
+                        <apex:outputPanel rendered="{!wrprObj.totalInsCoResp!=null}">
+                            <apex:outputText value="${0, number,0,000.00}" rendered="{!wrprObj.totalInsCoResp>=1000}" escape="false" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.totalInsCoResp}" />
+                            </apex:outputText> 
+                            <apex:outputText value="${0, number,0.00}" rendered="{!wrprObj.totalInsCoResp<1000}" escape="false" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.totalInsCoResp}" />
+                            </apex:outputText> 
+                        </apex:outputPanel> 
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 3 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Deductible&nbsp;Remaining" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Deductible_Remaining__c}" rendered="{!wrprObj.insrncBnft.Deductible_Remaining__c!=null}"/>    
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Deductible_Remaining__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Out&nbsp;of&nbsp;Pocket&nbsp;Max&nbsp;Remaining" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Remaining__c}" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Remaining__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.insrncBnft.Max_Out_of_Pocket_Remaining__c==null}"/> 
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Co-Pay&nbsp;Amount&nbsp;Requested" escape="false"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Co_Pay_Amount_Requested__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Total&nbsp;Revenue" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Total_Revenue__c}" rendered="{!wrprObj.pyAgrmntWrksht.Total_Revenue__c!=null}"/> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.pyAgrmntWrksht.Total_Revenue__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 4 -->
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputText value="Room&nbsp;and&nbsp;Board&nbsp;Fee(s)" escape="false"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Room_and_Board_Fees__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputText value="Uncovered&nbsp;Charges" escape="false"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Uncovered_Charges__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Daily&nbsp;Revenue" escape="false"/>
+                            <apex:outputPanel style="{!IF(AND(wrprObj.targetEDR != null,wrprObj.pyAgrmntWrksht.Daily_Revenue__c!=null,wrprObj.pyAgrmntWrksht.Daily_Revenue__c != 0,wrprObj.pyAgrmntWrksht.Daily_Revenue__c < wrprObj.targetEDR),'color:red','color:black')}" >
+                            <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Daily_Revenue__c}" rendered="{!wrprObj.pyAgrmntWrksht.Daily_Revenue__c!=null}"  /> 
+                            <apex:outputText value="$0.00" rendered="{!wrprObj.pyAgrmntWrksht.Daily_Revenue__c==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 5 -->                    
+                    <apex:pageBlockSectionItem dataStyle="text-align:right;margin-left: 34px !important;position: relative;left:15px;" >
+                        <apex:outputText value="Plan&nbsp;Coverage" escape="false" styleClass="labelCol vfLabelColTextWrap"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Plan_Coverage__c}"/>   
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem labelStyle="text-align: left;" rendered="{!AND(!isTalbott, !isIop)}" >
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Plan_Coverage__c}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputText value="Ancillary Fee(s)"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Ancillary_Fees__c}" rendered="{!wrprObj.pyAgrmntWrksht.Ancillary_Fees__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(isTalbott, !isIop)}" >
+                        <apex:outputText value="Days 60-90 Fee(s)"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Days_60_90_Fees__c}" rendered="{!wrprObj.pyAgrmntWrksht.Days_60_90_Fees__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, isIop)}"/>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Total&nbsp;Co&nbsp;Pay" escape="false"/>
+                        <apex:outputPanel >
+                            <apex:outputText value="${0, number,0,000.00}" rendered="{!wrprObj.totalCoPayAmt!=null && wrprObj.totalCoPayAmt>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.totalCoPayAmt}" />
+                            </apex:outputText>
+                            <apex:outputText value="${0, number,0.00}" rendered="{!wrprObj.totalCoPayAmt !=null && wrprObj.totalCoPayAmt<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.totalCoPayAmt}" />
+                            </apex:outputText>
+                            <apex:outputText value="$ 0.00" rendered="{!wrprObj.totalCoPayAmt==null}"/>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 6 -->
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputText value="Miscellaneous Pay"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Miscellaneous_Fees__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}" />
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 7 -->
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="Private Pay"/>
+                        <apex:inputField value="{!wrprObj.pyAgrmntWrksht.Private_Pay__c}" style="width:120px;"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 8 -->
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection columns="4" id="patDel1">
+                <!-- Row 1 -->
+                <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputlabel value="Detox&nbsp;(DTX)" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Detox_DTX__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:23%" rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputlabel value="Detox&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!wrprObj.pyAgrmntWrksht.Detox_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!wrprObj.pyAgrmntWrksht.Detox_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.Detox_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!wrprObj.pyAgrmntWrksht.Detox_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.Detox_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputlabel value="Detox&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Detox_Over__c}" rendered="{!wrprObj.pyAgrmntWrksht.Detox_Over__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 2 -->
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputlabel value="Residential&nbsp;Treatment&nbsp;(RTC)" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Residential_Treatment_RTC__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">  
+                        <apex:outputlabel value="RTC&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!wrprObj.pyAgrmntWrksht.RTC_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!wrprObj.pyAgrmntWrksht.RTC_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.RTC_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!wrprObj.pyAgrmntWrksht.RTC_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.RTC_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                        <apex:outputlabel value="Residential&nbsp;Treatment&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Residential_Treatment_Override__c}" rendered="{!wrprObj.pyAgrmntWrksht.Residential_Treatment_Override__c!=null}" /> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(!isTalbott, !isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 3 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Partial&nbsp;Hospitalization&nbsp;(PHP)" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Partial_Hospitalization_PHP__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="PHP&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!wrprObj.pyAgrmntWrksht.PHP_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!wrprObj.pyAgrmntWrksht.PHP_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.PHP_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!wrprObj.pyAgrmntWrksht.PHP_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.PHP_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:20%">
+                        <apex:outputlabel value="Partial&nbsp;Hospitalization&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Partial_Hospitalization_Override__c}" rendered="{!wrprObj.pyAgrmntWrksht.Partial_Hospitalization_Override__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 4 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Intensive&nbsp;Outpatient&nbsp;(IOP)" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Intensive_Outpatient_IOP__c}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >  
+                        <apex:outputlabel value="IOP&nbsp;Pays&nbsp;at" escape="false"/>
+                        <apex:outputPanel rendered="{!wrprObj.pyAgrmntWrksht.IOP_Pays_at__c!=null}">
+                            <apex:outputText value="{0, number, 0,000.00}%" rendered="{!wrprObj.pyAgrmntWrksht.IOP_Pays_at__c>=1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.IOP_Pays_at__c}" />
+                            </apex:outputText>
+                            <apex:outputText value="{0, number, 0.00}%" rendered="{!wrprObj.pyAgrmntWrksht.IOP_Pays_at__c<1000}" style="white-space: nowrap;">
+                                <apex:param value="{!wrprObj.pyAgrmntWrksht.IOP_Pays_at__c}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem dataStyle="width:10%" labelStyle="width:20%">
+                        <apex:outputlabel value="Intensive&nbsp;Outpatient&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Intensive_Outpatient_Override__c}" rendered="{!wrprObj.pyAgrmntWrksht.Intensive_Outpatient_Override__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 5 -->
+                    <apex:pageBlockSectionItem >
+                        <apex:outputlabel value="Total" escape="false"/>
+                        <apex:outputText value="{!wrprObj.totalRowCount}" style="{!if(wrprObj.totalRowCount<=30,'color:black;','color: red;')}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 6 -->
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <apex:pageBlockSectionItem />
+                    <!-- Row 7 -->
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Uncovered__c}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days&nbsp;Rate" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Uncovered_Days_Rate__c}" rendered="{!wrprObj.pyAgrmntWrksht.Uncovered_Days_Rate__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputlabel value="Uncovered&nbsp;Days&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Uncovered_Days_Override__c}" rendered="{!wrprObj.pyAgrmntWrksht.Uncovered_Days_Override__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 8 -->
+                    <apex:pageBlockSectionItem rendered="{!AND(isTalbott, !isIop)}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Num_Days_Room__c}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(isTalbott, !isIop)}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days&nbsp;Rate" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Room_and_Board_Days_Rate__c}" rendered="{!wrprObj.pyAgrmntWrksht.Room_and_Board_Days_Rate__c!=null}"/> 
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(isTalbott, !isIop)}">
+                        <apex:outputlabel value="Room&nbsp;and&nbsp;Board&nbsp;Days&nbsp;Override" escape="false"/>
+                        <apex:outputField value="{!wrprObj.pyAgrmntWrksht.Room_and_Board_Days_Override__c}" rendered="{!wrprObj.pyAgrmntWrksht.Room_and_Board_Days_Override__c!=null}"/>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!AND(isTalbott, !isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <!-- Row 9-->
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                        <apex:outputlabel value="Total" escape="false"/>
+                        <apex:outputText value="{!wrprObj.totalTalbottDay}" />
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!OR(isTalbott, isIop)}">
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                
+                
+                <apex:pageBlockSection columns="1">
+                    <apex:outputPanel id="WorksheetDetail">
+                        <apex:outputPanel rendered="{!wrprObj.pawDetailListDisplayFlag}" >
+                            <style>
+                                .tbl tr th, .tbl tr td{padding:3px 3px;text-align:center;vertical-align:middle;}
+                                .tbl tr th{font-weight:bold}
+                            </style>
+                            <table border="1" cellspacing="0" cellpadding="0" class="tbl" style="margin-top:50px;">
+                                <tr>
+                                    <th>Days </th>
+                                    <th>LOC </th>
+                                    <th>Billed Rate </th>
+                                    <th>Ins Coverage </th>
+                                    <th>(Effective)<br/>Beginning<br/>Deductible </th>
+                                    <th>Apply<br/>Deductible </th>
+                                    <th>Charge After<br/>Deductible </th>
+                                    <th>Beginning OOP </th>
+                                    <th>OOP After<br/>Deductible </th>
+                                    <th>Calculated Co-<br/>Ins </th>
+                                    <th>Co-Ins </th>
+                                    <th>Ins EIV </th>
+                                    <th>Patient<br/>Responsibility </th>
+                                    <th>Ins Co Responsibility </th>
+                                </tr>
+                                <apex:variable value="{!1}" var="rowNum"/>
+                                <apex:repeat value="{!wrprObj.relatedPAWDetailsList}" var="detailInstance">
+                                <tr>
+                                   <td><apex:outputText value="{!FLOOR(rowNum)}"/>  </td>
+                                   <td><apex:outputText value="{!detailInstance.Level_of_Care__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Billed_Rate__c}"/> </td>
+                                   <td><apex:outputText value="{!detailInstance.Insurance_Coverage__c}%"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Beginning_Deductible__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Applied_Deductible__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Charge_After_Deductible__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Beginning_Out_of_Pocket__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Out_of_Pocket_After_Deductible__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Calculated_Co_Insurance__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Co_Insurance__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Insurance_EIV__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Patient_Responsibility__c}"/> </td>
+                                   <td><apex:outputField value="{!detailInstance.Insurance_Co_Responsibility__c}"/> </td>
+                                </tr>
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:repeat>
+                    </table>
+                </apex:outputPanel>
+            </apex:outputPanel>
+       </apex:pageBlockSection>
+            </apex:pageBlock>
+    </apex:form>
+    <script type="text/javascript">
+        var frn = frn || {};
+        var isPrivatePay = false;
+        // method to check if Rate Adjustments are blank
+        frn.validateRateAdjustment = function() {
+            console.log('>>> isPrivatePay : ',isPrivatePay);
+            if(!isPrivatePay) {
+                var rateAdjustment = $(".rtAdjstmntSelected").val();
+
+                if( !rateAdjustment ) {
+                    alert("Error : Rate Adjustment missing for PAW record!");
+                    return false;
+                }
+                else 
+                    return true;
+            }
+            else {
+                return true;
+            }
+        }
+
+        // method to check if patient insuracnces are blank
+        frn.validatePatientInsurance = function() {
+            var patientInsurance = $(".pntntInsrncSelected").val();
+            var patientIns = $(".pntntInsrncSelected1").text();
+                        
+            if( !patientInsurance && !patientIns ) {
+                alert("Error : Patient Insurance missing for PAW record!");
+                return false;
+            }
+            else 
+                return true;
+        }
+
+        // method to check if Insurance benefits are blank
+        frn.validateInsuranceBenefit = function() {
+            var insuranceBenefit = $(" .insrncBnftSelected").val();
+            
+            if( !insuranceBenefit ) {
+                alert("Error : Insurance Benefit missing for PAW record!");
+                return false;
+            }
+            else 
+                return true;
+        }
+
+
+        // method to check if Facility Program are blank
+        frn.validateFacilityProgram = function() {
+            
+            var isPrgrmSelected = false;
+            isPrivatePay = false;
+            $(" .fcltyPrgrmSelected option").each(function(index){
+                console.log('>>> : ',$(" .fcltyPrgrmSelected option")[index].selected);
+                if($(" .fcltyPrgrmSelected option")[index].selected) {                    
+                    if($(" .fcltyPrgrmSelected option")[index].text.includes('Self/Private Pay'))
+                    {
+                        isPrivatePay = true;
+                    }
+                    
+                    if($(" .fcltyPrgrmSelected option")[index].text.includes('---Select---')) {
+                        alert("Error : Facility Program missing for PAW record!");
+                        isPrgrmSelected = isPrgrmSelected && false;
+                        return true;
+                    }
+                    else {
+                        isPrgrmSelected = isPrgrmSelected && true;
+                    }
+                    
+                }
+            });
+            return isPrgrmSelected;
+        }
+    </script>
+</apex:page>

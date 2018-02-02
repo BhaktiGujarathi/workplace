@@ -1,0 +1,622 @@
+<!-- NewLeadPage________________________________________________________________ -->
+<apex:page standardController="Lead" extensions="NewLeadController" tabstyle="Lead">
+    <apex:sectionHeader title="Pre-Screenings Edit" subtitle="New Pre-Screenings"/>
+        <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+        <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js" />
+        <apex:styleSheet value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" />
+        <script src="//cdn.rawgit.com/malsup/blockui/316f6e5d/jquery.blockUI.js" />
+
+    <script type="text/javascript">
+        var jQ = $.noConflict();
+        var frn = frn || {};
+
+        frn.initializeFieldSecurity = function(){
+            var fieldList = $(".fieldRef");
+            var fieldList1 = $(".fieldRef1");
+            
+            var pName = ('{!$Profile.Name}');
+            var nVOB = pName.includes("VOB");
+            var nVOB1 = pName.includes("(AC) Manager");
+            if(!nVOB)   {
+                if(!nVOB1)   {
+                    if(fieldList.length > 0){                           
+                        for (var i = 0, len = fieldList.length; i < len; i++) {
+                            fieldList[i].disabled = nVOB== false ? true : false;
+                            
+                        }
+                    } 
+                } 
+            } 
+            if(nVOB){
+                    $(".actLink").each(function( index ) {
+                            $(this).remove();
+                    }); 
+                    $(".lookupInput a").each(function( index ) {
+                            $(this).remove();
+                    });     
+                    $(".newBtn").each(function( index ) {
+                            $(this).remove();
+                    });                 
+    
+                    if(fieldList1.length > 0){                          
+                        for (var i = 0, len = fieldList1.length; i < len; i++) {
+                            fieldList1[i].disabled = nVOB== true ? true : false;                            
+                        }
+                    }
+                    
+            }
+            //textarea fix for scrollbars and resizing does not work together
+            frn.applyTextAreaResizeFix(); 
+        };
+
+        frn.applyTextAreaResizeFix = function(){ 
+            var disabledTextareas = $("textarea[disabled]");
+            disabledTextareas.removeAttr("disabled");
+            disabledTextareas.attr("readonly","true");
+        };
+
+        frn.applyMultipleSubmitFix = function(){
+            jQ("input.save-button").click(function(event){ 
+                //$(this).prop("disabled","true");
+                frn.showLoader();
+                return true;
+            });
+        };
+
+        frn.showLoader = function(){
+            jQ.blockUI({ css: {
+                    border: 'none', 
+                    padding: '15px', 
+                    backgroundColor: '#000', 
+                    '-webkit-border-radius': '10px', 
+                    '-moz-border-radius': '10px', 
+                    opacity: .5, 
+                    color: '#fff' 
+            }}); 
+        };
+
+        frn.hideLoader = function(){
+            console.log('>>>>>>');
+           jQ.unblockUI();
+        };
+
+        function Callmefunc(id) {
+            var type = document.getElementById(id).value;
+            check(type);  
+        }
+    </script>
+
+    <style type="text/css">
+    .col1 {width:75%;}
+    </style>  
+    <style>
+        .displayNone { 
+            display:none; 
+        }
+        .displayBlock {
+            display:block;
+        }
+        .ui-autocomplete-loading { 
+            background: white url(/img/loading32.gif) right center no-repeat;
+            background-size:15px 15px; 
+        }
+        .placeHolder {
+            font-style: italic;         
+        }
+        .ui-autocomplete{
+            height:150px;
+            overflow:auto;
+            width:216px !important;
+            background-color: lightgray;
+        }
+        ul li, ol li {
+            margin-left: -1.5em;
+            padding-left: 0;
+            list-style:none;
+            padding:3px;
+            font-famil:Arial;
+            font-size:14px; 
+        }
+        .requiredLegend {
+            padding: 0 2px;
+            background-color: #fff;
+            font-weight: normal;
+            color: #000;
+            display: none;
+        }           
+    </style>
+    <apex:form id="theForm">
+        <c:HighPriorityReferralInstructions />
+         <apex:actionFunction name="onchangeCountry"  rerender="scriptID"/>
+        <apex:outputPanel id="ErrorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>    
+ 
+        <apex:pageBlock mode="maindetail">
+            <apex:actionFunction name="CallApexMethod" action="{!selectedvalue}" rerender="PosHead,accPickList,conPickList,ramAssign" oncomplete="getSpecialInstructions();" Status="status"/>
+            
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="Save" action="{!saveLead}" styleClass="save-button"/>
+                <apex:CommandButton value="Save & New" action="{!saveAndNewLead}" styleClass="save-button" />
+                <apex:CommandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+            
+            <apex:panelGrid columns="2" id="theGrid" columnClasses="col1,col2" width="100%">
+                <apex:outputPanel >
+                    <apex:pageBlockSection title="Pre-Screenings Information" collapsible="false">
+                        <apex:pageblocksectionitem >
+                            <apex:outputText value="Pre-Screenings Owner"/>
+                            <apex:outputPanel >                
+                               
+                                <apex:inputField value="{!nLead.ownerId}" tabOrderHint="1"/>
+                            </apex:outputPanel>
+                        </apex:pageblocksectionitem>    
+                          
+                        <apex:pageblocksectionitem >
+                            <apex:outputText value="Pre-Screenings Record Type"/>                 
+                            <apex:outputText value="{!recordTypeName}"/>                
+                        </apex:pageblocksectionitem>
+                        <apex:pageBlockSectionItem >
+                            <apex:outputText value="Origin"/>
+                            <apex:inputField value="{!nLead.Origin__c}" tabOrderHint="2"/>
+                        </apex:pageBlockSectionItem>        
+                        <apex:pageblocksectionitem >
+                            <apex:outputText value="Pre-Screenings Status"/>                  
+                            <apex:inputField value="{!nLead.Status}" tabOrderHint="3"/>              
+                        </apex:pageblocksectionitem>   
+                                         
+                    </apex:pageBlockSection> 
+             
+                    <apex:pageBlockSection title="Marketing Information" collapsible="false">
+                        <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="Caller Id"></apex:outputLabel>
+                        <apex:inputField value="{!nLead.Caller_Id__c}" tabOrderHint="4"/>
+                        </apex:pageBlockSectionItem>
+                        <apex:pageBlockSectionItem />
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Call In Code"></apex:outputLabel>
+                            <apex:selectList value="{!selectedCallInCode}" size="1" tabindex="50">
+                                <apex:selectOptions value="{!callInCodePicklist}"/>
+                            </apex:selectList> 
+                        </apex:pageblocksectionItem>
+                        <apex:pageblocksectionItem >
+                
+                        <apex:outputLabel value="Pre-Screenings Source" />
+                            <apex:inputField value="{!nLead.LeadSource}" tabOrderHint="6">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+                            </apex:inputField>
+                        </apex:pageblocksectionItem>
+                    </apex:pageBlockSection>
+            
+                <apex:outputPanel id="pbs">
+                     <apex:pageBlockSection rendered="{!rend5}" collapsible="false">  
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Alumni Name" />
+                            <apex:inputField value="{!nLead.Alumni_Name__c}" tabOrderHint="15"/>
+                        </apex:pageblocksectionItem>
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Alumni FRN Facility"/>
+                            <apex:inputField value="{!nLead.Alumni_FRN_Facility__c}" tabOrderHint="16"/>
+                        </apex:pageblocksectionItem>
+                    </apex:pageBlockSection> 
+                    <apex:pageBlockSection rendered="{!rend3}" collapsible="false">  
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Pre-Screenings Source is FRN Alumni" />
+                            <apex:inputField value="{!nLead.Lead_Source_is_FRN_Alumni__c}" tabOrderHint="9">
+                                <apex:actionSupport event="onchange" action="{!rendSection}" rerender="AlumniReferral,pbs"/>
+                            </apex:inputField>
+                        </apex:pageblocksectionItem>
+                        <apex:pageblocksectionItem id="AlumniReferral">
+                            <!-- <apex:outputPanel id="" > -->
+                                <!-- <apex:outputPanel > -->
+                                    <apex:outputText value="Alumni Referral Source" rendered="{!if(nLead.Lead_Source_is_FRN_Alumni__c=='Yes', true, false)}" />
+                                    <apex:inputField value="{!nLead.Alumni_Referral_Source__c}" rendered="{!if(nLead.Lead_Source_is_FRN_Alumni__c=='Yes', true, false)}"  tabOrderHint="10">
+                                        <apex:actionSupport event="onchange" action="{!rendSection}" rerender="pbs"/>
+                                    </apex:inputField>
+                                <!-- </apex:outputPanel>     -->
+                            <!-- </apex:outputPanel>         -->
+                        </apex:pageblocksectionItem>
+                    </apex:pageBlockSection> 
+                    
+                        <apex:actionFunction name="check" action="{!toldYouAbout}" reRender="refresh,referalSUD">
+                            <apex:param name="about" value="" />
+                        </apex:actionFunction>                  
+                        <apex:pageBlockSection rendered="{!rend1}" collapsible="false">  
+                            <apex:pageblocksectionItem >
+                                <apex:outputLabel value="Online Search Term"/>
+                                <apex:inputField value="{!nLead.Online_Search_Term__c}" Style="width: 120%; height: 50px;" id="check" onmouseOut="Callmefunc('{!$Component.check}');"  tabOrderHint="7"/>
+                            </apex:pageblocksectionItem>                        
+                            <apex:pageblocksectionItem />                    
+                            <apex:outputPanel id="refresh" >
+                                <apex:pageblocksectionItem rendered="{!IF(searchTerm != null && searchTerm != '', true, false)}">
+                                    <apex:outputText style="margin-left:150px; color:red; font-weight:bold;" value="Who told you about {!searchTerm}?" escape="false"/>
+                                </apex:pageblocksectionItem> 
+                            </apex:outputPanel>                    
+                        </apex:pageBlockSection> 
+               
+                        <apex:outputPanel id="PosHead"> 
+                            <apex:outputPanel rendered="{!rend2}"> 
+                                <apex:variable value="{!0}" var="rowNum"/>  
+                                <apex:pageBlockTable value="{!campMWrpList}" var="eachRecord">   
+                                    <apex:column >
+                                        <apex:outputPanel rendered="{!campMWrpList.size>1}">
+                                            <apex:commandLink value="Del"  action="{!removeRow}" onclick="if(!confirm('Are you sure?')){return};" rerender="PosHead,ErrorMessage" tabindex="80" >
+                                                <apex:param value="{!eachRecord.index}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                            </apex:commandLink>
+                                        </apex:outputPanel>
+                                    </apex:column>
+                            
+                                    <apex:column headerValue="Search">                    
+                                        <apex:inputText id="accId" value="{!eachRecord.selectedKeyWrp}" style="width:220px;" styleClass="placeHolder-{!eachRecord.index}" onkeypress="doWhateverUneed({!eachRecord.index})" html-placeholder="Enter Search Keyword" tabindex="80">
+                                            <apex:inputHidden id="searchPos" value="{!searchPosition}" /> 
+                                            <apex:inputHidden id="searchAccountId" value="{!eachRecord.searchKeyWord}" />
+                                        </apex:inputText>
+                                    </apex:column>              
+                                    
+                                    <apex:column headerValue="Referral Source" id="accPickList">
+                                    <apex:outputPanel layout="block" styleClass="requiredInput" >
+                                        <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                                        <apex:selectList value="{!eachRecord.cmpM.Account__c}" size="1" tabindex="80">
+                                            <apex:selectOptions value="{!eachRecord.referralSourceList}"/>
+                                        </apex:selectList> 
+                                    </apex:outputpanel>
+                                     <script>
+                                        function getSpecialInstructions() {
+                                           var priorityflag = {!validHighReferralWrp};
+                                           var specialInstructionsMsg = '{!JSENCODE(specialInstructionsMsg)}';
+                                           if(priorityflag && specialInstructionsMsg ) {
+                                                $("#frn-context").trigger("show-referral-dialog",{specialInstructions : specialInstructionsMsg});
+                                           }
+                                        }
+                                    </script> 
+                                    </apex:column>                    
+                                         
+                                    <apex:column headerValue="Referral Source Contact" id="conPickList">
+                                        <apex:selectList value="{!eachRecord.cmpM.Consentor__c}" size="1" tabindex="80">
+                                            <apex:selectOptions value="{!eachRecord.referralSourceConList}"/>
+                                        </apex:selectList>                    
+                                    </apex:column>                  
+                                    
+                                    <apex:column headerValue="Referral Order" id="refOrd"> 
+                                        <apex:selectList value="{!eachRecord.cmpM.Referral_Rank__c}" size="1" style=" width: 90px;" tabindex="80">
+                                            <apex:selectOptions value="{!eachRecord.refOrders}"/>
+                                            <apex:actionSupport event="onchange" action="{!referlist}" rerender="ErrorMessage,PosHead"  />
+                                        </apex:selectList>
+                                    </apex:column>
+                                    
+                                    <apex:column headerValue="RAM assigned to Account" id="ramAssign">
+                                        <apex:outputText value="{!eachRecord.RAMName}"/>                  
+                                    </apex:column>
+                            
+                                    <apex:column >
+                                        <apex:outputPanel rendered="{!if((campMWrpList.size)-1 ==rowNum && campMWrpList.size != 4 ,true,false)}">
+                                            <apex:commandLink value="Add New" action="{!addNewRow}" rerender="ErrorMessage,PosHead" Status="status" tabindex="80" >
+                                            </apex:commandLink>
+                                        </apex:outputPanel> 
+                                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                                    </apex:column> 
+                                </apex:pageBlockTable> 
+                                <script type="text/javascript">
+                                function doWhateverUneed(index){                        
+                                    var movieObjects1;
+                                    var queryTerm1;                         
+                                    $('.placeHolder-'+index).autocomplete({
+                                        minLength: 2,                           
+                                        source: function(request, response) {                               
+                                            queryTerm1 = request.term;  
+                                            NewLeadController.getSearchResult(request.term, function(result, event){
+                                                if(event.type == 'exception') {
+                                                      alert(event.message);
+                                                } else {                                
+                                                    movieObjects1 = result;
+                                                    if(movieObjects1=='null' || movieObjects1==''){   
+                                                        $('.error-'+index).show();
+                                                        response([]);
+                                                    } else {
+                                                        $('.error-'+index).hide();
+                                                        response(movieObjects1);                              
+                                                    }
+                                                } 
+                                            });
+                                        },
+                                        focus: function( event, ui ) {
+                                            var aa = ui.item.label;
+                                            var varTitle = $('<textarea />').html(aa).text(); 
+                                            $('.placeHolder-'+index).val( varTitle );                   
+                                            return false;
+                                        },
+                                        select: function( event, ui ) {
+                                            var aa = ui.item.label;
+                                            var varTitle = $('<textarea />').html(aa).text();
+                                            $('.placeHolder-'+index).val( varTitle );                           
+                                            $('[id$=searchAccountId]').val( ui.item.id ); 
+                                            $('[id$=searchPos]').val( index ); 
+                                            CallApexMethod();
+                                            return false;
+                                        },
+                                    })                      
+                                    .data( "autocomplete" )._renderItem = function( ul, item ) {
+                                        var entry = "";
+                                        if(item.label=='Referral Source' || item.label=='Referral Source Contact'){
+                                            entry = "<b>&nbsp;&nbsp;&nbsp;&nbsp;"+item.label+"</b><br/>";    
+                                        } else if (item.label=='--No Matches--'){
+                                            entry = "&nbsp;&nbsp;&nbsp;&nbsp;"+item.label;   
+                                        } else {
+                                            entry = "<a>"+item.label+"</a>";
+                                        }
+                                        //var entry = "<a>" + item.label;                           
+                                        //entry = entry + "</a>";
+                                        //entry = entry.replace(queryTerm1, "<b>" + queryTerm1 + "</b>");
+                                        return $( "<li></li>" )
+                                            .data( "item.autocomplete", item )
+                                            .append( entry )
+                                            .appendTo( ul );
+                                    };
+                                        
+                                    // Add or remove placeholder values
+                                    $('.placeHolder-'+index).val(PLACEHOLDER1);
+                                    $('.placeHolder-'+index).on("focus",  function(event){
+                                        $tgt = $(event.target);
+                                        if($tgt.val() === PLACEHOLDER1 ){
+                                            $tgt.val('');
+                                            $tgt.removeClass('placeHolder');
+                                        }
+                                    });
+                                    $('.placeHolder-'+index).on( "blur",  function(event){
+                                        $tgt = $(event.target);
+                                        if($tgt.val() === '' ){
+                                            $('[id$=searchAccountId]').val('');
+                                            $('[id$=searchPos]').val(index);
+                                            CallApexMethod();
+                                        }
+                                    });                     
+                                }
+                            </script> 
+                        </apex:outputPanel>  
+                    
+                    <apex:outputPanel id="referalSUD" >
+                    <apex:pageBlockSection rendered="{!rend4}" collapsible="false">                
+                        <apex:pageblocksectionItem >
+                            <apex:outputLabel value="Referral Source<br/>Unknown Details" escape="false" style="width: 31.99%;"/>
+                            <apex:inputTextArea value="{!nLead.Referral_Source_Unknown_Details__c}" style="width: 229%;height: 75px;" tabindex="140" />
+                        </apex:pageblocksectionItem> 
+                    </apex:pageBlockSection>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            
+            <apex:actionFunction name="callingFor" action="{!leadCallingFor}" rerender="clInfo"/>
+            <apex:pageBlockSection id="clInfo" title="Caller Information" collapsible="false">
+                <apex:inputField value="{!nLead.Calling_for__c}" tabOrderHint="17" onchange="callingFor()"/>
+                <apex:inputField value="{!nLead.Relationship_to_Patient__c}" tabOrderHint="18" onchange="callingFor()" rendered="{!if(nLead.Calling_for__c!='Self' && nLead.Calling_for__c!=null,true,false)}"/>
+                <apex:inputField value="{!nLead.Caller_First_Name__c}" tabOrderHint="19" rendered="{!isNotSelf}"/>
+                <apex:inputField value="{!nLead.Caller_Phone__c}" tabOrderHint="21" rendered="{!isNotSelf}"/>
+                <apex:inputField value="{!nLead.Caller_Last_Name__c}" tabOrderHint="20" rendered="{!isNotSelf}"/>
+                <apex:inputField value="{!nLead.Caller_Mobile__c}" tabOrderHint="22" rendered="{!isNotSelf}"/> 
+                <apex:pageblockSectionItem rendered="{!isNotSelf}"/>
+                <apex:inputField value="{!nLead.Caller_Work_Phone__c}" tabOrderHint="23" rendered="{!isNotSelf}"/>
+                <apex:pageblockSectionItem rendered="{!isNotSelf}"/>
+                <apex:inputField value="{!nLead.Caller_Email__c}" tabOrderHint="24" rendered="{!isNotSelf}"/>
+             </apex:pageBlockSection>
+             
+            <apex:pageBlockSection title="Prospective Patient Information" collapsible="false" columns="2">
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="First Name"/>
+                    <apex:outputpanel >
+                        <apex:inputfield value="{!nLead.Salutation}" tabOrderHint="25"/>
+                        <apex:inputfield value="{!nLead.FirstName}" tabOrderHint="26">
+                         <apex:actionSupport event="onblur" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                        </apex:inputfield>
+                    </apex:outputPanel>
+                </apex:pageblocksectionitem>  
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Birthdate"/>
+                    <apex:outputpanel >
+                        <apex:inputfield value="{!nLead.Birthdate__c}" tabOrderHint="30"/>
+                    </apex:outputpanel>
+                </apex:pageblocksectionitem>
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Middle Name"/>
+                    <apex:inputField value="{!nLead.MiddleName}" tabOrderHint="27">
+                     <apex:actionSupport event="onchange" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                    </apex:inputfield>
+                </apex:pageblocksectionitem>
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Gender"/>
+                    <apex:outputpanel >
+                        <apex:inputfield value="{!nLead.Gender__c}" tabOrderHint="30"/>
+                    </apex:outputpanel>
+                </apex:pageblocksectionitem>
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Last Name"/>
+                    <apex:outputPanel layout="block" styleClass="requiredInput" >
+                        <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                        <apex:inputField value="{!nLead.LastName}" required="false" tabOrderHint="28"> 
+                         <apex:actionSupport event="onblur" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                        </apex:inputfield>
+                    </apex:outputpanel> 
+                </apex:pageblocksectionitem> 
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Identified Gender"/>
+                    <apex:outputpanel >
+                        <apex:inputfield value="{!nLead.Identified_Gender__c}" tabOrderHint="30"/>
+                    </apex:outputpanel>
+                </apex:pageblocksectionitem>
+                <apex:pageblocksectionitem >
+                    <apex:outputText value="Suffix"/>
+                    <apex:inputField value="{!nLead.Suffix}" tabOrderHint="29"/>
+                </apex:pageblocksectionitem>
+            </apex:pageBlockSection>
+             
+            <apex:pageBlockSection title="Patient Contact Information" collapsible="false">
+                <apex:inputField value="{!nLead.Preferred_Contact_Method__c}" tabOrderHint="31"/>
+                <apex:pageblockSectionItem />
+                <apex:inputField value="{!nLead.Phone}" tabOrderHint="32">
+                    <apex:actionSupport event="onblur" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                </apex:inputfield>
+                <apex:inputField value="{!nLead.DoNotCall}" tabOrderHint="37"/>
+                <apex:inputField value="{!nLead.MobilePhone}" tabOrderHint="33">
+                    <apex:actionSupport event="onchange" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                </apex:inputfield>
+                <apex:pageblockSectionItem />
+                <apex:inputField value="{!nLead.Work_Phone__c}" tabOrderHint="34">
+                    <apex:actionSupport event="onchange" action="{!leadDuplicate}" rerender="lDuplicate"/>
+                </apex:inputfield>
+                <apex:pageblockSectionItem />
+                <apex:inputField value="{!nLead.Email}" tabOrderHint="35"/>
+                <apex:inputField value="{!nLead.HasOptedOutOfEmail}" tabOrderHint="38"/>
+                <apex:inputField value="{!nLead.Fax}" tabOrderHint="36"/>
+                <apex:inputField value="{!nLead.HasOptedOutOfFax}" tabOrderHint="39"/> 
+             </apex:pageBlockSection>
+
+             <apex:pageBlockSection title="Patient Address Information" collapsible="false">
+                <apex:inputField value="{!nLead.Street}" tabOrderHint="40"/>
+                <apex:pageblockSectionItem />
+                <apex:inputField value="{!nLead.City}" tabOrderHint="41"/>             
+                <apex:inputField value="{!nLead.StateCode}" tabOrderHint="42" id="StateCode" />
+                <apex:inputField value="{!nLead.PostalCode}" tabOrderHint="43"/>
+                <apex:inputField value="{!nLead.CountryCode}" tabOrderHint="44" onclick="onchangeCountry();return false;"/>
+             </apex:pageBlockSection>
+             
+            <apex:outputPanel id="lDuplicate">
+            
+           
+            <!-- <apex:outputPanel rendered="{!flagRelated}"> -->
+                <apex:pageBlockSection title="Potential Duplicates" collapsible="false" columns="1" >
+                    <apex:pageblocksectionitem >
+                        <apex:iframe src="{!URLld}" scrolling="true" id="theIframe" width="100%" height="200px" html-tabIndex="440"/>
+                    </apex:pageblocksectionitem>
+                    <apex:pageblocksectionitem >
+                        <apex:iframe src="{!URLopp}" scrolling="true" id="theIframe1" width="100%" height="200px" html-tabIndex="440"/>
+                    </apex:pageblocksectionitem>
+                    
+                     <apex:pageblocksectionitem >
+                        <apex:iframe src="{!URLcon}" scrolling="true" id="theIframe2" width="100%" height="200px" html-tabIndex="440"/>
+                    </apex:pageblocksectionitem>
+                    
+                    
+                </apex:pageBlockSection>
+            <!-- </apex:outputPanel > -->
+            </apex:outputPanel>
+            
+             <hr color="#ebaf59"></hr>
+             <center>
+             <br/><apex:outputText value="Talk Track Questions" style="color:blue;font-size:18px;"/>
+             </center>
+             
+             <apex:pageBlockSection title="Situational Questions" collapsible="false">
+                
+                <apex:inputField value="{!nLead.Patient_Willing_to_Receive_Treatment__c}" tabOrderHint="45"/>
+                <apex:inputField value="{!nLead.Description_of_Average_Day__c}" tabOrderHint="46" style="width:99%;height:75px;"/>
+             </apex:pageBlockSection>
+            
+             <apex:pageBlockSection title="Impact Questions" collapsible="false">
+                <apex:inputField value="{!nLead.Timeframe_of_Impact__c}"  tabOrderHint="47" style="width:99%;height:75px;"/>
+                <apex:pageblockSectionItem />
+                <apex:inputField value="{!nLead.What_Prompted_Call__c}"  tabOrderHint="48" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Impact_on_Job__c}"  tabOrderHint="50" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Patient_Currently_Working__c}"  tabOrderHint="49" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Impact_on_Relationships__c}"  tabOrderHint="51" style="width:99%;height:75px;"/>
+             </apex:pageBlockSection>
+            
+             <apex:pageBlockSection title="Cause Questions" collapsible="false">
+                <apex:inputField value="{!nLead.Trigger__c}" style="width:99%;height:75px;" tabOrderHint="52"/>
+                <apex:inputField value="{!nLead.Contributing_Factors__c}"  tabOrderHint="53" style="width:99%;height:75px;"/>
+             </apex:pageBlockSection>
+            
+             <apex:pageBlockSection title="Qualifying Questions" collapsible="false">
+                <apex:inputField value="{!nLead.Payment__c}" tabOrderHint="54"/>
+                <apex:inputField value="{!nLead.Diagnosed_with_Psychiatric_Condition__c}"  tabOrderHint="56" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Prior_Treatment__c}" tabOrderHint="55">
+                    <apex:actionSupport event="onchange" action="{!rendTreatmentHistoryInfo}" rerender="trthHead1"/>
+                </apex:inputField>
+                    <apex:inputField value="{!nLead.Budget__c}" tabOrderHint="40"
+                                     styleClass="fieldRef1 budgetFld"/>
+             </apex:pageBlockSection>
+            
+            
+            <!--Treatment History Related List-->
+            <apex:outputPanel id="trthHead1">
+            <apex:pageBlockSection title="Treatment History Information" collapsible="False" columns="1" id="trthHead" rendered="{!isPriorTreatmentYes}">
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!TreatmentHistoryWrpList}" var="eachTreatmentHistory">
+                    <apex:column headerValue="Action">
+                        <apex:commandLink value="Del"  action="{!removeRowToTreatmentHistoryList}" onclick="if(!confirm('Are you sure?')){return};" rerender="trthHead" tabindex="570" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink> 
+                    </apex:column>
+                        
+                    <apex:column headerValue="Type" style="width:8%"> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.RecordTypeId}" html-tabIndex="570" />
+                    </apex:column>
+                    <apex:column headerValue="Other Facility"> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.Other_Facility__c}" style="width:70px" html-tabIndex="570"/>
+                    </apex:column>
+                    <apex:column headerValue="Level of Care"> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.Level_of_Care__c}"  style="width:90px" html-tabIndex="570"/>
+                    </apex:column>
+                    <apex:column > 
+                        <apex:facet name="header">Was Treatment<br/>Involuntary?</apex:facet> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.Was_Treatment_Involuntary__c}" html-tabIndex="570" />
+                    </apex:column>
+                    <apex:column headerValue="Admit Date"> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.Admit_Date__c}"  style="width:60px" html-tabIndex="570"/>
+                    </apex:column>
+                    <apex:column headerValue="Discharge Date"> 
+                        <apex:inputField value="{!eachTreatmentHistory.record.Discharge_Date__c}"  style="width:60px" html-tabIndex="570"/>
+                    </apex:column>  
+                        
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((TreatmentHistoryWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewTreatmentHistoryObj}" rerender="ErrorMessage,trthHead" tabIndex="570"/>
+                        </apex:outputPanel> 
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            </apex:outputPanel>
+            
+             <apex:pageBlockSection title="Commitment Questions" collapsible="false">
+                <apex:inputField value="{!nLead.Vision_of_Future_without_Treatment__c}"   tabOrderHint="58" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Ready_to_Make_Commitment__c}"   tabOrderHint="60" style="width:99%;height:75px;"/>
+                <apex:inputField value="{!nLead.Happiness_Scale__c}" tabOrderHint="59"/>
+             </apex:pageBlockSection>
+             
+            <!-- <apex:outputPanel rendered="{!flagRelated}">
+            <apex:iframe src="{!URLopp}" scrolling="true" id="theIframe1" width="100%" height="200px"/>
+            </apex:outputPanel> -->
+             
+            </apex:outputPanel>
+            <apex:outputPanel >
+                <div style="position: fixed;padding: 10px;">
+                    <apex:CommandButton value="Save & Continue" action="{!saveAndContinue}" reRender="ledsaved,ErrorMessage"  tabindex="610" styleclass="save-button" oncomplete="frn.hideLoader();"/>
+                    <apex:outputPanel id="ledsaved" >
+                        <apex:outputText value="&nbsp;&nbsp;&nbsp;&nbsp;Lead Saved" style="color:red;font-size:12px;" escape="false" rendered="{!isLeadSaved}" />
+                        <apex:actionPoller action="{!hideMessage}" reRender="ledsaved" interval="5" enabled="{!isLeadSaved}"/>
+                    </apex:outputPanel>
+                    <hr color="#ddb929"></hr>
+                   <apex:pageBlockSection columns="1">
+                        Scratchpad
+                        <apex:pageblocksectionItem >
+                            <apex:inputField value="{!nLead.ScratchPad__c}" tabOrderHint="62" id="sp"/>
+                        </apex:pageblocksectionItem> 
+                    </apex:pageBlockSection>
+                </div>
+            </apex:outputPanel>
+        </apex:panelGrid>
+    </apex:pageBlock>
+           
+ </apex:form> 
+ <apex:outputPanel id="scriptID">
+    <script>
+            $(document).ready(function(){
+                setTimeout(function(){$("[id*='StateCode']").attr("tabindex", "430");}, 2000);
+                setTimeout(function(){$("[id*='sp']").attr("tabindex", "620");}, 2000);
+                frn.applyMultipleSubmitFix();
+                });
+                
+
+    </script>
+</apex:outputPanel>
+</apex:page>

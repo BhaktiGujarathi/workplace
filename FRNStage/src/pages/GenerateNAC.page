@@ -1,0 +1,54 @@
+<apex:page standardController="Opportunity" extensions="GenerateNACExt" tabstyle="Opportunity" id="myPage">    
+     <script src="/soap/ajax/35.0/connection.js" type="text/javascript"></script> 
+    <script src="/soap/ajax/35.0/apex.js" type="text/javascript"></script> 
+   
+    <apex:sectionHeader title="Physical Description of Patient Edit" subtitle="Generate NAC"/>
+    
+    <apex:form id="myForm">
+        <apex:pageBlock id="Pb">
+            <apex:pageBlockSection columns="1" id="Pbs">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Physical&nbsp;Description&nbsp;of&nbsp;Patient" escape="false"/>
+                    <apex:inputField id="pdop" style="width:600px;height:200px;" value="{!opp.Physical_Description_of_Patient__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                  <apex:pageBlockSectionItem >
+                    <apex:outputText value="Additional&nbsp;Trip&nbsp;Details" escape="false"/>
+                    <apex:inputField id="atd" style="width:600px;height:200px;" value="{!opp.Additional_Trip_Details__c}"/>
+                </apex:pageBlockSectionItem>
+                
+                <apex:pageBlockSectionItem id="PbsI">
+                        <apex:outputText value="Guarantor "/>
+                        <apex:selectList value="{!selectedGenerator}" size="1" id="gua" multiselect="false" >
+                            <apex:selectOptions value="{!PatConOption}"/>
+                        </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="PbsI2">
+                        <apex:outputText value="Secondary Travel Contact"/>
+                        <apex:selectList id="stc"  value="{!opp.Secondary_Travel_Contact__c}" size="1" multiselect="false" >
+                            <apex:selectOptions value="{!PatConOption2}"/>
+                        </apex:selectList>
+                </apex:pageBlockSectionItem>
+				
+				<apex:pageBlockSectionItem id="pbsi5">
+                    <apex:outputText value="Estimated Date and Time of Arrival"/>
+                    <apex:inputfield value="{!opp.Estimated_Date_and_Time_of_Arrival__c}" id="estDT"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockButtons location="bottom">
+				<apex:commandLink style="text-decoration: none;" value=""  action="{!generateNAC}" target="_blank" >
+				<apex:Commandbutton value="Generate NAC" reRender="rediredct" oncomplete="ref()"/>
+				</apex:commandLink>
+				<apex:CommandButton value="Cancel" onclick="ref();return false;" />                    
+            </apex:pageBlockButtons>  
+        </apex:pageBlock> 
+		<script type="text/javascript"> 
+			 
+			function ref(){
+                setTimeout(function(){ window.top.location.href = '/{!Opportunity.Id}';  }, 3000);
+                
+			}
+		</script>
+    </apex:form>        
+</apex:page>

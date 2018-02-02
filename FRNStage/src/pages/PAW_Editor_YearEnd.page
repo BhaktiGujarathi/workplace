@@ -1,0 +1,387 @@
+<apex:page controller="PAW_Editor_YearEndController"
+           cache="false"
+           action="{!initialize}"
+           showHeader="true"
+           sidebar="true">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css" />
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/south-street/theme.min.css" />
+
+    <style type="text/css">
+
+        .sumData {
+            font-size: 14px;
+        }
+        .bPageBlock {
+            padding-left: 5px   !important;
+            padding-right: 5px  !important;
+            padding-bottom: 5px !important;
+        }
+        .recalculationCls {
+            position: absolute;
+            margin-top: 45px;
+            margin-left: 64%;
+        }
+        .reclaculationLabel {
+            text-align: right;
+            font-size: 91%;
+            font-weight: bold;
+        }
+    </style>
+
+    <c:Loader />
+    <apex:form >
+        <apex:outputPanel styleClass="recalculationCls" >
+            <apex:outputLabel value="Needs PAW calculation for next year" styleClass="reclaculationLabel" />
+            <apex:inputCheckbox value="{!meta.hasSecondary}" 
+                                onchange="frn.rerenderSecondaryPAW();" 
+                                styleClass="hasSecondaryCls"/>
+            <apex:actionfunction name="rerenderTheSecondaryBlock"
+                                 action="{!rerenderMethod}"
+                                 reRender="pawPanel,summarizedPanel" 
+                                 />
+        </apex:outputPanel>
+    </apex:form>
+    <apex:outputPanel id="pawPanel" >
+        <c:PAW_Editor_YearEnd id="primaryPAW"
+                              c="{!primaryController}"
+                              html-class="primaryPAW" />
+        <c:PAW_Editor_YearEnd id="secondaryPAW"
+                              c="{!secondaryController}"
+                              rendered="{!meta.hasSecondary}"
+                              html-class="secondaryPAW" />
+    </apex:outputPanel>
+    <apex:form >
+        <apex:actionfunction name="saveCompleted"
+                             action="{!saveRecords}"
+                             reRender="primaryPAW,secondaryPAW,ErrorMessage">
+            <apex:param id="primaryPAWRecordId" name="primaryPAWRecordId" value="" />
+            <apex:param id="secondaryPAWRecordId" name="secondaryPAWRecordId" value="" />
+        </apex:actionFunction>
+    </apex:form>
+    <apex:outputPanel id="summarizedPanel" >
+        <c:PAW_SummarizedData_YearEnd id="summarizedPAWInfo"
+                                      clsInstance="{!this}"
+                                      rendered="{!meta.hasSecondary}"
+                                      html-class="sumData"/>
+    </apex:outputPanel>
+
+    <script type="text/javascript">
+        var frn = frn || {};
+
+        $(document).ready(function(event) {
+            frn.refreshSummarySection();
+            /*$(document).on( "saveEvent", function() {
+                saveClicked();
+            });*/
+        });
+
+        frn.rerenderSecondaryPAW = function() {
+            rerenderTheSecondaryBlock();
+        }
+
+        frn.getFRNFacilitiesInfo = function(){
+
+            var facilityInfo = {};
+
+            facilityInfo.primaryFRNFacility = $(".primaryPAW .frnFacilitySelected").val();
+            facilityInfo.secondaryFRNFacility = $(".secondaryPAW .frnFacilitySelected").val();
+
+            return facilityInfo;
+
+        };
+
+        // method to check if patient insuracnces are blank
+        frn.validatePatientInsurances = function() {
+            var primaryPatientInsurance = $(".primaryPAW .pntntInsrncSelected").val();
+            var primaryPatientIns = $(".primaryPAW .pntntInsrncSelected1").text();
+            var secondaryPatientInsurance = $(".secondaryPAW .pntntInsrncSelected").val();
+            var secondaryPatientIns = $(".secondaryPAW .pntntInsrncSelected1").text();
+            var hasSecondary = $('.hasSecondaryCls')[0].checked;
+            
+            if( !primaryPatientInsurance && !primaryPatientIns ) {
+                alert("Error : Patient Insurance missing for Primary PAW record!");
+                return false;
+            }
+
+            if( hasSecondary == true && !secondaryPatientInsurance && !secondaryPatientIns ) {
+                alert("Error : Patient Insurance missing for Secondary PAW record!");
+                return false;
+            }
+
+            return true;
+        }
+
+        // method to check if Insurance benefits are blank
+        frn.validateInsuranceBenefits = function() {
+            var primaryInsuranceBenefit = $(".primaryPAW .insrncBnftSelected").val();
+            var secondaryInsuranceBenefit = $(".secondaryPAW .insrncBnftSelected").val();
+            var hasSecondary = $('.hasSecondaryCls')[0].checked;
+
+            if( !primaryInsuranceBenefit ) {
+                alert("Error : Insurance Benefit missing for Primary PAW record!");
+                return false;
+            }
+
+            if( hasSecondary == true && !secondaryInsuranceBenefit ) {
+                alert("Error : Insurance Benefit missing for Secondary PAW record!");
+                return false;
+            }
+
+            return true;
+        }
+
+        // method to check if Facility Program are blank
+        frn.validateFacilityPrograms = function() {
+            // var primaryFacilityProgram = $(".primaryPAW .fcltyPrgrmSelected").val();
+            // var secondaryFacilityProgram = $(".secondaryPAW .fcltyPrgrmSelected").val();
+            // var hasSecondary = $('.hasSecondaryCls')[0].checked;
+
+            // if( !primaryFacilityProgram ) {
+            //     alert("Error : Facility Program missing for Primary PAW record!");
+            //     return false;
+            // }
+
+            // if( hasSecondary == true && !secondaryFacilityProgram ) {
+            //     alert("Error : Facility Program missing for Secondary PAW record!");
+            //     return false;
+            // }
+
+            // primary PAW
+            var isPrgrmSelected = false;
+            isPrivatePay = false;
+            $(".primaryPAW .fcltyPrgrmSelected option").each(function(index){
+                if($(".primaryPAW .fcltyPrgrmSelected option")[index].selected) {                    
+                    if($(".primaryPAW .fcltyPrgrmSelected option")[index].text.includes('Self/Private Pay'))
+                    {
+                        isPrivatePay = isPrivatePay || true;
+                    }
+                    
+                    if($(".primaryPAW .fcltyPrgrmSelected option")[index].text.includes('---Select---')) {
+                        alert("Error : Facility Program missing for Primary PAW record!");
+                        isPrgrmSelected = isPrgrmSelected && false;
+                        return true;
+                    }
+                    else {
+                        isPrgrmSelected = isPrgrmSelected && true;
+                    }
+                    
+                }
+            });
+
+            $(".secondaryPAW .fcltyPrgrmSelected option").each(function(index){
+                if($(".secondaryPAW .fcltyPrgrmSelected option")[index].selected) {                    
+                    if($(".secondaryPAW .fcltyPrgrmSelected option")[index].text.includes('Self/Private Pay'))
+                    {
+                        isPrivatePay = isPrivatePay || true;
+                    }
+                    
+                    if(hasSecondary == true && ($(".secondaryPAW .fcltyPrgrmSelected option")[index].text.includes('---Select---'))) {
+                        alert("Error : Facility Program missing for Secondary PAW record!");
+                        isPrgrmSelected = isPrgrmSelected && false;
+                        return true;
+                    }
+                    else {
+                        isPrgrmSelected = isPrgrmSelected && true;
+                    }
+                    
+                }
+            });
+            return isPrgrmSelected;
+
+            // secondary PAW
+
+        }
+
+        // method to check if Rate Adjustments are blank
+        frn.validateRateAdjustments = function() {
+            if(!isPrivatePay) {
+                var primaryRateAdjustment = $(".primaryPAW .rtAdjstmntSelected").val();
+                var secondaryRateAdjustment = $(".secondaryPAW .rtAdjstmntSelected").val();
+                var hasSecondary = $('.hasSecondaryCls')[0].checked;
+
+                if( !primaryRateAdjustment ) {
+                    alert("Error : Rate Adjustment missing for Primary PAW record!");
+                    return false;
+                }
+
+                if( hasSecondary == true && !secondaryRateAdjustment ) {
+                    alert("Error : Rate Adjustment missing for Secondary PAW record!");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // method to check if FRN Facilities are blank
+        frn.validateFRNFacilities = function(){
+            var facilityInfo = frn.getFRNFacilitiesInfo();
+            var hasSecondary = $('.hasSecondaryCls')[0].checked;
+
+            if( !facilityInfo.primaryFRNFacility ) {
+                alert("Error : FRN Facility missing for Primary PAW record!");
+                return false;
+            }
+
+            if( hasSecondary == true && !facilityInfo.secondaryFRNFacility ) {
+                alert("Error : FRN Facility missing for Secondary PAW record!");
+                return false;
+            }
+
+            if( hasSecondary == true && (facilityInfo.primaryFRNFacility != facilityInfo.secondaryFRNFacility) ){
+                return confirm('The facilities selected do not match. Are you sure you would like to proceed?');
+            }
+
+            return true;
+        };
+
+
+        frn.isTargetEDRAchieved = function(){
+            var targetEDR =  parseFloat( $(".primaryPAW .target-edr").attr("target-edr") ) || 0;
+            var actualEDR =  parseFloat(
+                                frn.currencyToNumber(
+                                    $('.sumData .dailyRevenueSum').text()
+                                )
+                              ) || 0;
+            if( actualEDR !=0 && actualEDR < targetEDR ) {
+                return false;
+            }
+
+            return true;
+        };
+
+        frn.pageReloadComplete = function(){
+            // if has sceondary. then call summarizing  of data
+            var hasSecondary = $('.hasSecondaryCls')[0].checked;
+            if(hasSecondary == true) {
+                frn.refreshSummarySection();
+            }
+            else {
+                frn.hideLoader();
+            }
+        };
+
+        //utility functions
+        frn.refreshSummarySection = function(){
+
+            var isPrimaryIop = $('.primaryPAW .paw_editor .isIopCls').val();
+            var isSecondaryIop = $('.secondaryPAW .paw_editor .isIopCls').val();
+            var paw1TotalContri = $('.primaryPAW .paw_editor .pawData .totalContri .totalContriVal').val();
+            var paw1TotalEIV = $('.primaryPAW .paw_editor .pawData .totalEIV').text();
+            var paw1TotalRevenue = $('.primaryPAW .paw_editor .pawData .totalRevenue ').text();
+            var paw1DailyRevenue = $('.primaryPAW .paw_editor .pawData .dailyRevenue .dailyRevenueVal').val();
+            var paw1totalCopay = $('.primaryPAW .paw_editor .pawData .totalCopay').text();
+
+            var paw2TotalContri = $('.secondaryPAW .paw_editor .pawData .totalContri .totalContriVal').val();
+            var paw2TotalEIV = $('.secondaryPAW .paw_editor .pawData .totalEIV').text();
+            var paw2TotalRevenue = $('.secondaryPAW .paw_editor .pawData .totalRevenue').text();
+            var paw2DailyRevenue = $('.secondaryPAW .paw_editor .pawData .dailyRevenue .dailyRevenueVal').val();
+            var paw2totalCopay = $('.secondaryPAW .paw_editor .pawData .totalCopay').text();
+
+            $('.sumData .totalContriSum').text(
+                frn.currency(
+                    frn.currencyToNumber( paw1TotalContri ) + frn.currencyToNumber( paw2TotalContri )
+                )
+            );
+
+            $('.sumData .totalEIVSum').text(
+                frn.currency (
+                    frn.currencyToNumber( paw1TotalEIV ) + frn.currencyToNumber( paw2TotalEIV )
+                )
+            );
+
+            $('.sumData .totalRevenueSum').text(
+                frn.currency (
+                    frn.currencyToNumber( paw1TotalRevenue ) + frn.currencyToNumber( paw2TotalRevenue )
+                )
+            );
+
+            if(isPrimaryIop == 'true' && isSecondaryIop == 'true') {
+                var primaryTotalDayCount = ($('.primaryPAW .paw_editor .daysData .totalrowCountCls .totalRowCountValue').text() ? $('.primaryPAW .paw_editor .daysData .totalrowCountCls .totalRowCountValue').text() : 0);
+                var secondaryTotalDayCount = ($('.secondaryPAW .paw_editor .daysData .totalrowCountCls .totalRowCountValue').text() ? $('.secondaryPAW .paw_editor .daysData .totalrowCountCls .totalRowCountValue').text() : 0);
+                var primaryUncoveredDaysCount = ($('.primaryPAW .paw_editor .daysData .uncoveredDayPnl .uncoveredDaysCls')
+                                                .text() ? $('.primaryPAW .paw_editor .daysData .uncoveredDayPnl .uncoveredDaysCls').text() : 0);
+                var secondaryUncoveredDaysCount = ($('.secondaryPAW .paw_editor .daysData .uncoveredDayPnl .uncoveredDaysCls').text() ? $('.secondaryPAW .paw_editor .daysData .uncoveredDayPnl .uncoveredDaysCls').text() : 0);
+
+                var dailyRevenueDivisorVal = parseFloat(primaryTotalDayCount)
+                                           + parseFloat(secondaryTotalDayCount)
+                                           + parseFloat(primaryUncoveredDaysCount)
+                                           + parseFloat(secondaryUncoveredDaysCount);
+
+                $('.sumData .dailyRevenueSum').text(
+                    frn.currency (
+                        (frn.currencyToNumber( paw1TotalRevenue ) + frn.currencyToNumber( paw2TotalRevenue ))/
+                                 (dailyRevenueDivisorVal)
+                    )
+                );
+            }
+            else {
+                $('.sumData .dailyRevenueSum').text(
+                    frn.currency (
+                        frn.currencyToNumber( paw1DailyRevenue ) + frn.currencyToNumber( paw2DailyRevenue )
+                    )
+                );
+            }
+            
+
+
+            $('.sumData .totalCopaySum').text(
+                frn.currency (
+                    frn.currencyToNumber( paw1totalCopay ) + frn.currencyToNumber( paw2totalCopay )
+                )
+            );
+
+            if( frn.isTargetEDRAchieved() == false ){
+                $('.sumData .dailyRevenueSum').css("color","red");
+            }
+
+            frn.hideLoader();
+
+        };
+
+        frn.currencyToNumber = function(currencyValue){
+            return new Number(currencyValue.replace(/[^0-9\.-]+/g,""));
+        };
+
+        // Create our number formatter.
+        frn.currencyFormatter = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          // the default value for minimumFractionDigits depends on the currency
+          // and is usually already 2
+        });
+
+        frn.currency = function(value){
+            return frn.currencyFormatter.format(value); /* $2,500.00 */
+        };
+
+        frn.primaryPAWRecordId = '';
+        frn.secondaryPAWRecordId = '';
+
+        frn.saveCalling = function(isComplete, forYear, recordId) {
+            //var primaryYear = '{!meta.primaryYear}';
+            var hasSecondary = '{!meta.hasSecondary}';
+            var hasSecondaryPAW = $('.hasSecondaryCls')[0].checked;
+            if(isComplete == true && forYear == '{!meta.primaryYear}') {                           
+                if(hasSecondary == 'false' || hasSecondaryPAW == false) {
+                    frn.primaryPAWRecordId   = $(".primaryPAW .WorksheetDetail").attr("paw-record-id");
+                    saveCompleted(frn.primaryPAWRecordId,frn.secondaryPAWRecordId);
+                }
+                else if(hasSecondary == 'true' && hasSecondaryPAW == true) {
+                    call('{!meta.secondaryYear}','saveClicked');
+                }
+            }
+            else if(isComplete == true && forYear == '{!meta.secondaryYear}') {
+
+                frn.primaryPAWRecordId   = $(".primaryPAW .WorksheetDetail").attr("paw-record-id");
+                frn.secondaryPAWRecordId = $(".secondaryPAW .WorksheetDetail").attr("paw-record-id");
+                saveCompleted(frn.primaryPAWRecordId,frn.secondaryPAWRecordId);
+            }
+            else if(isComplete == false && forYear == '{!meta.primaryYear}') {
+                call('{!meta.primaryYear}','saveClicked');
+            }
+        }
+    </script>
+</apex:page>

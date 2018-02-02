@@ -1,0 +1,36 @@
+<apex:page standardController="Opportunity" 
+            extensions="CreateOpportunityExt" 
+            tabstyle="Opportunity" 
+            action="{!redirectIfLocked}"
+            lightningStylesheets="true">
+
+    <c:CreateOpportunityCSS />
+    <c:CreateOpportunityJS />
+
+    <c:HighPriorityReferralInstructions />
+
+    <apex:outputpanel rendered="{!AND( $CurrentPage.parameters.showQualityReport!=null
+                                     , $CurrentPage.parameters.showQualityReport!=''
+                                     , $CurrentPage.parameters.showQualityReport=='true')}" 
+                      >
+        <c:ScoreQualityReport oppId="{!opp.Id}" recordTypeName="{!opp.RecordType.DeveloperName}" />
+    </apex:outputpanel>
+
+    <!--<apex:include pageName="CreateOpportunityRTOutTreat"/> -->
+
+
+    <!-- IOP -->
+    <apex:outputpanel rendered="{!showForOutPatient}">
+        <apex:include pageName="CreateOpportunityRTOutTreat"/>
+    </apex:outputpanel>
+ 
+    <!-- ROO -->
+    <apex:outputpanel rendered="{!showForReferalFields}">
+        <apex:include pageName="CreateOpportunityRTRefOut"/>
+    </apex:outputpanel>
+
+    <!-- RTC -->
+    <apex:outputpanel rendered="{!showForResidentialTreatment}">
+        <apex:include pageName="CreateOpportunityRTResTreat"/>
+    </apex:outputpanel> 
+</apex:page>

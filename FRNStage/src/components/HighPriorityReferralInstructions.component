@@ -1,0 +1,83 @@
+<apex:component >
+
+<style>
+    .ui-dialog[aria-describedby="special-referral-dialog"] {
+        top: 3% !important;
+        position: fixed !important;
+        width: 50% !important;
+        left: 24% !important;
+    }
+    
+    #special-referral-dialog {
+        max-height: 500px !important;
+        overflow: scroll !important;
+        overflow-x: hidden !important;
+    }
+</style>
+
+
+<span id="frn-context">
+
+    <div id="special-referral-dialog" title="Special Instructions">
+    </div>
+
+</span>
+
+<script type="text/template" class="popup-template">
+    <div id="dialog-body">
+        <p>
+            The Referral source you selected is a high priority account and requires additional steps.
+        </p>
+        <p>
+            <%=specialInstructions%>
+        </p>
+    </div>
+</script>
+
+<script>
+
+var frn = frn || {};
+var dialogSelector = "#special-referral-dialog";
+var dialogTemplate = _.template(
+            $( "script.popup-template" ).html()
+);
+
+frn.initialize = function(event){
+    frn.initializeDialog(event);   
+    frn.initializeEvents(); 
+};
+
+frn.initializeDialog = function(event){
+
+    $( dialogSelector ).dialog({
+        modal: true,
+        autoOpen: false,
+        buttons: {
+            Ok: function() {
+            $( this ).dialog( "close" );
+        }
+      }
+    });
+};
+
+frn.initializeEvents = function(){
+    $(document).on("show-referral-dialog","#frn-context",function(event,data){
+        frn.showDialog(event,data);
+    });
+};
+
+frn.showDialog = function(event,data){
+    $( dialogSelector ).html("").html(  dialogTemplate( data ) )
+                       .dialog( "open" );
+     $("#special-referral-dialog").scrollTop(0);
+
+};
+
+$(document).ready(function(event){
+    frn.initialize(event);
+});
+
+</script>
+
+
+</apex:component>

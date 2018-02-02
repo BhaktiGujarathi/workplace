@@ -1,0 +1,168 @@
+<!-- PrintQuotePDF -->
+<apex:page controller="NAC_QuoteExt" showHeader="false" sidebar="false" standardStylesheets="false" renderAs="PDF">
+
+<!-- Header -->
+    <table width="100%" style="padding:20px;">
+        <tr>
+            <td>
+                
+            </td>
+            <td style="vertical-align:bottom; text-align:right;">
+                <apex:outputtext style="font-size:23px;font-weight:bold;color:#1139A3; font-family:Arial Unicode MS" escape="false" value="<b>Estimated Charges and Payments</b>"/>
+            </td>
+        </tr>
+    </table>
+    <!-- Add QuoteLineItems Details -->
+    
+     
+    
+
+    <table  width="100%" style="border:1px solid #888; border-radius:4px;">
+        <tr style = "background : #ddb929; height : 25px; font-size:16px;" align="Left">
+            <td colspan="24">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>QuoteLineItems Details</b>
+                </span>
+            </td>
+        </tr>
+        <tr style = "background : #e0e3e5; height : 25px; font-size:14px">
+            <td  width="33%"><b> Type </b></td>
+            <td  width="33%"> <b>Product</b></td>
+            <td  width="34%"> <b>Charge</b></td>
+        </tr>
+        
+        <apex:repeat value="{!lineItemWrp}" var="eachQLI" >
+         <apex:variable var="v" value=""  rendered="{!if(eachQLI.qli.Product2Id!=null ,true,false)}">
+            <tr style ="font-size:12px">
+                 <td  width="33%"><apex:outputText value="{!productMap[eachQLI.qli.Product2Id].Family}" /></td> 
+                 <td  width="33%"><apex:outputText value="{!productMap[eachQLI.qli.Product2Id].Name}" /></td>
+                 <td  width="34%"><apex:outputText value="$ {!eachQLI.qli.UnitPrice}" /></td>
+            </tr> 
+         </apex:variable>  
+        </apex:repeat>
+        
+            <tr style ="font-size:12px; background-color : #e3e3d7;">
+                <td  width="33%"> </td>
+                <td  width="33%">Grand Total :</td>
+                <td  width="34%"><b><apex:outputText value="$ {!TotalUnitPrice}"/></b></td>
+            </tr>
+    </table>
+
+<!-- Add Payment(s) Details -->
+    <apex:outputPanel rendered="{!!isOutpatientTreatment}" >
+    <table  width="100%" style="border:1px solid #888; border-radius:4px; border-top: none;">
+        <tr style = "background : #ddb929; height : 25px; font-size:16px;" align="Left">
+            <td colspan="24">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>Payment(s) Details</b>
+                </span>
+            </td>
+        </tr>
+        <tr style = "background : #e0e3e5; height : 25px; font-size:14px">
+            <td  width="18%"><b>Payment Method Type </b></td>
+            <td  width="12%"> <b>Last 4</b></td>
+            <td  width="20%"> <b>Card Holder Name</b></td>
+            <td  width="16%"><b>Total Payment Amount</b></td>
+            <!-- <td  width="14%"><b>Total Amount Remaining</b></td> -->
+            <td  width="16%"><b>Payment Date</b></td>
+            <td  width="18%"><b>Ref Number</b></td>
+        </tr>
+        <apex:repeat value="{!paymentMethodWrpList}" var="eachPt">
+            <apex:variable var="v" value=""  rendered="{!if(eachPt!=null ,true,false)}">
+                <tr style ="font-size:12px">
+                    <td  width="18%"><apex:outputText value="{!eachPt.pyt.Type__c}" /></td>
+                    <td  width="12%"><apex:outputText value="{!eachPt.pyt.Last_4__c}" /></td>
+                    <td  width="20%"><apex:outputText value="{!eachPt.selectedHolderName}" /></td>
+                    <td  width="16%"><apex:outputText value=" {!eachPt.pyt.Total_Payment_Amount__c}" /></td>
+                    <!-- <td  width="14%"><apex:outputText value="$ {!eachPt.pyt.Total_Amount_Remaining__c}" /></td> -->
+                    <td  width="16%">
+                        <apex:outputText value="{0,date,MM/dd/yyyy}">
+                        <apex:param value="{!eachPt.pyt.Payment_Date__c}" />
+                        </apex:outputText>
+                    </td>
+                    <td  width="18%"><apex:outputText value="{!eachPt.pyt.Reference_Confirmation_Number__c}" /></td>
+                </tr>
+            </apex:variable> 
+        </apex:repeat>
+    </table>
+    </apex:outputPanel>
+    <!-- Apply Payments and Distribute Balances Details--> 
+    <apex:outputPanel rendered="{!!isOutpatientTreatment}" >
+    <table  width="100%" style="border:1px solid #888; border-radius:4px; border-top: none;">
+        <tr style = "background : #ddb929; height : 25px; font-size:16px;" align="Left">
+            <td colspan="24">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>Apply Payments and Distribute Balances</b>
+                </span>
+            </td>
+        </tr>
+        <tr style = "background : #e0e3e5; height : 25px; font-size:14px">
+            <td  width="20%"><b> Type </b></td>
+            <td  width="20%"> <b>Product</b></td>
+            <td  width="20%"> <b>Charge</b></td>
+            <td  width="20%"><b>Payment Amount</b></td>
+            <td  width="20%"><b>Remaining Cost</b></td>
+        </tr>
+            <apex:repeat value="{!lineItemWrp}" var="ply">
+                <apex:variable var="v" value=""  rendered="{!if(ply.qli.Product2Id!=null ,true,false)}">
+                    <tr style ="font-size:12px">
+                        <td  width="26%"><apex:outputText value="{!productMap[ply.qli.Product2Id].Family}" /></td>
+                        <td  width="30%"><apex:outputText value="{!productMap[ply.qli.Product2Id].Name}" /></td>
+                        <td  width="20%"><apex:outputText value="$ {!ply.qli.UnitPrice}" /></td>
+                        <td  width="20%"><apex:outputText value="{!ply.PayCstPyt.Payment_Amount__c}" /></td>
+                        <td  width="20%"><apex:outputText value="$ {!ply.PayCstPyt.Balance__c}" /></td>
+                    </tr>
+                </apex:variable>
+            </apex:repeat>
+            <tr style ="font-size:12px; background-color : #e3e3d7;">
+                <td  width="20%"></td>
+                <td  width="20%"></td>
+                <td  width="20%"><b><apex:outputText value="$ {!TotalUnitPrice}" /></b></td>
+                <td  width="20%"><b><apex:outputText value="$ {!totalPaymentAmount}" /></b></td>
+                <td  width="20%"><b><apex:outputText value="$ {!totalRemaining}" /></b></td>
+            </tr>
+    </table>
+    </apex:outputPanel>
+    <!-- Payment Plan Details -->
+    <apex:outputPanel rendered="{!!isOutpatientTreatment}" >
+    <table  width="100%" style="border:1px solid #888; border-radius:4px; border-top: none;">
+        <tr style = "background : #ddb929; height : 25px; font-size:16px;" align="Left">
+            <td colspan="24">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>Payment Plan Details</b>
+                </span>
+            </td>
+        </tr>
+        <tr style = "background : #e0e3e5; height : 25px; font-size:14px">
+            <td  width="50%"><b> Balance to Collect </b></td>
+            <td  width="50%"> <b>Collect Balance at</b></td>
+            
+        </tr>
+            <apex:repeat value="{!ftrPytWrpList}" var="eachFPt">
+            <apex:variable var="v" value=""  rendered="{!if(eachFPt.ftrPyt!=null ,true,false)}">
+                <tr style ="font-size:12px">
+                    <td  width="50%"><apex:outputText value=" {!eachFPt.ftrPyt.Balance_to_Collect__c}" /></td>
+                    <td  width="50%"><apex:outputText value="{!eachFPt.ftrPyt.Collect_Balance_at__c}" /></td>
+                </tr>
+                </apex:variable>
+            </apex:repeat>
+             <tr style ="font-size:12px; background-color : #e3e3d7;">
+                <td  width="50%"><b><apex:outputText value="$ {!totalBalance}" /></b></td>
+                <td  width="50%"> &nbsp;</td>
+            </tr>
+    </table> 
+    </apex:outputPanel>
+    <!-- Additional Comments -->
+    <table  width="100%" style="border:1px solid #888; border-radius:4px; border-top: none;">
+        <tr style = "background : #ddb929; height : 25px; font-size:16px;" align="Left">
+            <td colspan="24">
+                <span style ="font face: Tw Cen MT Condensed">
+                    <b>Additional Comments</b>
+                </span>
+            </td>
+        </tr>           
+        <tr style ="font-size:12px">
+            <td  width="50%"><apex:outputField value=" {!quoteObj.Additional_Comments__c}" /></td>
+        </tr>               
+    </table> 
+</apex:page>

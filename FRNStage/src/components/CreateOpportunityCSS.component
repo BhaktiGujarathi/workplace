@@ -1,0 +1,391 @@
+<apex:component >
+    
+    <link href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css" rel="stylesheet">
+    </link>
+
+    <link href="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/theme.min.css" rel="stylesheet">
+    </link>
+    
+    <link rel="stylesheet" type="text/css" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
+
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
+
+    <style>
+        textarea{    
+            min-height: 15px  !important;
+            min-width: 15px   !important;
+            /*overflow : hidden !important;*/
+        }
+
+        textarea[readonly]{
+            background-color: lightgrey;
+        }
+
+        html {
+            -webkit-transition: background-color 1s;
+            transition: background-color 1s;
+        }
+
+        html, body {
+            /* For the loading indicator to be vertically centered ensure */
+            /* the html and body elements take up the full viewport */
+            min-height: 100%;
+        }
+
+        html.loading {
+            /* Replace #333 with the background-color of your choice */
+            /* Replace loading.gif with the loading image of your choice */
+            background: #333 url('loading.gif') no-repeat 50% 50%;
+
+            /* Ensures that the transition only runs in one direction */
+            -webkit-transition: background-color 0;
+            transition: background-color 0;
+        }
+
+        body {
+            -webkit-transition: opacity 1s ease-in;
+            transition: opacity 1s ease-in;
+        }
+
+        html.loading body {
+            /* Make the contents of the body opaque during loading */
+            opacity: 0;
+
+            /* Ensures that the transition only runs in one direction */
+            -webkit-transition: opacity 0;
+            transition: opacity 0;
+        }
+
+        #notes-wrapper .detailList .data2Col{
+            padding: 0px;
+            padding-top: 5px;
+        }
+    </style>
+
+
+    <!-- Side bar + Quality Report CSS -->
+
+    <style>
+       .floating-panel {
+            position: fixed !important;
+            width: 23.1%;
+            left: 75%;
+            overflow: scroll;
+            max-height: 500px;
+            min-height: 500px;
+            overflow-x: hidden;
+            overflow-y: hidden;
+            top: 120px;
+            display: block;
+            border: 1px solid #b6b6b6;
+            padding: 0;
+            /*background-color: #f7f7f7;*/
+            padding: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.38);
+        }
+
+        #side-tabs {
+            overflow: hidden;
+        }
+
+        #side-tabs .ui-tabs-panel {
+            padding: 0px;
+        }
+
+        .panel-isfloating {
+            position: fixed !important;
+            /*z-index: 2000 !important;*/
+            opacity: 0.95 !important;
+            filter: alpha(opacity=95) ;
+            margin: 0px !important;
+            top: 0px !important;
+            max-height: 600px !important;
+            min-height: 600px !important;
+        }
+        
+        .horizontal-floating{
+            position: fixed !important;
+            left: 0px;
+            width: 380px;
+        }
+        
+        #qualityscore-report .quality-report-panel {
+            padding-bottom: 10px;
+        }
+        
+        #qualityscore-report li { 
+            cursor: pointer; cursor: hand; 
+        }
+
+        #qualityscore-report .opportunity-score-view {
+            /*position: fixed;
+            margin-top: -5px;
+            background-color: #f7f7f7;
+            z-index: 1;*/
+        }
+
+        #qualityscore-report .section-view,
+        #qualityscore-report .field-view {
+            overflow-x: hidden;
+            overflow-y: scroll;
+            max-height: 400px;
+        }
+
+        .panel-isfloating #qualityscore-report .section-view,
+        .panel-isfloating #qualityscore-report .field-view {
+            max-height: 500px;
+        }
+
+        #qualityscore-report .refresh-view {
+            text-align: center;
+            vertical-align: middle;
+            margin-top : 25%;
+        }
+
+        #qualityscore-report li a {
+              text-decoration: none;
+              font-size: 13px;
+              margin-left: -15%;
+              color: #000;
+            
+              -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+              transition: font-size 0.3s ease, background-color 0.3s ease;
+              display: block;
+              width: 200px;
+        }
+        
+        #qualityscore-report li a:hover {
+          font-size: 15px;
+          background: #f6f6f6;
+        }
+        
+        #qualityscore-report .hide-control{
+            margin-left: -23px;
+            position: fixed;
+            z-index: 1000;
+            cursor: pointer; cursor: hand; 
+        }
+
+        #qualityscore-report .show-control{
+            cursor: pointer; 
+            cursor: hand;
+            position: fixed;
+            left: 97%;
+        }
+    
+        #qualityscore-report li.incomplete{
+            color : red !important;
+        }
+    
+        #qualityscore-report li.incomplete a{
+            color : red !important;
+        }
+
+        #qualityscore-report li.complete{
+            color : green !important;
+        }
+
+        #qualityscore-report li.complete a{
+            color : green !important;
+        }
+
+
+        #qualityscore-report .flexbox-container {
+            display: flex;
+            height: 100%;
+        }
+
+        #qualityscore-report .flexbox-container {
+            flex-direction: row;
+        }
+
+        #qualityscore-report .flex-big-column {
+            flex: 0 0 17em;
+        }
+
+        #qualityscore-report .flexbox-small-column {
+            /* width: 25em; */
+            flex: 0 0 4em;
+        }
+
+        #qualityscore-report .margin-top-medium {
+            margin-top : 15px;
+        }
+
+        #qualityscore-report .field-highlight{
+            background-color : yellow !important;
+        }
+
+        @-webkit-keyframes highlight-animation {
+            0%, 49% {
+                background-color: rgba(117, 209, 63, 0.27);
+                /*border: 3px solid #e50000;*/
+            }
+            50%, 100% {
+                background-color: #e5000017;
+                /*border: 3px solid rgb(117, 209, 63);*/
+            }
+
+
+        }
+
+        .field-highlight {
+            -webkit-animation: highlight-animation 1s infinite;  /* Safari 4+ */
+            -moz-animation: highlight-animation 1s infinite;  /* Fx 5+ */
+            -o-animation: highlight-animation 1s infinite;  /* Opera 12+ */
+            animation: highlight-animation 1s infinite;  /* IE 10+, Fx 29+ */
+        }
+
+        .oppScore {
+            font-size: 15px;
+            margin-left: -15%;
+            color : red !important;
+            font-family: sans-serif !important;
+
+            -webkit-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -moz-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -o-transition: font-size 0.3s ease, background-color 0.3s ease;
+              -ms-transition: font-size 0.3s ease, background-color 0.3s ease;
+              transition: font-size 0.3s ease, background-color 0.3s ease;
+        }
+
+        #qualityscore-report .refresh-view .refresh-button {
+            width: 70px;
+            height: 70px;
+            margin-left: 40%;
+            display: block;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        #qualityscore-report  .panel-isfloating .refresh-view .refresh-button {
+            width: 150px;
+            height: 150px;
+            margin-left: 25%;
+            margin-top: 50px;
+        }
+
+        #qualityscore-report  .panel-isfloating .refresh-view h3 {
+            font-size: 14px;
+        }
+        
+        #qualityscore-report td {
+            vertical-align: baseline;
+        }
+
+        #qualityscore-report .section-name-column{
+            width: 220px;
+        }
+
+        .show-hand-cursor {
+            cursor: pointer; 
+            cursor: hand; 
+        }
+
+        .visiblity-hidden {
+            visibility: hidden;
+        }
+        
+        .vertical-align-middle{
+            vertical-align: middle;
+        }
+
+        /*Save and Continue Button CSS*/
+        #side-tabs .save-continue-button {
+            font-size: 10px;
+            padding: .5em 1em;
+        }
+
+        #side-tabs #save-continue-tab {
+            padding: 0px;
+            background-color: #00d0ffa6;
+        }
+        
+    </style>
+
+    <!-- Back Button -->
+    <style type="text/css">
+        a.left-button {
+          display: inline-block;
+          border-radius: 50%;
+          text-align: center;
+        }
+
+        a.left-button:hover .left{
+          border: 0.5em solid #e74c3c;
+        }
+
+        a.left-button:hover .left:after {
+          border-top: 0.5em solid #e74c3c;
+          border-right: 0.5em solid #e74c3c;
+        }
+
+        /*
+        .left-button .left {
+          display: inline-block;
+          width: 4em;
+          height: 4em;
+          border: 0.5em solid #333;
+          border-radius: 50%;
+          margin-right: 1.5em;
+        }
+
+        .left-button .left:after {
+          content: '';
+            display: inline-block;
+          margin-top: 1.05em;
+          margin-left: 0.6em;
+          width: 1.4em;
+          height: 1.4em;
+          border-top: 0.5em solid #333;
+          border-right: 0.5em solid #333;
+          -moz-transform: rotate(-135deg);
+          -webkit-transform: rotate(-135deg);
+          transform: rotate(-135deg);
+        }*/
+
+
+        .left-button .left {
+            display: inline-block;
+            width: 2em;
+            height: 2em;
+            border: 0.5em solid #333;
+            border-radius: 50%;
+        }
+
+        .left-button .left::after {
+            content: '';
+            display: inline-block;
+            margin-top: 8px;
+            margin-left: 1px;
+            width: 5px;
+            height: 5px;
+            border-top: 0.5em solid #333;
+            border-right: 0.5em solid #333;
+            -moz-transform: rotate(-135deg);
+            -webkit-transform: rotate(-135deg);
+            transform: rotate(-135deg);
+        }
+
+        .checkBoxImg {
+            position: absolute;
+            right: 10px;
+        }
+
+        .loading-symbol {
+            height: 100px;
+            margin-left: 35%;
+        }
+
+        .panel-isfloating .loading-symbol{
+            margin-top: 30%;
+        }
+
+    </style>
+
+
+
+</apex:component>

@@ -1,0 +1,267 @@
+<apex:page standardController="Insurance_Benefit__c" extensions="CreateInsuranceBenefitCtrl" tabstyle="Insurance_Benefit__c">
+
+<link rel="stylesheet" href="{!URLFOR($Resource.multipicklist, 'multiple-select.css')}" />  
+
+    <apex:sectionHeader title="Insurance Benefit" subtitle="Insurance Benefit"/>
+    <apex:form id="theForm">
+        <apex:outputPanel id="ErrorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+    
+        <apex:pageBlock mode="edit">
+        
+            <apex:pageBlockButtons >
+                <apex:CommandButton value="Save" action="{!saveOppInfo}"/>
+                <apex:CommandButton value="Save & New" action="{!saveNOppInfo}"/>
+                <apex:CommandButton value="Cancel" action="{!cancel}"/>
+            </apex:pageBlockButtons>
+        <!--Insurance Benefit Detail -->        
+            <apex:pageBlockSection title="Insurance Benefit Detail" collapsible="true" columns="2" id="Info">
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Insurance Benefit Name"/>
+                    <apex:inputField value="{!ib.Name}" taborderhint="1"/>
+                </apex:pageBlockSectionItem>
+                 <apex:pageBlockSectionItem >
+                    <apex:outputText value="Applicable For Year"/>
+                    <apex:inputField value="{!ib.Applicable_For_Year__c}" taborderhint="1"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Patient Insurance"/>                    
+                    <apex:outputPanel >                
+                        <apex:actionRegion >
+                            <apex:inputField value="{!ib.Patient_Insurance__c}"  id="Info2" taborderhint="3">
+                                <apex:actionSupport event="onchange" action="{!showDOB}" rerender="Info8"/>
+                            </apex:inputField>                                        
+                        </apex:actionRegion>
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Record Type"/>
+                    <apex:outputText value="{!recordTypeName}" id="Info4"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Disposition"/>
+                    <apex:inputField value="{!ib.Disposition__c}" id="Info6" taborderhint="4"/>
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection> 
+            
+            <!-- Benefits Information -->
+            <apex:pageBlockSection title="Benefits Information" collapsible="true" columns="2" id="Benefits">
+                <apex:inputField value="{!ib.Deductible__c}" taborderhint="5"/>
+                <apex:inputField value="{!ib.Max_Out_of_Pocket__c}" taborderhint="9"/>
+                <apex:inputField value="{!ib.Deductible_Met__c}" taborderhint="6"/>
+                <apex:inputField value="{!ib.Max_Out_of_Pocket_Met__c}" taborderhint="10"/>
+                <apex:inputField value="{!ib.Deductible_Remaining__c}" taborderhint="7"/>
+                <apex:inputField value="{!ib.Max_Out_of_Pocket_Remaining__c}" taborderhint="11"/> 
+                <apex:inputField value="{!ib.Deductible_Included_in_OOP__c}" taborderhint="8"/>                  
+               <!-- <apex:inputField value="{!ib.Co_Pay__c}" taborderhint="12"/> -->
+                
+                <apex:inputField value="{!ib.Co_Pay_Met__c}" taborderhint="13"/> 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="Day / Dollar Max Information" collapsible="true" columns="2" id="dMax">
+                <apex:inputField value="{!ib.Day_Max_Inpatient__c}" taborderhint="14"/>              
+                <apex:inputField value="{!ib.Annual_Max__c}" taborderhint="23"/>
+                <apex:inputField value="{!ib.Day_Max_Inpatient_Used__c}" taborderhint="15"/>  
+                <apex:inputField value="{!ib.Annual_Max_Met__c}" taborderhint="24"/>
+                <apex:inputField value="{!ib.Day_Max_Outpatient__c}" taborderhint="16"/>
+                <apex:inputField value="{!ib.Annual_Max_Remaining__c}" taborderhint="25"/>                   
+                <apex:inputField value="{!ib.Day_Max_Outpatient_Used__c}" taborderhint="17"/>
+                <apex:PageBlockSectionItem />
+                <apex:inputField value="{!ib.Combined_Day_Max_IP_OP__c}" taborderhint="18"/>
+                <apex:inputField value="{!ib.Lifetime_Max__c}" taborderhint="26"/>
+                <apex:inputField value="{!ib.Detox_Ratio__c}" taborderhint="19"/>
+                <apex:inputField value="{!ib.Lifetime_Max_Met__c}" taborderhint="27"/> 
+                <apex:inputField value="{!ib.RTC_Ratio__c}" taborderhint="20"/>                   
+                <apex:inputField value="{!ib.Lifetime_Max_Remaining__c}" taborderhint="28"/> 
+                <apex:inputField value="{!ib.PHP_Ratio__c}" taborderhint="21"/>              
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!ib.IOP_Ratio__c}" taborderhint="22"/>               
+                <apex:pageBlockSectionItem />              
+            </apex:pageBlockSection>
+            
+            <!-- DTX Benefits -->
+            <apex:pageBlockSection title="DTX Benefits" collapsible="true" columns="2" id="dBenefits">
+                <apex:inputField value="{!ib.Detox_Covered__c}" taborderhint="29"/>
+                <apex:inputField value="{!ib.Detox_Admit_Co_Payment__c}" taborderhint="34"/>
+                <apex:inputField value="{!ib.Detox_Pays_at__c}" taborderhint="30"/>
+                <apex:inputField value="{!ib.DTX_Copay_Type__c}" taborderhint="35"/>
+                <apex:inputField value="{!ib.Detox_Day_Max_Applies__c}" taborderhint="31"/>
+                <apex:inputField value="{!ib.DTX_Apply_Copay__c}" taborderhint="36"/>
+                <apex:inputField value="{!ib.Detox_Over__c}" taborderhint="32"/>
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!ib.LOC_Benefits_are_the_Same__c}" taborderhint="33"/> 
+            </apex:pageBlockSection>
+            
+            <!-- RTC Benefits -->
+            <apex:pageBlockSection title="RTC Benefits" collapsible="true" columns="2" id="rBenefits">
+                <apex:inputField value="{!ib.RTC_Covered__c}" taborderhint="37"/>
+                <apex:inputField value="{!ib.RTC_Admit_Co_Payment__c}" taborderhint="41"/>
+                <apex:inputField value="{!ib.RTC_Pays_at__c}" taborderhint="38"/>                 
+                <apex:inputField value="{!ib.RTC_Copay_Type__c}" taborderhint="42"/>                 
+                <apex:inputField value="{!ib.RTC_Day_Max_Applies__c}" taborderhint="39"/> 
+                <apex:inputField value="{!ib.RTC_Apply_Copay__c}" taborderhint="43"/> 
+                <apex:inputField value="{!ib.Residential_Treatment_Override__c}" taborderhint="40"/>  
+            </apex:pageBlockSection>  
+            
+            <!-- PHP Benefits -->
+            <apex:pageBlockSection title="PHP Benefits" collapsible="true" columns="2" id="pBenefits">
+                <apex:inputField value="{!ib.PHP_Covered__c}" taborderhint="44"/>
+                <apex:inputField value="{!ib.PHP_Admit_Co_Payment__c}" taborderhint="48"/>
+                <apex:inputField value="{!ib.PHP_Pays_at__c}" taborderhint="45"/>                    
+                <apex:inputField value="{!ib.PHP_Copay_Type__c}" taborderhint="49"/>                    
+                <apex:inputField value="{!ib.PHP_Day_Max_Applies__c}" taborderhint="46"/> 
+                <apex:inputField value="{!ib.PHP_Apply_Copay__c}" taborderhint="50"/> 
+                <apex:inputField value="{!ib.Partial_Hospitalization_Override__c}" taborderhint="47"/>   
+            </apex:pageBlockSection>
+            
+            <!-- IOP Benefits -->
+            <apex:pageBlockSection title="IOP Benefits" collapsible="true" columns="2" id="iBenefits">
+                    <apex:inputField value="{!ib.IOP_Covered__c}" taborderhint="51"/>
+                    <apex:inputField value="{!ib.IOP_Admit_Co_Payment__c}" taborderhint="55"/>
+                    <apex:inputField value="{!ib.IOP_Pays_at__c}" taborderhint="52"/>
+                    <apex:inputField value="{!ib.IOP_Copay_Type__c}" taborderhint="56"/>
+                    <apex:inputField value="{!ib.IOP_Day_Max_Applies__c}" taborderhint="53"/>
+                    <apex:inputField value="{!ib.IOP_Apply_Copay__c}" taborderhint="57"/>
+                    <apex:inputField value="{!ib.Intensive_Outpatient_Override__c}" taborderhint="54"/>
+            </apex:pageBlockSection>
+            
+            <!-- Additional Information -->
+            <apex:pageBlockSection title="Additional Information" collapsible="true" columns="2" id="additional">
+                <apex:inputField value="{!ib.Reimbursement_Structure__c}" id="iCovered" taborderhint="58"/>
+                <apex:inputField value="{!ib.Plan_Funded_by__c}" taborderhint="61"/>
+                <apex:inputField value="{!ib.Shared_Savings__c}" taborderhint="59"/>
+                <apex:inputField value="{!ib.No_Out_of_Network_Benefits__c}" taborderhint="62"/>    
+                <apex:inputField value="{!ib.Percentage_of_Medicare_Rate__c}" taborderhint="60"/>      
+            </apex:pageBlockSection>
+            
+            <apex:actionFunction action="{!renderedSectionMethod}" name="onChangeRerenderMethod" reRender="additionalInfo" /> 
+            <apex:pageBlockSection id="additionalInfo" title="Professional Benefits Section" collapsible="true" columns="2" >
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Professional Outpatient Covered Same" />
+                    <apex:inputField value="{!ib.Professional_Outpatient_Covered_Same__c}" onchange="onChangeRerenderMethod()"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Physician Fees Covered Same" />
+                    <apex:inputField value="{!ib.Physician_Fees_Covered_Same__c}" onchange="onChangeRerenderMethod()"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!IF(ib.Professional_Outpatient_Covered_Same__c == 'No', true, false)}">
+                    <apex:outputText value="Professional OP Additional Info" />
+                    <apex:inputField value="{!ib.Professional_OP_Additional_Info__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!IF(ib.Professional_Outpatient_Covered_Same__c == 'No', false, true)}" />
+                <apex:pageBlockSectionItem rendered="{!IF(ib.Physician_Fees_Covered_Same__c == 'No', true, false)}">
+                    <apex:outputText value="Physician Fees Additional Info" />
+                    <apex:inputField value="{!ib.Physician_Fees_Additional_Info__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem rendered="{!IF(ib.Physician_Fees_Covered_Same__c == 'No', false, true)}" />
+            </apex:pageBlockSection>
+            <!-- Uncovered Information_(Talbott Facilities ONLY)-->
+            <apex:pageBlockSection title="Uncovered Information (Talbott Facilities ONLY)" collapsible="true" columns="2" id="uci">
+                <apex:inputField value="{!ib.Uncovered_Days__c}" taborderhint="65"/>
+                <apex:inputField value="{!ib.Uncovered_Days_Rate__c}" taborderhint="66"/>
+                <apex:pageBlockSectionItem />
+                <apex:inputField value="{!ib.Uncovered_Charges__c}" taborderhint="67"/>
+            </apex:pageBlockSection>            
+            
+            <apex:actionfunction name="evaluateTotalDaysUsed" action="{!calculateTotalDaysUsed}" reRender="ttldaysUsed"/>
+            <apex:pageBlockSection title="Residential Days Used" collapsible="false" columns="1" id="daysUsed" >
+                <apex:pageBlockTable value="{!ib}" var="benefitInstance">
+                    <apex:column headerValue="Current Residential Facility" style="width:100px">
+                        <apex:selectList value="{!ib.Current_Residential_facility__c}" size="1" multiselect="false" >
+                            <apex:selectOptions value="{!currentFrnFaclitityOptions}"/>
+                        </apex:selectList>
+                    </apex:column> 
+                    <apex:column headerValue="DTX Days Used">
+                        <apex:inputField value="{!ib.DTX_Days_Used__c}" style="width:100px" onchange="evaluateTotalDaysUsed()" />
+                    </apex:column>
+                    <apex:column headerValue="RTC Days Used">
+                        <apex:inputField value="{!ib.RTC_Days_Used__c}" style="width:100px" onchange="evaluateTotalDaysUsed()" />
+                    </apex:column>
+                    <apex:column headerValue="PHP Days Used">
+                        <apex:inputField value="{!ib.PHP_Days_Used__c}" style="width:100px" onchange="evaluateTotalDaysUsed()" />
+                    </apex:column>
+                    <apex:column headerValue="IOP Days Used">
+                        <apex:inputField value="{!ib.IOP_Days_Used__c}" style="width:100px" onchange="evaluateTotalDaysUsed()" />
+                    </apex:column>
+                    <apex:column headerValue="Current Daily EIV">
+                        <apex:inputField value="{!ib.Current_Daily_EIV__c}" style="width:100px" />
+                    </apex:column>
+                    
+                    <apex:column headerValue="Total Used Days">
+                        <apex:outputPanel id="ttldaysUsed">
+                            <apex:outputText value="{!totalDaysUsedCount}" style="width:100px" />
+                        </apex:outputPanel>
+                    </apex:column>
+                   
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            
+            <apex:actionfunction name="changeLOC" action="{!calculateTotalCoPay}" reRender="tdays,tcop,ErrorMessage"/>
+            <apex:pageBlockSection title="Estimated Coverage Days" collapsible="false" columns="1" id="estHead" >
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!coverageDaysWrpList}" var="eachEST">                
+                    <apex:column headerValue="Action">
+                        <apex:commandLink value="Del"  action="{!removeRowFromEst}" onclick="if(!confirm('Are you sure?')){return};" rerender="estHead" >
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink> 
+                    </apex:column> 
+                    
+                    <apex:column headerValue="FRN Facility" style="width:15%px">
+                        <apex:outputPanel layout="block" styleClass="requiredInput" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                            <apex:selectList value="{!eachEST.record.FRN_Facility__c}" size="1" multiselect="false" tabIndex="660">
+                                <apex:selectOptions value="{!FRNFacilities}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:column> 
+                            
+                    <apex:column headerValue="DTX Days" style="width:15%px"> 
+                        <apex:inputField value="{!eachEST.record.DTX_Days__c}" style="width:100px" onblur="changeLOC()" html-tabIndex="660"/>
+                    </apex:column> 
+                            
+                    <apex:column headerValue="RTC Days" style="width:15%px"> 
+                        <apex:inputField value="{!eachEST.record.RTC_Days__c}" style="width:100px" onblur="changeLOC()" html-tabIndex="660"/>
+                    </apex:column> 
+                    
+                    <apex:column headerValue="PHP Days" style="width:15%px">
+                        <apex:inputField value="{!eachEST.record.PHP_Days__c}" style="width:100px" onblur="changeLOC()" html-tabIndex="660"/>
+                    </apex:column>
+                            
+                    <apex:column headerValue="IOP Days" style="width:15%px">
+                        <apex:inputField value="{!eachEST.record.IOP_Days__c}" style="width:100px" onblur="changeLOC()" html-tabIndex="660"/>
+                    </apex:column>
+                    
+                    <apex:column headerValue="Total Days" >                     
+                        <apex:outputText value="{!eachEST.total_days}"  id="tdays"/>                                    
+                    </apex:column>
+                            
+                    <apex:column headerValue="Total Copay" >
+                        <apex:outputField value="{!eachEST.record.Total_Copay__c}" id="tcop" />                 
+                    </apex:column>                  
+                            
+                    <apex:column headerValue="Action">
+                        <apex:outputPanel rendered="{!if((coverageDaysWrpList.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewEstRows}" rerender="ErrorMessage,estHead"/>
+                        </apex:outputPanel> 
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column> 
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>        
+        </apex:pageBlock>       
+        
+    </apex:form>
+
+    <script src="{!URLFOR($Resource.multipicklist, 'jquery.min.js')}"></script>
+    <script src="{!URLFOR($Resource.multipicklist, 'multiple-select.js')}"></script>
+    <script>
+        $(function() { 
+          
+            $('.ms').change(function() {
+                console.log($(this).val());
+            }).multipleSelect({
+                width: '60%'
+            });
+        });
+    </script>
+</apex:page>

@@ -1,0 +1,310 @@
+<apex:page standardController="Quote" extensions="QuoteExt" tabstyle="Quote" cache="false"
+           action="{!redirectIfLocked}">
+    <apex:sectionHeader title="Estimated Treatment Costs Edit" subtitle="New Payment"/>
+    <apex:form >
+        <apex:outputPanel id="ErrorMessage">
+            <apex:pagemessages />
+        </apex:outputPanel>
+        <apex:pageBlock >
+            <!--QuoteLineItem Table-->  
+            <apex:pageBlockSection title="Add QuoteLineItems" collapsible="False" columns="1"  >
+                <apex:outputPanel id="rFHead">
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!lineItemWrp}" var="eachQLI">
+                    <apex:column headerValue="Action" style="width:8%">
+                        <apex:commandLink value="Del"  action="{!removeRowToQLITable}" onclick="if(!confirm('Are you sure?')){return};" rerender="rFHead,aplyPyt" immediate="true" rendered="{!!eachQLI.qli.Auto_Added__c}">
+                            <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                        </apex:commandLink> 
+                    </apex:column> 
+                    <apex:column headerValue="Type" style="width:20%"> 
+                         <apex:outputText value="{!productMap[eachQLI.qli.Product2Id].Family}" rendered="{!eachQLI.isReadOnly}"/>
+                         <apex:outputPanel layout="block" rendered="{!!eachQLI.isReadOnly}" styleClass="requiredInput">
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/>
+                            <apex:selectList id="family" value="{!eachQLI.selectedFamilyType}" size="1" rendered="{!!eachQLI.isReadOnly}">
+                                <apex:actionSupport event="onchange" action="{!onTypeSelected}" reRender="rFHead">
+                                    <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                </apex:actionSupport>
+                                <apex:selectOptions value="{!ProductType}"/>
+                            </apex:selectList><br/>                         
+                            <apex:outputPanel rendered="{!eachQLI.selectedFamilyType==null && eachQLI.isEmptyRow}">
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You must enter a value" style="color:#C00; "/>
+                            </apex:outputPanel>
+                        </apex:outputpanel>
+                         <!-- <apex:inputField value="{!eachQLI.qli.Product2.Family}" rendered="{!!eachQLI.isReadOnly}"/> -->
+                    </apex:column>
+                    <apex:column headerValue="Product" style="width:20%">                                     
+                        <apex:outputText value="{!productMap[eachQLI.qli.Product2Id].Name}" rendered="{!eachQLI.isReadOnly}"/>                        
+                        <apex:outputPanel layout="block" styleClass="requiredInput" rendered="{!!eachQLI.isReadOnly}" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                            <apex:selectList id="product" value="{!eachQLI.qli.Product2Id}" size="1" >
+                                <apex:actionSupport event="onchange" reRender="aplyPyt" action="{!onProductSelected}">
+                                    <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                </apex:actionSupport>
+                                <apex:selectOptions value="{!eachQLI.productSelect}"/>
+                            </apex:selectList><br/>
+                             <apex:outputPanel rendered="{!(eachQLI.qli.Product2Id==null || eachQLI.qli.Product2Id=='') && eachQLI.isEmptyRow && !eachQLI.isSameProduct}">
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You must enter a value" style="color:#C00; "/>
+                            </apex:outputPanel> 
+                            <apex:outputPanel rendered="{!eachQLI.qli.Product2Id!=null && eachQLI.isSameProduct}">
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You can not add same Product Multiple times" style="color:#C00; "/>
+                            </apex:outputPanel>
+                        </apex:outputpanel> 
+                        <!-- <apex:facet name="footer">
+                            <apex:outputText value="Total:" style="float: right;"  escape="false"/>
+                        </apex:facet> -->                       
+                    </apex:column>
+                    
+                    <apex:column headerValue="Charge" style="width:20%"> 
+                        <apex:outputField value="{!eachQLI.qli.UnitPrice}" rendered="{!eachQLI.isReadOnly}"/>
+                        <!-- <apex:inputField value="{!eachQLI.qli.UnitPrice}" rendered="{!!eachQLI.isReadOnly}" required="false"/> -->
+                        <apex:outputPanel layout="block" styleClass="requiredInput" rendered="{!!eachQLI.isReadOnly}" >
+                            <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                            <apex:inputField value="{!eachQLI.qli.UnitPrice}" required="false">
+                                <apex:actionSupport event="onchange" action="{!updateAmounts}" reRender="aplyPyt,rFHead,ErrorMessage"/>
+                            </apex:inputField><br/>
+                            <apex:outputPanel rendered="{!eachQLI.qli.UnitPrice==null && eachQLI.isEmptyRow}">
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="You must enter a value" style="color:#C00; "/>
+                            </apex:outputPanel>
+                        </apex:outputpanel>
+                        <apex:facet name="footer">
+                            <apex:outputText value="${!TotalUnitPrice}" rendered="{!TotalUnitPrice==null}"/>
+                            <apex:outputPanel rendered="{!TotalUnitPrice!=null}">
+                                <apex:outputText value="${0, number, 0,000.00}" rendered="{!TotalUnitPrice>=1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!TotalUnitPrice}" />
+                                </apex:outputText>
+                                <apex:outputText value="${0, number, 00.00}" rendered="{!TotalUnitPrice<1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!TotalUnitPrice}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                    </apex:column>
+                        
+                    <apex:column headerValue="Action" style="width:8%">
+                        <apex:outputPanel rendered="{!if((lineItemWrp.size)-1 ==rowNum,true,false)}">
+                            <apex:commandLink value="Add New" action="{!addNewQLIObj}" rerender="rFHead,aplyPyt" />
+                        </apex:outputPanel> 
+                        <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+                
+                 
+                </apex:outputPanel>
+                
+            </apex:pageBlockSection>  
+            
+            <!--New Payment Table-->            
+            <apex:pageBlockSection title="Add Payment(s)" collapsible="False" columns="1" rendered="{!!isOutpatientTreatment}" >
+                <apex:outputPanel id="newPyt">
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!paymentMethodWrpList}" var="eachPt" >
+                        <apex:column headerValue="Action">
+                            <apex:commandLink value="Del"  action="{!removeRowPytTable}" onclick="if(!confirm('Are you sure?')){return};" rerender="newPyt,aplyPyt" immediate="true">
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> 
+                        </apex:column> 
+                        
+                        <apex:column > 
+                            <apex:facet name="header">
+                                Payment Method <br/> Type
+                            </apex:facet>
+                            <apex:inputField value="{!eachPt.pyt.Type__c}" >
+                                <apex:actionSupport event="onchange" reRender="aplyPyt"/>
+                            </apex:inputField>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Last 4">                       
+                            <apex:inputField value="{!eachPt.pyt.Last_4__c}" style="width:30px;" onchange="{!checkLastFour}">
+                                <apex:actionSupport event="onchange" reRender="aplyPyt" />
+                            </apex:inputField>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Card Holder Name"> 
+                            <apex:panelGrid columns="2">
+                            <apex:selectList size="1" value="{!eachPt.selectedCardHolder}">
+                                <apex:selectOptions value="{!CardHolders}"/>
+                            </apex:selectList>
+                            <apex:commandLink action="{!newPatientContact}">
+                                <apex:outputText value="Add&nbsp;New" escape="false"/>
+                                <apex:param value="{!rowNum}" name="paymentUniNo" assignTo="{!paymentToProcess}"/>
+                            </apex:commandLink>
+                            </apex:panelGrid>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Total Payment Amount"> 
+                            <apex:inputField value="{!eachPt.pyt.Total_Payment_Amount__c}" style="width:100px;"> 
+                                <apex:actionSupport event="onblur" action="{!updateAmounts}" rerender="newPyt,aplyPyt,ErrorMessage">
+                                    <apex:param value="{!rowNum}" name="paymentUniNo" assignTo="{!paymentToProcess}"/>
+                                </apex:actionSupport>
+                            </apex:inputField><br/>                      
+                            <apex:outputPanel rendered="{!eachPt.isNotValidNo}">                                  
+                                <apex:outputLabel value="Error: "  style="color:#C00; font-weight:bold;"/>
+                                <apex:outputLabel value="Please enter valid amount" style="color:#C00; "/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <!--<apex:column headerValue="Total Amount Remaining">
+                            <apex:outputField value="{!eachPt.pyt.Total_Amount_Remaining__c}"  style="width:100px;"/>
+                        </apex:column>-->
+                        
+                        <apex:column headerValue="Payment Date">
+                            <apex:inputField value="{!eachPt.pyt.Payment_Date__c}" style="width:66px;">
+                                <apex:actionSupport event="onchange" reRender="aplyPyt"/>
+                            </apex:inputField>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Ref Number">
+                            <apex:inputField value="{!eachPt.pyt.Reference_Confirmation_Number__c}" style="width:128px;">
+                                <apex:actionSupport event="onchange" reRender="aplyPyt"/>
+                            </apex:inputField>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Action">
+                            <apex:outputPanel rendered="{!if((paymentMethodWrpList.size)-1 ==rowNum,true,false)}">
+                                <apex:commandLink action="{!addNewPytObj}" rerender="newPyt,aplyPyt">
+                                    <apex:outputText value="Add&nbsp;New" escape="false"/>
+                                </apex:commandLink>
+                            </apex:outputPanel> 
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel> 
+            </apex:pageBlockSection> 
+            
+            <!--Apply Payment Table-->  
+            <apex:pageBlockSection title="Apply Payments and Distribute Balances" collapsible="False" columns="1"  rendered="{!!isOutpatientTreatment}">  
+                <apex:pageBlockTable value="{!lineItemWrp}" var="ply" id="aplyPyt"> 
+                    <apex:column headerValue="Type" style="width:15%"> 
+                        <apex:outputText value="{!productMap[ply.qli.Product2Id].Family}" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                    </apex:column>
+                    <apex:column headerValue="Product" style="width:15%">    
+                        <apex:outputText value="{!productMap[ply.qli.Product2Id].Name}" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                    </apex:column>
+                    <apex:column headerValue="Charge" style="width:10%"> 
+                        <apex:outputField value="{!ply.qli.UnitPrice}" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="${!TotalUnitPrice}" rendered="{!TotalUnitPrice==null}"/>
+                            <apex:outputPanel rendered="{!TotalUnitPrice!=null}">
+                                <apex:outputText value="${0, number, 0,000.00}" rendered="{!TotalUnitPrice>=1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!TotalUnitPrice}" />
+                                </apex:outputText>
+                                <apex:outputText value="${0, number, 00.00}" rendered="{!TotalUnitPrice<1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!TotalUnitPrice}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                    </apex:column>
+                    <apex:column headerValue="Payment Amount" style="width:10%"> 
+                        <apex:outputField value="{!ply.PayCstPyt.Payment_Amount__c}" style="width:150px;" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="${!totalPaymentAmount}" rendered="{!totalRemaining==null}"/>
+                            <apex:outputPanel rendered="{!totalPaymentAmount!=null}">
+                                <apex:outputText value="${0, number, 0,000.00}" rendered="{!totalPaymentAmount>=1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!totalPaymentAmount}" />
+                                </apex:outputText>
+                                <apex:outputText value="${0, number, 0.00}" rendered="{!totalPaymentAmount<1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!totalPaymentAmount}" />
+                                </apex:outputText>
+                            </apex:outputPanel>
+                        </apex:facet>
+                    </apex:column>                  
+                                                                <!-- <apex:column headerValue="Payment Date" style="width:15%"> 
+                                                                <apex:inputField value="{!ply.PayCstPyt.Date__c}" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                                                                </apex:column>  -->
+                    <apex:column headerValue="Remaining Cost" style="width:10%"> 
+                        <apex:outputField value="{!ply.PayCstPyt.Balance__c}" style="width:150px;" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="$0.00" rendered="{!totalRemaining==null}"/> 
+                            <apex:outputPanel rendered="{!totalRemaining!=null}">
+                                <apex:outputText value="${0, number, 0,000.00}" rendered="{!totalRemaining>=1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!totalRemaining}" />
+                                </apex:outputText>
+                                <apex:outputText value="${0, number, 0.00}" rendered="{!totalRemaining<1000}" style="white-space: nowrap;">
+                                    <apex:param value="{!totalRemaining}" />
+                                </apex:outputText> 
+                            </apex:outputPanel>
+                        </apex:facet>
+                        
+                    </apex:column>
+                                                                <!-- <apex:column style="width:10%"> 
+                                                                <apex:facet name="header">
+                                                                Reference / Confirmation <br/> Number
+                                                                </apex:facet>
+                                                                <apex:inputField value="{!ply.PayCstPyt.Reference_Confirmation_Number__c}" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}"/>
+                                                                </apex:column>                      
+                                                                <apex:column headerValue="Collect Balance at" style="width:15%" > 
+                                                                <apex:selectList id="product" value="{!ply.TrtCstPyt.Collect_At__c}" size="1" rendered="{!ply.qli.Product2Id!=null && ply.qli.Product2Id!='' && ply.qli.UnitPrice!=null}">                          
+                                                                <apex:selectOptions value="{!ply.collectedAt}"/>
+                                                                </apex:selectList>
+                                                                </apex:column>-->
+                </apex:pageBlockTable>
+                
+            </apex:pageBlockSection>
+            
+            <!--Payment Plan Table-->  
+           <apex:pageBlockSection title="Payment Plan" collapsible="False" columns="1" rendered="{!!isOutpatientTreatment}" >
+                <apex:outputPanel id="PytPlan">
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:pageBlockTable value="{!ftrPytWrpList}" var="eachFPt" >
+                        <apex:column headerValue="Action">
+                            <apex:commandLink value="Del"  action="{!removeRowPaymentPlanTable}" onclick="if(!confirm('Are you sure?')){return};" rerender="PytPlan">
+                                <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                            </apex:commandLink> 
+                        </apex:column> 
+                        
+                        <apex:column headerValue="Balance to Collect">                          
+                            <apex:inputField value="{!eachFPt.ftrPyt.Balance_to_Collect__c}">
+                                <apex:actionSupport event="onchange" action="{!Render}" reRender="PytPlan,ErrorMessage"/>
+                            </apex:inputField>
+                            <apex:facet name="footer">
+                                <!--<apex:outputText value="${0, number, 0.00}"  style="white-space: nowrap;">
+                                    <apex:param value="{!totalBalance}" />
+                                </apex:outputText> -->
+                                <apex:outputText value="$0.00" rendered="{!totalBalance==null}"/> 
+                                <apex:outputPanel rendered="{!totalBalance!=null}">
+                                    <apex:outputText value="${0, number, 0,000.00}" rendered="{!totalBalance>=1000}" style="white-space: nowrap;">
+                                        <apex:param value="{!totalBalance}" />
+                                    </apex:outputText>
+                                    <apex:outputText value="${0, number, 0.00}" rendered="{!totalBalance<1000}" style="white-space: nowrap;">
+                                        <apex:param value="{!totalBalance}" />
+                                    </apex:outputText>
+                                </apex:outputPanel>
+
+                            </apex:facet>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Collect Balance at">                       
+                            <apex:inputField value="{!eachFPt.ftrPyt.Collect_Balance_at__c}" >
+                                 <apex:actionSupport event="onchange" action="{!Render}" reRender="PytPlan,ErrorMessage"/>
+                            </apex:inputField>  
+                        </apex:column>
+                        
+                        <apex:column headerValue="Action">
+                            <apex:outputPanel rendered="{!if((ftrPytWrpList.size)-1 ==rowNum,true,false)}">
+                                <apex:commandLink action="{!addNewFtrPyt}" rerender="PytPlan">
+                                    <apex:outputText value="Add&nbsp;New" escape="false"/>
+                                </apex:commandLink>
+                            </apex:outputPanel> 
+                            <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel> 
+            </apex:pageBlockSection> 
+            
+            <apex:pageBlockSection title="Additional Comments" collapsible="False" columns="1"  >
+                <apex:outputPanel >
+                    <apex:inputField value="{!quoteObj.Additional_Comments__c}" style="width:890px;height:100px;"/>
+                </apex:outputPanel>
+            </apex:pageBlockSection> 
+            
+            <apex:pageBlockButtons location="bottom">
+                <apex:CommandButton value="Save & Close" action="{!saveAndClose}" rerender="aplyPyt,rFHead,ErrorMessage"/>
+                <apex:CommandButton value="Cancel" action="{!cancel}"/>                    
+            </apex:pageBlockButtons> 
+        </apex:pageBlock>
+    </apex:form>   
+            
+</apex:page>

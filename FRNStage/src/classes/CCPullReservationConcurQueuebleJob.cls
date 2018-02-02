@@ -1,0 +1,20 @@
+public class CCPullReservationConcurQueuebleJob implements Queueable, Database.AllowsCallouts
+{
+ 
+private Map<String,Trip__c> mapIdConcurTrip = new Map<String,Trip__c>();
+private String accessToken; 
+public CCPullReservationConcurQueuebleJob (Map<String,Trip__c> pMapIdConcurTrip,
+                                           String pAccessToken)
+{
+    this.mapIdConcurTrip = pMapIdConcurTrip;
+    this.accessToken = pAccessToken;
+  
+}
+
+public void execute(QueueableContext context) 
+{
+    Database.executeBatch(new CCPullReservationConcurBatch(mapIdConcurTrip,accessToken), 10);
+}
+
+
+}
