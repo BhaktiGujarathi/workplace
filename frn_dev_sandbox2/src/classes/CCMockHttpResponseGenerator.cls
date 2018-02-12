@@ -21,7 +21,7 @@ global class CCMockHttpResponseGenerator implements HttpCalloutMock {
         res.setStatusCode(200);
         return res;
        }
-       else if(endPointURL == 'https://www.concursolutions.com/api/travel/trip/v1.1?userid_type=login&userid_value=ALL&bookingtype=Air&createdAfterDate='+(system.today().addDays(Integer.valueOf(system.label.CCtripConcurStartDate))+'').remove(' 00:00:00')+'&createdBeforeDate='+(system.today().addDays(Integer.valueOf(system.label.CCtripConncurEndDate))+'').remove(' 00:00:00'))
+       else if(endPointURL == 'https://www.concursolutions.com/api/travel/trip/v1.1?userid_type=login&userid_value=ALL&bookingtype=Air&createdAfterDate='+(system.today().addDays(Integer.valueOf(system.label.CCtripConcurStartDate))+'').remove(' 00:00:00')+'&createdBeforeDate='+(system.today().addDays(Integer.valueOf(system.label.CCtripConncurEndDate))+'').remove(' 00:00:00')+'&includePersonalTrips=false&includeCancelledTrips=false&includeVirtualTrips=false&includeGuestBookings=true')
        {
         //Create a fake response
         HttpResponse res = new HttpResponse();

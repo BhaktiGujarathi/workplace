@@ -12,6 +12,7 @@ public Class AddingUpAttachmentsPOCController {
                          FROM Documents__r)
                  FROM Opportunity 
                 WHERE Id =: recId];
+                system.debug('opp------------'+opp);
         //getAttachedDocsList(recId);  
     }
     
@@ -26,7 +27,7 @@ public Class AddingUpAttachmentsPOCController {
 
     @RemoteAction
     public static List<AttachmentWrapper> getAttachedDocsList(String pParentOpportunityId) {
-
+        system.debug('pParentOpportunityId-----'+pParentOpportunityId);
         List<AttachmentWrapper> attchmentList =  new List<AttachmentWrapper>();
 
         AttachmentWrapper attachmentWrapper;
@@ -46,6 +47,8 @@ public Class AddingUpAttachmentsPOCController {
             attachmentWrapper.ContentType = attachment.ContentType;
             attachmentWrapper.Body = EncodingUtil.base64Encode(attachment.Body);
             attchmentList.add(attachmentWrapper);
+            system.debug('attachmentWrapper------------'+attachmentWrapper);
+            system.debug('attchmentList------------'+attchmentList);
         }
         return attchmentList;        
     }

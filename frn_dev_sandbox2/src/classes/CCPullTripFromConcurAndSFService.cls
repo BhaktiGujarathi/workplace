@@ -15,6 +15,14 @@ public class CCPullTripFromConcurAndSFService {
     public static Date tripConcurStartDate = system.today().addDays(Integer.valueOf(system.label.CCtripConcurStartDate));
     public static Date tripConncurEndDate = system.today().addDays(Integer.valueOf(system.label.CCtripConncurEndDate));
     public static String pullTripEndpoint = '';
+    public static final String INCLUDEPERSONALTRIPSPARAMETER  = 'includePersonalTrips';
+    public static final String INCLUDECANCELLEDTRIPSPARAMETER = 'includeCancelledTrips';
+    public static final String INCLUDEVIRTUALTRIPSPARAMETER = 'includeVirtualTrips';
+    public static final String INCLUDEGUESTBOOKINGSPARAMETER = 'includeGuestBookings';
+    public static final String INCLUDEPERSONALTRIPSFLAG  = 'false';
+    public static final String INCLUDECANCELLEDTRIPSFLAG = 'false';
+    public static final String INCLUDEVIRTUALTRIPSFLAG = 'false';
+    public static final String INCLUDEGUESTBOOKINGSFLAG = 'true';
 
     public static PullTripResponse  fetchTripsAndInsertRecords(String accessToken){
         PullTripResponse pullTripResponse = new PullTripResponse();
@@ -65,7 +73,11 @@ public class CCPullTripFromConcurAndSFService {
                                                                                                 'userid_value' => 'ALL',
                                                                                                 'bookingtype' => 'Air',
                                                                                                 'createdAfterDate' => (tripConcurStartDate+'').remove(' 00:00:00'),
-                                                                                                'createdBeforeDate' => (tripConncurEndDate+'').remove(' 00:00:00')
+                                                                                                'createdBeforeDate' => (tripConncurEndDate+'').remove(' 00:00:00'),
+                                                                                                INCLUDEPERSONALTRIPSPARAMETER => INCLUDEPERSONALTRIPSFLAG,
+                                                                                                INCLUDECANCELLEDTRIPSPARAMETER => INCLUDECANCELLEDTRIPSFLAG,
+                                                                                                INCLUDEVIRTUALTRIPSPARAMETER => INCLUDEVIRTUALTRIPSFLAG,
+                                                                                                INCLUDEGUESTBOOKINGSPARAMETER => INCLUDEGUESTBOOKINGSFLAG
                                                                                             }
                                                                     );
 

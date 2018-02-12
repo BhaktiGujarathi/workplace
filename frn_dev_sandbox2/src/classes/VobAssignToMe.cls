@@ -1,60 +1,73 @@
-public with sharing class VobAssignToMe {
-
-	Boolean isLockedFlag = False ; // temporary value
-	Id pRecordId;
-	Patient_Insurance__c objPatientInsurance = new Patient_Insurance__c();
-
+/**
+* Class VobAssignToMe
+*
+* Class VobAssignToMe for the VobAssignToMe VF page. This class implements the functionality
+* to VobAssignToMe of Patient Insurance.
+*/
+global class VobAssignToMe
+{
+    public Patient_Insurance__c newPatientInsurance;
     public VobAssignToMe(ApexPages.StandardController controller) {
-
+        this.newPatientInsurance= (Patient_Insurance__c)controller.getRecord();
     }
+    
+    @RemoteAction
+    global static Boolean Click_Button(Id patientInsuranceId){
+        
+        return true;
+    }
+    
+    public VobAssignToMe() {
+    }
+    
+    public PageReference RedirectToRecord() {
+        PageReference pageRef;
+        pageRef= new PageReference('/'+newPatientInsurance.id);          
+        system.debug('pageRef'+pageRef);           
+        pageRef.setRedirect(true);
+        return pageRef;
+    }
+    
+    public PageReference VobAssignToMeMethod() {
+        string currentPIId = ApexPages.CurrentPage().getparameters().get('id');
+        newPatientInsurance =  [select id,name,VOB_Assigned__c from Patient_Insurance__c where id =: currentPIId];
+        System.debug('newPatientInsurance '+newPatientInsurance);
+        boolean isLockedFlag = RecordLockUtility.checkIsLocked(newPatientInsurance.Id);
+        System.debug('<<<<<<<<<<<<<< isLockedFlag <<<<<<<<<<<<<<<<'+isLockedFlag);            
 
-	public PageReference VobAssignToMeMethod() {
-  		PageReference pageRef;
-
-		pRecordId = ApexPages.CurrentPage().getparameters().get('id');
-		isLockedFlag = RecordLockUtility.checkIsLocked(pRecordId);
-		if(isLockedFlag == false) {
-			Profile p = [Select Name from Profile where Id =: userinfo.getProfileid()];
-			String pname = p.name;
-			objPatientInsurance = [SELECT VOB_Assigned__c
-								   from Patient_Insurance__c
-								   where id =: pRecordId
-								   limit 1];
-			List<Patient_Insurance__c> lst_PatientInsurance = new List<Patient_Insurance__c>();
-			Patient_Insurance__c newPatientInsurance = new Patient_Insurance__c();
-			newPatientInsurance.id = pRecordId;
-			newPatientInsurance.VOB_Assigned__c = UserInfo.getUserId();
-			lst_PatientInsurance.add(newPatientInsurance);
-
-			if(objPatientInsurance.VOB_Assigned__c != null) {
-				//if(alert msg)
-				try {
-					update lst_PatientInsurance;
-					System.debug('<<<<<<< lst_PatientInsurance<<<<<'+lst_PatientInsurance);
-				}
-				catch (Exception e) {
-					system.debug('DML failed --- Error'+e);
-					return null;
-				}
-			}
-			else {
-				try {
-					update lst_PatientInsurance;
-					System.debug('<<<<<<< lst_PatientInsurance<<<<<'+lst_PatientInsurance);
-				}
-				catch (Exception e) {
-					system.debug('DML failed --- Error'+e);
-					return null;
-				}
-			}
-			//pageRef= new PageReference(ApexPages.currentPage().getURL());
-			pageRef = ApexPages.currentPage();
-  			pageRef.setRedirect(true);
-        	return pageRef;
-		}
-		else {
-			ApexPages.addmessage(new ApexPages.message(ApexPages.severity.WARNING,'Record is locked'));
-			return null;
-		}
-	}
+        if(!isLockedFlag)
+        {
+            list<Patient_Insurance__c> lstPatientInsuranceRecords= new list<Patient_Insurance__c>();
+            lstPatientInsuranceRecords = [Select Id,VOB_status__c,VOB_Assigned__c From Patient_Insurance__c Where id=: newPatientInsurance.Id limit 1];
+            
+            list<Patient_Insurance__c> lstPatientInsuranceRecordsToUpdate = new list<Patient_Insurance__c>();
+            Patient_Insurance__c objPatientInsurance = new Patient_Insurance__c();
+            objPatientInsurance.id = newPatientInsurance.Id;
+            objPatientInsurance.VOB_Assigned__c = UserInfo.getUserId();
+            lstPatientInsuranceRecordsToUpdate.add(objPatientInsurance);
+            Patient_Insurance__c objPatientInsuranceUpdated = new Patient_Insurance__c();         
+            try{
+                update lstPatientInsuranceRecordsToUpdate;
+                system.debug('lstPatientInsuranceRecordsToUpdate'+lstPatientInsuranceRecordsToUpdate);
+                
+                objPatientInsuranceUpdated = [Select Id,VOB_status__c,VOB_Assigned__c From Patient_Insurance__c Where id=:objPatientInsurance.id];
+                system.debug('objPatientInsuranceUpdated-----'+objPatientInsuranceUpdated);
+                ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.Info,'Record is updated.'));
+                System.debug('<<<<<<<<<<<<<< Record is updated<<<<<<<<<<<<<<<<'+isLockedFlag);
+                
+            } catch (Exception e) {
+                system.debug('DML failed --- Error'+e);
+                return null;
+            }
+            //return (new ApexPages.StandardController(newPatientInsurance)).view(); 
+            return null;        
+            
+        }
+        else
+        {
+            ApexPages.addMessage(new ApexPages.Message(ApexPages.Severity.ERROR,'Record is locked.'));
+            System.debug('<<<<<<<<<<<<<< Record is locked <<<<<<<<<<<<<<<<'+isLockedFlag);
+            return null;
+        }
+    }
 }

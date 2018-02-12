@@ -69,6 +69,7 @@
 
     <script type="text/javascript">
         var frn = frn || {};
+        var isPrivatePay
 
         $(document).ready(function(event) {
             frn.refreshSummarySection();
@@ -136,7 +137,7 @@
         frn.validateFacilityPrograms = function() {
             // var primaryFacilityProgram = $(".primaryPAW .fcltyPrgrmSelected").val();
             // var secondaryFacilityProgram = $(".secondaryPAW .fcltyPrgrmSelected").val();
-            // var hasSecondary = $('.hasSecondaryCls')[0].checked;
+            var hasSecondary = $('.hasSecondaryCls')[0].checked;
 
             // if( !primaryFacilityProgram ) {
             //     alert("Error : Facility Program missing for Primary PAW record!");
@@ -152,7 +153,9 @@
             var isPrgrmSelected = false;
             isPrivatePay = false;
             $(".primaryPAW .fcltyPrgrmSelected option").each(function(index){
-                if($(".primaryPAW .fcltyPrgrmSelected option")[index].selected) {                    
+                if($(".primaryPAW .fcltyPrgrmSelected option")[index].selected) {    
+                    console.log('>>> $(".secondaryPAW .fcltyPrgrmSelected option")[index].text : ',$(".secondaryPAW .fcltyPrgrmSelected option")[index].text); 
+                    console.log('>>> index : ',index);                
                     if($(".primaryPAW .fcltyPrgrmSelected option")[index].text.includes('Self/Private Pay'))
                     {
                         isPrivatePay = isPrivatePay || true;
@@ -160,18 +163,24 @@
                     
                     if($(".primaryPAW .fcltyPrgrmSelected option")[index].text.includes('---Select---')) {
                         alert("Error : Facility Program missing for Primary PAW record!");
-                        isPrgrmSelected = isPrgrmSelected && false;
-                        return true;
+                        console.log('>>>1 isPrgrmSelected : ',isPrgrmSelected);
+                        isPrgrmSelected = isPrgrmSelected || false;
+                        console.log('>>>2 isPrgrmSelected : ',isPrgrmSelected);
+                        return false;
                     }
                     else {
-                        isPrgrmSelected = isPrgrmSelected && true;
+                        console.log('>>>3 isPrgrmSelected : ',isPrgrmSelected);
+                        isPrgrmSelected = isPrgrmSelected || true;
+                        console.log('>>>4 isPrgrmSelected : ',isPrgrmSelected);
                     }
                     
                 }
             });
 
             $(".secondaryPAW .fcltyPrgrmSelected option").each(function(index){
-                if($(".secondaryPAW .fcltyPrgrmSelected option")[index].selected) {                    
+                if($(".secondaryPAW .fcltyPrgrmSelected option")[index].selected) {
+                    console.log('>>> $(".secondaryPAW .fcltyPrgrmSelected option")[index].text : ',$(".secondaryPAW .fcltyPrgrmSelected option")[index].text); 
+                    console.log('>>> index : ',index);                
                     if($(".secondaryPAW .fcltyPrgrmSelected option")[index].text.includes('Self/Private Pay'))
                     {
                         isPrivatePay = isPrivatePay || true;
@@ -179,15 +188,20 @@
                     
                     if(hasSecondary == true && ($(".secondaryPAW .fcltyPrgrmSelected option")[index].text.includes('---Select---'))) {
                         alert("Error : Facility Program missing for Secondary PAW record!");
-                        isPrgrmSelected = isPrgrmSelected && false;
-                        return true;
+                        console.log('>>>5 isPrgrmSelected : ',isPrgrmSelected);
+                        isPrgrmSelected = isPrgrmSelected || false;
+                        console.log('>>>6 isPrgrmSelected : ',isPrgrmSelected);
+                        return false;
                     }
                     else {
-                        isPrgrmSelected = isPrgrmSelected && true;
+                        console.log('>>>7 isPrgrmSelected : ',isPrgrmSelected);
+                        isPrgrmSelected = isPrgrmSelected || true;
+                        console.log('>>>8 isPrgrmSelected : ',isPrgrmSelected);
                     }
                     
                 }
             });
+
             return isPrgrmSelected;
 
             // secondary PAW

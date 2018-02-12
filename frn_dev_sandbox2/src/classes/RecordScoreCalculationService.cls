@@ -230,9 +230,9 @@ public with sharing class RecordScoreCalculationService {
                                 system.debug('>>> sobjectInstance.get(fieldDetailInstance.fieldAPIName) : '+sobjectInstance.get(fieldDetailInstance.fieldAPIName));
 
                                 if((!isNotOperatorUsed && ((controllingFieldValue != fieldValueStr) 
-                                                           || (!fieldValueSet.contains(fieldValueStr))))
+                                                           || (!fieldValueSet.isEmpty() && !fieldValueSet.contains(fieldValueStr))))
                                 || (isNotOperatorUsed && ((controllingFieldValue == fieldValueStr)
-                                                           || (fieldValueSet.contains(fieldValueStr))))) 
+                                                           || (!fieldValueSet.isEmpty() && fieldValueSet.contains(fieldValueStr))))) 
                                 {
                                     // if controlling field on saME object
                                     // and controlling field.value != controlling value
@@ -241,9 +241,9 @@ public with sharing class RecordScoreCalculationService {
                                     isDependent = (isDependent && true);
                                 }
                                 else if ((isNotOperatorUsed && ((controllingFieldValue != fieldValueStr) 
-                                                             || (!fieldValueSet.contains(fieldValueStr))))
+                                                             || (!fieldValueSet.isEmpty() && !fieldValueSet.contains(fieldValueStr))))
                                      || (!isNotOperatorUsed && ((controllingFieldValue == fieldValueStr)
-                                                             || (fieldValueSet.contains(fieldValueStr)))))
+                                                             || (!fieldValueSet.isEmpty() && fieldValueSet.contains(fieldValueStr)))))
                                 {
                                     // if controlling field on saME object
                                     // and controlling feild.value == controlling value

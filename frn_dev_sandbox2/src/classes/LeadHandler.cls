@@ -82,6 +82,7 @@ public with sharing class LeadHandler implements TriggerInterface
      
     public void beforeInsert(SObject so){       
         Lead le = (Lead)so;
+        system.debug('>>> le : '+le);
         String companyname = '';
         if(le.FirstName!=null){
             companyname = le.FirstName +' ';
@@ -89,7 +90,8 @@ public with sharing class LeadHandler implements TriggerInterface
         if(le.MiddleName!=null){
             companyname += le.MiddleName +' ';
         }
-        companyname += le.LastName;
+
+        companyname += (le.LastName != null ? le.LastName : '');
         le.company = companyname;
     } 
     

@@ -164,6 +164,7 @@ public class OppScoreCalculationBatch implements Database.Batchable<sObject>, Da
 	
         if( String.isBlank(opportunityRelationObjectName) == false ){
            querystr  += ' AND '+opportunityRelationObjectName+'.RecordTypeId != :referOutReordTypeId';
+           querystr  += ' AND '+opportunityRelationObjectName+'.StageName NOT IN :oppStageToExcludeSet';
         }
         querystr += ' AND '+Label.OpportunityQualityScoreClause;
         

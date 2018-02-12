@@ -1,29 +1,29 @@
 global class convertLead{
     WebService static string  convertLeadtoAcc(string id){
          boolean isError = false;
-         
+
         Lead leadBefore = [Select Id,
                                   Caller_First_Name__c,
                                   Calling_for__c,
-                                  FirstName, 
-                                  LastName, 
-                                  Caller_Phone__c, 
-                                  StateCode, 
-                                  City, 
-                                  Caller_Last_Name__c, 
+                                  FirstName,
+                                  LastName,
+                                  Caller_Phone__c,
+                                  StateCode,
+                                  City,
+                                  Caller_Last_Name__c,
                                   Relationship_to_Patient__c
-                             from Lead 
+                             from Lead
                             where Id=:id];
         string errormessage ='';
-        
+
         System.debug('in convertedLeadtoAcc method...>>');
-        
+
         if (leadBefore.Calling_for__c == 'Self' || (leadBefore.Calling_for__c != 'Self' && leadBefore.Relationship_to_Patient__c == 'Self')){
-            
+
             if((leadBefore.LastName == null || leadBefore.LastName == '') || (leadBefore.FirstName == null || leadBefore.FirstName == '') || (leadBefore.StateCode == null || leadBefore.StateCode == '') || (leadBefore.City == null || leadBefore.City == '')){
-                errormessage = 'Following field(s) is/are required for Lead Conversion';    
+                errormessage = 'Following field(s) is/are required for Lead Conversion';
             }
-            
+
             if(leadBefore.LastName == null  || leadBefore.LastName == ''){
                 errormessage += '\n Last Name';
                 isError = true;
@@ -33,21 +33,21 @@ global class convertLead{
                 } if(leadBefore.StateCode == null || leadBefore.StateCode == ''){
                         errormessage += '\n State';
                         isError = true;
-                    } if(leadBefore.City == null || leadBefore.City == '') {  
+                    } if(leadBefore.City == null || leadBefore.City == '') {
                         errormessage += '\n City';
                         isError = true;
-                        }                   
+                        }
                         if(isError == false){
                             return leadCustomCovert(leadBefore);
-                        } 
+                        }
                             return errormessage;
-                            
+
         }else if(leadBefore.Relationship_to_Patient__c != 'Self'){
-            
+
             if((leadBefore.LastName == null || leadBefore.LastName == '') || (leadBefore.FirstName == null || leadBefore.FirstName == '') || (leadBefore.StateCode == null || leadBefore.StateCode == '') || (leadBefore.City == null || leadBefore.City == '') || (leadBefore.Caller_First_Name__c == null || leadBefore.Caller_First_Name__c == '') || (leadBefore.Caller_Last_Name__c == null || leadBefore.Caller_Last_Name__c == '') || (leadBefore.Caller_Phone__c == null || leadBefore.Caller_Phone__c == '') || (leadBefore.Relationship_to_Patient__c == null || leadBefore.Relationship_to_Patient__c == '')){
-                errormessage = 'Following field(s) is/are required for Lead Conversion';    
-            }           
-                        
+                errormessage = 'Following field(s) is/are required for Lead Conversion';
+            }
+
             if (leadBefore.LastName == null || leadBefore.LastName == ''){
                 errormessage += '\n Patient Last Name';
                 isError = true;
@@ -72,15 +72,15 @@ global class convertLead{
                                     } if(leadBefore.Relationship_to_Patient__c == null || leadBefore.Relationship_to_Patient__c == '') {
                                             errormessage += '\n Relationship to Patient';
                                             isError = true;
-                                    } 
+                                    }
                                     if(isError == false){
                                         return leadCustomCovert(leadBefore);
                                     }
                                     return errormessage;
-        } 
+        }
         return '';
     }
-    
+
     public static string leadCustomCovert(Lead leadBefore){
         List<Medical_Equipment__c> medEquipmentToInsert = new List<Medical_Equipment__c>();
         List<Infectious_Disease__c> infctsDsiseaseToInsert = new List<Infectious_Disease__c>();
@@ -89,16 +89,16 @@ global class convertLead{
         List<Account> highPriorityReferralList = new List<Account>();
 
                 System.debug('leadBefore_____________ '+leadBefore);
-                
+
                 User usrObj = new User();
                 Database.LeadConvert lc = new database.LeadConvert();
                 lc.setLeadId(leadBefore.id);
-                LeadStatus convertStatus = [SELECT Id, MasterLabel 
-                                            FROM LeadStatus 
-                                            WHERE IsConverted=true LIMIT 1];                
+                LeadStatus convertStatus = [SELECT Id, MasterLabel
+                                            FROM LeadStatus
+                                            WHERE IsConverted=true LIMIT 1];
                 lc.setConvertedStatus(convertStatus.MasterLabel);
                 Database.LeadConvertResult lcr = Database.convertLead(lc);
-                
+
                 Lead convertedLead=[select ConvertedOpportunityId,
                                            ConvertedContactId,
                                            ConvertedAccountId,
@@ -116,7 +116,7 @@ global class convertLead{
                                            High_Priority__c,
                                            Referral_Instruction__c,
                                            (SELECT id, Account__c FROM Referrals__r)
-                                      from Lead 
+                                      from Lead
                                      where id=: leadBefore.id];
                 if(!convertedLead.Referrals__r.isEmpty()) {
                     for(Referral__c referObj : convertedLead.Referrals__r) {
@@ -133,12 +133,12 @@ global class convertLead{
                 usrObj = [SELECT Id,
                                  Update_AC_Assigned_on_Opportunity__c,
                                  Update_RAM_Assigned_on_Opportunity__c,
-                                 Username 
-                            FROM User 
+                                 Username
+                            FROM User
                            WHERE Id =: convertedLead.OwnerId];
-                
-                
-                
+
+
+
                 System.debug('convertedLead....>>'+convertedLead);
                 System.debug('Update_RAM_Assigned_on_Opportunity__c____________ '+usrObj.Update_RAM_Assigned_on_Opportunity__c);
                 System.debug('convertedLead.Caller_First_Name__c ....>>'+convertedLead.Caller_First_Name__c );
@@ -152,7 +152,7 @@ global class convertLead{
                                       insert newContact;
                                       System.debug('newContact..>>'+newContact);
                                       pc.Contact__c = newContact.Id;
-                                       */        
+                                       */
                 Patient_Contact__c pc = new Patient_Contact__c();
                     pc.Relationship__c = convertedLead.Relationship_to_Patient__c;
                     pc.Opportunity__c = convertedLead.ConvertedOpportunityId;
@@ -164,12 +164,12 @@ global class convertLead{
                     pc.Email__c  = convertedLead.Caller_Email__c;
                     insert pc;
                 System.debug('PatientContact________________________________ '+pc);
-                    
+
                 }
                     List<Note_Comment__c> leNoteCo = new list<Note_Comment__c>();
                     for(Note_Comment__c nc:[select id,
-                                                   Lead__c 
-                                              from Note_Comment__c 
+                                                   Lead__c
+                                              from Note_Comment__c
                                              where Lead__c=:leadBefore.id]){
                     Note_Comment__c Note = new Note_Comment__c();
                     Note.id = nc.id;
@@ -179,8 +179,8 @@ global class convertLead{
             if(leNoteCo.size()>0){
               update leNoteCo;
                 }
-                
-                
+
+
                    if(convertedLead.ConvertedOpportunityId != null){
                     Opportunity opp = [
                         select id
@@ -191,27 +191,27 @@ global class convertLead{
                              , RecordType.Name
                              , RecordType.DeveloperName
                              , AC_Assigned__c
-                             , RAM_Assigned__c 
-                          from Opportunity 
+                             , RAM_Assigned__c
+                          from Opportunity
                          where id = :convertedLead.ConvertedOpportunityId
                     ];
-                    
+
                     opp.AccountId = null;
 
                     if ( usrObj.Update_AC_Assigned_on_Opportunity__c && !Utils.isIOP(opp) ) {
-                        opp.AC_Assigned__c = convertedLead.OwnerId;             
-                    }
-                    
-                    if(usrObj.Update_RAM_Assigned_on_Opportunity__c && !Utils.isIOP(opp) ){
-                        opp.RAM_Assigned__c = convertedLead.OwnerId;
-                        
+                        opp.AC_Assigned__c = convertedLead.OwnerId;
                     }
 
-                    if(convertedLead.High_Priority__c == true) {
+                    if(usrObj.Update_RAM_Assigned_on_Opportunity__c && !Utils.isIOP(opp) ){
+                        opp.RAM_Assigned__c = convertedLead.OwnerId;
+
+                    }
+
+                    if(convertedLead.High_Priority__c == true && highPriorityReferralList.size()>0) {
                         system.debug('>>> high referral : ');
                         UpdateHighPriorityReferralService.getReferralDocsOnOpportunity(
                                                         highPriorityReferralList[0].Id,
-                                                        convertedLead.ConvertedOpportunityId);                
+                                                        convertedLead.ConvertedOpportunityId);
                     }
                     update opp;
                     medEquipmentToInsert = createEquipmntRecordlist(opp.Id, medEquipmentToInsert);
@@ -240,7 +240,7 @@ global class convertLead{
             }
             return  convertedLead.ConvertedOpportunityId + '';
     }
-    
+
     // method to create list of Medical equipment prior to creation of Opportunity
     public static List<Medical_Equipment__c> createEquipmntRecordlist(Id pOpportunityId, List<Medical_Equipment__c> pMedEquipmntList) {
         List<Schema.PicklistEntry> equipmntTypeList = new List<Schema.PicklistEntry>();
@@ -253,7 +253,7 @@ global class convertLead{
         }
         return pMedEquipmntList;
     }
-    
+
     // method to create list of infectious diseases prior to creation of Opportunity
     public static List<Infectious_Disease__c> createDiseaseRecordlist(Id pOpportunityId, List<Infectious_Disease__c> pInfctsDsiseaseToInsert) {
         List<Schema.PicklistEntry> diseasestypeList = new List<Schema.PicklistEntry>();
@@ -267,7 +267,7 @@ global class convertLead{
         }
         return pInfctsDsiseaseToInsert;
     }
-    
+
     // method to create list of major medical issues prior to creation of Opportunity
     public static List<Major_Medical_Issue__c> createMedIssueRecordlist(Id pOpportunityId, List<Major_Medical_Issue__c> pMedIssueToInsert) {
         List<Schema.PicklistEntry> medIssuestypeList = new List<Schema.PicklistEntry>();

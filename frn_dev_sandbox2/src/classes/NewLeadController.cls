@@ -36,8 +36,11 @@ public class NewLeadController {
                                                                                'Tertiary' => 3,
                                                                                'Other' => 4
                                                                                };
-
+    public ApexPages.StandardController sController;
+    public String responseToSentStr             {get; set;}
     public NewLeadController(ApexPages.StandardController controller){
+        sController = controller;
+        responseToSentStr = 'Not saved';
         specialInstructionsMsg = '';
         highPriorityCheck = false;
         validHighReferralWrp = false;
@@ -79,7 +82,78 @@ public class NewLeadController {
         system.debug('RecordType_________________________'+recordTypeName);
 
         if(leadId !=null){
-            nLead = [SELECT Salutation,Name, FirstName, Status, MiddleName, Rating, LastName, Type__c, Suffix, Company, Owner.Name ,Online_Search_Term__c, Friend_Family_Details__c,ownerId, LeadSource, Preferred_Contact_Method__c, Phone, DoNotCall, MobilePhone, HasOptedOutOfEmail, Work_Phone__c, Email, Fax, HasOptedOutOfFax, CountryCode, Street, City, StateCode, PostalCode, Calling_for__c, Relationship_to_Patient__c, Patient_Willing_to_Receive_Treatment__c, Description_of_Average_Day__c, Timeframe_of_Impact__c, What_Prompted_Call__c, Alumni_Referral_Source__c, Impact_on_Job__c, Patient_Currently_Working__c, Impact_on_Relationships__c, Trigger__c, Contributing_Factors__c, Payment__c, Diagnosed_with_Psychiatric_Condition__c, Prior_Treatment__c, Vision_of_Future_without_Treatment__c, Ready_to_Make_Commitment__c, Level_of_Committment__c, Chat_Email_Transcript__c, Customer_Note__c,State,Country,ScratchPad__c, Caller_First_Name__c, Caller_Last_Name__c, Caller_Id__c, Caller_Phone__c, Caller_Mobile__c, Caller_Work_Phone__c, Caller_Email__c ,Happiness_Scale__c,Origin__c,Birthdate__c,Lead_Source_is_FRN_Alumni__c,Alumni_Name__c,Alumni_FRN_Facility__c , Referral_Source_Unknown_Details__c,Call_in_Code__c,Identified_Gender__c,Gender__c FROM Lead WHERE id =: leadId];
+            nLead = [SELECT Salutation,
+                            Name,
+                            FirstName,
+                            Status,
+                            MiddleName,
+                            Rating,
+                            LastName,
+                            Type__c,
+                            Suffix,
+                            Company,
+                            Owner.Name,
+                            Online_Search_Term__c,
+                            Friend_Family_Details__c,
+                            OwnerId,
+                            LeadSource,
+                            Preferred_Contact_Method__c,
+                            Phone,
+                            DoNotCall,
+                            MobilePhone,
+                            HasOptedOutOfEmail,
+                            Work_Phone__c,
+                            Email,
+                            Fax,
+                            HasOptedOutOfFax,
+                            CountryCode,
+                            Street,
+                            City,
+                            StateCode,
+                            PostalCode,
+                            Calling_for__c,
+                            Relationship_to_Patient__c,
+                            Patient_Willing_to_Receive_Treatment__c,
+                            Description_of_Average_Day__c,
+                            Timeframe_of_Impact__c,
+                            What_Prompted_Call__c,
+                            Alumni_Referral_Source__c,
+                            Impact_on_Job__c,
+                            Patient_Currently_Working__c,
+                            Impact_on_Relationships__c,
+                            Trigger__c,
+                            Contributing_Factors__c,
+                            Payment__c,
+                            Diagnosed_with_Psychiatric_Condition__c,
+                            Prior_Treatment__c,
+                            Vision_of_Future_without_Treatment__c,
+                            Ready_to_Make_Commitment__c,
+                            Level_of_Committment__c,
+                            Chat_Email_Transcript__c,
+                            Customer_Note__c,
+                            State,
+                            Country,
+                            ScratchPad__c,
+                            Caller_First_Name__c,
+                            Caller_Last_Name__c,
+                            Caller_Id__c,
+                            Caller_Phone__c,
+                            Caller_Mobile__c,
+                            Caller_Work_Phone__c,
+                            Caller_Email__c,
+                            Happiness_Scale__c,
+                            Origin__c,
+                            Birthdate__c,
+                            Lead_Source_is_FRN_Alumni__c,
+                            Alumni_Name__c,
+                            Alumni_FRN_Facility__c,
+                            Referral_Source_Unknown_Details__c,
+                            Call_in_Code__c,
+                            Identified_Gender__c,
+                            Gender__c,
+                            Budget__c 
+                       FROM Lead 
+                      WHERE id =: leadId];
             System.debug(nLead.Online_Search_Term__c);
             CampaignMemberWrapper cmpWrp;
             for(Referral__c cmpMW:[Select Id,RAM_Lookup__c,Lead__c,Account__c,Account__r.name,Consentor__c,Consentor__r.name, Consentor__r.Currently_Employed__c, Referral_Rank__c FROM Referral__c WHERE Lead__c=:leadId]){
@@ -133,6 +207,7 @@ public class NewLeadController {
                                                 WHERE Inactive__c = false
                                              ORDER BY Name ASC]);
         system.debug('listCIC:::>>>  '+ listCIC);
+        callInCodePicklist.add(new SelectOption('', '--None--'));
         for(Call_in_Code__c eachCIC : listCIC.values()){
            callInCodePicklist.add(new SelectOption(eachCIC.Id, eachCIC.name));
         }
@@ -506,21 +581,68 @@ public class NewLeadController {
         isLeadSaved = false;
     }
 
-    public PageReference saveLead(){
+    public void saveLead(){
+        system.debug('>>> in save method');
         if(nLead.LastName == null || nLead.LastName ==''){
             apexpages.Message msg = new Apexpages.Message(ApexPages.Severity.Error,'LastName: You must enter a value');
             apexpages.addmessage(msg);
-            return null;
+            //return null;
         }
         if(nLead.company == null || nLead.company == ''){
           apexpages.Message msg = new Apexpages.Message(ApexPages.Severity.Error,'Company: You must enter a value');
           apexpages.addmessage(msg);
-                return null;
+                //return null;
         }
-        saveLeadData();
-        PageReference orderPage = new PageReference('/' + nLead.Id);
-        orderPage.setRedirect(true);
-        return orderPage;
+        if(selectedCallInCode == null || selectedCallInCode ==''){
+            apexpages.Message msg = new Apexpages.Message(ApexPages.Severity.Error,'Call In Code: You must enter a value');
+            apexpages.addmessage(msg);
+            //return null;
+        }
+        try {            
+            saveLeadData();
+            responseToSentStr = 'Successfully saved';
+        }
+        catch(Exception exObj) {
+            system.debug('>>> exObj : '+exObj);
+            responseToSentStr = 'Error Occured while saving!!';
+        }
+        //PageReference orderPage = new PageReference('/' + nLead.Id);
+        //PageReference orderPage = new ApexPages.StandardController(nLead).view();
+        //orderPage.setRedirect(true);
+        //return orderPage;
+    }
+
+    // attempt to resolve the redirection issue on lead creation
+    public void commitLeadToDB(){
+        responseToSentStr = '';
+        system.debug('>>> 1 in savemethod : '+nLead);
+        system.debug('>>> nLead.LastName : '+nLead.LastName);
+        system.debug('>>> nLead.company : '+nLead.company);
+        system.debug('>>> selectedCallInCode : '+selectedCallInCode);
+        //saveLeadData();
+        //sController.save();
+        try {            
+            saveLeadData();
+            responseToSentStr = 'Successfully saved';
+        }
+        catch(Exception exObj) {
+            responseToSentStr = 'Error Occured while saving!!';
+        }
+        
+        system.debug('>>> 3 in savemethod : '+nLead);
+        system.debug('>>> 2 in savemethod : '+nLead.Id);
+        Id leadRecordId = nLead.Id;
+        system.debug('>>> 4 leadRecordId : '+leadRecordId);
+        system.debug('>>> 4 in savemethod : '+nLead);
+        system.debug('>>> 4 in savemethod : '+nLead.Id);
+        //PageReference pageRef = new PageReference('/00Qg000000BeoSy');
+        //system.debug('>>> pageRef : '+pageRef);
+        //PageReference pageRef1 = new ApexPages.StandardController(nLead).view();
+        //system.debug('>>> pageRef : '+pageRef1);
+        //pageRef.setRedirect(true);
+        system.debug('>>> responseToSentStr : '+responseToSentStr);
+        //return responseToSentStr;
+
     }
 
     public void saveAndContinue(){
@@ -535,11 +657,17 @@ public class NewLeadController {
             apexpages.addmessage(msg);
             return;
         }
+        if(selectedCallInCode == null || selectedCallInCode ==''){
+            apexpages.Message msg = new Apexpages.Message(ApexPages.Severity.Error,'Call In Code: You must enter a value');
+            apexpages.addmessage(msg);
+            return;
+        }
         saveLeadData();
         isLeadSaved = true;
     }
 
     public void saveLeadData(){
+
         nLead.Call_in_Code__c = selectedCallInCode;
         System.debug('nLead>>>>>'+nLead);
         try{
@@ -714,43 +842,44 @@ public class NewLeadController {
     public void upsertReferals(){
         List<Referral__c> refList = new List<Referral__c>();
         Referral__c rf ;
+        system.debug('>>> campMWrpList  : '+campMWrpList);
         for(CampaignMemberWrapper cmpWrp:campMWrpList){
             rf = new Referral__c();
             if(cmpWrp.cmpM.Account__c!=null){
-            String patientName = '';
+                String patientName = '';
 
-            if(cmpWrp.cmpM.id != null){
-                rf.id = cmpWrp.cmpM.id;
-            }
-            rf.Lead__c = nLead.Id;
+                if(cmpWrp.cmpM.id != null){
+                    rf.id = cmpWrp.cmpM.id;
+                }
+                rf.Lead__c = nLead.Id;
 
-            rf.Account__c = cmpWrp.cmpM.Account__c;
+                rf.Account__c = cmpWrp.cmpM.Account__c;
 
-            if(cmpWrp.cmpM.Consentor__c!=null){
-                rf.Consentor__c = cmpWrp.cmpM.Consentor__c;
-            }
-            if(cmpWrp.cmpM.Referral_Rank__c!=null){
-                rf.Referral_Rank__c = cmpWrp.cmpM.Referral_Rank__c;
-            }
-            System.debug('nLead.Call_In_Code__c ::>'+nLead.Call_In_Code__c);
-            if(nLead.Call_In_Code__c != null ){
-                 rf.Call_In_Code__c = listCIC.get(nLead.Call_In_Code__c).Id;
-            }
-            //rf.Search_Term__c = nLead.Online_Search_Term__c;
-            if(nLead.FirstName!=null){
-                patientName = nLead.FirstName +' ';
-            }
-            /* if(nLead.MiddleName!=null){
-                patientName += nLead.MiddleName +' ';
-            } */
-            System.debug('last Name..>'+nLead.LastName.charAt(0));
-            patientName += nLead.LastName.substring(0,1);
-            rf.Patient_Name__c = patientName;
-            rf.City__c = nLead.City;
-            rf.State__c = nLead.State;
-            rf.RecordTypeId = refRecId;
-            rf.Referral_Stage__c = 'Open';
-            refList.add(rf);
+                if(cmpWrp.cmpM.Consentor__c!=null){
+                    rf.Consentor__c = cmpWrp.cmpM.Consentor__c;
+                }
+                if(cmpWrp.cmpM.Referral_Rank__c!=null){
+                    rf.Referral_Rank__c = cmpWrp.cmpM.Referral_Rank__c;
+                }
+                System.debug('nLead.Call_In_Code__c ::>'+nLead.Call_In_Code__c);
+                if(nLead.Call_In_Code__c != null ){
+                     rf.Call_In_Code__c = listCIC.get(nLead.Call_In_Code__c).Id;
+                }
+                //rf.Search_Term__c = nLead.Online_Search_Term__c;
+                if(nLead.FirstName!=null){
+                    patientName = nLead.FirstName +' ';
+                }
+                /* if(nLead.MiddleName!=null){
+                    patientName += nLead.MiddleName +' ';
+                } */
+                System.debug('last Name..>'+nLead.LastName.charAt(0));
+                patientName += nLead.LastName.substring(0,1);
+                rf.Patient_Name__c = patientName;
+                rf.City__c = nLead.City;
+                rf.State__c = nLead.State;
+                rf.RecordTypeId = refRecId;
+                rf.Referral_Stage__c = 'Open';
+                refList.add(rf);
             }
 
             System.debug('refList....>'+refList);

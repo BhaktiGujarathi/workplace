@@ -441,6 +441,7 @@ public class CreateOpportunityExt{
                      , Does_patient_have_prescribed_medications__c
                      , Patient_suffered_from_illness_or_injury__c
                      , Pt_Diagnosed_with_Psychiatric_Condition__c
+                     , Budget__c
                      , (select id from Documents__r where category__c = 'Referral Documents')
                   FROM Opportunity
                  WHERE Id=:oppId

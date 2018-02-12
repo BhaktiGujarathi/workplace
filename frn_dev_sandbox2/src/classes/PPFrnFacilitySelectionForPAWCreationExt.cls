@@ -51,19 +51,19 @@ public without sharing class PPFrnFacilitySelectionForPAWCreationExt {
     // method to get all FRN facility from db
     public Map<Id, Account> fetchFRNFaciltyDBMap() {
         if(frnFacililtyRecordTypeId <> null) {
-	        frnFacilityDBMap = new Map<Id, Account>([Select id, 
-	                                                        Name,
+            frnFacilityDBMap = new Map<Id, Account>([Select id, 
+                                                            Name,
                                                             FRN_Facility_Type__c,
                                                             Ownership,
-	                                                        (Select id, 
-	                                                                Name,
-	                                                                Private_Pay_Fee__c,
-	                                                                Program_Length__c,
-	                                                                Auto_Add__c
-	                                                         From Facility_Programs__r 
-	                                                         Where Is_Private_Pay__c = true) 
-	                                                 From Account 
-	                                                 Where RecordTypeId =: frnFacililtyRecordTypeId]);
+                                                            (Select id, 
+                                                                    Name,
+                                                                    Private_Pay_Fee__c,
+                                                                    Program_Length__c,
+                                                                    Auto_Add__c
+                                                             From Facility_Programs__r 
+                                                             Where Is_Private_Pay__c = true) 
+                                                     From Account 
+                                                     Where RecordTypeId =: frnFacililtyRecordTypeId]);
         }
         return frnFacilityDBMap;
     }
@@ -143,115 +143,115 @@ public without sharing class PPFrnFacilitySelectionForPAWCreationExt {
     public Pagereference savePAWRecords() {
         
         Id benefitRecordTypeId = Schema.SObjectType.Insurance_Benefit__c.getRecordTypeInfosByName().get('In Network').getRecordTypeId();
-		Savepoint savePt = Database.setSavepoint();
-		List<Estimated_Coverage_Days__c> estmtCvrageDaysList = new List<Estimated_Coverage_Days__c>();
-		List<Pay_Agreement_Worksheet__c> payAgrmntList = new List<Pay_Agreement_Worksheet__c>();
-		List<Pay_Agreement_Worksheet__c> payAgrmntDBList = new List<Pay_Agreement_Worksheet__c>();
-		Set<Id> payAgrmntDBIdSet = new Set<Id>();
-		List<Quote> estmtCostlist = new List<Quote>();
-		Default_Pricebook__c pricebookName = Default_Pricebook__c.getValues('FRN Price Book');
-		List<PriceBook2> pricebooks = [select id, name, isActive from Pricebook2 where Name=:pricebookName.Default_Pricebook_Name__c limit 1];
+        Savepoint savePt = Database.setSavepoint();
+        List<Estimated_Coverage_Days__c> estmtCvrageDaysList = new List<Estimated_Coverage_Days__c>();
+        List<Pay_Agreement_Worksheet__c> payAgrmntList = new List<Pay_Agreement_Worksheet__c>();
+        List<Pay_Agreement_Worksheet__c> payAgrmntDBList = new List<Pay_Agreement_Worksheet__c>();
+        Set<Id> payAgrmntDBIdSet = new Set<Id>();
+        List<Quote> estmtCostlist = new List<Quote>();
+        Default_Pricebook__c pricebookName = Default_Pricebook__c.getValues('FRN Price Book');
+        List<PriceBook2> pricebooks = [select id, name, isActive from Pricebook2 where Name=:pricebookName.Default_Pricebook_Name__c limit 1];
 
-		try {
-			Insurance_Benefit__c insuranceBenefitObj = new Insurance_Benefit__c(Patient_Insurance__c = patientInsuranceId,
-			                                                                    RecordTypeId = benefitRecordTypeId,
-			                                                                    Disposition__c = 'Private Pay',
+        try {
+            Insurance_Benefit__c insuranceBenefitObj = new Insurance_Benefit__c(Patient_Insurance__c = patientInsuranceId,
+                                                                                RecordTypeId = benefitRecordTypeId,
+                                                                                Disposition__c = 'Private Pay',
                                                                                 Applicable_For_Year__c = String.valueOf( System.Today().year() ));
-			insert insuranceBenefitObj;
-			Pay_Agreement_Worksheet__c payAgrmntObj;
-			Estimated_Coverage_Days__c estmtDayObj;
+            insert insuranceBenefitObj;
+            Pay_Agreement_Worksheet__c payAgrmntObj;
+            Estimated_Coverage_Days__c estmtDayObj;
             PP_Estimate_Coverage_Days_For_Facility__c daysSettingObj;
             if(customSettingName != null && customSettingName != '') {
                 daysSettingObj = PP_Estimate_Coverage_Days_For_Facility__c.getInstance(customSettingName);
             }     
-			Decimal prgrmlength;
-			Quote estmtObj;
-			for(pawDetailsWrapper wrprInstance : pawDetailsWrapperList) {
-			    if(wrprInstance.pawFRNFacility != '' && wrprInstance.pawProgram!= '') {
-			        estmtDayObj = new Estimated_Coverage_Days__c(Insurance_Benefit__c = insuranceBenefitObj.Id,
-			                                                     FRN_Facility__c = (Id)wrprInstance.pawFRNFacility,
-			                                                     DTX_Days__c = (daysSettingObj != null && daysSettingObj.DTX_Days__c != null)? daysSettingObj.DTX_Days__c : 0,
-			                                                     RTC_Days__c = (daysSettingObj != null && daysSettingObj.RTC_Days__c != null)? daysSettingObj.RTC_Days__c : 0,
-			                                                     PHP_Days__c = (daysSettingObj != null && daysSettingObj.PHP_Days__c != null)? daysSettingObj.PHP_Days__c : 0,
-			                                                     IOP_Days__c = (daysSettingObj != null && daysSettingObj.IOP_Days__c != null)? daysSettingObj.IOP_Days__c : 0,
-			                                                     Total_Copay__c = 0.00);
-			        estmtCvrageDaysList.add(estmtDayObj);
+            Decimal prgrmlength;
+            Quote estmtObj;
+            for(pawDetailsWrapper wrprInstance : pawDetailsWrapperList) {
+                if(wrprInstance.pawFRNFacility != '' && wrprInstance.pawProgram!= '') {
+                    estmtDayObj = new Estimated_Coverage_Days__c(Insurance_Benefit__c = insuranceBenefitObj.Id,
+                                                                 FRN_Facility__c = (Id)wrprInstance.pawFRNFacility,
+                                                                 DTX_Days__c = (daysSettingObj != null && daysSettingObj.DTX_Days__c != null)? daysSettingObj.DTX_Days__c : 0,
+                                                                 RTC_Days__c = (daysSettingObj != null && daysSettingObj.RTC_Days__c != null)? daysSettingObj.RTC_Days__c : 0,
+                                                                 PHP_Days__c = (daysSettingObj != null && daysSettingObj.PHP_Days__c != null)? daysSettingObj.PHP_Days__c : 0,
+                                                                 IOP_Days__c = (daysSettingObj != null && daysSettingObj.IOP_Days__c != null)? daysSettingObj.IOP_Days__c : 0,
+                                                                 Total_Copay__c = 0.00);
+                    estmtCvrageDaysList.add(estmtDayObj);
 
-			        payAgrmntObj = new Pay_Agreement_Worksheet__c(FRN_Facility__c = (Id)wrprInstance.pawFRNFacility,
-			                                                      Facility_Program__c = (Id)wrprInstance.pawProgram,
-			                                                      Private_Pay__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
-			                                                      Patient_Insurance__c = patientInsuranceId,
-			                                                      Status__c = 'Open',
-			                                                      Opportunity__c = patientInsuarnceObj.Opportunity__c,
-			                                                      Insurance_Benefit__c = insuranceBenefitObj.Id,
-			                                                      Total_Patient_Contribution__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
-			                                                      Total_Revenue__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
-			                                                      Daily_Revenue__c = ((wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee)/(prgrmlength = wrprInstance.pawFacilitPrgmMap.get(wrprInstance.pawProgram).Program_Length__c==null?1:wrprInstance.pawFacilitPrgmMap.get(wrprInstance.pawProgram).Program_Length__c)),
-			                                                      Uncovered_Charges__c = 0.00,
-					                                              Days_60_90_Fees__c = 0.00,
-					                                              Num_Days_Uncovered__c = 0,
-					                                              Uncovered_Days_Rate__c = 0.00,
-					                                              Room_and_Board_Days_Rate__c = 0.00,
-					                                              Ancillary_Fees__c = 0.00);
-			       //Daily_Revenue__c = (wrprInstance.pawPrivatePayFee/(wrprInstance.pawFacilitPrgmMap.get((Id)wrprInstance.pawProgram).Program_Length__c))
-			                                                      
-			        payAgrmntList.add(payAgrmntObj);
-			    }   
-			}
-			
-			if(!estmtCvrageDaysList.isEmpty()) {
-			    insert estmtCvrageDaysList;
-			}
-			
-			if(!payAgrmntList.isEmpty()) {
-			    insert payAgrmntList;
-			}
-			
-			for(Pay_Agreement_Worksheet__c pawInstance : payAgrmntList) {
-			    if(pawInstance.Id != null) {
-			        payAgrmntDBIdSet.add(pawInstance.Id);
-			    }
-			}
-			
-			payAgrmntDBList = [SELECT id,
-			                          Opportunity__c,
-			                          Opportunity__r.Name,
-			                          FRN_Facility__c,
-			                          Facility_Program__c
-			                   FROM Pay_Agreement_Worksheet__c
-			                   WHERE Id IN :payAgrmntDBIdSet];
-			
-			if(!payAgrmntDBList.isEmpty()) {
-			    for(Pay_Agreement_Worksheet__c pawInstance : payAgrmntDBList) {
-	                if(pawInstance.Id != null) {
-	                    estmtObj = new Quote(OpportunityId = pawInstance.Opportunity__c,
-	                                         Pay_Agreement_Worksheet__c = pawInstance.Id,
-	                                         Status__c = 'Open',
-	                                         FRN_Facility__c = pawInstance.FRN_Facility__c,
-	                                         Facility_Program__c = pawInstance.Facility_Program__c,
-	                                         Name = pawInstance.Opportunity__r.name,
-	                                         Type__c = 'Official',
-	                                         Insurance_Company__c = patientInsuarnceObj.Insurance_Company__c,
-	                                         Pricebook2Id = pricebooks[0].Id
-	                                         );
-	                    estmtCostlist.add(estmtObj);
-	                }
+                    payAgrmntObj = new Pay_Agreement_Worksheet__c(FRN_Facility__c = (Id)wrprInstance.pawFRNFacility,
+                                                                  Facility_Program__c = (Id)wrprInstance.pawProgram,
+                                                                  Private_Pay__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
+                                                                  Patient_Insurance__c = patientInsuranceId,
+                                                                  Status__c = 'Open',
+                                                                  Opportunity__c = patientInsuarnceObj.Opportunity__c,
+                                                                  Insurance_Benefit__c = insuranceBenefitObj.Id,
+                                                                  Total_Patient_Contribution__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
+                                                                  Total_Revenue__c = (wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee),
+                                                                  Daily_Revenue__c = ((wrprInstance.pawPrivatePayFee = wrprInstance.pawPrivatePayFee==null?0.00:wrprInstance.pawPrivatePayFee)/(prgrmlength = wrprInstance.pawFacilitPrgmMap.get(wrprInstance.pawProgram).Program_Length__c==null?1:wrprInstance.pawFacilitPrgmMap.get(wrprInstance.pawProgram).Program_Length__c)),
+                                                                  Uncovered_Charges__c = 0.00,
+                                                                  Days_60_90_Fees__c = 0.00,
+                                                                  Num_Days_Uncovered__c = 0,
+                                                                  Uncovered_Days_Rate__c = 0.00,
+                                                                  Room_and_Board_Days_Rate__c = 0.00,
+                                                                  Ancillary_Fees__c = 0.00);
+                   //Daily_Revenue__c = (wrprInstance.pawPrivatePayFee/(wrprInstance.pawFacilitPrgmMap.get((Id)wrprInstance.pawProgram).Program_Length__c))
+                                                                  
+                    payAgrmntList.add(payAgrmntObj);
+                }   
+            }
+            
+            if(!estmtCvrageDaysList.isEmpty()) {
+                insert estmtCvrageDaysList;
+            }
+            
+            if(!payAgrmntList.isEmpty()) {
+                insert payAgrmntList;
+            }
+            
+            for(Pay_Agreement_Worksheet__c pawInstance : payAgrmntList) {
+                if(pawInstance.Id != null) {
+                    payAgrmntDBIdSet.add(pawInstance.Id);
                 }
-			}
-			
-			if(!estmtCostlist.isEmpty()) {
+            }
+            
+            payAgrmntDBList = [SELECT id,
+                                      Opportunity__c,
+                                      Opportunity__r.Name,
+                                      FRN_Facility__c,
+                                      Facility_Program__c
+                               FROM Pay_Agreement_Worksheet__c
+                               WHERE Id IN :payAgrmntDBIdSet];
+            
+            if(!payAgrmntDBList.isEmpty()) {
+                for(Pay_Agreement_Worksheet__c pawInstance : payAgrmntDBList) {
+                    if(pawInstance.Id != null) {
+                        estmtObj = new Quote(OpportunityId = pawInstance.Opportunity__c,
+                                             Pay_Agreement_Worksheet__c = pawInstance.Id,
+                                             Status__c = 'Open',
+                                             FRN_Facility__c = pawInstance.FRN_Facility__c,
+                                             Facility_Program__c = pawInstance.Facility_Program__c,
+                                             Name = pawInstance.Opportunity__r.name,
+                                             Type__c = 'Official',
+                                             Insurance_Company__c = patientInsuarnceObj.Insurance_Company__c,
+                                             Pricebook2Id = pricebooks[0].Id
+                                             );
+                        estmtCostlist.add(estmtObj);
+                    }
+                }
+            }
+            
+            if(!estmtCostlist.isEmpty()) {
                 insert estmtCostlist;
-                PageReference pageRef = new PageReference('/'+patientInsuarnceObj.Opportunity__c);
+                PageReference pageRef = new PageReference('/'+patientInsuarnceObj.Id);
                 return pageRef;
             }
             Database.rollback(savePt);
-			return null;
-		}
-		catch(Exception exObj) {
-		    system.debug('>>> esObj :'+exObj);
-		    Database.rollback(savePt);
-		    return null;
-		}
+            return null;
+        }
+        catch(Exception exObj) {
+            system.debug('>>> esObj :'+exObj);
+            Database.rollback(savePt);
+            return null;
+        }
         
     }
     
@@ -284,12 +284,12 @@ public without sharing class PPFrnFacilitySelectionForPAWCreationExt {
                     pawWrprObj = new pawDetailsWrapper(new Map<Id, Facility_Program__c>(),
                                                new List<SelectOption> {new SelectOption('', '--None--')},
                                                pawDetailsWrapperList.size());
-	                pawWrprObj.pawFRNFacility = (String)idInstance;
-	                pawWrprObj.pawProgram = (String)prgrmInstance.Id;
-	                pawWrprObj.pawPrivatePayFee = prgrmInstance.Private_Pay_Fee__c;
-	                pawWrprObj.pawPrgmSelectList.add(new SelectOption(prgrmInstance.Id, prgrmInstance.Name));
-	                pawWrprObj.pawFacilitPrgmMap.put(prgrmInstance.Id, prgrmInstance);
-	                pawDetailsWrapperList.add(pawWrprObj);
+                    pawWrprObj.pawFRNFacility = (String)idInstance;
+                    pawWrprObj.pawProgram = (String)prgrmInstance.Id;
+                    pawWrprObj.pawPrivatePayFee = prgrmInstance.Private_Pay_Fee__c;
+                    pawWrprObj.pawPrgmSelectList.add(new SelectOption(prgrmInstance.Id, prgrmInstance.Name));
+                    pawWrprObj.pawFacilitPrgmMap.put(prgrmInstance.Id, prgrmInstance);
+                    pawDetailsWrapperList.add(pawWrprObj);
                 }
             }
             

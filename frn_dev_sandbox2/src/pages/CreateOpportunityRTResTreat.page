@@ -781,6 +781,11 @@ Reord Type: Resident Treatment
                     <apex:inputField value="{!opp.Prior_Treatment__c}" tabOrderHint="40"
                                      styleClass="fieldRef1 priorTreatmntFld"/>
                 </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputText value="Budget?" html-apiName="Budget__c"/>
+                    <apex:inputField value="{!opp.Budget__c}" tabOrderHint="40"
+                                     styleClass="fieldRef1 budgetFld"/>
+                </apex:pageBlockSectionItem>
             </apex:pageBlockSection>
 
             <!--- Commitment Questions -->
@@ -2103,9 +2108,16 @@ Reord Type: Resident Treatment
 
                 </apex:outputPanel>
                 
-
+                <!-- @TODO : To move to a separate component -->
+                <!-- Notes Section  -->
                 <apex:outputPanel >
-                    <div id="side-tabs" style="position: fixed;padding: 10px;" class="floating-panel">
+                    <div style="display:none;" class="right-side-panel-trigger floating-panel">
+                        <a id="save-continue-tab" href="#quality-report-wrapper">  
+                            <button id="maximize-button">Add Notes</button>
+                        </a>
+                    </div>
+
+                    <div id="side-tabs" style="position: fixed;padding: 10px;" class="right-side-panel floating-panel">
 
                         <ul>
                             <apex:outputPanel rendered="{!AND( $CurrentPage.parameters.showQualityReport!=null
@@ -2127,6 +2139,12 @@ Reord Type: Resident Treatment
                                             <apex:actionPoller action="{!hideMessage}" reRender="oppsaved" interval="5" enabled="{!isOpportunitySaved}"/> -->
                                         </apex:outputPanel>
                                     </span>
+                                </a>
+                            </li>
+
+                            <li>
+                                <a id="save-continue-tab" href="#quality-report-wrapper">  
+                                    <button id="minimize-button">Hide</button>
                                 </a>
                             </li>
                         </ul>
@@ -2166,15 +2184,31 @@ Reord Type: Resident Treatment
                     </div>
                 </apex:outputPanel>
 
+                <div style="display:none;" class="right-side-panel-trigger floating-menu">
+                    <a id="save-continue-tab" href="#quality-report-wrapper">  
+                        <button id="maximize-button">Add Notes</button>
+                    </a>
+                </div>
+
             </apex:panelGrid>
         </apex:pageBlock>
     </apex:form>
 
    <script>
             $(document).ready(function(){
-                setTimeout(function(){$("[id*='sp']").attr("tabindex", "1710");}, 2000)
+                setTimeout(function(){$("[id*='sp']").attr("tabindex", "1710");}, 2000);
+                frn.initializeSidePanelMinimize();
             });
 
+            //POC Code
+            var frn = frn || {};
+            frn.initializeSidePanelMinimize = function(){
+                $(".right-side-panel #minimize-button, .right-side-panel-trigger #maximize-button").click(function(){
+                    $(".right-side-panel").closest("td").slideToggle();
+                    $(".right-side-panel-trigger").slideToggle();
+                    return false;
+                });
+            }
     </script>
 
 </apex:page>

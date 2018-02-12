@@ -130,6 +130,7 @@ public class PAW_YearEnd_Controller extends PAW_New_EditCntrllr {
     }
 
     public void createDetailRecordsForPAW() {
+        system.debug('>>> call base class');
         createAndUpdatePAWDetailsRecords();
     }
 

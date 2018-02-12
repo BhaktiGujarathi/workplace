@@ -22,6 +22,18 @@ public class CreateInsuranceBenefitCtrl {
     public Integer totalDaysUsedCount {get; set;}
 
     public CreateInsuranceBenefitCtrl(ApexPages.StandardController controller){
+        String idVal = null;
+        Map<String, String> params = ApexPages.currentPage().getParameters();
+        for (String key : params.keySet()) {
+          if (key.startsWith('CF') && key.endsWith('lkid')) {
+            String val = params.get(key);
+            
+              idVal = val;
+              break;
+            
+          }
+        }
+        system.debug('id'+idVal);
         selectedAccounts = new List<SelectOption>();
         allContacts = new List<SelectOption>();
         patientAge = 0;
@@ -38,11 +50,14 @@ public class CreateInsuranceBenefitCtrl {
         if(getcustomRetURL != null){
             getretURL = getcustomRetURL;
             
-        } else {
-            getretURL = ApexPages.currentPage().getParameters().get('retURL');      
+        } else {            
+            getretURL = ApexPages.currentPage().getParameters().get('retURL'); 
+            
             if(getretURL != null && getretURL.length()>14){
                 s = getretURL.split('/');
                 getretURL=s[1];
+            } else {
+                getretURL = idVal;
             }
         }
      
@@ -53,7 +68,6 @@ public class CreateInsuranceBenefitCtrl {
         } else {
             selectedRecordType = ((Insurance_Benefit__c)controller.getRecord()).RecordTypeId;       
         }
-        
         if(selectedRecordType != null && selectedRecordType.length() >0){            
             RecordType rt = [SELECT Id,Name FROM RecordType WHERE Id =:selectedRecordType];
             recordTypeName = rt.Name;          
@@ -63,7 +77,6 @@ public class CreateInsuranceBenefitCtrl {
             if(getretURL!= null && getretURL.length()>14 && getretURL.startsWith(paInPrefix)){
                 ib.Patient_Insurance__c = getretURL;
                 patDOB = [Select Id,Opportunity__c,Accreditation__c,Accepts_Assignment_of_Benefits__c,COBRA_Account__c,Patient__r.Birthdate FROM Patient_Insurance__c Where id=: getretURL];
-                
                 if(patDOB.Patient__r.Birthdate != null){
                     pDOB = patDOB.Patient__r.Birthdate;
                     Integer age = calculateYears(patDOB.Patient__r.Birthdate);              
@@ -378,12 +391,11 @@ public class CreateInsuranceBenefitCtrl {
     
     public List<SelectOption> getFRNFacilities(){
         List<SelectOption> frnFacilities = new List<SelectOption>();
-        Id accRTId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('FRN Facility').getRecordTypeId();       
+        Id accRTId = Schema.SObjectType.Account.getRecordTypeInfosByName().get('FRN Facility').getRecordTypeId(); 
         Opportunity oppObj = new Opportunity();
         Set<Id> accids = new Set<Id>();
         if(ib.Patient_Insurance__c!=null && patDOB.Opportunity__c!=null){
             String oppId = patDOB.Opportunity__c;
-            
             if(oppId!=null){    
                 oppObj = [SELECT Id,
                                  RecordTypeId,

@@ -6,6 +6,7 @@
         <apex:styleSheet value="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
         <script src="https://code.jquery.com/jquery-2.2.4.min.js" />
         <script src="//cdn.rawgit.com/malsup/blockui/316f6e5d/jquery.blockUI.js" />
+        <script type="text/JavaScript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js" />
 
     <script type="text/javascript">
         var jQ = $.noConflict();
@@ -78,7 +79,7 @@
 
         frn.hideLoader = function(){
             console.log('>>>>>>');
-           jQ.unblockUI();
+            jQ.unblockUI();
         };
 
         function Callmefunc(id) {
@@ -137,10 +138,29 @@
             <apex:actionFunction name="CallApexMethod" action="{!selectedvalue}" rerender="PosHead,accPickList,conPickList,ramAssign" oncomplete="getSpecialInstructions();" Status="status"/>
             
             <apex:pageBlockButtons >
-                <apex:CommandButton value="Save" action="{!saveLead}" styleClass="save-button"/>
+                <apex:CommandButton value="Save" action="{!saveLead}" styleClass="save-button" rerender="pnlToRedirect" />
                 <apex:CommandButton value="Save & New" action="{!saveAndNewLead}" styleClass="save-button" />
                 <apex:CommandButton value="Cancel" action="{!cancel}"/>
             </apex:pageBlockButtons>
+
+            <apex:outputPanel id="pnlToRedirect" >
+                <Script>
+                    var responseStr = 'Successfully saved';
+                    var responseRecieved = '{!responseToSentStr}';
+                    var currentUserTheme = '{!$User.UITheme}';
+                    var lightningTheme = 'Theme4d';
+                    if(responseStr == responseRecieved) {
+                        var recordId = '{!nLead.Id}'; 
+                        if(currentUserTheme == lightningTheme) {
+                            sforce.one.navigateToSObject(recordId);
+                        }
+                        else {
+                            window.close();
+                            window.open('/'+recordId,'_new');  
+                        }
+                    }
+                </Script>
+            </apex:outputPanel>
             
             <apex:panelGrid columns="2" id="theGrid" columnClasses="col1,col2" width="100%">
                 <apex:outputPanel >
@@ -300,7 +320,8 @@
                                 <script type="text/javascript">
                                 function doWhateverUneed(index){                        
                                     var movieObjects1;
-                                    var queryTerm1;                         
+                                    var queryTerm1;
+                                    var PLACEHOLDER1;                       
                                     $('.placeHolder-'+index).autocomplete({
                                         minLength: 2,                           
                                         source: function(request, response) {                               
@@ -355,14 +376,15 @@
                                     };
                                         
                                     // Add or remove placeholder values
-                                    $('.placeHolder-'+index).val(PLACEHOLDER1);
-                                    $('.placeHolder-'+index).on("focus",  function(event){
-                                        $tgt = $(event.target);
-                                        if($tgt.val() === PLACEHOLDER1 ){
-                                            $tgt.val('');
-                                            $tgt.removeClass('placeHolder');
-                                        }
-                                    });
+                                    // $('.placeHolder-'+index).val(PLACEHOLDER1);
+                                    // $('.placeHolder-'+index).on("focus",  function(event){
+                                    //     $tgt = $(event.target);
+                                    //     if($tgt.val() === PLACEHOLDER1 ){
+                                    //         $tgt.val('');
+                                    //         $tgt.removeClass('placeHolder');
+                                    //     }
+                                    // });
+
                                     $('.placeHolder-'+index).on( "blur",  function(event){
                                         $tgt = $(event.target);
                                         if($tgt.val() === '' ){
@@ -409,6 +431,8 @@
                          <apex:actionSupport event="onblur" action="{!leadDuplicate}" rerender="lDuplicate"/>
                         </apex:inputfield>
                     </apex:outputPanel>
+
+                    <!-- <apex:inputfield value="{!nLead.LastName}" tabOrderHint="25"/> -->
                 </apex:pageblocksectionitem>  
                 <apex:pageblocksectionitem >
                     <apex:outputText value="Birthdate"/>
@@ -430,8 +454,8 @@
                 </apex:pageblocksectionitem>
                 <apex:pageblocksectionitem >
                     <apex:outputText value="Last Name"/>
-                    <apex:outputPanel layout="block" styleClass="requiredInput" >
-                        <apex:outputpanel layout="block" styleClass="requiredBlock"/> 
+                    <apex:outputPanel layout="block"  >
+                        <apex:outputpanel layout="block" /> 
                         <apex:inputField value="{!nLead.LastName}" required="false" tabOrderHint="28"> 
                          <apex:actionSupport event="onblur" action="{!leadDuplicate}" rerender="lDuplicate"/>
                         </apex:inputfield>
@@ -531,6 +555,8 @@
                 <apex:inputField value="{!nLead.Prior_Treatment__c}" tabOrderHint="55">
                     <apex:actionSupport event="onchange" action="{!rendTreatmentHistoryInfo}" rerender="trthHead1"/>
                 </apex:inputField>
+                    <apex:inputField value="{!nLead.Budget__c}" tabOrderHint="40"
+                                     styleClass="fieldRef1 budgetFld"/>
              </apex:pageBlockSection>
             
             

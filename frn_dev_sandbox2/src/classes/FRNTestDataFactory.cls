@@ -3,8 +3,8 @@
 * @date 12-Apr-2016
 *
 * @description This is org specific data factory
-* 
-* 
+*
+*
 */
 
 public Class FRNTestDataFactory
@@ -12,10 +12,10 @@ public Class FRNTestDataFactory
 
  /*******************************************************************************************************
     * @description Created the bulk account
-    * @param Integer: Number of account to be created. 
+    * @param Integer: Number of account to be created.
     * @return List<Account>  : List of Account
  */
- 
+
 public static List<Account> createAccountBasedOnRecordCount(Integer i)
 {
     List<Account> lstAcc = new List<Account>();
@@ -24,7 +24,7 @@ public static List<Account> createAccountBasedOnRecordCount(Integer i)
         Account acc = new Account();
         lstAcc.add(acc);
     }
-    
+
     return lstAcc;
 
 }
@@ -38,7 +38,7 @@ public static List<Case> createCaseBasedOnRecordCount(Integer i)
         Case tempCase = new Case();
         lstCase.add(tempCase);
     }
-    
+
     return lstCase;
 
 }
@@ -47,28 +47,28 @@ public static List<Case> createCaseBasedOnRecordCount(Integer i)
     {
         Facility_Status__c faciltityStatusObj = new Facility_Status__c(FRN_Facility__c = pFacilityId,
                                                                        Case__c = pCaseId);
-        return faciltityStatusObj;    
+        return faciltityStatusObj;
     }
-    
+
     // mehtod to create contact records
     public static List<Contact> createContactList(Integer pCount) {
         List<Contact> contactList = new List<Contact>();
-        
+
         for(Integer i=0; i<pCount; i++) {
             contactList.add(new Contact(LastName='TestLast'+i,
                                         FirstName='TestFirst'+i,
                                         Gender__c='Transgender'
                                         ));
         }
-        
+
         return contactList;
     }
-    
+
     // method to create Opportunity records
     public static List<Opportunity> createOpportunityList(Integer pCount) {
         List<Opportunity> opportunityList = new List<Opportunity>();
         Id oppRecId = Schema.SObjectType.Opportunity.getRecordTypeInfosByName().get('Residential Treatment').getRecordTypeId();
-        
+
         for(Integer i=0; i<pCount; i++) {
             opportunityList.add(new Opportunity(Name = 'Test'+i,
                                                 RecordTypeId = oppRecId,
@@ -77,8 +77,32 @@ public static List<Case> createCaseBasedOnRecordCount(Integer i)
                                                 Probability = 10
                                                 ));
         }
-        
+
         return opportunityList;
+    }
+
+    public static Opportunity opportunityForVFcontrollers() {
+        Call_in_Code__c testCallingCode = new Call_in_Code__c();
+	testCallingCode.Name = 'calling code';
+	insert testCallingCode;
+
+	Contact testcont = new Contact();
+	testcont.LastName = 'test contact';
+	testcont.Gender__c = 'Male';
+	insert testcont;
+
+	Id strRecordTypeId = [Select Id From RecordType Where SobjectType = 'opportunity' and Name = 'Residential Treatment'].Id;
+
+	Opportunity  testOppty = new Opportunity();
+	  testOppty.name='testOppty';
+	 // testOppty.AccountId=acc.id;
+	  testOppty.StageName='Open';
+	  testOppty.CloseDate=System.today();
+	  testOppty.Call_in_Code__c = testCallingCode.id;
+	  testOppty.Probability = 10;
+	  testOppty.RecordTypeId = strRecordTypeId;
+	  insert testOppty;
+      return testOppty;
     }
 
 }
