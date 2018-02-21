@@ -1,0 +1,1055 @@
+<apex:component controller="FundTransferComponentController">
+
+    <body>
+
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+            <div class="wrapper">
+                <div class="row">
+                    <!-- <div class="col-md-8"> -->
+                    <section id="">
+                        <div class="well">
+                            <h4>Funds Transfer</h4>
+                            <h5 class="text-primary">
+                                <strong>Enter Source Units Details</strong>
+                            </h5>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select unit(s) from which funds to be transferred</label>
+                                        <apex:selectList styleClass="chosen-select form-control" value="{!wrapObj.lstSelectedSourceUnits}" multiselect="true" size="1">
+                                            <apex:selectOptions value="{!wrapObj.lstSourceUnits}"/>
+                                        </apex:selectList>
+                                    </div>
+                                </div>
+                                <div class="col-lg-12 col-md-12">
+                                    <apex:commandButton styleClass="btn btn-sm btn-primary"
+                                    action="{!getUnitDetails}" value="Fetch Unit Details" reRender="sourceUnitDiv, pgMsg"></apex:commandButton>
+                                    <br/><br/><br/>
+                                </div>
+                            </div>
+
+                            <!-------------------------Unit Details----------------------------->
+                            <apex:outputPanel id="sourceUnitDiv" layout="block">
+                                <apex:outputPanel layout="block" rendered="{!displayUnitDetails}">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <table class="paymentDue table table-responsive unitTable">
+                                                <colgroup>
+                                                    <col width="40%"/>
+                                                    <col width="50%"/>
+                                                    <col width="10%"/></colgroup>
+                                                <tbody>
+                                                    <apex:repeat value="{!wrapObj.lstSelectedBookingUnit}" var="unit">
+                                                        <tr>
+                                                            <td>{!unit.Unit_Details__c}</td>
+                                                            <td>{!unit.Selling_Price__c} {!userCurrencyISOCode}</td>
+                                                        </tr>
+                                                    </apex:repeat>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label>Credit Note</label>
+                                                <apex:inputText value="{!wrapObj.strCreditNote}" styleClass="form-control"/></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label>Amount Collected as EOI</label>
+                                                <apex:input type="number" styleClass="form-control" value="{!wrapObj.decAmountCollectedAsEOI}" disabled="true"/> {!userCurrencyISOCode}
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label>EOI Reference Number</label>
+                                                <apex:inputText styleClass="form-control" value="{!wrapObj.strEOIRefNumber}" disabled="true"/></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label>Amount Collected/ Available</label>
+                                                <apex:input type="number" styleClass="form-control" value="{!wrapObj.decAmountCollected_Available}" disabled="true"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr/>
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                <label>Select Unit</label>
+                                                <apex:selectList styleClass="chosen-select form-control" value="{!selectedUnitToShow}" multiselect="false" size="1">
+                                                    <apex:selectOptions value="{!wrapObj.lstSelectedUnits}"/>
+                                                    <apex:actionSupport event="onchange" rerender="detailsPanel, addInfo, unitPanel" action="{!getDetailsForSelectedUnit}"/>
+                                                </apex:selectList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel id="unitPanel" layout="block">
+                                        <apex:outputPanel layout="block" styleClass="row unitDetailBg" rendered="{!IF(selectedUnitToShow != '--None--', true, false)}">
+                                            <div class="col-lg-6">
+                                                <div class="form-group">
+                                                    <label>Select Unit Options</label>
+                                                    <apex:selectList styleClass="chosen-select form-control" value="{!wrapObj.strSelectedUnitDetail}" multiselect="false" size="1">
+                                                        <apex:selectOptions value="{!wrapObj.lstUnitDetails}"/>
+                                                        <apex:actionSupport event="onchange" rerender="detailsPanel,addInfo"/>
+                                                    </apex:selectList>
+
+                                                </div>
+                                                <!-- <ul class="nav nav-pills" id="unitTab">
+                                                        <li role="presentation" class="active">
+                                                            <a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a>
+                                                        </li>
+                                                        <li role="presentation">
+                                                            <a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a>
+                                                        </li>
+                                                        <li role="presentation">
+                                                            <a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a>
+                                                        </li>
+                                                        <li role="presentation">
+                                                            <a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a>
+                                                        </li>
+                                                    </ul> -->
+                                                <apex:outputPanel id="detailsPanel" layout="block">
+                                                    <apex:outputPanel styleClass="tab-content" layout="block">
+                                                        <apex:outputPanel styleClass="tab-pane fade active in" id="plan1" layout="block">
+                                                            <apex:outputPanel styleClass="row" layout="block">
+                                                                <apex:outputPanel layout="block" rendered="{!IF(wrapObj.strSelectedUnitDetail == 'Unit Details',true,false)}" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                        <colgroup>
+                                                                            <col width="40%"/>
+                                                                            <col width="60%"/></colgroup>
+                                                                        <tbody>
+
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Project</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strProject}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Project City</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strProjectCity }</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Bedroom Type</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strBedroomType}
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Unit Type
+                                                                                    </b>
+                                                                                    <small>(Villa/High-rise)</small>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strUnitType }</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Permitted Use</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strPermittedUse }</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Ready/Off Plan</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strReady_OffPlan}</td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <b>Rental Pool</b>
+                                                                                </td>
+                                                                                <td>{!wrapObj.objCurrentWBU.strRentalPool }</td>
+                                                                            </tr>
+
+                                                                        </tbody>
+                                                                    </table>
+                                                                </apex:outputPanel>
+
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <!-- <apex:outputPanel styleClass="tab-pane fade in"  id="plan2" layout="block"> -->
+                                                        <apex:outputPanel styleClass="row" layout="block">
+                                                            <apex:outputPanel rendered="{!IF(wrapObj.strSelectedUnitDetail == 'Flags',true,false)}" layout="block" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                                <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                    <colgroup>
+                                                                        <col width="40%"/>
+                                                                        <col width="60%"/></colgroup>
+                                                                    <tbody>
+
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Dispute</b>
+                                                                            </td>
+                                                                            <td align="left">
+                                                                                <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnDispute == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnDispute == true,true,false)}"/>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Enforcement</b>
+                                                                            </td>
+                                                                            <td align="left">
+                                                                                <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnEnforcement  == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnEnforcement  == true,true,false)}"/>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Litigation</b>
+                                                                            </td>
+                                                                            <td align="left">
+                                                                                <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnLitigation == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnLitigation == true,true,false)}"/>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Mortage</b>
+                                                                            </td>
+                                                                            <td align="left">
+                                                                                <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnMortage == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnMortage == true,true,false)}"/>
+                                                                            </td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Court Case</b>
+                                                                            </td>
+                                                                            <td align="left">
+                                                                                <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnCourtCase == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnCourtCase == true,true,false)}"/>
+
+                                                                            </td>
+                                                                        </tr>
+                                                                    </tbody>
+
+                                                                </table>
+                                                            </apex:outputPanel>
+
+                                                        </apex:outputPanel>
+                                                        <!-- </apex:outputPanel> -->
+                                                        <!-- <apex:outputPanel styleClass="tab-pane fade in" id="plan3" layout="block"> -->
+                                                        <apex:outputPanel styleClass="row" layout="block">
+                                                            <apex:outputPanel layout="block" rendered="{!IF(wrapObj.strSelectedUnitDetail == 'Unit Status',true,false)}" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                                <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                    <colgroup>
+                                                                        <col width="40%"/>
+                                                                        <col width="60%"/></colgroup>
+                                                                    <tbody>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>OQOOD Registered</b>
+                                                                            </td>
+                                                                            <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnOQOODregistered == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnOQOODregistered == true,true,false)}"/></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Agreement Status</b>
+                                                                            </td>
+                                                                            <td>{!wrapObj.objCurrentWBU.strAgreementStatus}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>Under Termination</b>
+                                                                            </td>
+                                                                            <td>{!wrapObj.objCurrentWBU.strUnderTermination}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>FTL sent</b>
+                                                                            </td>
+                                                                            <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnFTLsent == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnFTLsent == true,true,false)}"/></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>EHO flag</b>
+                                                                            </td>
+                                                                            <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnEHO == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnEHO == true,true,false)}"/></td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>HO flag</b>
+                                                                            </td>
+                                                                            <td>{!wrapObj.objCurrentWBU.strHO}</td>
+                                                                        </tr>
+                                                                        <tr>
+                                                                            <td>
+                                                                                <b>PCC</b>
+                                                                            </td>
+                                                                            <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnPCC == false,true,false)}"/>
+                                                                                <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objCurrentWBU.blnPCC == true,true,false)}"/></td>
+                                                                        </tr>
+
+                                                                    </tbody>
+                                                                </table>
+                                                            </apex:outputPanel>
+
+                                                        </apex:outputPanel>
+                                                        <!-- </apex:outputPanel> -->
+
+                                                    </apex:outputPanel>
+                                                </apex:outputPanel>
+                                            </div>
+                                            <apex:outputPanel id="addInfo" styleClass="col-lg-6">
+                                                <div class="details">
+                                                    <h4>Additional Information</h4>
+                                                    <div class="row">
+                                                        <div class="col-lg-6 col-md-12">
+                                                            <h6>Unit Price (AED)</h6>
+                                                            <h4 class="text-danger">1500000</h4>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Penalties Accrued</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.intPenaltyAmount}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>PC/ Agent Name</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.strPC_AgentName}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Conservation Status</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.intConversationStatus}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Overdues</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.intOverdue}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Current RERA Construction Status</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decConstructionStatusPercent}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Docs Status</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.strDocsStatus}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Original ACD</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.strOriginalACD}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Current ACD</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.strCurrentACD}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Area Variation (sq. ft.)</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decAreaVariation_SqFt}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Type Variation</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.strTypeVariation}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Other charges (Parking, Furniture etc.)</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decOtherCharges}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Paid %</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decPaidPercent}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>%PDC coverage</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decPDCcoveragePercent}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>No. of times customer defaulted on instalments</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.intNoOfTimesCusDefaulted}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Prior AoPT</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.blnPriorAOPT}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Recovery flag</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.blnRecoveryFlag}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Total Outstanding</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decTotalOutstanding}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Default</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decDefaultAmt}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Penalty/ Over dues (Portfolio level)</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decPenaltyOverdues}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                            <div class="infoBoxes">
+                                                                <h6>Penalty Waivers (Portfolio level)</h6>
+                                                                <h5>{!wrapObj.objCurrentWBU.decPenaltyWaivers}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </div>
+                    </section>
+                    <!----------------------------Source Unit Details ends Here-------------------------->
+                    <section id="">
+                        <div class="well">
+                            <h5 class="text-success">
+                                <strong>Enter Target Units Details</strong>
+                            </h5>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select the customer(s)</label>
+                                        <apex:selectList html-placeholder="Choose Customer(s)" value="{!wrapObj.selectedCustomers}" styleClass="chosen-select form-control" multiselect="true">
+                                            <apex:selectOptions value="{!wrapObj.lstCustomers}"/>
+                                            <apex:actionSupport event="onchange" reRender="targetUnitId,fundAllocationPanelId" action="{!getCustomerRelatedUnits}"/>
+                                        </apex:selectList>
+                                    </div>
+                                </div>
+                                <apex:outputPanel layout="block" styleClass="col-lg-6" id="targetUnitId">
+                                    <apex:outputPanel styleClass="form-group" rendered="{!wrapObj.lstTargetUnits.size > 0}">
+                                        <label>Select unit</label>
+                                        <apex:selectList html-placeholder="Choose unit(s)" value="{!wrapObj.lstSelectedTargetUnits}" styleClass="chosen-select form-control" multiselect="true">
+                                            <apex:selectOptions value="{!wrapObj.lstTargetUnits}"/>
+                                            <apex:actionSupport event="onchange" reRender="targetSelectedId,targetUnitPanel,fundAllocationPanelId" action="{!getTargetUnitsSelected}"/>
+                                        </apex:selectList>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </div>
+                            <apex:outputPanel styleClass="row" id="targetSelectedId" layout="block">
+                                <apex:outputPanel styleClass="col-lg-6" rendered="{!IF(AND(NOT(ISBLANK(wrapObj.lstSelectedTargetUnits)),wrapObj.lstSelectedTargetUnits.size>0),true,false)}" layout="block">
+                                    <div class="form-group">
+                                        <label>Select Unit</label>
+                                        <apex:selectList styleClass="chosen-select form-control" value="{!wrapObj.strTargetUnitDetail}" multiselect="false" size="1">
+                                            <apex:selectOptions value="{!wrapObj.lstSelectedTargetUnitsOption}"/>
+                                            <apex:actionSupport event="onchange" rerender="targetdetailsPanel, targetaddInfo, targetUnitPanel,fundAllocationPanelId" action="{!getDetailsForTargetUnit}"/>
+                                        </apex:selectList>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="targetUnitPanel" layout="block">
+                                <apex:outputPanel layout="block" styleClass="row unitDetailBg" rendered="{!If(wrapObj.strTargetUnitDetail != null || wrapObj.strTargetUnitDetail !='',true,false)}">
+                                    <div class="col-lg-6">
+                                        <apex:outputPanel styleClass="form-group">
+                                            <label>Select Unit Options</label>
+                                            <apex:selectList styleClass="chosen-select form-control" value="{!wrapObj.strTargetSelectedUnitDetail}" multiselect="false" size="1">
+                                                <apex:selectOptions value="{!wrapObj.lstUnitDetails}"/>
+                                                <apex:actionSupport event="onchange" rerender="targetdetailsPanel,targetaddInfo"/>
+                                            </apex:selectList>
+
+                                        </apex:outputPanel>
+                                        <apex:outputPanel id="targetdetailsPanel" layout="block">
+                                            <apex:outputPanel styleClass="tab-content" layout="block">
+                                                <!-- <div class="tab-pane fade active in" role="tabpanel" id="plan1"> -->
+                                                <!-- <div class="row"> -->
+                                                <apex:outputPanel layout="block" rendered="{!IF(wrapObj.strTargetSelectedUnitDetail == 'Unit Details',true,false)}" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <colgroup>
+                                                            <col width="40%"/>
+                                                            <col width="60%"/></colgroup>
+                                                        <tbody>
+
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Project</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strProject}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Project City</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strProjectCity }</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Bedroom Type</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strBedroomType}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Unit Type
+                                                                    </b>
+                                                                    <small>(Villa/High-rise)</small>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strUnitType }</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Permitted Use</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strPermittedUse }</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Ready/Off Plan</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strReady_OffPlan}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Rental Pool</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strRentalPool }</td>
+                                                            </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </apex:outputPanel>
+
+                                                <!-- </div> -->
+                                                <!-- </div> -->
+                                                <!-- <div class="tab-pane fade in" role="tabpanel" id="plan2"> -->
+                                                <!-- <div class="row"> -->
+                                                <apex:outputPanel rendered="{!IF(wrapObj.strTargetSelectedUnitDetail == 'Flags',true,false)}" layout="block" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <colgroup>
+                                                            <col width="40%"/>
+                                                            <col width="60%"/></colgroup>
+                                                        <tbody>
+
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Dispute</b>
+                                                                </td>
+                                                                <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnDispute == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnDispute == true,true,false)}"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Enforcement</b>
+                                                                </td>
+                                                                <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnEnforcement  == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnEnforcement  == true,true,false)}"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Litigation</b>
+                                                                </td>
+                                                                <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnLitigation == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnLitigation == true,true,false)}"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Mortage</b>
+                                                                </td>
+                                                                <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnMortage == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnMortage == true,true,false)}"/>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Court Case</b>
+                                                                </td>
+                                                                <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnCourtCase == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnCourtCase == true,true,false)}"/>
+
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+
+                                                    </table>
+                                                </apex:outputPanel>
+
+                                                <!-- </div> -->
+                                                <!-- </div> -->
+                                                <!-- <div class="tab-pane fade in" role="tabpanel" id="plan3"> -->
+                                                <!-- <div class="row"> -->
+                                                <apex:outputPanel layout="block" rendered="{!IF(wrapObj.strTargetSelectedUnitDetail == 'Unit Status',true,false)}" styleClass="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <colgroup>
+                                                            <col width="40%"/>
+                                                            <col width="60%"/></colgroup>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>OQOOD Registered</b>
+                                                                </td>
+                                                                <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnOQOODregistered == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnOQOODregistered == true,true,false)}"/></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Agreement Status</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strAgreementStatus}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>Under Termination</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strUnderTermination}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>FTL sent</b>
+                                                                </td>
+                                                                <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnFTLsent == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnFTLsent == true,true,false)}"/></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>EHO flag</b>
+                                                                </td>
+                                                                <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnEHO == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnEHO == true,true,false)}"/></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>HO flag</b>
+                                                                </td>
+                                                                <td>{!wrapObj.objTargetUnitWBU.strHO}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>
+                                                                    <b>PCC</b>
+                                                                </td>
+                                                                <td><apex:image value="{!$Resource.UnCheck_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnPCC == false,true,false)}"/>
+                                                                    <apex:image value="{!$Resource.Check_Icon}" style="height:20px;" rendered="{!IF(wrapObj.objTargetUnitWBU.blnPCC == true,true,false)}"/></td>
+                                                            </tr>
+
+                                                        </tbody>
+                                                    </table>
+                                                </apex:outputPanel>
+
+                                                <!-- </div> -->
+                                                <!-- </div> -->
+
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </div>
+                                    <apex:outputPanel id="targetaddInfo" styleClass="col-lg-6">
+                                        <div class="details">
+                                            <h4>Additional Information</h4>
+                                            <div class="row">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4 class="text-danger">1500000</h4>
+                                                </div>
+
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties Accrued</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.intPenaltyAmount}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>PC/ Agent Name</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.strPC_AgentName}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Conservation Status</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.intConversationStatus}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdues</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.intOverdue}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current RERA Construction Status</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decConstructionStatusPercent}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Docs Status</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.strDocsStatus}</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Original ACD</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.strOriginalACD}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current ACD</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.strCurrentACD}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Area Variation (sq. ft.)</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decAreaVariation_SqFt}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Type Variation</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.strTypeVariation}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Other charges (Parking, Furniture etc.)</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decOtherCharges}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Paid %</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decPaidPercent}</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>%PDC coverage</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decPDCcoveragePercent}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>No. of times customer defaulted on instalments</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.intNoOfTimesCusDefaulted}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Prior AoPT</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.blnPriorAOPT}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Recovery flag</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.blnRecoveryFlag}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Total Outstanding</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decTotalOutstanding}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Default</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decDefaultAmt}</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalty/ Over dues (Portfolio level)</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decPenaltyOverdues}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-4 col-sm-4 col-xs-4">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalty Waivers (Portfolio level)</h6>
+                                                        <h5>{!wrapObj.objTargetUnitWBU.decPenaltyWaivers}</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+
+                        </div>
+                    </section>
+                    <!-------------------------------------Fund Allocation Starts here--------------------------------------------------->
+                    <apex:outputPanel id="fundAllocationPanelId" layout="block">
+                        <apex:outputPanel rendered="{!wrapObj.selectedCustomers.size > 0 && wrapObj.lstSelectedTargetUnits.size > 0}">
+                            <apex:variable var="i" value="{!1}"/>
+                            <section id="">
+                                <div class="well">
+                                    <h4>Fund Allocation</h4>
+                                    <div class="row">
+                                        <div class="col-sm-12">
+                                            <table class="paymentDue table table-striped" width="100%">
+                                                <colgroup>
+                                                    <col width="10%"/>
+                                                    <col width="30%"/>
+                                                    <col width="30%"/>
+                                                    <col width="20%"/></colgroup>
+
+                                                <thead>
+                                                    <th>Sr No.</th>
+                                                    <th>Customer Name</th>
+                                                    <th>Unit Name</th>
+                                                    <th>Allocated Fund</th>
+                                                    <th></th>
+                                                </thead>
+                                                <tbody>
+                                                    <apex:repeat value="{!wrapObj.lstFunAllocation}" var="wrap">
+
+                                                        <tr>
+                                                            <td>{!i}</td>
+                                                            <td>{!wrap.customerName}</td>
+                                                            <td>{!wrap.unitName}</td>
+                                                            <td>
+                                                                <apex:input type="number" styleClass="form-control" value="{!wrap.fundAllocated}"/>
+                                                            </td>
+                                                        </tr>
+                                                        <apex:variable var="i" value="{!i+1}"/>
+                                                    </apex:repeat>
+                                                    <tr>
+                                                    <td colspan="2"></td>
+                                                    <td class="text-success"><h4>Total Fund Allotted</h4></td>
+                                                    <td class="text-success"><h4>{!wrapObj.decTotalFundAlloted} {!userCurrencyISOCode}</h4></td>
+                                                </tr>
+                                                <tr>
+                                                    <td colspan="2"></td>
+                                                    <td class="text-danger"><h4>Available Limit</h4></td>
+                                                    <td class="text-danger"><h4>{!wrapObj.decAvailableLimit} {!userCurrencyISOCode}</h4></td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </section>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!-------------------------------------Power of Attorney Details--------------------------------------------------->
+                    <section id="">
+                        <div class="well">
+                            <h4>Power of Attorney Details</h4>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select Power of Attorney</label>
+                                        <apex:selectList styleClass="chosen-select form-control" value="{!wrapObj.strSelected_POAOption}"
+                                                        multiselect="false" size="1" >
+                                            <apex:selectOptions value="{!wrapObj.lst_POAOptions}"/>
+                                            <apex:actionSupport event="onchange" rerender="POADetailsId"/>
+                                        </apex:selectList>
+                                    </div>
+                                </div>
+                                <!-- <apex:input type="Number" /> -->
+                            </div>
+                            <apex:outputPanel id="POADetailsId">
+                            <apex:outputPanel rendered="{!wrapObj.strSelected_POAOption == 'Yes'}">
+                                <h5>Power of Attorney Details</h5>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name</label>
+
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Purpose of POA</label>
+                                            <apex:inputText styleClass="form-control" value="{!wrapObj.strPOA_Purpose}" html-placeholder="Enter Purpose of POA"/></div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Issue</label>
+                                            <apex:inputText html-placeholder="01/01/1999" value="{!wrapObj.strPOA_ExpiryDate}"
+                                                styleClass="form-control datepicker"/></div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued By</label>
+                                            <apex:inputText styleClass="form-control" value="{!wrapObj.strPOA_IssuedBy}" html-placeholder="Enter name"/></div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Upload Power of Attorney</label>
+                                            <div class="form-control fileupload" data-provides="fileupload">
+                                                <input type="file">
+                                                    <span class="fileupload-new">Select file</span>
+                                                    <span class="fileupload-preview"></span>
+                                                </input>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            </apex:outputPanel>
+                        </div>
+                    </section>
+
+                    <!----------------------Upload Offer and Acceptance Letter Starts here------------------------------>
+                    <section id="">
+                        <div class="well">
+                            <h4>
+                                Upload Offer and Acceptance Letter
+                                <div class="btn-group pull-right">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-download"></i>
+                                        Documents
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li>
+                                            <a href="#">View Offer and Acceptance Letter</a>
+                                        </li>
+                                        <li>
+                                            <a href="#">Download Offer and Acceptance Letter</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </h4>
+                            <div class="row">
+
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Upload Signed Offer and Acceptance Letter</label>
+                                        <div class="form-control fileupload" data-provides="fileupload">
+                                            <input type="file">
+                                                <span class="fileupload-new">Select file</span>
+                                                <span class="fileupload-preview"></span>
+                                            </input>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm">Save Draft</button>
+                                        <button class="btn btn-sm btn-success">Submit</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- </div> -->
+                </div>
+            </div>
+        </section>
+        <apex:actionFunction action="{!getDetailsForSelectedUnit}" name="getDetailsForSelectedUnit" rerender="detailsPanel"/>
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/jquery.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/bootstrap.min.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/bootstrap-datepicker.min.js')}"/> -->
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/main.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/button.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/checkbox.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/bootstrap-multiselect.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/upload.js')}"/> -->
+
+        <!-- <apex:includeScript value="{!URLFOR($Resource.FundTransferResource, 'All_Processes/assets/js/ease.js')}"/> -->
+
+        <apex:outputPanel id="jsPanel">
+            <script>
+                $('.well input.datepicker').datepicker({});
+                $(document).ready(function () {
+                    $('#multi-select-demo').multiselect();
+                });
+            </script>
+            <script>
+                $(function () {
+                    $('.chosen-select').chosen();
+                    $('.chosen-select-deselect').chosen({allow_single_deselect: true});
+                });
+            </script>
+            <script>
+                $('#mySelect').on('change', function (e) {
+                    $('#unitTab li a').eq($(this).val()).tab('show');
+                    debugger;
+                });
+            </script>
+            <script>
+                // function showDiv() {
+                //
+                //     // document.getElementById('sourceUnitDiv').style.display = "block";     var divBlock = $("#sourceUnitDiv");     debugger; }
+            </script>
+        </apex:outputPanel>
+    </body>
+
+</apex:component>

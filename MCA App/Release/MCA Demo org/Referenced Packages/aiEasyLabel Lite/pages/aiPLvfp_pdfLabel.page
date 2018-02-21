@@ -1,0 +1,64 @@
+<apex:page docType="html-5.0" sidebar="false" showheader="false" controller="aiell.aiPLctl_documentLabel" action="{!mInitializeResultPrintLabel}" renderas="pdf" readOnly="true">
+<!-- REMEBER that all the changes must be done in aiPLvfp_resultPrintLabel as well -->
+    <head>
+            <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'jquery-1.9.1.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'ForceTk.js')}"/>
+        
+        <style type="text/css">
+            @page{
+                size:{!pPaperSize.Name} {!pCurrentRotation};
+                margin: 0in;
+            }
+            .tablePage{
+                page-break-inside:avoid;
+                width:{!pPageWidth}mm;
+                height:{!pPageHeight}mm;
+                border-collapse:collapse;
+                margin-bottom:{!pMarginBottom}mm;
+                margin-left:{!pMarginLeftRight}mm;
+                margin-right:{!pMarginLeftRight}mm;
+                font-family:{!pCurrentTemplate.aiell__FontFamily__c};
+                font-size:{!pCurrentTemplate.aiell__FontSize__c}pt;
+            }
+            .tableRow{
+                height: {!pLabelHeight}mm;
+                overflow: hidden;
+                max-height: {!pLabelHeight}mm;
+                width:{!pLabelWidth}mm;
+                max-width:{!pLabelWidth}mm;
+                padding-top:{!pCurrentTemplate.aiell__PaddingTop__c}mm;
+                padding-bottom:{!pCurrentTemplate.aiell__PaddingBottom__c}mm;
+                padding-left:{!pCurrentTemplate.aiell__PaddingLeft__c}mm;
+                padding-right:{!pCurrentTemplate.aiell__PaddingRight__c}mm;
+                font-family:{!pCurrentTemplate.aiell__FontFamily__c};
+                vertical-align:text-top;
+            }
+        </style>
+    </head>
+    <body id="tbody" style="margin: 0in;">
+         <!-- Loop through each page (one table per page) -->
+        <apex:repeat var="pTablePage" value="{!pTablePagearray}">
+            <table class="tablePage" id="{!pTablePage.pTablePageNumber}" style="margin-top:{!pTablePage.pMarginTop}mm;page-break-after:{!IF(pTablePage.pTablePageNumber < pTableNumber - 1, 'always','none')};">
+            <!-- Loop through each row -->
+                <apex:repeat var="pRow" value="{!pTablePage.pRowArray}">
+                    <tr style="height: {!pLabelHeight}mm;max-height: {!pLabelHeight}mm;width:{!pRowWidth}mm;max-width:{!pRowWidth}mm;display:block;">
+                        <!-- Loop through each cell -->
+                        <apex:repeat var="pRecord" value="{!pRow.pRecordArray}">
+                            <td class="tableRow">
+                                <div style="text-align:{!pReverseAlign};">
+                                <!-- Loop through each line (one field per line) -->
+                                <apex:repeat var="pField" value="{!pRecord.pFieldArray}">
+                                    <apex:outputText value="{!pField}" style="{!pFontStyle}{!pFontWeight}{!pTextDecoration}"/><br/>
+                                </apex:repeat>
+                                </div>
+                            </td>
+                            
+                        </apex:repeat>
+                    </tr>
+                </apex:repeat>
+            </table>
+        </apex:repeat>
+        
+    </body>
+    
+</apex:page>

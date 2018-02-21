@@ -1,0 +1,71 @@
+<apex:page standardcontroller="opportunity" extensions="NVMSOrderFormExtension">
+<script src="//code.jquery.com/jquery-1.9.1.js"></script>
+<script>
+    $(document).ready(function(){
+        checkUncheckIds();
+    });
+        var checkedValues="";
+        function assignSelectedProduct(rt){
+            ids = '{!$Component.formid.selectedServiceIds}';
+                if(rt.checked==true){
+                     checkedValues=rt.value;            
+                     document.getElementById(ids).value=checkedValues; 
+                 }else{
+                     var val=rt.value;
+                     checkedValues = checkedValues.replace(val,"");
+                     document.getElementById(ids).value=checkedValues; 
+                 }
+         }
+         function checkUncheckIds(){
+            var ids =  document.getElementById('{!$Component.formid.selectedServiceIds}').value;
+            var idArr = ids.split(',');
+            for(i in idArr){
+                $('#'+idArr[i]).prop('checked','checked');
+            }
+         }
+</script>
+<apex:sectionHeader subtitle="New Order" title="NVMS Order">
+<img src="{!URLFOR($Resource.NVMS_LOGO)}" style="
+    float: right;
+    width: 150px;
+    margin-top: -60px;
+" />
+</apex:sectionHeader>
+<apex:form id="formid">
+    <apex:inputHidden value="{!oppObj.Services__c}" id="selectedServiceIds" />
+  <apex:pageblock >
+    <apex:outputpanel id="errorId" >
+        <apex:pagemessages />
+    </apex:outputpanel>
+    <apex:pageblockbuttons >
+        <apex:commandbutton value="Save" action="{!AddOrder}" rerender="formid" oncomplete="checkUncheckIds();" />
+        <apex:commandbutton value="Cancel" action="{!cancel}" />
+    </apex:pageblockbuttons>
+    <apex:pageblocksection >
+        <apex:inputfield required="true" label="Property Name" value="{!oppObj['name']}" />
+        <apex:pageblocksectionitem >
+            <apex:outputlabel >Account</apex:outputlabel>
+            <apex:actionregion >
+            <apex:inputfield required="true" label="Account" value="{!oppObj['accountid']}" onchange="populateAddress()" />
+                <apex:actionfunction name="populateAddress" action="{!PopulateAddress}" rerender="formDetails,errorId" oncomplete="checkUncheckIds();"></apex:actionfunction>
+            </apex:actionregion>
+        </apex:pageblocksectionitem>
+    </apex:pageblocksection>
+    <apex:pageblocksection columns="2" id="formDetails">
+        <apex:repeat value="{!$ObjectType.Opportunity.fieldsets.Order_Form}" var="fld">
+            <apex:inputfield required="{!fld.required}" value="{!oppObj[fld]}" />
+        </apex:repeat>
+    </apex:pageblocksection>
+    <br/>
+    <apex:pageblocktable value="{!response.serList}" var="serobj">
+        <apex:column style="width:40px">
+                    <input type="radio" name="service" id="{!serObj.serviceId}"  value="{!serObj.serviceId}"
+                        onchange="assignSelectedProduct(this)" />
+                </apex:column>
+        <apex:column headerValue="Service Id" value="{!serObj.serviceId}" />
+        <apex:column headerValue="Service Name" value="{!serObj.serviceName}" />
+        <apex:column headerValue="Price" value="${!ROUND(serObj.price,2)}" /> 
+    </apex:pageblocktable>
+  </apex:pageblock>
+</apex:form>
+</apex:page>

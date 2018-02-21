@@ -1,0 +1,153 @@
+<apex:page docType="html-5.0" sidebar="false" showheader="false" controller="aiell.aiPLctl_documentLabel" action="{!mInitializeResultPrintLabel}">
+<!-- 
+    This vfp has two difference with aiPLvfp_pdfLabel,
+    the first one is the Javascript between script tags
+    and the other is marked with a comment
+ -->
+    <head>
+        <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'jquery-1.9.1.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'ForceTk.js')}"/>
+        <script type="text/javascript">
+                $( document ).ready(function() {
+            
+        });
+            $( document ).ready(function() {
+                if('{!JSENCODE(pSObjectType)}' == '' || '{!JSENCODE(pListViewIdSelected)}' == ''){
+                    alert('Please follow the program instruction for a good use');
+                    window.close();
+                }else{
+                    var elements = document.getElementsByClassName('tableRow');
+                    var jslvConversionCoefficient = 3.779527559;
+                    var jslvToleranceWidth = 8;
+                    var jslvToleranceHeight = 10;
+                    
+                    var jslvMaxWidth = Math.ceil(('{!JSENCODE(pLabelWidth)}'*jslvConversionCoefficient)+jslvToleranceWidth);
+                    var jslvMaxHeight = Math.ceil(('{!JSENCODE(pLabelHeight)}'*jslvConversionCoefficient)+jslvToleranceHeight);
+                    var jslvElementIDetails = '';
+                    var jslvParentNode = '';
+                    var jslvPageNumber = 0;
+                    var jslvErrorInSize = 'no';
+                    for (var i = 0; i < elements.length; i++) {
+                        
+                            if(jslvMaxWidth < elements[i].offsetWidth || jslvMaxHeight < elements[i].offsetHeight){
+                                jslvErrorInSize = 'yes';
+                                jslvElementIDetails = elements[i].innerHTML;
+                                jslvParentNode = elements[i].parentNode;
+                                jslvParentNode = jslvParentNode.parentNode;
+                                jslvPageNumber = parseInt(jslvParentNode.parentNode.id) +1;
+                                jslvElementIDetails = getTextWithoutHTML(jslvElementIDetails);
+                                
+                                break;
+                            }
+                    }
+                        
+                    var myParams = '&SObjectType='+getURLParameter('SObjectType');
+                    myParams = myParams + '&ListViewId='+getURLParameter('ListViewId');
+                    myParams = myParams + '&option='+getURLParameter('option');
+                    myParams = myParams + '&records='+getURLParameter('records');
+                    // Get the style that we want for the window which show the label PDF
+                    var myStyle = 'height=600,location=no,resizable=yes,toolbar=no,status=no,menubar=no,scrollbars=1';
+                    
+                    if(jslvErrorInSize == 'yes'){
+                        var resultConfirm = confirm('The text for one of the labels is too long.\nThis relates to the label on Page '+jslvPageNumber+' with this value:\n'+jslvElementIDetails+'\n\nLabels following this one will NOT be positioned correctly.\nDo you want to continue?');
+                        
+                        if(resultConfirm == true){
+                           window.open('/apex/aiPLvfp_pdfLabel?' + myParams,'_self',myStyle,1);
+                        }else{
+                            window.close();
+                        }
+                        
+                    }else{
+                        // Now open the window to show the label PDF                       
+                        if(document.getElementById('msgs') == null){
+                          window.open('/apex/aiPLvfp_pdfLabel?' + myParams,'_self',myStyle,1);
+                        }
+                    }
+                }
+            });
+            
+            function getURLParameter(name) {
+              return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search)||[,""])[1].replace(/\+/g, '%20'))||''
+            }
+            
+            function getTextWithoutHTML(elementIhtml){
+                var regex = /(<([^/>]+)>)/ig
+                ,   body = elementIhtml
+                ,   result = body.replace(regex, "");
+                
+                regex = /(<([^>]+)>)/ig
+                ,   body = result
+                ,   result = body.replace(regex, "\n");
+                
+                return result;
+            }
+        </script>
+        
+        <style type="text/css">
+            @page{
+                size:{!pPaperSize.Name} {!pCurrentRotation};
+                margin: 0in;
+            }
+            .tablePage{
+                page-break-inside:avoid;
+                width:{!pPageWidth}mm;
+                height:{!pPageHeight}mm;
+                border-collapse:collapse;
+                margin-bottom:{!pMarginBottom}mm;
+                margin-left:{!pMarginLeftRight}mm;
+                margin-right:{!pMarginLeftRight}mm;
+                font-family:{!pCurrentTemplate.aiell__FontFamily__c};
+                font-size:{!pCurrentTemplate.aiell__FontSize__c}pt;
+            }
+            .tableRow{
+                height: {!pLabelHeight}mm;
+                overflow: hidden;
+                max-height: {!pLabelHeight}mm;
+                width:{!pLabelWidth}mm;
+                max-width:{!pLabelWidth}mm;
+                padding-top:{!pCurrentTemplate.aiell__PaddingTop__c}mm;
+                padding-bottom:{!pCurrentTemplate.aiell__PaddingBottom__c}mm;
+                padding-left:{!pCurrentTemplate.aiell__PaddingLeft__c}mm;
+                padding-right:{!pCurrentTemplate.aiell__PaddingRight__c}mm;
+                font-family:{!pCurrentTemplate.aiell__FontFamily__c};
+                vertical-align:text-top;
+            }
+        </style>
+    </head>
+
+    <body id="tbody" style="margin: 0in;">
+    
+    <!-- Div to show the Loading message, this is a difference between this vfp and aiPLvfp_pdfLabel -->
+    <apex:messages id="msgs"/>
+    <button onclick="window.close();">Close</button>
+    
+    
+    <div style="visibility:hidden;">
+    <!-- Loop through each page (one table per page) -->
+        <apex:repeat var="pTablePage" value="{!pTablePagearray}">
+            <table class="tablePage" id="{!pTablePage.pTablePageNumber}" style="margin-top:{!HTMLENCODE(pTablePage.pMarginTop)}mm;page-break-after:{!HTMLENCODE(IF(pTablePage.pTablePageNumber < pTableNumber - 1, 'always','none'))};">
+            <!-- Loop through each row -->
+                <apex:repeat var="pRow" value="{!pTablePage.pRowArray}">
+                    <tr style="height: {!pLabelHeight}mm;max-height: {!pLabelHeight}mm;width:{!pRowWidth}mm;max-width:{!pRowWidth}mm;display:block;">
+                        <!-- Loop through each cell -->
+                        <apex:repeat var="pRecord" value="{!pRow.pRecordArray}">
+                            <td class="tableRow">
+                                <div style="text-align:{!pReverseAlign};">
+                                <!-- Loop through each line (one field per line) -->
+                                <apex:repeat var="pField" value="{!pRecord.pFieldArray}">
+                                    <apex:outputText value="{!pField}" style="{!pFontStyle}{!pFontWeight}{!pTextDecoration}"/><br/>
+                                </apex:repeat>
+                                </div>
+                            </td>
+                            
+                        </apex:repeat>
+                    </tr>
+                </apex:repeat>
+            </table>
+        </apex:repeat>
+        
+        
+    </div>
+    </body>
+    
+</apex:page>

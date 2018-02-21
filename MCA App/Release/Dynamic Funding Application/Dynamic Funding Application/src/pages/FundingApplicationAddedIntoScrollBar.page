@@ -1,0 +1,57 @@
+<apex:page id="pg" controller="FundingAppIntoScrollBarController">
+    <apex:form id="frm">
+        <apex:pageMessages />
+        <center>
+            <apex:commandlink target="_blank" styleClass="btn" value="New Application" 
+                          style=" padding: 4px 4px;display: inline-block; text-decoration: none;"
+                          action="{!displayFundingApplication}">
+<!--  <apex:param name="searchValue" value="{!searchTextBoxValue}" /> -->
+            </apex:commandlink>
+        </center>
+        <br/>
+        <center><b><apex:outputLabel value="Business Name " style="height :15px;" /></b></center>
+        <p class="padding2"><apex:inputText value="{!searchTextBoxValue}" id="srchbx" style="width: 160px; "/></p>
+        <center><apex:commandButton value="Search" action="{!searchAccountValue}" /><br/></center>
+         
+        <apex:outputPanel rendered="{!isValue}" >
+            <apex:dataTable value="{!listAccount}" var="lstAcc">
+                <apex:column headerValue="Found " style="height :25px;">
+                    <apex:outputlink value="/{!lstAcc.Id}" target="_blank"
+                    style="width: 500px">{!lstAcc.Name}</apex:outputlink>
+                </apex:column>
+            </apex:dataTable>
+        </apex:outputPanel>
+        <br/>
+        <apex:outputPanel rendered="{!flag}" >
+            <center>
+                <apex:commandLink value="Click here to view possible matches" action="{!displayMultipleAccount}"
+                                   target="_blank">
+                    <apex:param name="NameParamAcc" value="{!searchTextBoxValue}" />
+                </apex:commandLink>
+            </center>
+        </apex:outputPanel>
+        <script>
+            function setVal()
+            {
+                document.getElementById("{!$Component.hdnField}").value = document.referrer;
+            }
+        </script>
+        <apex:inputHidden id="hdnField" value="{!theValue}" />
+        <b><center><apex:outputText value="{!errorMessage}" id="err" rendered="{!showMsg}" /></center></b>
+        
+    </apex:form>
+    
+    <style>
+        p.padding {
+            padding-bottom: 5cm;
+        }
+    </style>
+    <script type="text/javascript">
+         //document.getElementById("{!$Component.hdnField}").value = 'test';
+         //alert(document.referrer);
+         setVal();
+        //var referrer = document.referrer;
+        //alert(referrer);
+    </script>
+    
+</apex:page>

@@ -1,0 +1,177 @@
+<apex:component controller="MCAStipsTabController" allowDML="true">
+
+<style>
+      .inpufield{
+      width:170px;
+}
+</style>
+
+<script src="/soap/ajax/20.0/connection.js" type="text/javascript"></script>
+  <apex:form id="records" styleClass="records">
+    <apex:pageMessages id="pageMessageId" escape="false" />    
+    <script Language="JavaScript">
+        var stipsTabLabelOriginal ;
+        t$(function () {
+            stipsTabLabelOriginal = t$("[id*='stipstab_lbl']").text();
+            console.log('-----tab label component----'+t$("[id*='stipstab_lbl']").text());
+            computestipCalculations();
+        });
+        
+        function computestipCalculations() {
+            //if({!stipsOpenCnt} != 0 || {!stipsCloseCnt} != 0) 
+            console.log('-----enter in javascript function----');
+             console.log('-----tab label component11111----'+t$("[id*='stipstab_lbl']").text());
+             console.log('---{!containers.size}--'+{!containers.size});
+                var stipsTabLabel = 'Stips' ; //+ ' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')';
+                console.log('-----stipsTabLabel----'+stipsTabLabel);
+                t$("[id*='stipstab_lbl']").text(stipsTabLabel);              
+                t$("[id*='stipstab_lbl']").append(' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')');
+        }
+        
+        function EmailStips()
+        {
+            var email = '{!opportunity.Owner_1__r.Email}';
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            var result = sforce.connection.query("Select Name, Id, StageName, (Select Id,Status__c From Items_Needed__r where Status__c != 'Completed' OR Status__c != 'Cancelled') From Opportunity where Id ='{!Opportunity.Id}'");
+            records = result.getArray("records");
+            var label = '{!$Label.McaGrid_EmailStips}';
+            console.log('####'+result);
+            console.log('@@@@'+records[0].Items_Needed__r);
+            console.log('1111111'+label.toUpperCase());
+            //alert('**records*'+records);            
+            if(records[0].Items_Needed__r == null)
+            {
+                alert("{!$Label.EmailOpenStipsNoStips}");
+            }    
+            else if((email == null || email == undefined || email == '') && (label.toUpperCase() != 'OPPORTUNITY OWNER'))
+            {
+               alert("{!$Label.EmailStips_MailIdNotPresent}");
+            }
+            
+            else if(records.length > 0){
+            window.open('{!DestURL}');
+            }
+         }
+    </script>
+    <script>
+
+        function runSaveAllStips() {
+          setTimeout(function() {
+            saveAllStips1();
+            
+          }, 1000);
+        }
+        
+        function runNewStips() {
+          setTimeout(function() {
+            newStips();
+            
+          }, 1000);
+        }
+        
+        function runEditStips() {
+          setTimeout(function() {
+            editStips();
+            
+          }, 1000);
+        }
+      </script>
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+
+      <apex:actionFunction action="{!saveAllStips}" name="saveAllStips1" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+      <apex:actionFunction action="{!newStip}" name="newStips" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+      <apex:actionFunction action="{!editAll}" name="editStips" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+      <apex:pageBlockButtons >
+        <apex:outputpanel rendered="{!$ObjectType.Stips__c.createable}">
+            <input type="button" onclick="runNewStips()" class="btn" value="New Stip"/>
+        </apex:outputPanel>
+        <apex:outputpanel rendered="{!OR($ObjectType.Stips__c.updateable,$ObjectType.Stips__c.createable)}">
+            <input type="button" onclick="runSaveAllStips()" class="btn" value="Save"/> 
+        </apex:outputpanel>
+        <apex:outputpanel rendered="{!$ObjectType.Stips__c.updateable}">
+            <input type="button" onclick="runEditStips()" class="btn" value="Edit All"/> 
+        </apex:outputpanel>
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"></apex:CommandButton>
+
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" 
+                oncomplete="computestipCalculations()" rendered="{!OR($ObjectType.Stips__c.updateable,$ObjectType.Stips__c.createable)}"></apex:CommandButton>
+<!--         <apex:commandButton onclick="window.open('{!DestURL}');" value="Email Stips" action="{!refresh}" rerender="records,refreshComponent" status="loadingPanel"/> -->
+        <apex:commandButton onclick="EmailStips()" value="Email Stips" action="{!refresh}" rerender="records,refreshComponent" status="loadingPanel"/>
+      </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="1" title="Stips ({!containers.size})" collapsible="false">
+        <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column styleClass="wrapperClass" >
+
+            <apex:outputLink value="/{!container.stip.Id}" target="blank" rendered="{!NOT(ISBLANK(container.stip.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.stip.Id)),$ObjectType.Stips__c.deletable)}"/>
+
+            <apex:commandLink action="{!deleteStip}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.stip.Id)),$ObjectType.Stips__c.deletable)}" status="loadingPanel" oncomplete="computestipCalculations()">
+              <apex:param name="recordToDelete" value="{!container.stip.Id}" assignTo="{!recordToDelete}" ></apex:param>
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeStips}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.stip.Id))}" status="loadingPanel" oncomplete="computestipCalculations()">
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Name.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Name}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Name}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}" styleClass="inpufield"/>
+          </apex:column>
+          <!--  
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Type__c.Label}">
+            <apex:outputField value="{!container.stip.Type__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Type__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>
+          -->
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Status__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Status__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Status__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Requested_by__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Requested_by__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Requested_by__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Date_Requested__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Date_Requested__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Date_Requested__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="Submission" styleClass="wrapperClass" >        
+           <apex:selectList value="{!container.stip.Submission__c}" size="1" id="values" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, editmode, container.isedited)}" >
+             <apex:selectOptions value="{!submissionNames}"/>
+           </apex:selectList>
+            <a href="/{!container.stip.Submission__c}">
+              <apex:outputText value="{!container.submissionName}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}">
+<!--                 <apex:actionSupport event="ondblclick" action="{!inlineedit}" rerender="records"/> -->
+<!--                     <apex:inlineEditSupport event="ondblclick"/> -->
+              </apex:outputText></a>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Recv_d__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Recv_d__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Recv_d__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>
+          
+         <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Notes__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.stip.Notes__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+            <apex:inputField value="{!container.stip.Notes__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+          </apex:column>  
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+</apex:component>

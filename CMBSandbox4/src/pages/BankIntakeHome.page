@@ -1,0 +1,729 @@
+<apex:page showHeader="false" cache="false" applyBodyTag="false" standardStylesheets="false" docType="html-5.0" controller="BankIntakeHomeController">
+
+    <head>
+
+        <title>Bank Intake Portal</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <!-- Bootstrap core CSS -->
+        <apex:stylesheet value="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+
+        <!-- Bootstrap Jasny CSS -->
+        <apex:stylesheet value="https://cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/3.1.3/css/jasny-bootstrap.min.css" />
+
+        <!-- Bootstrap Theme -->
+        <apex:stylesheet value="{!$Resource.yeti_boostrap}" />
+
+        <!-- JQuery -->
+        <apex:includeScript value="https://code.jquery.com/jquery-2.1.3.min.js" />
+
+        <!-- Bootstrap -->
+        <apex:includeScript value="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" />
+
+        <!-- Bootstrap Jasny -->
+        <apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/3.1.3/js/jasny-bootstrap.min.js" />
+
+        <!-- Bootstrap Multiselect -->
+        <apex:stylesheet value="{!URLFOR($Resource.multiselect_bootstrap, 'bootstrap-multiselect.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.multiselect_bootstrap, 'bootstrap-multiselect.js')}" />
+
+        <!-- Jquery Mask -->
+        <apex:includeScript value="{!$Resource.jquery_mask}" />
+
+        <style>
+
+            .header {
+
+                padding-bottom: 2em;
+                padding-top: 1em;
+            }
+
+            table input[type="text"] {
+
+                width: 100%;
+            }
+
+            table input.medium[type="text"] {
+
+                width: 60%;
+            }
+
+            table input.small[type="text"] {
+
+                width: 50%;
+            }
+
+            table th, table td {
+
+                text-align: center;
+            }
+
+            table td.initial-td {
+
+                text-align: left;
+            }
+
+            .alert.alert-danger {
+
+                margin-bottom: 0px;
+            }
+
+            .dropdown-menu {
+
+                min-width: 80px;
+
+            }
+
+            .btn-group .multiselect {
+
+                 padding: 0px 3px;
+                 background-color: white;
+            }
+
+
+            .multiselect .multiselect-selected-text {
+                font-size: 0.7em;
+            }
+
+            .table-responsive {
+                overflow: visible;
+            }
+
+            .multiselect-container.dropdown-menu {
+                background-color: white !important;
+                height: 300px !important;
+                overflow: overlay !important;
+            }
+
+            .footer p {
+
+                text-align: center;
+                font-size: 0.8em;
+            }
+
+            .alert {
+
+                margin-bottom: 0px;
+            }
+
+            .panel-body {
+
+                padding-bottom: 0px;
+            }
+
+            .errorMsg {
+
+                color: red;
+            }
+
+            .numberInput {
+
+                text-align: right;
+            }
+
+            select[multiple], select[size] {
+                height: 39px;
+            }
+
+            .table-addon {
+
+                width: 0px;
+                display: inline-table;
+                border: 1px solid #cccccc;
+            }
+
+        </style>
+
+
+        <script>
+
+        $(function(){
+
+            $('.phone').mask('(000) 000-0000');
+        })
+
+
+        function runMultiselect() {
+
+            $('.multiple-pick').multiselect({
+
+                    buttonText: function(options, select) {
+                        if (options.length === 0) {
+                            return '  None  ';
+                        }
+                        else if (options.length > 0) {
+                            return 'Selected';
+                        }
+                    },
+                    numberDisplayed: 1
+            });
+
+        }
+
+        function hideAlerts() {
+
+            setTimeout(
+
+                function(){
+                    $('.alert').fadeOut();
+                },
+
+                3000
+            );
+
+        }
+
+        </script>
+
+    </head>
+
+    <body>
+
+        <apex:outputPanel styleClass="container" id="container" layout="block">
+
+            <div class="row">
+                <div>
+
+                    <div class="header">
+
+                        <div class="row">
+                            <div class="col-xs-8">
+                                <apex:image value="{!$Resource.CloudMyBizLogo}" />
+                            </div>
+                            <div class="col-xs-4">
+                                <blockquote style="font-size: 1.2em;">
+                                    <p>Have questions? <br/>
+                                    Call (877) 703-4488 or <br/>
+                                    <a href="mailto:info@cloudmybiz.com">info@cloudmybiz.com</a></p>
+                                </blockquote>
+                            </div>
+
+                        </div>
+
+                        <div class="row">
+                            <div class="col-xs-12">
+                                <div>
+                                    <div class="panel-body">
+                                        <apex:outputPanel styleClass="alert alert-danger" layout="block" html-role="alert" rendered="{!hasErrorMessages}">
+                                            <apex:messages ></apex:messages>
+                                                <script>
+                                                    $(function(){
+                                                        hideAlerts();
+                                                    })
+                                                </script>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel styleClass="alert alert-success" layout="block" html-role="alert" rendered="{!hasSuccessMessages}">
+                                            <apex:messages ></apex:messages>
+                                                <script>
+                                                    $(function(){
+                                                        hideAlerts();
+                                                    })
+                                                </script>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <apex:outputPanel layout="block" rendered="{!stage == 'AUTH'}" id="firstStage">
+
+                        <apex:form >
+
+                            <div class="row">
+
+                                <div class="col-xs-6 col-xs-offset-3">
+
+                                    <div class="panel panel-primary">
+
+                                        <div class="panel-heading">
+                                            <h3 class="panel-title">Enter Credentials</h3>
+                                        </div>
+
+                                        <div class="panel-body">
+
+                                            <div class="row">
+
+                                                <div class="col-xs-12">
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="authEmail" value="Email"/>
+                                                        <apex:inputText value="{!email}" id="authEmail" styleClass="form-control" html-placeholder="Email" />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="authPassword" value="Password"/>
+                                                        <apex:inputSecret value="{!password}" id="authPassword" styleClass="form-control" html-placeholder="Password" />
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="panel-footer">
+                                            <apex:commandButton action="{!login}" value="Login" styleClass="btn btn-primary" rerender="container"></apex:commandButton>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </apex:form>
+
+
+                    </apex:outputPanel>
+
+                    <apex:outputPanel layout="block" rendered="{!stage == 'BANK'}" id="secondStage">
+
+                        <apex:form >
+
+                            <div class="row">
+
+                                <div class="col-xs-12">
+
+                                    <div class="panel panel-primary">
+
+                                        <div class="panel-heading">
+                                            <h3 class="panel-title">Bank Information</h3>
+                                        </div>
+
+                                        <div class="panel-body">
+
+                                            <div class="row">
+
+                                                <div class="col-xs-6">
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="BankName" value="Bank Name"/>
+                                                        <apex:inputField value="{!bank.Name}" id="BankName" styleClass="form-control" html-placeholder="Bank Name" />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="BankPhone" value="Phone"/>
+                                                        <apex:inputField value="{!bank.Phone__c}" id="BankPhone" styleClass="form-control phone" html-placeholder="Phone" />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="BankWebsite" value="Website"/>
+                                                        <apex:inputField value="{!bank.Website__c}" id="BankWebsite" styleClass="form-control" html-placeholder="Website" />
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="col-xs-6">
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="BankStreet" value="Mailing Street"/>
+                                                        <apex:inputText value="{!bank.Billing_Street__c}" id="BankStreet" styleClass="form-control" html-placeholder="Mailing Street" />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="BankCity" value="Mailing City"/>
+                                                        <apex:inputField value="{!bank.Billing_City__c}" id="BankCity" styleClass="form-control" html-placeholder="Mailing City" />
+                                                    </div>
+
+                                                    <div class="row">
+
+                                                        <div class="col-xs-6">
+                                                            <div class="form-group">
+                                                                <apex:outputLabel for="BankState" value="Mailing State"/>
+
+                                                                <apex:selectList value="{!bank.Billing_State__c}" id="BankState"
+                                                                    styleClass="form-control" size="1">
+                                                                    <apex:selectOptions value="{!states}" />
+                                                                </apex:selectList>
+
+<!--                                                                 <apex:inputField value="{!bank.Billing_State__c}" id="BankState"
+                                                                    styleClass="form-control" html-placeholder="Mailing State" /> -->
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-xs-6">
+                                                            <div class="form-group">
+                                                                <apex:outputLabel for="BankZip" value="Mailing Zip Code"/>
+                                                                <apex:inputField value="{!bank.Billing_Postal_Code__c}" id="BankZip"
+                                                                    styleClass="form-control" html-placeholder="Mailing Zip Code" />
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="col-xs-6">
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="ContactName" value="Bank Contact Name"/>
+                                                        <apex:inputField value="{!bank.Bank_Contact_Name__c}" id="ContactName"
+                                                                styleClass="form-control" html-placeholder="Contact Name" />
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="ContactEmail" value="Bank Contact Email"/>
+                                                        <apex:inputField value="{!bank.Bank_Contact_Email__c}" id="ContactEmail"
+                                                                styleClass="form-control email" html-placeholder="Contact Email" />
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="col-xs-6">
+
+                                                    <div class="form-group">
+                                                        <apex:outputLabel for="ContactPhone" value="Bank Contact Phone"/>
+                                                        <apex:inputField value="{!bank.Bank_Contact_Phone__c}" id="ContactPhone"
+                                                                styleClass="form-control phone" html-placeholder="Contact Phone" />
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="row">
+
+                                <div class="col-xs-12">
+
+                                    <div class="panel panel-primary">
+
+                                        <div class="panel-heading">
+                                            <h3 class="panel-title">Programs</h3>
+                                        </div>
+
+                                        <div class="panel-body">
+
+                                            <apex:outputPanel id="programBlock" layout="block" styleClass="table-responsive">
+
+                                                <script>
+                                                    $(function(){
+                                                        // runMultiselect();
+                                                        $('.number').mask('00000000', {reverse: true});
+                                                        $('.age').mask('0000', {reverse: true});
+                                                        $('.score').mask('000');
+
+                                                    });
+                                                </script>
+
+                                                <div class="table-responsive">
+
+                                                <table class="table table-striped table-condensed">
+
+                                                    <tr>
+
+                                                        <th></th>
+                                                        <th>Program Name</th>
+                                                        <th>Years in Business</th>
+                                                        <th>Min. Credit Score</th>
+                                                        <th>Min. Monthly Deposits</th>
+                                                        <th>Min. Monthly CC Sales</th>
+                                                        <th>Max # of NSFs</th>
+
+                                                    </tr>
+
+                                                    <apex:repeat value="{!programs}" var="program">
+
+                                                        <tr>
+
+                                                            <td class="initial-td">
+                                                                <apex:commandLink action="{!showDetailsAction}" value="Details" reRender="programModalPanel">
+                                                                    <apex:param name="recordMd5" value="{!program.md5}" assignTo="{!recordMd5}" />
+                                                                </apex:commandLink>
+                                                            </td>
+
+                                                            <td>
+                                                                <apex:inputField value="{!program.record.Name}" />
+                                                            </td>
+
+                                                            <td>
+                                                                <apex:inputField value="{!program.record.Years_in_Business__c}" styleClass="numberInput medium age"/>
+                                                            </td>
+
+                                                            <td>
+                                                                <apex:inputField value="{!program.record.Min_Credit_Score__c}" styleClass="numberInput medium score"/>
+                                                            </td>
+
+                                                            <td>
+                                                                <span class="input-group-addon table-addon">$</span>
+                                                                <apex:inputField value="{!program.record.Min_Monthly_Deposits__c}" styleClass="numberInput medium money"/>
+                                                            </td>
+
+                                                            <td>
+                                                                <span class="input-group-addon table-addon">$</span>
+                                                                <apex:inputField value="{!program.record.Min_Monthly_CC_Avg__c}" styleClass="numberInput medium money"/>
+                                                            </td>
+
+                                                            <td>
+                                                                <apex:inputField value="{!program.record.Max_No_NSFs__c}" styleClass="numberInput medium number"/>
+                                                            </td>
+                                                        </tr>
+
+                                                    </apex:repeat>
+
+                                                </table>
+                                                </div>
+                                            </apex:outputPanel>
+
+                                        </div>
+
+                                        <div class="panel-footer">
+                                            <div class="row">
+                                                <div class="col-xs-2">
+                                                    <apex:commandButton action="{!addProgram}" value="Add Program" styleClass="btn btn-primary"
+                                                        reRender="programBlock,programModalPanel">
+                                                    </apex:commandButton>
+                                                </div>
+
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="row">
+
+                                <div class="col-xs-12">
+
+                                    <div class="panel panel-primary">
+
+                                        <div class="panel-footer">
+                                            <div class="row">
+
+                                                <div class="col-xs-2 col-xs-offset-10">
+                                                    <apex:commandButton action="{!save}" value="Save" styleClass="btn btn-block btn-primary"></apex:commandButton>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </apex:form>
+
+                    </apex:outputPanel>
+
+                    <div class="footer">
+                        <p>
+                            © 2015 Bank Directory All Rights Reserved.<br/>
+                            Powered by <a href="http://www.cloudmybiz.com" style="color: #57B1D1; text-decoration: none;" target="_blank">CloudMyBiz ®</a>
+                        </p>
+                    </div>
+
+
+                </div>
+            </div>
+
+
+            <apex:outputPanel layout="block" id="programModalPanel">
+
+                <apex:outputPanel layout="block" rendered="{!showModal}">
+
+                <script>
+                    $(function(){
+                        $("#programModal").modal();
+                        $('.percent').mask('##0.00', {reverse: true});
+                        $('.money').mask('000,000,000,000,000.00', {reverse: true});
+
+                    })
+                </script>
+
+                <div id="programModal" class="modal fade" tabindex="-1" role="dialog">
+
+                    <div class="modal-dialog modal-lg">
+
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                                <h4 class="modal-title">Program Information - {!selectedProgram.record.Name}</h4>
+                            </div>
+
+                            <div class="modal-body">
+
+                                <apex:form >
+
+                                    <div class="row">
+
+                                        <div class="col-xs-4">
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Program Name" />
+                                                <apex:inputField value="{!selectedProgram.record.Name}" styleClass="form-control"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Submission Email"/>
+                                                <apex:inputField value="{!selectedProgram.record.Submission_Email__c}" styleClass="form-control"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Years in Business"/>
+                                                <apex:inputField value="{!selectedProgram.record.Years_in_Business__c}" styleClass="form-control number"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Min. Credit Score"/>
+                                                <apex:inputField value="{!selectedProgram.record.Min_Credit_Score__c}"
+                                                        styleClass="form-control score"/>
+                                            </div>
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Min. Monthly CC Sales"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">$</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Min_Monthly_CC_Avg__c}" styleClass="form-control money"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Min. Monthly Deposits"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">$</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Min_Monthly_Deposits__c}" styleClass="form-control money"/>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-xs-4">
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Max # of NSFs"/>
+                                                <apex:inputField value="{!selectedProgram.record.Max_No_NSFs__c}" styleClass="form-control number"/>
+                                            </div>
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Min. Deposit Count"/>
+                                                <apex:inputField value="{!selectedProgram.record.Minimum_Deposit_Count__c}" styleClass="form-control number"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Min. Avg Daily Bal"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">$</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Min_Avg_Daily_Bal__c}"
+                                                            styleClass="form-control money"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Ownership Percentage Requirement"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">%</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Ownership_Percentage_Requirement__c}"
+                                                        styleClass="form-control percent"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Percentage Net After Payoff"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">%</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Percentage_Net_After_Payoff__c}"
+                                                        styleClass="form-control percent"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Max. Funding Amount"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">$</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Max_Amount__c}" styleClass="form-control money"/>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-xs-4">
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Funding Amt - % of Monthly Gross Sales"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">%</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Funding_Amt_of_Monthly_Gross_Sales__c}" styleClass="form-control percent"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Syndication Allowed?"/>
+                                                <apex:inputField value="{!selectedProgram.record.Allow_Syndication__c}" styleClass="form-control"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Commission % - New Deals"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">%</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Commission_Percentage__c}" styleClass="form-control percent"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Payback/Funded - New Deals"/>
+                                                <apex:inputField value="{!selectedProgram.record.Payback_Funded__c}" styleClass="form-control"/>
+                                            </div>
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Commissions % - Renewals"/>
+                                                <div class="input-group">
+                                                    <div class="input-group-addon">%</div>
+                                                    <apex:inputField value="{!selectedProgram.record.Commission_on_Renewal__c}" styleClass="form-control percent"/>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Payback/Funded - Renewals"/>
+                                                <apex:inputField value="{!selectedProgram.record.Payback_Funded_Renewals__c}" styleClass="form-control"/>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="col-xs-12">
+
+                                            <div class="form-group">
+                                                <apex:outputLabel value="Notes"/>
+                                                <apex:inputField value="{!selectedProgram.record.Notes__c}"
+                                                    styleClass="form-control"/>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <apex:commandButton styleClass="btn btn-primary" action="{!saveModalAction}" value="Save" />
+
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+
+                                </apex:form>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+                </apex:outputPanel>
+
+            </apex:outputPanel>
+
+        </apex:outputPanel>
+
+    </body>
+
+</apex:page>

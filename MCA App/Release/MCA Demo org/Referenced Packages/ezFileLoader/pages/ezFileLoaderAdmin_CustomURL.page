@@ -1,0 +1,67 @@
+<apex:page setup="true" controller="ezfileloader.ezFileLoaderAdmin_CustomURL" title="ezFileLoader Administration: Custom URLs">
+<apex:form id="PrimaryForm">
+    <c:ezFileLoaderAdminNav PageTitle="Custom URLs"/>
+    
+    <apex:pageMessages id="UserMessages"></apex:pageMessages>
+    
+    <apex:pageBlock title="Create">
+        <table cellspacing="0" cellpadding="3">
+            <tr>
+                <td style="vertical-align:middle;">
+                    <b>URL:</b>
+                </td>
+                <td style="vertical-align:middle;">
+                    <apex:inputText size="100" value="{!CustomURL}" />
+                </td>
+                <td style="vertical-align:middle;">
+                    <apex:commandButton value="Submit" status="PrimaryActionStatus" action="{!ParseCustomURL}" reRender="UserMessages,ParamOP"/>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3">
+                    <apex:outputPanel id="ParamOP">
+                        <apex:pageBlockTable value="{!ParamList}" var="u">
+                            <apex:column headerValue="Action" width="100">
+                                <apex:commandButton status="PrimaryActionStatus" value="Select & Save" action="{!SaveCustomURL}" reRender="PrimaryForm">
+                                    <apex:param name="SelectedParamName" assignTo="{!SelectedParamName}" value="{!u.ParamName}"/>
+                                </apex:commandButton>
+                            </apex:column>
+                            <apex:column value="{!u.Recommened}" headerValue="Recommened"/>
+                            <apex:column value="{!u.ParamName}" headerValue="Param Name"/>
+                            <apex:column value="{!u.ParamValue}" headerValue="Param Value"/>
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>
+                </td>
+            </tr>
+        
+        </table>
+    
+    </apex:pageBlock>
+    
+    <center>
+        <apex:actionStatus id="PrimaryActionStatus">
+            <apex:facet name="start">
+                Please Wait...
+            </apex:facet>
+            <apex:facet name="stop">
+                &nbsp;
+            </apex:facet>
+        </apex:actionStatus>
+    </center>
+    
+    <apex:pageBlock title="Custom URLs">
+        
+        <apex:pageBlockTable value="{!CustomURLList}" var="u" id="CustomURLListPBT">
+            <apex:column headerValue="Actions" width="100">
+                <apex:commandButton status="PrimaryActionStatus" value="Delete" action="{!DeleteCustomURL}" reRender="PrimaryForm">
+                    <apex:param name="SelectedIdToDelete" assignTo="{!SelectedIdToDelete}" value="{!u.Id}"/>
+                </apex:commandButton>
+            </apex:column>
+            <apex:column value="{!u.ezfileloader__Host__c}" headerValue="Host"/>
+            <apex:column value="{!u.ezfileloader__File__c}" headerValue="File"/>
+            <apex:column value="{!u.ezfileloader__Param__c}" headerValue="Param"/>
+        </apex:pageBlockTable>
+    
+    </apex:pageBlock>
+</apex:form>
+</apex:page>

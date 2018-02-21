@@ -1,0 +1,349 @@
+<apex:component controller="MCASalesHistoryTabController" allowDML="true">
+    <style>
+        .columnWidth {
+            width: 99px;
+        }
+        .records th {
+            cursor: pointer;
+        }
+        .records th.headerSortUp {
+            background-image: url(/img/colTitle_uparrow.gif) !important;
+            background-repeat: no-repeat !important;
+            background-position: right center !important;
+        }
+        .records th.headerSortDown {
+            // background-image: url(/img/colTitle_downarrow.gif) !important;
+            background-repeat: no-repeat !important;
+            background-position: right center !important;
+        }
+        .records .dataCell {
+            white-space: nowrap;
+        }
+        /*-------------------------------*/
+        .test {
+            position: relative;
+            border-right: 1px solid #ccc;
+            padding-top: 37px;
+            background: #f2f3f3;
+            overflow: hidden;
+            width:100%;
+        }
+        .positioned {
+            position: absolute;
+            top:100px;
+            left:100px;
+            width:100%;
+            box-shadow: 0 0 15px #333;
+        }
+        .container-new {
+            overflow-y: auto;
+            max-height: 300px;
+        }
+
+        .tablesorter tr{
+            background:#fff !important;
+        }
+        .tablesorter tr:hover{
+            background:#e6f4ff !important;
+        }
+
+        .container-new table {
+            border-spacing: 0;
+            width:100%;
+        }
+        .container-new td + td {
+            border-bottom:1px solid #ddd;
+        }
+        .container-new td, th {
+            border-bottom:1px solid #eee;
+            color: #000;
+            //padding: 10px 25px;
+        }
+        .container-new th {
+            height: 0;
+            line-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            color: transparent;
+            //border: solid 1px #ccc;
+            white-space: nowrap;
+        }
+        .container-new th div{
+            position: absolute;
+            background: transparent;
+            color: #000;
+            padding: 12px 25px;
+            top: 0;
+            margin-left: -25px;
+            line-height: normal;
+            border: 1px solid #ddd;
+            width:100%;
+        }
+        .container-new td:first-child { 
+            padding:2px;
+        }
+        .container-new th:first-child div{
+            border: none;
+        }
+        
+    </style>
+    <apex:form id="records" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false" />
+        <apex:pageBlock id="pageBlockId">
+
+            <script>
+
+                function runSaveSales() {
+
+                  setTimeout(function() {
+                      saveAllSales();
+                  },
+                  1000);
+                }
+                
+                 function runNewBankStatement() {
+
+                  setTimeout(function() {
+                      newBankStatement();
+                  },
+                  1000);
+                }
+                function runNewCredit() {
+
+                  setTimeout(function() {
+                      newCredit();
+                  },
+                  1000);
+                }
+                
+                 function runEditSales() {
+
+                  setTimeout(function() {
+                      editAllSales();
+                  },
+                  1000);
+                }
+                
+                var salesHistoryTabLabelOriginal ;
+                t$(function () {
+                    salesHistoryTabLabelOriginal = t$("[id*='salesHistorytab_lbl']").text();
+                    console.log('-----tab label component----'+t$("[id*='salesHistorytab_lbl']").text());
+                    computeSalesCalculations();
+                });
+                
+                function computeSalesCalculations() {
+                        var salesTabLabel = 'Sales History' ; //+ ' (' + {!containersStatements.size} + '/'+{!containersCards.size}+')';
+                        t$("[id*='salesHistorytab_lbl']").text(salesTabLabel);
+                        if({!bankAccountAccesss} == true && {!creditCardAccesss} == false)
+                            t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersStatements.size} + ')');
+                        else if({!bankAccountAccesss} == false && {!creditCardAccesss} == true)
+                            t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersCards.size} + ')');
+                        else
+                            t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersStatements.size} + '/'+{!containersCards.size}+')');
+                }
+                
+                t$(".saveBtn").click(function(){      
+                    t$('.saveBtn').prop('disabled', true);
+                });
+                var buttonVisibility = "{!isDisable}";
+                if(buttonVisibility  == 'true') {
+                    //alert(buttonVisibility);
+                    t$('.buttonVisible').prop('disabled', true);
+                }
+            </script>
+      
+            <apex:actionFunction action="{!saveAllSales}" name="saveAllSales" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+            <apex:actionFunction action="{!newStatement}" name="newBankStatement" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+            <apex:actionFunction action="{!newCredit}" name="newCredit" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editAllSales" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+        
+            <apex:pageBlockButtons >
+            
+                <apex:outputpanel rendered="{!$ObjectType.McaApp__Bank_Account__c.createable}">
+                    <input type="button" onclick="runNewBankStatement()" class="btn buttonVisible" value="New Bank Statement" />
+                    
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!$ObjectType.McaApp__Credit_Card__c.createable}">
+                   <input type="button" onclick="runNewCredit()" class="btn buttonVisible" value="New Credit Card Sales" /> 
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.McaApp__Credit_Card__c.updateable,$ObjectType.McaApp__Credit_Card__c.createable,$ObjectType.McaApp__Bank_Account__c.updateable,$ObjectType.McaApp__Bank_Account__c.createable)}">
+                    <input type="button" onclick="runSaveSales()" class="btn saveBtn buttonVisible" value="Save" /> 
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.McaApp__Credit_Card__c.updateable,$ObjectType.McaApp__Bank_Account__c.updateable)}">
+                   <input type="button" onclick="runEditSales()" class="btn buttonVisible" value="Edit All" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSalesCalculations()" styleClass="buttonVisible"></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSalesCalculations()"
+                rendered="{!OR($ObjectType.McaApp__Credit_Card__c.updateable,$ObjectType.McaApp__Credit_Card__c.createable,$ObjectType.McaApp__Bank_Account__c.updateable,$ObjectType.McaApp__Bank_Account__c.createable)}" styleClass="buttonVisible"></apex:CommandButton>
+            </apex:pageBlockButtons>
+
+            <apex:pageBlockSection columns="1" title="Bank Statements ({!containersStatements.size})" id="bankAccounts" rendered="{!$ObjectType.McaApp__Bank_Account__c.accessible}">
+                <apex:pageBlockTable value="{!containersStatements}" var="containerStatement" styleClass="tablesorting tablesorter" headerClass="header">
+                <apex:inlineEditSupport />
+
+                    <apex:column >
+                        <apex:outputLink value="/{!containerStatement.statement.Id}" target="blank" rendered="{!NOT(ISBLANK(containerStatement.statement.Id))}"> View </apex:outputLink>
+                        <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)),$ObjectType.McaApp__Bank_Account__c.deletable)}"/>
+                        <apex:commandLink action="{!deleteStatement}" value="Del" rerender="records,refreshComponent,bankAccounts,pageBlockId" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)),$ObjectType.McaApp__Bank_Account__c.deletable)}" status="loadingPanel" oncomplete="computeSalesCalculations()">
+                            <apex:param name="recordToDelete" value="{!containerStatement.statement.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                        </apex:commandLink>
+                        <apex:commandLink action="{!removeStatement}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(containerStatement.statement.Id))}" status="loadingPanel">
+                            <apex:param name="indexToRemove" value="{!containerStatement.index}" assignTo="{!indexToRemove}"></apex:param>
+                        </apex:commandLink>
+                        <apex:facet name="footer">
+                            <apex:outputLabel value="Averages " />
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Month__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Month__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Month__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Year__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Year__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Year__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Deposits__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Deposits__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Deposits__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!depositsAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+                  
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__No_Deposits__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__No_Deposits__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__No_Deposits__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!noDepositsAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Average_Daily_Balance__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Average_Daily_Balance__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Average_Daily_Balance__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!balanceAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Number_of_NSFs__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Number_of_NSFs__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Number_of_NSFs__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+
+                        <apex:facet name="footer">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!nsfAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Number_of_Negative_Days__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Number_of_Negative_Days__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Number_of_Negative_Days__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+
+                        <apex:facet name="footer">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!negativeAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+              
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Include_in_average__c.Label}" styleClass="wrapperClass">
+                    <apex:outputField value="{!containerStatement.statement.McaApp__Include_in_average__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                    <apex:inputField value="{!containerStatement.statement.McaApp__Include_in_average__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                    </apex:column>
+              
+                    <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Bank_Account_Number__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containerStatement.statement.McaApp__Bank_Account_Number__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll),NOT(containerStatement.isedited))}"/>
+                        <apex:inputField value="{!containerStatement.statement.McaApp__Bank_Account_Number__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll, containerStatement.isedited)}"/>
+                    </apex:column>
+                      
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection columns="1" title="Credit Cards Sales ({!containersCards.size})" id="creditCards" rendered="{!$ObjectType.McaApp__Credit_Card__c.accessible}">
+                <apex:pageBlockTable value="{!containersCards}" var="containersCard" styleClass="tablesorting tablesorter" headerClass="header">
+                <apex:inlineEditSupport /> 
+                    <apex:column >
+                        <apex:outputLink value="/{!containersCard.card.Id}" target="blank" rendered="{!NOT(ISBLANK(containersCard.card.Id))}"> View </apex:outputLink>
+                        <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)),$ObjectType.McaApp__Credit_Card__c.deletable)}"/>
+                        <apex:commandLink action="{!deleteCredit}" value="Del" rerender="records,refreshComponent,creditCards,pageBlockId " rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)),$ObjectType.McaApp__Credit_Card__c.deletable)}" status="loadingPanel" oncomplete="computeSalesCalculations()">
+                            <apex:param name="recordToDelete" value="{!containersCard.card.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                        </apex:commandLink>
+                        <apex:commandLink action="{!removeCard}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(containersCard.card.Id))}" status="loadingPanel">
+                            <apex:param name="indexToRemove" value="{!containersCard.index}" assignTo="{!indexToRemove}"></apex:param>
+                        </apex:commandLink>
+                        <apex:facet name="footer">
+                            <apex:outputLabel value="Averages" />
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Month__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Month__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Month__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Year__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Year__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Year__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Total_Net_Processed_All__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Total_Net_Processed_All__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Total_Net_Processed_All__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+
+                        <apex:facet name="footer">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!processedAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Number_of_Transactions_All__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Number_of_Transactions_All__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Number_of_Transactions_All__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!transactionAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+              
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Batches__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Batches__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Batches__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                        <apex:facet name="footer">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!batchesAverage}" />
+                            </apex:outputText>
+                        </apex:facet>
+                    </apex:column>
+            
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__MID_Account_Number__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__MID_Account_Number__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__MID_Account_Number__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                    </apex:column>
+              
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Include_in_average__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Include_in_average__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)),NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Include_in_average__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                    </apex:column>
+              
+                    <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Processor_Name__c.Label}" styleClass="wrapperClass">
+                        <apex:outputField value="{!containersCard.card.McaApp__Processor_Name__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll),NOT(containersCard.isedited))}"/>
+                        <apex:inputField value="{!containersCard.card.McaApp__Processor_Name__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll, containersCard.isedited)}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:component>

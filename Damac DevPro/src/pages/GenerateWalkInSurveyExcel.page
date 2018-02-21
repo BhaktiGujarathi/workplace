@@ -1,0 +1,164 @@
+<apex:page controller="GenerateWalkInSurveyExcelController" readOnly="true">
+   
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js" />
+    <apex:styleSheet value="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/smoothness/jquery-ui.css" />
+    
+    <style>
+        .displayNone { 
+            display:none; 
+        }
+        .displayBlock {
+            display:block;
+        }
+        .ui-autocomplete-loading { 
+            background: white url(/img/loading32.gif) right center no-repeat;
+            background-size:15px 15px; 
+        }
+        .placeHolder {
+            font-style: italic;
+        }
+        .ui-autocomplete { position: absolute; cursor: default;z-index:30 !important;} 
+    </style>
+    
+    <apex:form id="autoCompleteForm" >
+        
+   <!--      <apex:pageBlock id="searchBlock" >
+            <apex:pageBlockSection id="searchSection" title="Find me a movie to rent" columns="1" >
+                 <apex:outputLabel value="Account Name" for="movieBox" />
+                 <apex:outputPanel >
+                     <apex:inputText id="accountTextBox" value="{!searchTerm}" styleClass="placeHolder"/>
+                     <apex:inputHidden id="searchMovieId" value="{!selectedMovie}" />
+                 </apex:outputPanel>
+            </apex:pageBlockSection>
+        </apex:pageBlock> -->
+
+        <input id="accountTextBox" type="text" class="form-control" placeholder="Quick Add"></input>
+         <apex:inputHidden id="searchMovieId" value="{!selectedMovie}" />
+    </apex:form>
+    
+    <script type="text/javascript">
+        var PLACEHOLDER = 'Enter Account Name Here'; 
+        var movieObjects;
+        var queryTerm;
+        
+        $('[id$=accountTextBox]').autocomplete({
+            minLength: 2,
+            source: function(request, response) {
+                        queryTerm = request.term;
+                        GenerateWalkInSurveyExcelController.searchMovie(request.term, function(result, event){
+                            if(event.type == 'exception') {
+                                  alert(event.message);
+                            } else {
+                                 movieObjects = result;
+                                 response(movieObjects);
+                            }
+                        });
+                   },
+            focus: function( event, ui ) {
+                    $('[id$=accountTextBox]').val( ui.item.Name );
+                    return false;
+                    },
+            select: function( event, ui ) {
+                        $('[id$=accountTextBox]').val( ui.item.Name );
+                        $('[id$=searchMovieId]').val( ui.item.Id );
+                        return false;
+                    },
+                        open: function() {
+                            $("ul.ui-menu").width( $(this).innerWidth() );
+                        },                 
+         })
+         .data( "autocomplete" )._renderItem = function( ul, item ) {
+            var entry = "<a>" + item.Name;
+           
+            entry = entry + "</a>";
+            entry = entry.replace(queryTerm, "<b>" + queryTerm + "</b>");
+            return $( "<li></li>" )
+                .data( "item.autocomplete", item )
+                .append( entry )
+                .appendTo( ul );
+        };
+            
+        // Add or remove placeholder values
+        $('[id$=accountTextBox]').val(PLACEHOLDER);
+        $('[id$=accountTextBox]').on("focus",  function(event){
+            $tgt = $(event.target);
+            if($tgt.val() === PLACEHOLDER ){
+                $tgt.val('');
+                $tgt.removeClass('placeHolder');
+            }
+        });
+        $('[id$=accountTextBox]').on( "blur",  function(event){
+            $tgt = $(event.target);
+            if($tgt.val() === '' ){
+                $tgt.val(PLACEHOLDER);
+                $tgt.addClass('placeHolder');
+            }
+        });
+    </script>
+
+
+
+
+
+    <apex:pageBlock title="Export Results" >  
+
+        <!-- <apex:repeat value="{!surveyQuestionWithResponse}" var="key">
+            <apex:pageBlock >
+                <apex:pageBlockTable value="{!surveyQuestionWithResponse[key]}" var="listItem">
+                    <apex:column value="{!listItem}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:repeat> -->
+
+        <table>
+            <!-- <tr> -->
+                <!-- <th>Created By</th>
+                <th>Created</th> -->
+
+   <!--              <apex:repeat value="{!surveyQuestionWithResponse}" var="questCol" >
+                    <th>
+                        {!questCol}
+                    </th>
+                </apex:repeat> -->
+      <!--           <th>Purpose of visit</th>
+                <th>Other Purpose- Please specify</th>
+                <th>Customer Name</th>
+                <th>Property Name</th>
+                <th>Unit Id</th> -->
+            <!-- </tr> -->
+        
+            
+                <!-- <td>{!surveyReportWrap.name}</td>
+                <td>{!surveyReportWrap.createdDate}</td> -->
+                <apex:repeat value="{!surveyQuestionWithResponse}" var="resVar" >
+                <tr>
+                    <th>
+                        {!resVar}
+                    </th>                
+                <!-- </tr>
+                <tr>   -->           
+                    
+                        <td>
+                            <apex:repeat value="{!surveyQuestionWithResponse[resVar]}" var="response" >
+                                {!response}
+                            </apex:repeat>
+                        </td>
+                    
+                </tr>
+                </apex:repeat>
+
+<!--                 <td>{!surveyReportWrap.purposeOfVisit}</td>
+                <td>{!surveyReportWrap.otherPleaseSpecify}</td>
+                <td>{!surveyReportWrap.custName}</td>
+                <td>{!surveyReportWrap.projectName}</td>
+                <td>{!surveyReportWrap.bookingId}</td> -->
+            <!-- </tr> -->
+        
+        </table>
+    </apex:pageBlock>
+
+
+
+
+</apex:page>

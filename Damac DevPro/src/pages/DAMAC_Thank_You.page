@@ -1,0 +1,186 @@
+<apex:page id="pg" standardController="NSIBPM__Service_Request__c" extensions="DAMAC_ThankYouCntlrExt" showHeader="false" standardStylesheets="false">
+    <script src="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.js')}"></script>    
+    <apex:stylesheet value="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.css')}"/>
+
+     <style>
+        .sidebar-components {
+            /*padding-top:20px;
+            width: 17.5% !important;;*/
+            float:left;
+            /*margin-right: 1.5%;*/
+            background-color: #f6f6f6; 
+            padding-left: 1px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        td.main-row, .sidebar, .dashboard-content{
+            padding-top: 0px !important;
+            vertical-align: top;
+        }
+        td.main-row {
+            vertical-align: top;
+            width: 230px !important;
+            padding: 0;
+            border: 1px solid #cbcbcb;
+        }
+        body .bPageTitle {padding: 0}
+        .page-title.row h3,.page-title.row h4, 
+        .page-title.row h5{ color: #000;}
+        
+        .dashboard-content {border: none; padding-top:0px; padding-right: 10px;}
+
+        .noSidebarCell > table.row { margin: 0; }  
+        
+        .dyncPanel .bPageBlock .pbHeader .pbTitle{
+            display: none;
+        }
+        .pageTitle {
+            color: #454a50;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 35px;
+            margin-bottom: 13px;
+        }
+        .pageDescription {
+            color: #454a50;
+            line-height: 1.5;
+            margin-bottom: 13px;
+            font-size: 13px;
+        }
+        
+        /*fixing side spacing*/          
+        .noSidebarCell {padding: 0;}
+        .bodyDiv .outerNoSidebar table .sidebarCell {padding-right: 1px;}
+        .bodyDiv .outerNoSidebar table .sidebarCell #NavigDiv {border-left: 1px solid #cbcbcb;}
+        
+        html body .bPageBlock.brandSecondaryBrd {border-top-color: #00426A!important;}
+        .hd_div {width: 100%;}
+        
+        .popupBackground {
+           /* Background color */
+           background-color:black;
+           opacity: 0.20;
+           filter: alpha(opacity = 20);
+        
+           /* Dimensions */
+           width: 100%;
+           height: 100%;
+           top: 0;
+           left: 0;
+           z-index: 998;
+           position: absolute;
+       }
+       .PopupPanel {
+           /* Dimensions */
+           left: 50%;
+           width: 100px;
+           //margin-left: -100px;
+           border-radius: 15px
+           top: 50%;
+           height: 100px;
+           margin-top: 200px;
+           z-index: 999;
+           position: fixed;
+       }
+       
+       /*emaar changes*/
+        body,.body,td{
+             font-family: "Praxis LT", "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+        }
+        .pbBody .pbSubheader{
+            padding: 10px 25px !important;
+            Background: #6687a6 !important;
+            color: #fff !important;
+        }
+        .bPageBlock.brandSecondaryBrd.secondaryPalette {
+            border-top-color: #38a0d1 !important;
+            border-top: 5px solid;
+        }
+        body .bPageBlock{
+            background-color: #fff !important;
+        }
+        @media only screen and (max-width: 767px){
+            .bPageBlock .detailList .dataCol {
+                width: 98%;
+                display: inline-block;
+            }
+            .colLayout1 .fieldWrapper {
+                width: 100% !important;
+            }
+            #form-description{
+                padding: 0 12px;
+            }
+        }
+        #form-description h1{
+            font-size: 22px;
+            color: #022343;
+            padding: 15px 0;
+            display: inline-block;
+        }
+        #form-description p{
+            color:#4d4d4d;
+            margin: 0px 0 15px;
+            font-size: 13px;
+        }
+        /*emaar changes*/
+        .dashboard-content {
+            border: none;
+            padding: 20px !important;
+            background-color: #f3f4f5;
+        }
+        #portalbody {
+            width: 750px;
+            min-height: 450px;
+            margin: auto;
+            margin-top: 20px;
+        }
+        .bPageBlock, .bSubBlock {
+            box-shadow: 0px 0px 10px -2px #4D4D4D;
+            -webkit-box-shadow: 0px 0px 10px -2px #4D4D4D;
+            -moz-box-shadow: 0px 0px 10px -2px #4D4D4D;
+        }
+        
+        
+        .pbHeader h2 {
+            color: rgba(255,255,255,1);
+            font-size: 12px;
+            font-weight: normal;
+            text-transform: uppercase;
+            text-decoration: none;
+            padding: 0 15px;    
+        }
+        #formwrapper {
+            width: 600px;
+            margin: auto;
+ 
+        }
+        #introduction {
+            width: 100%;
+            float: left;
+            padding-bottom: 25px;
+            font-weight: bold;
+            font-size: 75%;    
+        }
+        .bPageBlock.brandSecondaryBrd, .individualPalette .bPageBlock {
+            background: rgba(255,255,255,1);
+            background: -moz-linear-gradient(top, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(255,255,255,1)), color-stop(100%,rgba(255,255,255,1)));
+            background: -webkit-linear-gradient(top, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 100%);
+            background: linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(255,255,255,1) 100%);
+            display: block;
+            overflow: hidden;    
+        }
+     </style>
+     
+
+    <div id="portalbody">    
+        <apex:pageBlock title="Thank You">
+            <div id="formwrapper">
+                <div id="introduction">
+                <apex:outputLink value="{!basicInfoPageURl}" id="theLink">Your Request has been submitted and reference number is {!NSIBPM__Service_Request__c.Name}</apex:outputLink>
+                    
+                </div>
+            </div>
+        </apex:pageBlock>        
+    </div>
+</apex:page>

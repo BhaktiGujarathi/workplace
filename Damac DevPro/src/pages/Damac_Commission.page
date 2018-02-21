@@ -1,0 +1,242 @@
+<apex:page standardStylesheets="false" controller="DamacCommissionController" readOnly="true">
+<html>
+    <head>
+        
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Commission</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+        <style>
+           
+
+            .global-content-w-footer{
+                padding-bottom:100px !important;
+            }
+
+            .custom-table thead > tr > th{
+                width: 200px !important;
+            }
+
+            .header-home{
+                background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Commission.jpg')}') no-repeat !important;
+                -webkit-background-size: cover!important;
+                -moz-background-size: cover!important;
+                background-size: cover!important;
+                position:relative;
+            }
+
+            .dt-buttons{
+                display: inline-block ;
+                float:left;
+                width:35%;
+                margin:0px;
+                padding:0px 10px;
+            }
+
+
+            .btn{
+                padding:6px !important;
+                text-decoration:none !important;
+            }
+
+            .refreshListButton{
+                padding-left:15px !important;
+                padding-right:15px !important;
+                margin:0px;
+            }
+            
+            label,p{
+                margin:0px !important;
+            }
+
+            .dataTables_filter .SearchTitle,{
+                padding:6px 20px 10px;
+                margin:0px !important;
+                
+            }
+          
+            .dataTables_filter{
+                width:64%;
+                margin:0px;
+                padding-bottom:8px !important;
+            }
+
+
+            .dt-button{
+                margin-right:10px !important;
+            }
+
+             .no-bg-image{
+                background:#000000 !important;
+            }
+
+            .outer td.oRight{
+                padding:0px !important;
+            }
+
+            .height-100vh{
+                width:100%;
+            }
+
+            .global-wrapper{
+                padding:7px !important;
+            }
+
+
+            @media only screen and (max-width: 767px){
+                .dt-buttons{
+                    display:block !important;
+                    width:100% !important;
+                }
+
+                .dataTables_filter{
+                    width:90% !important;
+                    display: block !important;
+                }
+
+                .height-100vh{
+                    width:85vw;
+                }
+            }
+
+        </style>
+    </head>
+<body >
+       
+        <div class="global-wrapper content-bg commission">
+            <div class="global-content-w-footer">
+                <apex:pageMessages id="messages"></apex:pageMessages>
+                <div style="padding:10px !important;background:#FFFFFF !important" class="table-responsive height-100vh">
+                 <table class="table responsive custom-table">
+                    <thead>
+                        <tr>
+                            
+                            <apex:repeat value="{!$ObjectType.Agent_Commission__c.FieldSets.Agent_Commission_List}" var="DetailsList">
+                                <th>
+                                    {!DetailsList.Label}
+                                </th>
+                            </apex:repeat>
+
+                        </tr>
+                      
+                    </thead>
+                    <tbody>
+
+                         <apex:repeat var="dataList" value="{!agentCommissionList}">
+                                <tr>
+                                
+                                    <apex:repeat var="commission" value="{!$ObjectType.Agent_Commission__c.FieldSets.Agent_Commission_List}">
+                                        <td>
+                                            <apex:outputField value="{!dataList[commission]}" />
+                                        </td>
+                                    </apex:repeat>
+                                </tr>
+                            </apex:repeat>
+                            
+                    </tbody>  
+                    <tfoot>
+                         <tr>
+                           <td style="width:25%" class="text-small text-color-black">
+                                 <b>Total Amount Paid : {!totalCommissionAmount}</b>
+                            </td>
+                            <apex:repeat value="{!$ObjectType.Agent_Commission__c.FieldSets.Agent_Commission_List}" rows="{!fieldSetSize}" var="DetailsList">
+                                <td>
+
+                                </td>
+                            </apex:repeat>
+
+                        </tr>
+                    </tfoot> 
+
+                </table>
+
+                </div>
+            </div>
+        </div>
+       
+      
+        <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <script>
+        
+        $(document).ready(function(){
+
+            
+            var dataTable = $('.custom-table').DataTable({
+                "pageLength": 10,
+                "language": {
+                    "search": "<p class='SearchTitle'>Search</p>"
+                },
+                "responsive": true,
+                "lengthMenu": [10, 25, 50, 100],
+                bInfo:false,
+                dom: 'lBfrtip',
+                buttons: [
+                     { extend: 'excel', text: 'Download', className: 'download btn',filename: 'Commission - Agent Portal' },
+                     
+                ],
+                "order": [],
+                "oSearch": {"bSmart": false},
+                
+                "aaSorting": [],
+                 columnDefs: [
+                   {type: 'de_date', targets: -3},
+                  
+                ],
+
+                
+            });
+            $('.custom-table tr>td>span>a').each(function(i, link){
+                $(link).replaceWith($(link).text())
+            });
+
+
+            
+             //Date Sorting
+             jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+                "de_date-asc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = a.split("/");
+                        c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = b.split("/");
+                        d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]))
+                    } else d = 1 / 0;
+                    var h = c < d ? -1 : c > d ? 1 : 0;
+                    return h
+                },
+                "de_date-desc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = a.split("/");
+                        c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = b.split("/");
+                        d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]));
+                    } else d = 1 / 0;
+                    var h = c < d ? 1 : c > d ? -1 : 0;
+                    return h
+                }
+            });
+        });
+
+      
+        
+    </script>
+   
+</body>
+</html>
+
+</apex:page>

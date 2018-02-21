@@ -1,0 +1,285 @@
+<apex:component controller="MCACommissionsTabController" allowDML="true">
+
+  <apex:form id="records" styleClass="records">
+  <apex:pageMessages id="pageMessageId" escape="false" /> 
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+
+      <script>
+
+        function runSaveCommissions() {
+
+          setTimeout(function() {
+              saveAllCommissions();
+          },
+          1000);
+        }
+        function runEditCommissions() {
+
+          setTimeout(function() {
+              editCommissions();
+          },
+          1000);
+        }
+        function runNewPayable() {
+
+          setTimeout(function() {
+              newPayable();
+          },
+          1000);
+        }
+        function runNewReceivable() {
+
+          setTimeout(function() {
+              newReceivable();
+          },
+          1000);
+        }
+        var commissionTabLabelOriginal ;
+        t$(function () {
+            commissionTabLabelOriginal = t$("[id*='commissiontab_lbl']").text();
+            computecommissionCalculations();
+        });
+        
+        function computecommissionCalculations() {
+                var commissionTabLabel = 'Commissions' ; //+ ' (' + {!receivables.size} + '/'+{!payables.size}+')';
+                t$("[id*='commissiontab_lbl']").text(commissionTabLabel);
+                if({!recAccesss} == true && {!payAccesss} == false)
+                    t$("[id*='commissiontab_lbl']").append(' (' + {!receivables.size} + ')');
+                else if({!payAccesss} == true && {!recAccesss} == false)
+                    t$("[id*='commissiontab_lbl']").append('(' + {!payables.size} + ')');
+                else
+                    t$("[id*='commissiontab_lbl']").append(' (' + {!receivables.size} + '/' + {!payables.size} + ')');
+        }
+
+      </script>
+
+      <apex:actionFunction action="{!saveAllCommissions}" name="saveAllCommissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecommissionCalculations()"/>
+      <apex:actionFunction action="{!editAll}" name="editCommissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecommissionCalculations()"/>
+      <apex:actionFunction action="{!newPayable}" name="newPayable" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecommissionCalculations()"/>
+      <apex:actionFunction action="{!newReceivable}" name="newReceivable" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecommissionCalculations()"/>
+      <apex:pageBlockButtons >
+        <apex:outputpanel rendered="{!$ObjectType.Receivable__c.createable}">
+            <input type="button" onclick="runNewReceivable()" class="btn" value="New Receivable"/>
+        </apex:outputpanel>
+        <apex:outputpanel rendered="{!$ObjectType.Payable__c.createable}">
+            <input type="button" onclick="runNewPayable()" class="btn" value="New Payable"/>
+        </apex:outputpanel>
+        <apex:outputpanel rendered="{!OR($ObjectType.Receivable__c.updateable,$ObjectType.Payable__c.updateable,$ObjectType.Receivable__c.createable,$ObjectType.Payable__c.createable)}">
+            <input type="button" onclick="runSaveCommissions()" class="btn" value="Save"/>
+        </apex:outputpanel>
+        <apex:outputpanel rendered="{!OR($ObjectType.Receivable__c.updateable,$ObjectType.Payable__c.updateable)}">
+            <input type="button" onclick="runEditCommissions()" class="btn" value="Edit All"/>
+        </apex:outputpanel>
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecommissionCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecommissionCalculations()" 
+                    rendered="{!OR($ObjectType.Receivable__c.updateable,$ObjectType.Payable__c.updateable,$ObjectType.Receivable__c.createable,$ObjectType.Payable__c.createable)}"></apex:CommandButton>
+
+      </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="1" title="Receivables ({!receivables.size})" id="receivables" collapsible="false" rendered="{!$ObjectType.Receivable__c.accessible}">
+        <apex:pageBlockTable value="{!receivables}" var="receivable" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column >
+
+            <apex:outputLink value="/{!receivable.receivable.Id}" target="blank" rendered="{!NOT(ISBLANK(receivable.receivable.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)),$ObjectType.Receivable__c.deletable)}"/>
+            <apex:commandLink action="{!deleteReceivable}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)),$ObjectType.Receivable__c.deletable)}" status="loadingPanel" oncomplete="computecommissionCalculations()">
+              <apex:param name="recordToDelete" value="{!receivable.receivable.Id}" assignTo="{!recordToDelete}" ></apex:param>
+              <apex:param name="indexToRemoveRec" value="{!receivable.index}" assignTo="{!indexToRemoveRec}"></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeCommission}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(receivable.receivable.Id))}" status="loadingPanel" oncomplete="computecommissionCalculations()">
+              <apex:param name="indexToRemoveRec" value="{!receivable.index}" assignTo="{!indexToRemoveRec}"></apex:param>
+            </apex:commandLink>
+
+            <apex:facet name="footer" >
+              <apex:outputLabel value="Total" rendered="{!receivables.size > 0}"/>
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Type__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Type__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Type__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Due_From_Account__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Due_From_Account__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Due_From_Account__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Amount__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Amount__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Amount__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+
+            <apex:facet name="footer">
+
+              <apex:outputPanel layout="block" rendered="{!receivables.size > 0}">
+
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!receivableAmount}" />
+                  </apex:outputText>
+              </apex:outputPanel>
+
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Amount_Due__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Amount_Due__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Amount_Due__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+
+            <apex:facet name="footer">
+              <apex:outputPanel layout="block" rendered="{!receivables.size > 0}">
+
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!receivableAmountDue}" />
+                  </apex:outputText>
+
+              </apex:outputPanel>
+
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Percentage__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Percentage__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Percentage__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Payback_Funded__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Payback_Funded__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Payback_Funded__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Memo__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Memo__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Memo__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Due_Date__c.Label}">
+            <apex:outputField value="{!receivable.receivable.Due_Date__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/>
+            <apex:inputField value="{!receivable.receivable.Due_Date__c}" rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Receivable__c.Fields.Status__c.Label}">
+           <apex:outputField value="{!receivable.receivable.Status__c}" rendered="{!AND(NOT(ISBLANK(receivable.receivable.Id)), NOT(editAll),NOT(receivable.isedited))}"/> 
+          
+            <apex:selectList value="{!selectReceivableStatus}" size="1"  rendered="{!OR(ISBLANK(receivable.receivable.Id), editAll, receivable.isedited)}">
+             <apex:selectOptions value="{!selectReceivableStatusOption}"/>
+             </apex:selectList>            
+          </apex:column>
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+      <apex:pageBlockSection columns="1" title="Payables ({!payables.size})" id="payables" collapsible="false" rendered="{!$ObjectType.Payable__c.accessible}">
+        <apex:pageBlockTable value="{!payables}" var="payable" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+
+          <apex:column >
+
+            <apex:outputLink value="/{!payable.payable.Id}" target="blank" rendered="{!NOT(ISBLANK(payable.payable.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(payable.payable.Id)),$ObjectType.Payable__c.deletable)}"/>
+            <apex:commandLink action="{!deletePayable}" value="Del" rerender="records,refreshComponent,pageMessageId" 
+                        rendered="{!AND(NOT(ISBLANK(payable.payable.Id)),$ObjectType.Payable__c.deletable)}" status="loadingPanel" >
+              <apex:param name="recordToDelete" value="{!payable.payable.Id}" assignTo="{!recordToDelete}" ></apex:param>
+              <apex:param name="indexToRemove" value="{!payable.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeCommission}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(payable.payable.Id))}" status="loadingPanel">
+              <apex:param name="indexToRemove" value="{!payable.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:facet name="footer">
+              <apex:outputLabel value="Total" rendered="{!AND(payables.size > 0,$ObjectType.Payable__c.accessible)}" />
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Type__c.Label}">
+            <apex:outputField value="{!payable.payable.Type__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Type__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Account__c.Label}">
+            <apex:outputField value="{!payable.payable.Account__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Account__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Amount_Due__c.Label}">
+            <apex:outputField value="{!payable.payable.Amount_Due__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Amount_Due__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+
+            <apex:facet name="footer">
+
+              <apex:outputPanel layout="block" rendered="{!AND(payables.size > 0,$ObjectType.Payable__c.accessible)}">
+
+                      <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                        <apex:param value="{!payableAmount}" />
+                      </apex:outputText>
+
+              </apex:outputPanel>
+
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Bill_Amount_Due__c.Label}">
+            <apex:outputField value="{!payable.payable.Bill_Amount_Due__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Bill_Amount_Due__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+
+            <apex:facet name="footer">
+              <apex:outputPanel layout="block" rendered="{!AND(payables.size > 0,$ObjectType.Payable__c.accessible)}">
+
+                      <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                        <apex:param value="{!payableAmountDue}" />
+                      </apex:outputText>
+              </apex:outputPanel>
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Percentage__c.Label}">
+            <apex:outputField value="{!payable.payable.Percentage__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Percentage__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Payback_Funded__c.Label}">
+            <apex:outputField value="{!payable.payable.Payback_Funded__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Payback_Funded__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Memo__c.Label}">
+            <apex:outputField value="{!payable.payable.Memo__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Memo__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Due_Date__c.Label}">
+            <apex:outputField value="{!payable.payable.Due_Date__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:inputField value="{!payable.payable.Due_Date__c}" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}"/>   
+            </apex:column>
+          
+           <apex:column headerValue="{!$ObjectType.Payable__c.Fields.Status__c.Label}">
+            <apex:outputField value="{!payable.payable.Status__c}" rendered="{!AND(NOT(ISBLANK(payable.payable.Id)), NOT(editAll),NOT(payable.isedited))}"/>
+            <apex:selectList value="{!selectPayableStatus}" size="1" rendered="{!OR((ISBLANK(payable.payable.Id)), editAll, payable.isedited)}">
+             <apex:selectOptions value="{!selectPayableStatusOption}" />
+             </apex:selectList>
+                
+          </apex:column>
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+
+</apex:component>

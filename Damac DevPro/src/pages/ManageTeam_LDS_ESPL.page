@@ -1,0 +1,328 @@
+<!-------------------------------------------------------------------------------------------------
+* Name               : ManageTeam.                                                                *
+* Description        : Page used to manage team and hierarchy.                                    *
+* Created Date       : NSI - Vineet                                                               *
+* Created By         : 22/01/2017                                                                 *
+* ----------------------------------------------------------------------------------------------- *
+* VERSION     AUTHOR            DATE                                                              *
+* 1.0         NSI - Vineet      22/01/2017                                                        *
+-------------------------------------------------------------------------------------------------->  
+<apex:page controller="ManageTeamController" title="Manage Team" tabStyle="ManageTeam__tab">
+ <apex:slds />
+    <script>
+        function overridePageMessages(){    
+            var textureEffect = '';
+            //Uncomment below line for texture effect on page messages
+            textureEffect = 'slds-theme--alert-texture';
+
+            $('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+            $('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+            $('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+            $('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                     
+            $('.errorM3').removeClass('errorM3'); 
+            $('.confirmM3').removeClass('confirmM3'); 
+            $('.infoM3').removeClass('infoM3');   
+            $('.warningM3').removeClass('warningM3');  
+        }
+    </script>
+    <style>
+        /* This is for the apex page message override*/
+        .msgIcon {
+                display: none!important
+        }
+        .customMessage * {
+            color: #fff!important
+        }
+        .customMessage {
+            margin: 5px 0!important;
+            max-width: 1280px;
+            opacity: 1!important;
+            width: 100%;
+            font-size: 12px;
+            border: 0px;
+            padding-left: 10px;
+        }
+        .message {
+            opacity: .1
+        }
+        /* This is for the apex page message override*/
+        .slds-scope img {
+            max-width: 32px !important;
+        }
+    </style>
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en"/>
+    <div id="hiddenElementId"></div>
+    <apex:actionstatus id="status">
+        <apex:facet name="start">
+            <div>
+                <div class="slds-spinner_container" style="position: fixed;">
+                    <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                        <span class="slds-assistive-text">Please Wait...</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+            </div>
+        </apex:facet> 
+    </apex:actionstatus> 
+    <apex:sectionHeader html-class="slds-page-header" title="Team" subtitle="Manage Team"/>
+    <apex:form styleClass="slds-form" >
+        <apex:actionFunction name="removeUserAction" action="{!removeTeamMember}" reRender="errorBlock, selectedUsersTable, membersTable" status="status">
+            <apex:param assignTo="{!removeUserId}" name="selectedUserId" value=""/> 
+        </apex:actionFunction>
+        <apex:actionFunction name="deleteGroupAction" action="{!deleteGroup}" reRender="errorBlock, manageTeamSection" status="status">
+            <apex:param assignTo="{!deleteGroup}" name="deleteGroup" value=""/> 
+        </apex:actionFunction>
+        <apex:actionFunction name="showDetails" action="{!searchUsers}" reRender="errorBlock, groupDetailSection" status="status">
+            <apex:param assignTo="{!selectedGroupName}" name="selectedGroupName" value=""/>       
+        </apex:actionFunction>
+        <apex:actionFunction name="editGroupAction" action="{!editGroup}" reRender="errorBlock, membersTable, selectedUsersTable, team_name" status="status">
+            <apex:param assignTo="{!editGroupId}" name="editGroupId" value=""/>       
+        </apex:actionFunction>
+        <apex:actionFunction name="getUsers" action="{!getRelevantUsers}" reRender="errorBlock, membersTable, selectedUsersTable, team_name" status="status">
+            <apex:param assignTo="{!selectedValue}" name="selectedValue" value=""/>  
+            <apex:param assignTo="{!selectedFilter}" name="selectedFilter" value=""/>        
+        </apex:actionFunction>
+        <apex:actionFunction name="searchUsers" action="{!searchUsers}" reRender="errorBlock, membersTable" status="status" />
+        <apex:actionFunction name="selectMembers" action="{!selectMembers}" reRender="errorBlock, selectedUsersTable" status="status" />
+        <apex:actionFunction name="createNewTeam" action="{!createNewTeam}" reRender="errorBlock, selectedUsersTable" status="status" />
+        <apex:actionFunction name="statusAction" status="status" reRender="none"/>
+        <div id="errorBlock" ><apex:pageMessages /><script>overridePageMessages(); </script></div>
+        <apex:pageBlock html-class="slds-panel" >
+            <apex:pageBlockSection html-class="slds-panel__section" title="Manage Team" collapsible="false" columns="2" id="manageTeamSection">
+                <apex:outputPanel styleClass="slds-panel" rendered="{!gwObjectList ==  null || (gwObjectList != null && gwObjectList.size == 0)}">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="{!errorMessage}" styleClass="slds-text-body_regular"/>
+                    </apex:pageBlockSectionItem>
+                </apex:outputPanel>
+                <apex:outputPanel styleClass="slds-panel" rendered="{!gwObjectList != null && gwObjectList.size > 0}">
+                    <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" value="{!gwObjectList}" var="thisGroup" columns="2">
+                        <apex:column headerValue="Action">
+                            <apex:outputLink value="#" styleClass="slds-text-link" onClick="editGroup('{!thisGroup.selectedGroup.Name}');">Edit</apex:outputLink>|
+                            <apex:outputLink value="#" styleClass="slds-text-link" onClick="deleteGroup('{!thisGroup.selectedGroup.Id}');">Delete</apex:outputLink>
+                        </apex:column>
+                        <apex:column headerValue="Group Name">
+                            <apex:outputLink value="#" onClick="showDetails('{!thisGroup.selectedGroup.Name}');" styleClass="slds-text-link">{!thisGroup.selectedGroup.Name}</apex:outputLink>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel> 
+                <apex:outputPanel styleClass="slds-panel" id="groupDetailSection">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputPanel styleClass="slds-panel" layout="block" rendered="{!NOT(ISBLANK(selectedGroupName))}" >
+                            <apex:outputPanel styleClass="slds-panel" layout="block" >
+                                <apex:outputLabel value="Group Details" style="color: #000; font-weight: bold;"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="slds-panel" layout="block" >
+                                <apex:outputLabel value="Group Name : " for="selected_group_name" styleClass="labelCol"/> 
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="slds-panel" layout="block" >
+                                <apex:outputText styleClass="slds-text-body_regular" value="{!selectedGroupName}" id="selected_group_name"/><br/>     
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="slds-panel" layout="block" >
+                                <apex:outputLabel value="Group Members : " for="selected_group_member" styleClass="labelCol"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel styleClass="slds-panel" layout="block" >
+                                <apex:variable var="counter" value="{!0}"/>
+                                <apex:repeat value="{!IF(NOT(ISBLANK(selectedGroupName)), gwObjectMap[selectedGroupName].groupMemberList, '')}" var="thisMember">
+                                    <apex:variable var="counter" value="{!counter+1}"/>
+                                    <apex:outputText styleClass="slds-text-body_regular" value="{!thisMember.Name}" id="selected_group_member"/>
+                                    <apex:outputText value=", " rendered="{!IF(counter == gwObjectMap[selectedGroupName].groupMemberList.size, false, true)}" />
+                                </apex:repeat>    
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                     </apex:pageBlockSectionItem> 
+                 </apex:outputPanel> 
+            </apex:pageBlockSection>
+            <apex:pageBlockSection html-class="slds-panel__section" title="Create/ Modify Team" collapsible="false"> 
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Search User" for="search_team_member"/> 
+                    <apex:inputText styleClass="slds-input" value="{!userSearchString}" id="search_team_member" onkeyup="searchUsers();"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Office" for="search_office_member"/> 
+                    <apex:selectList styleClass="slds-select" value="{!selectedOffice}" size="1" id="search_office_member"  onChange="getUsers('{!selectedOffice}', 'office');">
+                        <apex:selectOptions value="{!salesOffices}"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Nationality" for="search_nationality_member"/>
+                    <apex:selectList styleClass="slds-select" value="{!selectedNationality}" size="1" id="search_nationality_member"  onChange="getUsers('{!selectedNationality}', 'nationality');">
+                        <apex:selectOptions value="{!nationality}"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Language" for="search_language_member"/>
+                    <apex:selectList styleClass="slds-select" value="{!selectedLanguage}" size="1" id="search_language_member"  onChange="getUsers('{!selectedLanguage}', 'language');"> 
+                        <apex:selectOptions value="{!languages}"/>
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Head of Sales" for="search_hos_member"/> 
+                    <apex:inputText styleClass="slds-input" value="{!selectedHos}" id="search_hos_member" onkeyup="statusAction();"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Director of Sales" for="search_dos_member"/> 
+                    <apex:inputText styleClass="slds-input" value="{!selectedDos}" id="search_dos_member" onkeyup="statusAction();"/>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem ></apex:pageBlockSectionItem> 
+                <apex:pageBlockSectionItem ></apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection html-class="slds-panel__section" >
+                <apex:pageBlockSectionItem >
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputPanel layout="block" style="float: right;">
+                        <apex:commandLink styleClass="slds-button slds-button--neutral" onClick="createNewTeam();" reRender="none">
+                            <apex:image value="/img/icon/wrench16.png" style="vertical-align: middle; padding-right: 5px;"/>
+                            <apex:outputText styleClass="slds-text-body_regular" value="Create New Team" />
+                        </apex:commandLink> 
+                    </apex:outputPanel>
+                </apex:pageBlockSectionItem>
+                <apex:outputPanel styleClass="slds-panel" id="membersTable">
+                    <apex:pageBlockSectionItem rendered="{!uwObjectList != null && uwObjectList.size > 0}">
+                        <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" value="{!uwObjectList}" var="thisUser" columns="4">
+                            <apex:column > 
+                                <apex:facet name="header">
+                                    <span class="slds-checkbox">
+                                        <input type="checkbox" name="options" id="allSelect" value="on" onchange="toggleSelectAll(this);" />
+                                        <label class="slds-checkbox__label" for="allSelect">
+                                            <span class="slds-checkbox_faux"></span>
+                                            <span class="slds-form-element__label"></span>
+                                        </label>
+                                    </span>
+                                </apex:facet>
+                                <div class="slds-form-element__row">
+                                   <div class="slds-form-element">
+                                      <label class="slds-checkbox">
+                                            <apex:inputcheckbox styleclass="slds-input chkbxClass" value="{!thisUser.isUserSelected}" onClick="uncheckSelectAll(); selectMembers();" />
+                                               <span class="slds-checkbox--faux"></span>
+                                      </label>
+                                   </div>
+                                </div>
+                            </apex:column>  
+                            <apex:column headerValue="User Name"> 
+                                <apex:outputText styleClass="slds-text-body_regular" value="{!thisUser.activeUser.Name}"/>
+                            </apex:column>  
+                            <apex:column headerValue="User Profile">  
+                                <apex:outputField value="{!thisUser.activeUser.Profile.Name}"/>
+                            </apex:column>
+                            <apex:column headerValue="User Role">  
+                                <apex:outputField value="{!thisUser.activeUser.UserRole.Name}"/>
+                            </apex:column>  
+                        </apex:pageBlockTable>
+                    </apex:pageBlockSectionItem>
+                    <apex:outputPanel styleClass="slds-panel" rendered="{!uwObjectList == null || (uwObjectList != null && uwObjectList.size == 0)}" layout="block" >
+                        <apex:outputText styleClass="slds-text-body_regular" value="No users found." />
+                    </apex:outputPanel>
+                    <apex:variable var="counter" value="{!0}"/>
+                    <apex:outputPanel styleClass="slds-panel" >
+                        <apex:repeat value="{!directoryList}" var="initials"> 
+                            <apex:variable var="counter" value="{!counter+1}"/>
+                            <apex:outputLink styleClass="slds-text-link" value="#" onClick="getUsers('{!initials}', 'initials');">{!initials}</apex:outputLink>
+                            <apex:outputLabel value=" | " rendered="{!IF(counter != directoryList.size, true, false)}"></apex:outputLabel>
+                        </apex:repeat>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel styleClass="slds-panel" id="selectedUsersTable">
+                    <apex:pageBlockSectionItem rendered="{!showNewTeam}">
+                        <apex:outputPanel styleClass="slds-panel" layout="block" >
+                            <apex:outputText value="Team Name" styleClass="slds-text-body_regular"/>
+                            <apex:inputText styleClass="slds-input" value="{!twObject.teamName}" id="team_name" disabled="{!IF(twObject.teamName == NULL, false, true)}"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel styleClass="slds-panel" rendered="{!twObject.teamMembers != null && twObject.teamMembers.size > 0}">
+                            <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" value="{!twObject.teamMembers}" var="thisSelectedUser" columns="2">
+                                <apex:column headerValue="" style="width: 25px;padding-left: 10px;">
+                                    <apex:commandLink onClick="removeUser('{!thisSelectedUser.Id}');" reRender="none">
+                                        <apex:image style="max-width:1 !important;" value="/img/func_icons/remove12_on.gif" alt="{!thisSelectedUser.Name}"/>
+                                    </apex:commandLink>
+                                </apex:column>
+                                <apex:column headerValue="Selected Users">
+                                    <img src="/img/icon/profile16.png" alt="{!thisSelectedUser.Name}" />
+                                    <b> 
+                                        <apex:outputText styleClass="slds-text-body_regular" value="{!thisSelectedUser.Name}" />
+                                    </b>
+                                </apex:column>
+                            </apex:pageBlockTable>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:outputPanel>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Save Team" action="{!saveTeam}" reRender="manageTeamSection, membersTable, errorBlock" status="status"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <script type="text/javascript">
+        var $j = jQuery.noConflict();
+        function removeUser(selectedUser){
+            removeUserAction(selectedUser);
+        } 
+        function editGroup(selectedGroup){
+            editGroupAction(selectedGroup);
+        }
+        function deleteGroup(selectedGroup){ 
+            if(confirm('Are you sure you want to delete this group? Deleting this group will revoke it\'s member access from the associated records.')){
+                deleteGroupAction(selectedGroup);        
+            }
+        }
+        window.onload = function setFocus(){
+            document.getElementById("hiddenElementId").focus();
+        } 
+        function uncheckSelectAll(selectedCheckbox){
+            $j(".allSelect").prop('checked', false);
+        }
+        
+        function toggleSelectAll(checkbox){
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j(".chkbxClass").each(function() {
+                    $j(this).prop('checked', true);
+                });
+            }else{
+                //set all row level checkboxes de-selected
+                $j(".chkbxClass").each(function() {
+                    $j(this).prop('checked', false);
+                });
+            }
+            selectMembers();
+        }
+        
+        $j("[id$=search_hos_member]").autocomplete({
+            source: function(request, response) {
+                queryTerm = request.term;
+                ManageTeamController.searchUser(request.term, 'Head of Sales', function(result, event){
+                    if(event.type == 'exception') {
+                        alert(event.message);
+                    } else {
+                        hosNames = result;
+                        response(hosNames);
+                    }
+                });
+            },
+            select: function(event, ui){ 
+                console.log('here = '+ui.item.label); 
+                getUsers(ui.item.label, 'hos');
+            }
+        });
+        
+        $j("[id$=search_dos_member]").autocomplete({
+            source: function(request, response) {
+                queryTerm = request.term;
+                ManageTeamController.searchUser(request.term, 'Director of Sales', function(result, event){
+                    if(event.type == 'exception') {
+                        alert(event.message);
+                    } else {
+                        dosNames = result;
+                        response(dosNames);
+                    }
+                });
+            },
+            select: function(event, ui){ 
+                getUsers(ui.item.label, 'dos');
+            }
+        });
+    </script>
+</apex:page>

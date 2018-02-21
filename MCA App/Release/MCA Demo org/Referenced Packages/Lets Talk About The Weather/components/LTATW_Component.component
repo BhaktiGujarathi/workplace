@@ -1,0 +1,84 @@
+<apex:component id="LTATWComponent"  >
+	<apex:attribute name="reportReturned" description="have we got some weather" type="Boolean" required="true"/>
+	<apex:attribute name="multipleValidAddresses" description="have we got multiple addresses" type="Boolean" required="true"/>
+	<apex:attribute name="iconResource" description="name/path to respurce" type="String" required="true"/>
+	<apex:attribute name="personName" description="name of person" type="String" required="true"/>
+	<apex:attribute name="name" description="city" type="String" required="true"/>
+	<apex:attribute name="country" description="country" type="String" required="true"/>
+	<apex:attribute name="main" description="main weather" type="String" required="true"/>
+	<apex:attribute name="description" description="description weather" type="String" required="true"/>
+	<apex:attribute name="temperature" description="temperature" type="String" required="true"/>
+	<apex:attribute name="windspeed" description="windspeed" type="String" required="true"/>
+	<apex:attribute name="errorInformation" description="errorInformation" type="String" required="false"/>
+	
+
+	<!-- Bootstrap -->
+		<link href="{!URLFOR($Resource.LTATW_bootstrap_302, 'dist/css/bootstrap.min.css')}" rel="stylesheet" media="screen"/>
+		<apex:includeScript value="{!URLFOR($Resource.LTATW__LTATW_bootstrap_302, 'dist/js/bootstrap.min.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.LTATW__LTATW_bootstrap_302, 'dist/js/bootstrap-modal.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.LTATW__LTATW_bootstrap_302, 'dist/js/bootstrap-modal.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.LTATW__jquery)}"/>
+	<!-- Bootstrap -->
+
+	<style>
+		.container {min-width: 550px; display: block; margin-left: auto; margin-right: auto;}
+		.main {min-width: 500px;}
+		.left {min-width: 40px;}
+		.settings {position:absolute; right:0px; top:0px; z-index:1;}
+	</style>
+				
+	<apex:outputPanel id="weatherPanel" styleclass="container" rendered="{!reportReturned}">
+		<table border="0" cellpadding="0" cellspacing="0">
+		 	<tr>
+		 		<td>
+		 			<div class="left">
+				 		<!-- <img src="{!iconUrl}" border="0" /> -->
+					 	<apex:variable var="imageVar" value="{!iconResource}"/>
+					 	<apex:image url="{!URLFOR($Resource.LTATW__LTATW, imageVar)}" style="height:34px;"/>	
+				 	</div>
+				</td>
+				<td>&nbsp;</td>
+				<td>
+					<div class="main">
+					 	<div class="text-info">
+					 		<small>
+					 			<strong>{!personName}</strong> {!$Label.LTATW_weather_in} {!name}, {!country} {!$Label.LTATW_is}
+					 		</small>
+					 	</div>
+					 	<div>
+					 		<span title="{!main}, {!description}" class="label label-info">{!main}</span>
+					 		<span class="label label-warning">{!temperature}</span> 
+					 		<span class="label label-success">{!windspeed}</span>
+					 	</div>
+				 	</div>
+				</td>
+			</tr>
+		</table> 
+	</apex:outputPanel>
+
+	<apex:outputPanel id="capologyPanel" rendered="{!NOT(reportReturned)}">
+		<div class="container">
+			<table border="0" cellpadding="0" cellspacing="0">
+			 	<tr>
+			 		<td>
+			 			<div class="left">
+					 		<apex:image url="{!URLFOR($Resource.LTATW__LTATW, 'LTATW/noweather.png')}" style="height:34px;"/>	
+					 	</div>
+					</td>
+					<td>&nbsp;</td>
+					<td>
+						<div class="main">
+						 	<div class="text-info">
+						 		<small>
+						 			<strong>{!$Label.LTATW_Ooops}</strong> {!$Label.LTATW_Something_went_wrong}<br/>{!errorInformation}
+						 		</small>
+						 	</div>
+				
+					 	</div>
+					</td>
+				</tr>
+			</table> 
+		</div>
+	</apex:outputPanel>
+
+</apex:component>

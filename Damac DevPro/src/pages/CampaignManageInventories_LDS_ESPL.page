@@ -1,0 +1,302 @@
+<apex:page id="myPage" standardController="Campaign__c" extensions="CampaignManageInventoriesControl" docType="html-5.0" standardStylesheets="true" sidebar="true" showHeader="true" tabStyle="Inventory__c">
+ <apex:slds />
+    <!-- jQuery CDN 
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>-->
+    <!--Required js files-->
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <script>
+        function overridePageMessages(){    
+            var textureEffect = '';
+            //Uncomment below line for texture effect on page messages
+            textureEffect = 'slds-theme--alert-texture';
+
+            $('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+            $('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+            $('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+            $('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                     
+            $('.errorM3').removeClass('errorM3'); 
+            $('.confirmM3').removeClass('confirmM3'); 
+            $('.infoM3').removeClass('infoM3');   
+            $('.warningM3').removeClass('warningM3');  
+        }
+    </script>
+    <style>
+        /* This is for the apex page message override*/
+        .msgIcon {
+                display: none!important
+        }
+        .customMessage * {
+            color: #fff!important
+        }
+        .customMessage {
+            margin: 5px 0!important;
+            max-width: 1280px;
+            opacity: 1!important;
+            width: 100%;
+            font-size: 12px;
+            border: 0px;
+            padding-left: 10px;
+        }
+        .message {
+            opacity: .1
+        }
+        .fontClass{
+            color: #000; 
+            font-size: .9em; 
+            font-weight: bold;
+        }
+        .selectWidth {
+            width: 90% !important;
+        }
+        .slds-panel__section {
+            padding-left:0px !important;
+            padding-right:0px !important;
+        }
+        #searchTable > td {
+            vertical-align: middle;
+        }
+    </style>
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <apex:form styleClass="slds-form" id="myForm">
+        <apex:pageBlock html-class="slds-panel" id="PB" title="Inventory Selection">
+            <apex:pageBlockButtons styleClass="slds-button" id="PBB" location="top">
+                <apex:actionStatus id="myStatus">
+                    <apex:facet name="start">
+                        <div>
+                            <div class="slds-spinner_container" style="position: fixed;">
+                                <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                                    <span class="slds-assistive-text">Please Wait...</span>
+                                    <div class="slds-spinner__dot-a"></div>
+                                    <div class="slds-spinner__dot-b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" status="myStatus" onclick="if(!validations()){return false};" action="{!SaveInventories}" value="Save" rerender="myForm,scriptTag"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" action="{!doCancel}" value="Cancel" rendered="{!NOT(manageHelper.isSaved)}" immediate="true" />
+                <apex:commandButton styleClass="slds-button slds-button--neutral" action="{!doCancel}" value="Back to Campaign" rendered="{!manageHelper.isSaved}" immediate="true"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection html-class="slds-panel__section" title="Filters" collapsible="false" />
+            <br/>
+            <apex:outputPanel styleClass="slds-panel" id="seachSection">
+                <Table id="searchTable" width="90%" style="background-color:#F8F8F8;">
+                    <tr>
+                        <td align="right"  ><apex:outputLabel id="inventory" styleClass="fontClass slds-text-body_regular" value="Inventory"/></td>
+                        <td>
+                            <c:Autocomplete_LDS_ESPL id="invName" required="false" SObject="Inventory__c" labelField="Unit__c" valueField="Id" targetFields="{!searchvalues.searchText}" conString="Status__c=\'Released\'"/>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchvalues.searchText}" id="inventryautocomplete"/>-->
+                        </td>
+                        <td align="right" style="vertical-align: middle;" ><apex:outputLabel styleClass="fontClass slds-text-body_regular" style="vertical-align: middle;" id="rooms" value="No of Bed Rooms"/></td>
+                        <td>
+                            <apex:selectList styleClass="slds-select selectWidth" value="{!searchvalues.noOfBedRooms}" size="1">
+                                <apex:selectOption html-class="slds-select" itemValue="" itemLabel="--None--"/>
+                                <apex:selectOption html-class="slds-select" itemValue="1" itemLabel="1 BR"/>
+                                <apex:selectOption html-class="slds-select" itemValue="2" itemLabel="2 BR"/>
+                                <apex:selectOption html-class="slds-select" itemValue="3" itemLabel="3 BR"/>
+                                <apex:selectOption html-class="slds-select" itemValue="Studio" itemLabel="STD"/>
+                            </apex:selectList>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchvalues.noOfBedRooms}" id="roomVal"/>-->
+                        </td>
+                        <td align="right" style="vertical-align: middle;" ><apex:outputLabel styleClass="fontClass slds-text-body_regular" style="vertical-align: middle;" id="location" value="Location"/></td>
+                        <td>
+                                <c:Autocomplete_LDS_ESPL id="locationName" required="false" SObject="Inventory__c" labelField="Building_Location__r.Building_Name__c" valueField="Building_Location__c" targetFields="{!searchvalues.location}" conString="Status__c=\'Released\' AND Building_Location__r.Location_Type__c = \'Building\'"/>
+                            <!-- <c:Autocomplete id="locationName" required="false" SObject="Location__c" labelField="Building_Name__c" valueField="Id" targetFields="{!searchvalues.location}" /> -->
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchvalues.location}" id="locationVal"/>-->
+                        </td>
+                        <td align="right" style="vertical-align: middle;" ><apex:outputLabel styleClass="fontClass slds-text-body_regular" style="vertical-align: middle;" id="property" value="Property"/></td>   
+                        <td>
+                            <c:Autocomplete_LDS_ESPL id="propertyName" required="false" SObject="Property__c" labelField="Property_Name__c" valueField="Id" targetFields="{!searchvalues.property}" />
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchvalues.property}" id="propertyVal"/>-->
+                        </td>
+                    </tr>
+                </Table>
+            </apex:outputPanel>
+            <table border="0" width="70%">
+                <tr>
+                    <td align="center" colspan="2">
+                        <div align="center">
+                            <apex:commandButton styleClass="slds-button slds-button--neutral" id="search" value="Search"  action="{!searchInventory}"  status="myStatus" reRender="myForm,scriptTag"/>
+                        </div>
+                    </td>
+                </tr>
+                <tr colspan="2"> 
+                       <br/> 
+                </tr>
+                <tr >
+                    <td>
+                        <apex:outputLabel id="mstart" styleClass="fontClass slds-text-body_regular" Style="margin-right:15px;" value="Marketing Start Date : "/>  
+                        <apex:outputField id="mStartDate" styleClass="slds-text-body_regular"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_Start_Date__c}" /> + 
+                        &nbsp;<apex:inputText styleClass="slds-input" style="width: 20%;" id="incrStartDate" value="{!dMStartDate}" ></apex:inputText>
+                    </td>
+                    <td>
+                        <apex:outputLabel id="mEnd" styleClass="fontClass slds-text-body_regular" Style="margin-right:15px;" value="Marketing End Date : "/>
+                        <apex:outputField id="mEndDate" styleClass="slds-text-body_regular"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_End_Date__c}" /> - 
+                        &nbsp;<apex:inputText styleClass="slds-input" style="width: 20%;" id="incrEndDate" value="{!dMEndDate}" ></apex:inputText>
+                    </td>   
+                </tr>
+            </table>
+            <apex:pageBlockSection html-class="slds-panel__section" id="PBS" title="Search Results " columns="1" collapsible="false">
+                <div id="errorBlock"><apex:pageMessages /><script>overridePageMessages();</script></div>
+                <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" id="searchResults" value="{!lstInventories}" var="inv">
+                    <apex:column width="40px" id="selID" headerValue="Select">
+                        <apex:facet name="header">
+                            <span class="slds-checkbox">
+                                <input type="checkbox" name="options" id="allSelect" value="on" onchange="toggleSelectAll(this);" />
+                                <label class="slds-checkbox__label" for="allSelect">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"></span>
+                                </label>
+                            </span>
+                            <!--<input type="checkbox" id="parentCheck" onclick="toggleSelectAll(this);"/>-->
+                        </apex:facet>
+                        <div class="slds-form-element__row">
+                            <div class="slds-form-element">
+                              <label class="slds-checkbox">
+                                    <apex:inputcheckbox styleclass="slds-input oneSelect" value="{!inv.checked}" onchange="toggleItem();" />
+                                       <span class="slds-checkbox--faux"></span>
+                              </label>
+                            </div>
+                        </div>
+                    </apex:column>
+                    <apex:column headerValue="Name">
+                        <apex:outputLink styleClass="slds-text-link" target="_blank" value="/{!inv.obj['Id']}">{!inv.obj['Unit__c']}</apex:outputLink>
+                    </apex:column>
+                    <apex:column headerValue="City" value="{!inv.obj['Address__r']['City__c']}"/>
+                    <apex:column headerValue="Marketing Name">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Marketing_Name__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Property Name">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Property_Name__c']}"/>
+                    </apex:column>
+                    <!--<apex:column headerValue="Building Name" value="{!inv.obj['Building_Location__r']['Building_Name__c']}"/>
+                    <apex:column headerValue="Master Developer" value="{!inv.obj['Building_Location__r']['Master_developer__c']}"/>-->
+                    <apex:column headerValue="Bedroom Type">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Bedroom_Type__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Bedrooms">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['IPMS_Bedrooms__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Area">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Area__c']}"/>
+                    </apex:column>    
+                    <!--<apex:column headerValue="Price">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Selling_Price__c']}"/>
+                    </apex:column>-->
+                    <apex:column headerValue="Special Price">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Special_Price_2__c']}"/>
+                    </apex:column>
+                    <!--<apex:column headerValue="Currency">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['CurrencyIsoCode']}"/>
+                    </apex:column>-->
+                    <apex:column headerValue="Release Date">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Release_Date__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Status" >
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!inv.obj['Status__c']}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <div align="center">
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="First" action="{!first}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Previous" action="{!previous}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Next" action="{!next}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}"  reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Last" action="{!last}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}" reRender="myForm" immediate="true"/>
+                <apex:outputLabel style="margin-left:15px;" value="Page #" >{!manageHelper.pageNumber}</apex:outputLabel>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel styleClass="slds-panel" id="scriptTag">
+    <script type="text/javascript">
+    
+        /*
+        * set row level checkboxes based on "all checkbox" state
+        */
+        var $j = jQuery.noConflict();
+        
+        $j(document).ready(function(){
+        
+            var cbselect = $j("input[id$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbselect.filter(':checked').length==0){
+                //set "all checkbox" selected
+                $j("input[id$=allSelect]").prop('checked', false);
+            }
+        });
+    
+        function validations(){
+            
+            var cbs = $j("input[id$=oneSelect]");
+            var isdatesPresent = true;
+            
+            if(cbs.filter(':checked').length == 0){
+                alert('Please select at least one Inventory');
+                return false;
+            }
+            
+            return isdatesPresent;
+            
+        }
+        
+        function toDateVal(dateStr) {
+            var parts = dateStr.split("/");
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        function dateformat(input){
+            if (!(input == '' || input == null || input == 'undefined')){
+                var year = input.slice(-4),
+                month = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(input.substr(4,3))+1,
+                day = input.substr(8,2);
+            
+                var output = year + '-' + (month<10?'0':'') + month + '-' + day;
+                var dateValue = new Date(year, month - 1, day);
+                return dateValue;
+            } else return null;
+        }
+    
+        function toggleSelectAll(checkbox){
+            
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j( "input[class$=oneSelect]" ).prop('checked', true);
+            }
+            else{
+                //set all row level checkboxes de-selected
+                $j( "input[class$=oneSelect]" ).prop('checked', false);
+            }
+        }
+        
+        /*
+        * set "all checkbox" based on state of row level checkboxes
+        */
+        function toggleItem(checkbox){
+            var cbs = $j("input[class$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbs.filter(':not(:checked)').length==0){
+                //set "all checkbox" selected
+                $j("input[id^=allSelect]").prop('checked', true);
+            }
+            else{
+                //set "all checkboxes" de-selected
+                $j("input[id^=allSelect]").prop('checked', false);
+            }
+        }
+        
+        function confirmAction(promptText){
+            var r=confirm(promptText)
+            if (r==true){ return true; }
+            else{ return false; }
+        }
+        
+    </script>
+    </apex:outputPanel>
+</apex:page>

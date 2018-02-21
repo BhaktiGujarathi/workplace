@@ -1,0 +1,140 @@
+<apex:page controller="NIPaymentGateway">
+    
+    <style>
+        .pbSubheader {
+        background: black!important;
+        }
+    </style>
+    <script src="/soap/ajax/38.0/connection.js"></script>
+    <script src="/soap/ajax/38.0/apex.js"></script>
+    <script>
+    sforce.connection.sessionId = '{!$Api.Session_ID}';
+    
+    
+    function doPay(){
+        if(document.getElementById("mustCheck").checked == false){
+            alert('Please check the User Declaration.')
+            return;
+        }
+        var iflareadypaid = sforce.apex.execute("NIPaymentGateway","CheckifPaid",{buID:"{!bookingUnitID}"});
+        if(iflareadypaid == 'true'){
+            alert('Amount already paid for this unit.');
+            return;
+        }
+        var reqval = sforce.apex.execute("NIPaymentGateway","doPay",{buID:"{!bookingUnitID}", amt:"{!tokenAmt}"});
+        //alert(reqval);
+        var loc =  '{!JSENCODE($Label.NIPaymentURL)}';
+        var form = document.createElement("form");
+        var req = document.createElement("input");
+        req.setAttribute("type","hidden");
+        req.setAttribute("name","requestParameter");
+        req.setAttribute("value",reqval);
+        req.setAttribute("id",reqval);
+        form.appendChild(req);
+        
+        form.setAttribute("method", "post");
+        form.setAttribute("action", loc);
+        form.setAttribute("target", "_blank");
+        window.parent.document.body.appendChild(form);
+        //alert('Submit');
+        form.submit();
+        
+        
+        
+    }
+    /*
+    window.onload=function(){
+        alert('{!$CurrentPage.parameters.responseParameter}');
+        var respParam = '{!$CurrentPage.parameters.responseParameter}';
+         
+        var reqval = sforce.apex.execute("NIPaymentGateway","decryptResponse",{resp:respParam});
+        alert(reqval);
+    }*/
+    </script>
+    <apex:form >
+        
+        <apex:pageBlock title="Booking Details">
+            <apex:pageBlockButtons id="pageBlockButtons1" location="both" rendered="true">
+                <apex:commandButton value="Pay" onclick="doPay(); return false;"/>
+            </apex:pageBlockButtons>
+            <!--  
+            <apex:outputpanel >
+                <apex:pageBlockSection title="Service Request Details" collapsible="false" columns="2">
+                    <apex:repeat value="{!DataTableSR}" var="DetailsList">
+                        <apex:repeat value="{!DataTable_SchemaSR}" var="DetailsSchemaList">
+                            <apex:outputField value="{!DetailsList[DetailsSchemaList.fieldPath]}" />
+                        </apex:repeat>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputpanel>
+            
+            <apex:outputpanel >
+                <apex:pageBlockSection title="Booking Details" collapsible="false" columns="2">
+                    <apex:repeat value="{!DataTableBooking}" var="DetailsList">
+                        <apex:repeat value="{!DataTable_SchemaBooking}" var="DetailsSchemaList">
+                            <apex:outputField value="{!DetailsList[DetailsSchemaList.fieldPath]}" />
+                        </apex:repeat>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputpanel>
+            -->
+            <apex:outputpanel >
+                <apex:pageBlockSection title="Booking Unit Details" collapsible="false" columns="2">
+                    <apex:repeat value="{!DataTableBU}" var="DetailsList">
+                        <apex:repeat value="{!DataTable_SchemaBU}" var="DetailsSchemaList">
+                            <apex:outputField value="{!DetailsList[DetailsSchemaList.fieldPath]}" />
+                        </apex:repeat>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputpanel>
+            <!--  
+            <apex:outputpanel >
+                <apex:pageBlockSection title="Payment Details" collapsible="false" columns="2">
+                    <apex:repeat value="{!DataTablePP}" var="DetailsList">
+                        <apex:repeat value="{!DataTable_SchemaPP}" var="DetailsSchemaList">
+                            <apex:outputField value="{!DetailsList[DetailsSchemaList.fieldPath]}" />
+                        </apex:repeat>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputpanel>
+            -->
+            <apex:outputpanel >
+                <apex:pageBlockSection title="Buyer Details" collapsible="false" columns="1">
+                    <apex:repeat value="{!DataTableBuyer}" var="DetailsList">
+                        <apex:pageBlockSection columns="2">
+                            <apex:repeat value="{!DataTable_SchemaBuyer}" var="DetailsSchemaList">
+                                <apex:outputField value="{!DetailsList[DetailsSchemaList.fieldPath]}" />
+                            </apex:repeat>
+                        </apex:pageBlockSection>
+                        
+                    </apex:repeat>
+                </apex:pageBlockSection>
+                
+            </apex:outputpanel>
+            
+            <apex:outputpanel >
+                <apex:pageBlockSection title="USER'S DECLARATION" collapsible="false" columns="1">
+                    <input type="checkbox" id="mustCheck"/> The User is required to read and accept the following Terms and conditions of use of this online payment facility, before proceeding with payment.
+                    <br/><br/>
+                    <span>
+                        
+                        <p>
+                            1.       I intend to purchase a residential / retail / commercial unit in one of DAMAC Properties' developments and make this on-line payment towards non-refundable initial reservation deposit for the unit.<br/>
+                            
+                        </p><p>
+                        2.       After payment of this initial reservation deposit, the reservation of the unit will be confirmed by DAMAC's representative in the form of an Irrevocable Reservation Form, subject to availability of the requested unit at the time of reservation. I also understand that this payment does not ensure availability of the requested unit at the time of payment.<br/>
+                        
+                        </p><p>
+                        
+                        3.       This payment facility cannot be used for any other payment / s to DAMAC Properties, including payment of balance of deposit and/or subsequent instalment/s for the reserved unit.<br/> </p>
+                        
+                    </span>
+                </apex:pageBlockSection>
+            </apex:outputpanel>
+            
+        </apex:pageBlock>
+        
+        
+        
+    </apex:Form>
+</apex:page>

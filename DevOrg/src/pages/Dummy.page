@@ -1,0 +1,112 @@
+<apex:page controller="GRIDTaskController" showHeader="false">
+ <apex:form id="taskform" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false" />
+        <apex:pageBlock mode="inlineedit" > 
+           
+           <apex:pageBlockButtons location="top" >
+               <apex:commandButton action="{!newTask}"  value="New Task" rerender="taskTable"  />
+               <apex:commandButton action="{!saveAllTasks}" value="Save" rerender="taskTable"  />     
+               <apex:CommandButton action="{!refresh}" value="Refresh" rerender="taskform"  />
+               <apex:CommandButton action="{!refresh}" value="Cancel" rerender="taskform"  />
+           </apex:pageBlockButtons>
+          
+          <!--
+           <apex:outputPanel id="taskTable">
+           <div>
+               <table class="tablesorting tablesorter">
+                   <thead>
+                       <tr>
+                            <th>Action
+                            </th>
+                            <th>{!$ObjectType.Task.Fields.Subject.Label}
+                            </th>
+                            <th>Due Date
+                            </th>
+                            <th>{!$ObjectType.Task.Fields.Priority.Label}
+                            </th>
+                            <th>{!$ObjectType.Task.Fields.Status.Label}
+                            </th>
+                            <th>{!$ObjectType.Task.Fields.Description.Label}
+                            </th>
+                            <th>Assigned To
+                            </th>
+                        </tr>
+                    </thead>
+                    
+                    <tbody>
+                        <apex:repeat value="{!TaskWrapperLst}" var="taskWrapper">
+                            <tr>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.Id}"/>
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.Subject}"/>
+                                    <apex:inputField value="{!taskWrapper.task.Subject}" />
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.ActivityDate}" />
+                                    <apex:inputField value="{!taskWrapper.task.ActivityDate}" />
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.Priority}" />
+                                    <apex:inputField value="{!taskWrapper.task.Priority}" />
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.Status}" />
+                                    <apex:inputField value="{!taskWrapper.task.Status}" />
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.Description}" />
+                                    <apex:inputField value="{!taskWrapper.task.Description}" />
+                                </td>
+                                <td>
+                                    <apex:outputField value="{!taskWrapper.task.OwnerId}" />
+                                    <apex:inputField value="{!taskWrapper.task.OwnerId}" />
+                                </td>
+                                </tr>
+                        </apex:repeat>
+                    </tbody>
+               </table>         
+           </div>
+          </apex:outputPanel>
+          
+          -->
+          
+          
+          
+       <apex:outputPanel id="taskTable">   
+       <table>
+          <thead>
+           <tr>
+              <th>
+                  <apex:repeat value="{!$ObjectType.Task.FieldSets.GRIDTaskFieldset}" var="field">
+                      <apex:outputLabel value="{!field.label}"/>
+                  </apex:repeat>
+              </th>
+          </tr>
+         </thead>
+         <tbody>
+            
+            <apex:repeat value="{!TaskWrapperLst}" var="wrpr" >
+                <tr>
+                    
+                    <apex:repeat value="{!$ObjectType.Task.FieldSets.GRIDTaskFieldset}" var="field">
+                       
+                       <td>
+                        <apex:outputField value="{!wrpr.task[field]}"/>
+                       </td>
+                    </apex:repeat>
+                   
+                </tr>
+            </apex:repeat>
+          </tbody>
+         </table> 
+        </apex:outputPanel>
+          
+          
+          
+          
+           
+        </apex:pageBlock>
+        </apex:form>
+</apex:page>

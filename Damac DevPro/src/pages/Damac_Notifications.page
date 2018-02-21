@@ -1,0 +1,264 @@
+<apex:page standardStylesheets="false" controller="DamacNotificationController" action="{!viewNotificationDetail}">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Notifications</title>
+         <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+        <link rel="stylesheet" href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/bootstrap.min.css')}" />
+        
+        <style>
+            .modal-content{
+                border-radius:0px !important;
+            }
+
+            .modal-title{
+                background: #0D80FC !important;
+                font-size:18px !important;
+                text-align:center;
+                font-family: Arial,sans-serif !important;
+                padding:10px !important;
+                color:#FFFFFF !important;
+            }
+
+            .modal-header{
+                border:0px !important;
+            }
+
+            .notification table{
+                width: 100%;
+            }
+
+            .table-bordered>thead>tr>th{
+               font-size:14px !important;
+               color:#FFFFFF !important;
+               border:1px solid #ddd !important;
+               background:#000000 !important;
+            }
+
+            .table-bordered>tbody>tr>td,td{
+                font-size:13px !important;
+                color:#000000 !important;
+                border:1px solid #ddd !important;
+                vertical-align: middle;
+            }
+           
+            .table-bordered, .table-bordered>tbody>tr>td, .table-bordered>tbody>tr>th,.table-bordered>thead>tr>td, .table-bordered>thead>tr>th{
+                padding:10px !important;
+                font-family:Arial,sans-serif !important;
+            }
+
+            .global-content-w-footer{
+                padding-bottom:150px;
+            }
+
+            .more-data a{
+                font-size:13px !important;
+                cursor:pointer !important;
+            }
+            
+            .dataTables_filter{
+                width:100% !important;
+            }
+            
+            .more{
+                color: #0D80FC;
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+            }
+            
+           
+            
+            label,p{
+            	margin:0px !important;
+            }
+            
+              .dataTables_filter{
+                margin:0px;
+            	padding-bottom:10px !important;
+            }
+            
+        </style>
+    </head>
+<body >
+        <div class="global-wrapper content-bg notification">
+            <div class="global-content-w-footer">
+                <div style="padding:10px !important;background:#FFFFFF !important" class="table-responsive height-100vh">
+                    <table class="table responsive custom-table">
+                        <thead>
+                            <tr>
+                                <th >Title</th>
+                                <th data-breakpoints="xs">Created Date</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!notificationList}" var="notification">
+                                <apex:outputPanel rendered="{!notification.Read__c == false}" >
+                                    <tr data-expanded="true" id="{!notification.id}" >
+                                        <td style="color:#FF9100 !important;cursor:pointer !important;" onclick="viewNotificationDetail('{!notification.id}')">{!notification.Title__c}</td>
+                                        <td style="color:#FF9100 !important;cursor:pointer !important;">
+                                            <apex:outputText value="{0,date,MM/dd/yyyy}"> <apex:param value="{!notification.CreatedDate}" /> </apex:outputText>
+                                        </td>
+                                        
+                                    </tr>
+                                </apex:outputPanel>
+                                <apex:outputPanel rendered="{!notification.Read__c == true}">
+                                    <tr data-expanded="true" id="{!notification.id}" >
+                                        <td onclick="viewNotificationDetail('{!notification.id}')">{!notification.Title__c}</td>
+                                        
+                                        <td>
+                                            <apex:outputText value="{0,date,MM/dd/yyyy}"> <apex:param value="{!notification.CreatedDate}" /> </apex:outputText>
+                                        </td>
+                                        
+                                    </tr>
+                                </apex:outputPanel>
+                            </apex:repeat>
+                        </tbody>        
+                    </table>
+                </div>
+            </div>
+        </div>
+    <apex:outputPanel id="notification-detail">
+        <div class="modal fade" id="notification_popup" role="dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title">Notification Information</div>
+                    </div>
+                    <div class="modal-body">
+                        <div class="slds slds-grid slds-wrap">
+                            <div class="slds-size--1-of-1">
+                                <div class="slds-form-element slds-p-around--small">
+                                  <label class="slds-form-element__label text-medium" for="selectSample1">
+                                      Title
+                                  </label>
+                                  <div class="slds-form-element__control">
+                                    <apex:outputText id="title" value="{!notification.Title__c}" styleClass="text-medium text-color-primary"/>
+                                  </div>
+                                  
+                                </div>
+                            </div>
+                            <div class="slds-size--1-of-1">
+                                <div class="slds-form-element slds-p-around--small">
+                                  <label class="slds-form-element__label text-medium" for="selectSample1">
+                                      Description
+                                  </label>
+                                  <div class="slds-form-element__control">
+                                    <apex:outputText id="description" value="{!notification.Description__c}" styleClass="text-medium text-color-primary"/>
+                                  </div>
+                                  
+                                </div>
+                            </div>
+                            <div class="slds-size--1-of-1">
+                                <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                    <div class="slds-button slds-button--neutral" data-dismiss="modal" style="cursor:pointer">CLOSE</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>    
+        </div>
+    </apex:outputPanel>
+    <apex:form >
+        <apex:actionFunction action="{!viewCurrentNotificationDetail}" name="viewNotificationDetail" reRender="notification-detail,sidebar-container,scriptTag" oncomplete="showDetail()">
+            <apex:param name="notificationId" value=""></apex:param>
+        </apex:actionFunction>
+    </apex:form>
+
+    <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/bootstrap.min.js')}"></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <script>
+        $('.page-name').text('Notifications');
+
+        if({!showNotificationDetail}){
+          $('#notification_popup').modal('show');
+        }
+
+        $(document).ready(function(){
+
+            
+            $('.custom-table').DataTable({
+                "bInfo": false,
+                "pageLength": 10,
+                "language": {
+                    "search": "<p class='SearchTitle'>Search</p>"
+                },
+                "autoWidth": true,
+                "lengthMenu": [10, 25, 50, 100],
+                dom: 'lBfrtip',
+                 buttons: [
+                     ],
+                "order": [],
+                columnDefs: [
+                   { type: 'de_date', targets: 1 }
+                 ],
+                "oSearch": {"bSmart": false}
+            });
+            $('.custom-table tr>td>span>a').each(function(i, link){
+                $(link).replaceWith($(link).text())
+            });
+            /*Date Sorting*/
+           jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            "de_date-asc": function(a, b) {
+                var c, d;
+                if ("" !== jQuery.trim(a)) {
+                    var e = jQuery.trim(a).match(/>([^<]*)/),
+                        f = a.split("/");
+                    c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                } else c = 1 / 0;
+                if ("" !== jQuery.trim(b)) {
+                    var e = jQuery.trim(b).match(/>([^<]*)/),
+                        g = b.split("/");
+                    d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]))
+                } else d = 1 / 0;
+                var h = c < d ? -1 : c > d ? 1 : 0;
+                return h
+            },
+            "de_date-desc": function(a, b) {
+                var c, d;
+                if ("" !== jQuery.trim(a)) {
+                    var e = jQuery.trim(a).match(/>([^<]*)/),
+                        f = a.split("/");
+                    c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                } else c = 1 / 0;
+                if ("" !== jQuery.trim(b)) {
+                    var e = jQuery.trim(b).match(/>([^<]*)/),
+                        g = b.split("/");
+                    d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]));
+                } else d = 1 / 0;
+                var h = c < d ? 1 : c > d ? -1 : 0;
+                return h
+            }
+        });
+        });
+        
+    </script>
+    <apex:outputPanel id="scriptTag">
+        <script>
+            function showDetail(){
+
+                $('#notification_popup').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                }).show();
+
+                $('#{!notification.id}').find('td').css('color','black');
+                $('iframe[title=Damac_SidebarPanel]')[0].contentWindow.location.reload(true)
+       
+            }
+        </script>
+    </apex:outputPanel>
+</body>
+</html>
+
+</apex:page>

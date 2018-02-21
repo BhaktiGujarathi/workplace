@@ -1,0 +1,418 @@
+<apex:page id="myPage" standardController="Campaign__c" extensions="CampaignManageUsersControl" docType="html-5.0" standardStylesheets="true" sidebar="true" showHeader="true" >
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <style type="text/css">
+        .fontClass{
+            color: #000; 
+            font-size: .9em; 
+            font-weight: bold;
+        }
+        /* This is for the full screen DIV */
+        .overlay {
+            background-color: black;
+            cursor: wait;
+            opacity: 0.6;
+            /* Generic for Major browsers */
+            -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
+            /* IE 5-7 */
+            filter: alpha(opacity = 60);
+            /* Netscape */
+            -moz-opacity: 0.6;
+            /* Safari 1.x */
+            -khtml-opacity: 0.6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 101;
+            zIndex: 101;
+        }
+        
+        /* This is for the message DIV */
+        .contentDiv {
+            position: fixed;
+            z-index: 102;
+            top: 30%;
+            right: 25%;
+            left: 25%;
+        }
+    </style>
+    <apex:form id="myForm">
+        <apex:pageBlock id="PB" title="Select Property Consultants">
+            <apex:pageBlockButtons id="PBB" location="top">
+                <!--onclick="if(!validations()){return false};" -->
+                <apex:commandButton status="myStatus" onclick="if(!validations()){return false};" action="{!getAllAgencies}" value="Save" rerender="pop_upSection,scriptTag"/>
+                <apex:commandButton value="Add All PCs" status="myStatus" onclick="if(!confirm('Are you sure want to add all PCs to Campaign?')){return false};" action="{!assignAllPCsToCampaign}" reRender="PB"/>
+                <apex:commandButton action="{!doCancel}" value="Cancel" rendered="{!NOT(manageHelper.isSaved)}" immediate="true"/>
+                <apex:commandButton action="{!doCancel}" value="Back to Campaign" rendered="{!manageHelper.isSaved}" immediate="true"/>
+            </apex:pageBlockButtons>
+            <apex:outputPanel id="seachSection">
+                <apex:pageBlockSection title="Filters" collapsible="false" />
+                <Table id="searchTable" width="90%" style="background-color:#F8F8F8;">
+                    <tr>
+                        <td align="right"><apex:outputLabel id="pcName" styleClass="fontClass" value="PC Name"/></td>
+                        <td>
+                            <apex:inputText value="{!manageHelper.selectedText}" id="countryautocomplete"/>
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="hos" value="HOS"/></td>
+                        <td>
+                            <apex:inputText value="{!searchSection.HOS__c}" id="hosautoComplete"/>
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="dos" value="DOS"/></td>
+                        <td>
+                            <apex:inputText value="{!searchSection.DOS__c}" id="dosautoComplete"/>
+                        </td>
+                    </tr>
+                    <tr>                            
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="pcLan" value=" PC Language"/></td>   
+                        <td><apex:inputField styleClass="textCls" id="pcLanVal" value="{!searchSection.PC_Languages__c}"/></td>                            
+                        <!--<td align="right"><apex:outputLabel styleClass="fontClass" id="pcNat" value="PC Country"/></td>
+                        <td><apex:inputField styleClass="textCls" id="pcNatVal" value="{!searchSection.PC_Nationality__c}"/></td>-->
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="team" value="Team"/></td>
+                        <td>
+                            <apex:selectList size="1" value="{!searchSection.Team__c}">
+                                <apex:selectOptions value="{!teamNames}"></apex:selectOptions>
+                            </apex:selectList>                            
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="SalesOfficelabel" value="Sales Office"/></td>
+                        <td> <!-- Added by Subhash on may 21 2017 on Riddhis Instructions -->
+                            <apex:inputField styleClass="textCls" id="salesOffice" value="{!searchSection.Sales_Office__c}"/>
+                        </td>
+                    </tr>                        
+                </Table>
+            </apex:outputPanel>
+            
+            <table border="0" width="70%">
+                <tr>
+                    <td align="center" colspan="2">
+                        <apex:commandButton id="search" value="Search" style="margin-left:15px;" action="{!searchUsers}"  status="myStatus" reRender="myForm,scriptTag"/>
+                    </td>
+                </tr>
+                <tr colspan="2"> 
+                       <br/> 
+                </tr>
+                <tr >
+                        <td>
+                            <apex:outputLabel id="mstart" styleClass="fontClass" Style="margin-right:15px;" value="Marketing Start Date : "/>  
+                            <apex:outputField id="mStartDate" styleClass="fontClass"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_Start_Date__c}" /> + 
+                            &nbsp;<apex:inputText id="incrStartDate" value="{!dMStartDate}" style="width:30px;"></apex:inputText>
+                        </td>
+                        <td>
+                            <apex:outputLabel id="mEnd" styleClass="fontClass" Style="margin-right:15px;" value="Marketing End Date : "/>
+                            <apex:outputField id="mEndDate" styleClass="fontClass"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_End_Date__c}" /> - 
+                            &nbsp;<apex:inputText id="incrEndDate" value="{!dMEndDate}" style="width:30px;"></apex:inputText>
+                        </td>   
+                        
+                </tr>
+            </table>
+            
+            <apex:actionStatus id="myStatus">
+                <apex:facet name="start">
+                    <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                        <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                            <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                            <span class="waitingDescription">Please Wait...</span>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            
+            <apex:pageBlockSection id="PBS" title="Search Results" columns="1" collapsible="false">
+                <apex:pageMessages />
+                <apex:pageBlockTable id="searchResults" value="{!lstofPCProfielUser}" var="pcUser">
+                    <apex:column width="40px" id="selID" headerValue="Select">
+                        <apex:facet name="header">
+                            <apex:inputCheckbox id="allSelect" onchange="toggleSelectAll(this);" />
+                            <!--<input type="checkbox" id="parentCheck" onclick="toggleSelectAll(this);"/>-->
+                        </apex:facet>
+                        <apex:inputCheckbox id="oneSelect" value="{!pcUser.checked}" onchange="toggleItem();"/>
+                    </apex:column>
+                    <apex:column headerValue="Name">
+                        <apex:outputLink target="_blank" value="/{!pcUser.obj['Id']}">{!pcUser.obj['Name']}</apex:outputLink>
+                    </apex:column>
+                    <apex:column value="{!pcUser.obj['UserName']}"/>
+                    <apex:column value="{!pcUser.obj['Languages_Known__c']}"/>
+                    <apex:column value="{!pcUser.obj['DOS_Name__c']}"/>
+                    <apex:column value="{!pcUser.obj['HOS_Name__c']}"/>
+                    <apex:column value="{!pcUser.obj['HOD_Name__c']}"/>
+                    
+                    <!--
+                    <apex:column headerValue="Start Date">
+                        <apex:outputPanel styleClass="requiredInput" layout="block" >
+                            <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                            <apex:inputField id="startDate" styleClass="startDate" value="{!pcUser.assignedPC.Start_Date__c}" />
+                        </apex:outputPanel>
+                        
+                    </apex:column>
+                    <apex:column headerValue="End Date">
+                        <apex:outputPanel styleClass="requiredInput" layout="block" >
+                            <apex:outputPanel styleClass="requiredBlock" layout="block"/>
+                            <apex:inputField id="endDate" styleClass="endDate" value="{!pcUser.assignedPC.End_Date__c}" />
+                        </apex:outputPanel>
+                        
+                    </apex:column>-->
+                </apex:pageBlockTable>
+            </apex:pageBlockSection> 
+            <div align="center">
+                <apex:commandButton value="First" action="{!first}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Previous" action="{!previous}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Next" action="{!next}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}"  reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Last" action="{!last}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}" reRender="myForm" immediate="true"/>
+                <apex:outputLabel style="margin-left:15px;" value="Page #" >{!manageHelper.pageNumber}</apex:outputLabel>
+            </div>
+            <!--<apex:panelGrid columns="4"> 
+                <apex:commandLink action="{!first}" immediate="true" reRender="myForm">First</apex:commandlink>
+                <apex:commandLink action="{!previous}" rendered="{!manageHelper.hasPrevious}" immediate="true" reRender="myForm">Previous</apex:commandlink>
+                <apex:commandLink action="{!next}" rendered="{!manageHelper.hasNext}" immediate="true" reRender="myForm">Next</apex:commandlink>
+                <apex:commandLink action="{!last}" immediate="true" reRender="myForm">Last</apex:commandlink>
+                <apex:outputLabel style="margin-left:15px;" value="Page #">{!manageHelper.pageNumber}</apex:outputLabel>
+            </apex:panelGrid>-->
+            <!--Pop-up section-->
+            <apex:outputPanel id="pop_upSection" >
+                <apex:outputPanel rendered="{!showPopup}">
+                    <div class="overlay"></div>
+                    <apex:outputPanel styleClass="contentDiv">
+                        <apex:pageBlock >
+                            <apex:pageBlockButtons location="top">
+                                <apex:commandButton status="myStatus" action="{!createCampaignUsersNew}" value="{!IF(lstSelectedAgencies.size = 0,'Continue','Save')}" rerender="myForm,scriptTag,pop_upSection" />
+                                <apex:commandButton value="Cancel" action="{!cancel}" reRender="pop_upSection" rendered="{!NOT(manageHelper.isSaved)}" rerender="myForm"/>
+                                <apex:commandButton value="Back to Campaign" action="{!doCancel}" rendered="{!manageHelper.isSaved}"/>
+                            </apex:pageBlockButtons>
+                            <apex:pageMessages />
+                            <apex:pageMessage detail="No Agencies are allocated to selected PCs." summary="" severity="info" strength="2" rendered="{!IF(lstSelectedAgencies.size = 0,true,false)}"/>
+                            <apex:pageBlockSection title="Selected Agencies" collapsible="false" rendered="{!IF(lstSelectedAgencies.size > 0,true,false)}">
+                                <apex:pageBlockTable value="{!lstSelectedAgencies}" var="ag" >
+                                    <apex:column width="40px" id="selID" headerValue="Select">
+                                        <apex:facet name="header">
+                                            <apex:inputCheckbox id="allSelectAgency" onchange="toggleSelectAllAgency(this);" />
+                                            <!--<input type="checkbox" id="parentCheck" onclick="toggleSelectAll(this);"/>-->
+                                        </apex:facet>
+                                        <apex:inputCheckbox id="oneSelectAgent" value="{!ag.checked}" onchange="toggleItemAgency();"/>
+                                    </apex:column>
+                                    <apex:column headerValue="Agency Name">
+                                        <apex:outputLink target="_blank" value="/{!ag.obj['Agency__c']}">{!ag.obj['Agency__r.Name']}</apex:outputLink>
+                                    </apex:column>
+                                </apex:pageBlockTable>
+                            </apex:pageBlockSection>
+                        </apex:pageBlock>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel id="scriptTag">
+    <script type="text/javascript">
+    
+    /*
+        * set row level checkboxes based on "all checkbox" state
+        */
+    var $j = jQuery.noConflict();
+    
+    //Capture the list of countries in a Array.
+    var userNames ;//= ['India', 'USA', 'China','FInland','Norway','Netherlands','England','Ukraine','Russia','Japan','Korea','Burma','Srilanka','Iran','Iceland','Canada','Rome','Australia','Armenia','Albania','Afghanisthan'];
+    var queryTerm;
+    var donNames;
+    var hosNames;    
+    //on Document ready
+    $j(document).ready(function(){
+        
+        var cbselect = $j("input[id$=oneSelect]");
+        //all row level checkboxes selected
+        if(cbselect.filter(':checked').length==0){
+            //set "all checkbox" selected
+            $j("input[id$=allSelect]").prop('checked', false);
+        }
+        
+        $j("[id$=countryautocomplete]").autocomplete({
+            //source : userNames
+            //console.log("pc Calling");
+            source: function(request, response) {
+                queryTerm = request.term;
+                CampaignManageUsersControl.searchUser(request.term,'{!campaignID}','Property', function(result, event){
+                    if(event.type == 'exception') {
+                        alert(event.message);
+                    } else {
+                        userNames = result;
+                        response(userNames);
+                    }
+                });
+            },
+            
+            });
+        
+            $j("[id$=hosautoComplete]").autocomplete({
+            //source : userNames
+               
+            source: function(request, response) {
+                queryTerm = request.term;
+                CampaignManageUsersControl.searchUser(request.term,'{!campaignID}','HOS', function(result, event){
+                    if(event.type == 'exception') {
+                        alert(event.message);
+                    } else {
+                        hosNames = result;
+                        response(hosNames);
+                    }
+                });
+            },
+            
+            });
+            
+            $j("[id$=dosautoComplete]").autocomplete({
+            //source : userNames
+                //console.log("Dos Calling");
+            source: function(request, response) {
+                queryTerm = request.term;
+                CampaignManageUsersControl.searchUser(request.term,'{!campaignID}','DOS', function(result, event){
+                    if(event.type == 'exception') {
+                        alert(event.message);
+                    } else {
+                        donNames = result;
+                        response(donNames);
+                    }
+                });
+            },
+            
+            });
+        });
+    
+    
+    
+    function validations(page){
+        //var sDate = dateformat('{!manageHelper.campainRecord.Marketing_Start_Date__c}');
+        //var eDate = dateformat('{!manageHelper.campainRecord.Marketing_End_Date__c}');
+        //console.log('sDate = '+sDate+';eDate = '+eDate); 
+        
+        var cbs = $j("input[id$=oneSelect]");
+        var isdatesPresent = true;
+        if(cbs.filter(':checked').length == 0){
+            alert('Please select at least one user');
+            return false;
+        }
+       /*  
+       $j(".dataCell input:checked").each(function () {
+           //console.log($j(this).closest('.dataRow').find(".startDate"));
+            var startDate = $j(this).closest('tr').find(".startDate").val();
+            var endtDate = $j(this).closest('tr').find(".endDate").val();
+            console.log(startDate+','+endtDate);
+            console.log(toDateVal(startDate)+','+toDateVal(endtDate));
+            if(startDate == '' || endtDate == ''){
+                isdatesPresent = false;
+                alert('Start and End dates are required for selected user');
+                return false;
+            }else if (sDate != null && eDate != null){
+                if(toDateVal(startDate) > toDateVal(endtDate) ){
+                    isdatesPresent = false;
+                    alert('Start date must be between less than End date.');
+                    return false;
+                }
+                else if(sDate > toDateVal(startDate) || eDate < toDateVal(startDate)) {
+                    isdatesPresent = false;
+                    alert('Start Date must be between Marketing Start and End dates.');
+                    return false;
+                } 
+                else if(sDate > toDateVal(endtDate) || eDate < toDateVal(endtDate)) {
+                    isdatesPresent = false;
+                    alert('End Date must be between Marketing Start and End dates.');
+                    return false;
+                }
+            }
+        });
+        
+        window.open(page+'?ids=0059E000000Rr9G 0059E000000RiZo','_blank', 'toolbar=yes, scrollbars=yes, resizable=yes, top=500, left=500, width=400, height=400')
+        */
+        return isdatesPresent;
+        
+    }
+    
+    function toDateVal(dateStr) {
+        var parts = dateStr.split("/");
+        return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
+    
+    function dateformat(input){
+        if (!(input == '' || input == null || input == 'undefined')){
+            var year = input.slice(-4),
+            month = ['Jan','Feb','Mar','Apr','May','Jun',
+                     'Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(input.substr(4,3))+1,
+            day = input.substr(8,2);
+        
+            var output = year + '-' + (month<10?'0':'') + month + '-' + day;
+            var dateValue = new Date(year, month - 1, day);
+            return dateValue;
+        } else return null;
+    }
+    
+    function toggleSelectAll(checkbox){
+        
+        //all checkbox is selected
+        if(checkbox.checked){
+            //set all row level checkboxes selected
+            $j( "input[id$=oneSelect]" ).prop('checked', true);
+        }
+        else{
+            //set all row level checkboxes de-selected
+            $j( "input[id$=oneSelect]" ).prop('checked', false);
+        }
+    }
+    
+    function toggleSelectAllAgency(checkbox){
+        
+        //all checkbox is selected
+        if(checkbox.checked){
+            //set all row level checkboxes selected
+            $j( "input[id$=oneSelectAgent]" ).prop('checked', true);
+        }
+        else{
+            //set all row level checkboxes de-selected
+            $j( "input[id$=oneSelectAgent]" ).prop('checked', false);
+        }
+    }
+    /*
+    * set "all checkbox" based on state of row level checkboxes
+    */
+    function toggleItem(checkbox){
+        var cbs = $j("input[id$=oneSelect]");
+        //all row level checkboxes selected
+        if(cbs.filter(':not(:checked)').length==0){
+            //set "all checkbox" selected
+            $j("input[id$=allSelect]").prop('checked', true);
+        }
+        else{
+            //set "all checkboxes" de-selected
+            $j("input[id$=allSelect]").prop('checked', false);
+        }
+    }
+    
+    /*
+    * set "all checkbox" based on state of row level checkboxes
+    */
+    var cbs = $j("input[id$=oneSelectAgent]");
+    //all row level checkboxes selected
+    if(cbs.filter(':not(:checked)').length==0){
+        //set "all checkbox" selected
+        $j("input[id$=allSelectAgency]").prop('checked', true);
+    }
+    function toggleItemAgency(checkbox){
+        var cbs = $j("input[id$=oneSelectAgent]");
+        //all row level checkboxes selected
+        if(cbs.filter(':not(:checked)').length==0){
+            //set "all checkbox" selected
+            $j("input[id$=allSelectAgency]").prop('checked', true);
+        }
+        else{
+            //set "all checkboxes" de-selected
+            $j("input[id$=allSelectAgency]").prop('checked', false);
+        }
+    }
+    
+    function confirmAction(promptText){
+        var r=confirm(promptText)
+        if (r==true){ return true; }
+        else{ return false; }
+    }
+    
+    </script>
+    </apex:outputPanel>
+</apex:page>

@@ -1,0 +1,134 @@
+<apex:component controller="ProfileController">
+ <html lang="en">
+    <head>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+          <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap.min.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/style.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-datepicker.min.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-multiselect.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/diff-theme.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/normalize.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-default.css')}" />
+          <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-style-bar.css')}" />
+
+          <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+          <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+          <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+          <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+          <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+
+
+    </head>
+    <body>
+
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+
+            <div class="wrapper">
+
+                <div class="row">
+
+
+                    <div class="col-lg-9 col-md-8">
+                        <div class="well">
+                            <h4>My Details</h4>
+
+
+                            <ul class="nav nav-pills">
+                                <li role="presentation" class="active tabHeader"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Portfolio worth</a></li>
+                                <li role="presentation" class="tabHeader"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Joint Buyers</a></li>
+                                <li role="presentation" class="tabHeader"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">My Payments</a></li>
+                                <li role="presentation" class="tabHeader"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">My Documents</a></li>
+                            </ul>
+
+                            <div class="tab-content">
+                                <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                    <c:My_Portfolio AccountId="{!customerAccountId}"/>
+                                </div>
+                                <div class="tab-pane fade in" role="tabpanel" id="plan2">
+                                   <c:MyJointBuyers AccountId="{!customerAccountId}"/>
+                                </div>
+                                <div class="tab-pane fade in" role="tabpanel" id="plan3">
+                                    <div class="row">
+                                        <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                            <c:My_Payments AccountId="{!customerAccountId}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+                                    <c:My_Documents AccountId="{!customerAccountId}"/>
+                                </div>
+                            </div>
+
+
+
+
+
+
+
+
+
+                        </div>
+
+
+                    </div>
+
+
+
+                </div>
+
+            </div>
+
+        </section>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/main.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-multiselect.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-datepicker.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/ease.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/fileinput.min.js')}"/>
+
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/upload.js')}"/>
+
+        <!--<script src="assets/js/jquery.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script src="assets/js/bootstrap-datepicker.min.js"></script>
+        <script src="assets/js/main.js"></script>
+        <script src="assets/js/button.js"></script>
+        <script src="assets/js/checkbox.js"></script>
+        <script src="assets/js/upload.js"></script>
+        <script src="assets/js/ease.js"></script>
+        <script src="assets/js/steps.js"></script>-->
+        <script>
+            $(document).ready(function () {
+                //Add Address Input on Button click ends Here
+                var max_fields = 10; //maximum input boxes allowed
+                var wrapper = $(".input_fields_wrap"); //Fields wrapper
+                var add_button = $(".add_field_button"); //Add button ID
+
+                var x = 1; //initlal text box count
+                $(add_button).click(function (e) { //on add input button click
+                    e.preventDefault();
+                    if (x < max_fields) { //max input box allowed
+                        x++; //text box increment
+                        $(wrapper).append('<div class="newInput"><input style="margin:3% 0% 3% 0%; " type="text" class="form-control formText" name="mytext[]"/><a href="#" class="remove_field">Remove</a></div>'); //add input box
+                    }
+                });
+
+                $(wrapper).on("click", ".remove_field", function (e) { //user click on remove text
+                    e.preventDefault();
+                    //$(this).parent('div').remove();
+                    $("div.newInput").remove();
+                    x--;
+                })
+
+                //Date Picker
+                $('.well input.datepicker').datepicker({
+                });
+            });
+        </script>
+
+    </body>
+</html>
+</apex:component>

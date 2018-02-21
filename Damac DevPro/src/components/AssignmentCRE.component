@@ -1,0 +1,1874 @@
+<apex:component controller="assignmentProcessCREController" allowDML="true">
+    <html lang="en">
+<head>
+<title>Dashboard</title>
+<meta charset="utf-8" />
+<meta name="viewport"
+    content="width=device-width, initial-scale=1, user-scalable=no" />
+<apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-multiselect.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/normalize.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-default.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-style-bar.css')}" />
+
+<link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+<link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+</head>
+<style>
+        .overlayStatus
+        {
+            position:fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            text-align:center;
+            vertical-align: middle;
+            background-color: #dcdcdc;
+            opacity:0.6;
+            filter:alpha(opacity=60);
+            z-index: 20 ;
+        }
+       
+        .loadIMG
+        {
+            display:block;
+            margin-top:20%;
+            margin-left:auto;
+            margin-right:auto;
+            text-align:center;
+            vertical-align: middle;
+        }
+       
+        .loadLabel
+        {
+            font-weight:bold;
+            font-size:14px;
+            color:black;
+        }
+        
+        .tdLabel
+        {
+            color: #4A4A56;
+            font-size: 91%;
+            font-weight: bold;
+            text-align: right;
+        }
+        
+        #filter {
+            display: none;
+            position: fixed;
+            top: 0%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 10;
+            opacity: 0.6;
+            filter: alpha(opacity=50);
+        }
+        
+        .sideBarFixed {
+            position: absolute!important;
+        }
+        
+        .fontColor {
+            color: black;
+        }
+    </style>
+<body>
+<!-- <apex:actionStatus id="processStatus" layout="block"> -->
+<!--             <apex:facet name="start"> -->
+<!--                 <apex:outputPanel styleClass="overlayStatus" > -->
+<!--                     <apex:image value="/img/loading32.gif" styleClass="loadIMG"/> -->
+<!--                     <apex:outputLabel value="Processing..." styleClass="loadLabel"/> -->
+<!--                 </apex:outputPanel> -->
+<!--             </apex:facet> -->
+<!--             <apex:facet name="stop"/> -->
+<!--         </apex:actionstatus> -->
+<!---------------------- Top Navbar ------------------------>        
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="#">DAMAC</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                <i class="fa fa-bell" aria-hidden="true"></i>
+                                <span class="label notification">10</span>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-calendar" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-profile-box dropdown">
+                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                <img src="assets/img/user.png" class="top-user-image" />
+                                <span class="top-user-name">Jane Doe</span>
+                            </a>
+                            <ul class="dropdown-menu site-dropdown user-dropdown">
+                                <li><a href="#" class="wave-button"> View Profile</a></li>
+                                <li><a href="#" class="wave-button">Settings</a></li>
+                                <li><a href="#" class="wave-button">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Sidebar Menu -->
+        <div class="nav-side-menu">
+            <div class="brand">Brand Logo</div>
+            <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+            <div class="menu-list">
+                <ul id="menu-content" class="menu-content collapse out">
+                    <li><a href="CRE-additional-parking.html"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                    <li  data-toggle="collapse" data-target="#cre" class="active" >
+                        <a><i class="fa fa-delicious" aria-hidden="true"></i> CRE SR <span class="arrow"></span></a>
+                    </li>
+                    <ul class="sub-menu collapse in" id="cre">
+                        <li class="active"><a href="CRE-additional-parking.html">Additional Parking</a></li>
+                        <li><a href="CRE-aopt.html">AOPT</a></li>
+                        <li><a href="CRE-bounced-cheque.html">Bounced Cheque</a></li>
+                        <li><a href="CRE-funds-transfer.html">Fund Transfer</a></li>
+                        <li><a href="CRE-furniture-package.html">Furniture Package</a></li>
+                        <li><a href="CRE-mortgage.html">Mortgage</a></li>
+                        <li><a href="CRE-penalty-waiver.html">Penalty Waiver</a></li>
+                        <li><a href="CRE-proof-of-payment.html">Proof of Payment</a></li>
+                        <li><a href="CRE-refunds.html">Refunds</a></li>
+                        <li><a href="CRE-cocd.html">COCD</a></li>
+                        <li><a href="CRE-early-handover.html">Early Handover</a></li>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+
+    <!---------------------- Main content ------------------------>
+<!--         <apex:form id="parentPanel"> -->
+<!--         <div id="filter"></div> -->
+<!--         <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" /> -->
+<!--         <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" /> -->
+        <apex:actionfunction name="fetchUnitDetails" action="{!fetchUnitDetails}"/> <!-- status="blockUI" rerender="panel01" -->
+        <apex:actionfunction name="jbPlaceholders" action="{!createJointBuyers}"/>
+        <apex:actionfunction name="createSoA" action="{!generateSoA}" status="blockUI"/>
+<!--         <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" /> -->
+<!--         <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" /> -->
+        
+        <section class="main-content-section">
+
+            <div class="wrapper">
+
+                <div class="row">
+
+                    <div class="col-md-9">
+                        <div id="errorMsg" style="color:red">{!errorMessage}</div>
+                        <section id="sec01">
+                            <div class="well">
+                                <h4>
+                                    Assignment
+                                </h4>
+
+                                <div class="row">
+                                    <div class="col-lg-8">
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Select Unit </label>
+                                            <apex:selectList value="{!strSelectedUnit}"
+                                                multiselect="false" size="1" 
+                                                styleClass="form-control units" id="units"
+                                                onchange="fetchUnitDetails();">
+                                                <apex:selectOptions value="{!lstUnits}" />
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                    </div>
+                                </div>
+                                <apex:outputpanel id="panel01">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="80%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <thead class="thead-inverse">
+                                                                <tr>
+                                                                    <th>
+                                                                        <apex:selectList value="{!strSelectedCategory}"
+                                                                        multiselect="false" size="1" required="true"
+                                                                        styleClass="form-control category" id="categories"
+                                                                        onchange="hideUnitDetails();"
+                                                                        style="height: 30px; !important">
+                                                                            <apex:selectOptions value="{!lstCategories}" />
+                                                                        </apex:selectList>
+                                                                    </th>
+                                                                    <th></th>
+                                                                </tr>
+                                                            </thead>
+                                                                <tbody id="unitDetails">
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>{!objUnit.Inventory__r.Property__r.Name}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>{!objUnit.Inventory__r.Property_City__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!objUnit.Inventory__r.Bedroom_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!objUnit.Inventory__r.Unit_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!objUnit.Permitted_Use__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/Off plan</b></td>
+                                                                    <td>{!objUnit.Inventory__r.Property_Status__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Promotion/Scheme/Option/Campaign</b></td>
+                                                                    <td>&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Invoices raised</b></td>
+                                                                    <td>{!objWrap.strInvoicesRaised}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Amount paid</b></td>
+                                                                    <td>{!objWrap.strAmountPaid}</td> <!-- {!objUnit.Token_Amount_val__c} -->
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Penalties</b></td>
+                                                                    <td>{!objWrap.strPenalties}</td> <!-- {!objUnit.Penalty_Amount__c} -->
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Overdue</b></td>
+                                                                    <td>{!objWrap.strOverdue}</td> <!-- {!objUnit.DP_Overdue__c} -->
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Deal Team</b></td>
+                                                                    <td>&nbsp;</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Type</b></td>
+                                                                    <td>{!objUnit.Booking_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Built Up Price</b></td>
+                                                                    <td>{!objWrap.strBuiltUpPrice}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Plot Price</b></td>
+                                                                    <td>{!objUnit.Plot_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Payment Plan</b></td>
+                                                                    <td>&nbsp;</td>
+                                                                </tr>
+<!--                                                                 <tr> -->
+<!--                                                                     <td><b>Statement of Account</b></td> -->
+<!--                                                                     <td>&nbsp;</td> -->
+<!--                                                                 </tr> -->
+                                                                <tr>
+                                                                    <td><b>Booking Date</b></td>
+                                                                    <td>
+                                                                    <apex:outputText value="{0,date,dd/mm/yyyy}">
+                                                                    <apex:param value="{!objUnit.Booking__r.CreatedDate}"/>
+                                                                    </apex:outputText>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Date</b></td>
+                                                                    <td>
+                                                                    <apex:outputText value="{0,date,dd/mm/yyyy}">
+                                                                    <apex:param value="{!objUnit.Agreement_Date__c}"/>
+                                                                    </apex:outputText>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Plan</b></td>
+                                                                    <td>
+                                                                    <apex:outputLink value="{!objUnit.Inventory__r.Unit_Plan__c}" target="_blank">{!IF(NOT(ISBLANK(objUnit.Inventory__r.Unit_Plan__c)),'Unit Plan','')}</apex:outputLink>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Floor Plan</b></td>
+<!--                                                                     <td>{!objUnit.Inventory__r.Floor_Plan__c}</td> -->
+                                                                    <td>
+                                                                    <apex:outputLink value="{!objUnit.Inventory__r.Floor_Plan__c}" target="_blank">{!IF(NOT(ISNULL(objUnit.Inventory__r.Floor_Plan__c)),'Floor Plan','')}</apex:outputLink>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>JOPD Area</b></td>
+                                                                    <td>{!objUnit.JOPD_Area__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="flags">
+                                                                    <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td>{!objUnit.Dispute__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td>{!objUnit.Enforcement__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td>{!objUnit.Litigation__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortgage</b></td>
+                                                                    <td>{!objUnit.Mortgage__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Counter case</b></td>
+                                                                    <td>{!objUnit.Counter_Case__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DP OK</b></td>
+                                                                    <td>{!objUnit.DP_OK__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DOC OK</b></td>
+                                                                    <td>{!objUnit.Doc_OK__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="unitStatus">
+                                                                <tr>
+                                                                    <td><b>OQOOD Registered</b></td>
+                                                                    <td>{!objUnit.OQOOD_Reg_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Registration Fee Paid</b></td>
+                                                                    <td>{!objWrap.strRegistrationFeePaid}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PRC Status</b></td>
+                                                                    <td>{!objWrap.strPRCStatus}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td>{!objWrap.strAgreementStatus}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td>{!objWrap.strUnderTermination}</td> <!-- {!objUnit.Booking_Undergoing_Termination__c} -->
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL sent</b></td>
+                                                                    <td>{!objWrap.strFTLSent}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO flag</b></td>
+                                                                    <td>{!objUnit.Early_Handover__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO flag</b></td>
+                                                                    <td>{!objUnit.Handover_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>{!objUnit.PCC_Release__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objUnit.Rental_Pool__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Title Deed Status</b></td>
+                                                                    <td>{!objUnit.Title_Deed__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Assignment</b></td>
+                                                                    <td>{!objUnit.Under_Assignment__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="sr">
+                                                                    <apex:variable var="cnt" value="{!1}" />
+                                                                    <apex:repeat value="{!lstExistingCase}" var="case">
+                                                                    <tr>
+                                                                        <td><b>SR {!cnt}</b></td>
+                                                                        <td><a href="">{!case.CaseNumber}</a></td>
+                                                                    </tr>
+                                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                                    </apex:repeat>
+                                                                </tbody>
+                                                        </table>
+                                                    </div>
+                                                    <div class="details col-lg-6 col-md-12 col-sm-12">
+                                                        <div class="row detailHeading">
+                                                            <div class="col-lg-6 col-md-12">
+                                                                <h6 class="col-md-12">Area</h6>
+                                                                <h4 class="col-md-12">{!objUnit.Inventory_Area__c} sq.ft</h4>
+                                                            </div>
+                                                            <div class="col-lg-6 col-md-12">
+                                                                <h6 class="col-md-12">Price</h6>
+                                                                <h4 class="col-md-12">AED {!objUnit.Unit_Selling_Price__c}</h4>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">RERA Construction Status%</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strReraConstructionStatus} %</h5> <!-- {!objUnit.Construction_Status__c} -->
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Current ACD</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strCurrentACD}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Area Variation (sq. ft.)</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strAreaVariation_sqft}</h5> <!-- {!objUnit.Area_Varied__c} -->
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Area Variation (AED)</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strAreaVariation_AED}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Type Variation</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strTypeOfVariation}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Other charges (Parking, Furniture etc.)</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strOtherCharges}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Paid %</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strPaidPercent}%</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">%Overdue</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strPercentOverdue}%</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">%PDC coverage</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strPercentPDCCoverage}%</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">No. of times customer defaulted on instalments</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strNoOfTimesCustomerDefaultedOnInstalments}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Recovery flag</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strRecoveryFlag}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Assignment NOC issuance in last 15 days</h6>
+                                                                    <h5 class="col-md-12">{!nocIssuedInLast15Days}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">AR PCC</h6>
+                                                                    <h5 class="col-md-12">{!objWrap.strARPCC}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Total Outstanding</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strTotalOutstanding}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Default</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strDefault}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Penalty/ Over dues (Portfolio level)</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strPenalty_Overdues}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Overdues/dues towards Service Charges</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strOverdues_DuesTowardsServiceCharges}</h5>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                                <div class="infoBoxes">
+                                                                    <h6 class="col-md-12">Penalties/ Late payment fee on Service Charges</h6>
+                                                                    <h5 class="col-md-12">AED {!objWrap.strPenalties_LatePaymentFeeOnServiceCharges}</h5>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+<!--                                                         <apex:commandButton action="{!generateSoA}" id="genSoA" -->
+<!--                                                         value="Generate SoA" styleClass="btn btn-sm btn-success"/> oncomplete="showSoA();"  -->
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </apex:outputpanel>
+                            </div>
+                        </section>
+                        
+                        <apex:outputpanel id="enterDetails" rendered="{!blnSectionOne}"> 
+<!--                         <apex:outputpanel id="enterDetails"> -->
+                        <section id="sec02">
+                            <div class="well">
+                                <h4>Enter Details</h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Buyer Type</label>
+                                            <apex:inputField value="{!objCase.Buyer_Type__c}" 
+                                            styleClass="form-control buyerType" onchange="validateViewPaymentButton();"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Relationship with Seller</label>
+                                            <apex:inputField value="{!objCase.Relationship_with_Seller__c}"
+                                                styleClass="form-control relationship" onchange="validateViewPaymentButton();"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Case Type</label>
+                                            <apex:inputField value="{!objCase.Case_Type__c}" 
+                                            styleClass="form-control caseType" onchange="validateViewPaymentButton();"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+	                                        <label><span>&nbsp;&nbsp;</span>No. of Joint Buyers</label>
+	                                        <apex:selectList value="{!strJBCount}"
+	                                            multiselect="false" size="1" 
+	                                            styleClass="form-control jbuyers" id="jbuyers"
+	                                            onchange="jbPlaceholders();">
+	                                            <apex:selectOptions value="{!lstTotalJointBuyers}" />
+	                                        </apex:selectList>
+	                                        <!-- onchange="jbPlaceholders();" -->
+	                                    </div>
+                                    </div>
+                                </div>
+                                <div align="right">
+                                <apex:commandButton styleclass="btn btn-sm btn-success viewPaymentDetails" 
+                                    value="View Payment Details" 
+                                    action="{!viewPaymentDetails}"/>
+                                </div>
+                            </div>
+                        </section>
+                        </apex:outputpanel>
+
+                        <apex:outputPanel style="display:block" rendered="{!blnSectionTwo}">
+<!--                         <apex:outputPanel style="display:block"> -->
+                        <section id="sec03">
+                            <div class="well">
+                                <h4>Payment Details</h4>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <table class="paymentDue" width="100%" cellpadding="10">
+                                            <thead>
+                                                <tr>
+                                                    <th>Payment Type</th>
+                                                    <th>Amount Due</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <apex:repeat value="{!lstPayments}" var="pay" id="paymentRepeatId">
+                                                <tr>
+                                                    <td>{!pay.strType}</td>
+                                                    <td>AED {!pay.decAmount}</td>
+                                                </tr>
+                                                </apex:repeat>
+                                                <tr>
+                                                    <td><b>Total</b></td>
+                                                    <td><b>AED {!decTotal}</b></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </section>
+                        
+                        <section id="sec04">
+                            <div class="well">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h4>
+                                            Enter Seller POA Details
+                                        </h4>
+                                        <div class="form-group">
+                                            <label>Seller POA</label>&nbsp;&nbsp;
+                                            <apex:inputField styleClass="sellerPOAChk"
+                                                        value="{!objCase.Seller_POA__c}" onchange="togglePOA();"/>
+                                        </div>
+                                        <div class="form-group spoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Name of Attorney</label>
+                                            <apex:inputField styleClass="form-control" onkeyup="validateTextField(this);"
+                                                        value="{!objCase.POA_Name_Seller__c}"/>
+                                        </div>
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Relationship with Seller</label> -->
+<!--                                             <apex:inputField styleClass="form-control" -->
+<!--                                                         value="{!objCase.POA_Relationship_with_Seller__c}" /> -->
+<!--                                         </div> -->
+                                        <div class="form-group spoa">
+                                            <label><span style="color:red">*&nbsp;</span>Purpose of POA</label>
+                                            <apex:inputField styleClass="form-control sellerPurpose"
+                                                        value="{!objCase.Purpose_of_POA_Seller__c}" onkeyup="validateTextField(this);"
+                                                        onchange="validateDocumentCompleteness();"/>
+                                        </div>
+                                        <div class="form-group spoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Date of Issue <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.PastDateErrorMsg}"/></label>
+<!--                                             <input type="text" id="sellerDatepicker" class="form-control datepicker sellerPOAExpiry" -->
+<!--                                             onchange="validatePastDate(this,'DOI');"/> -->
+                                            <apex:inputText styleclass="form-control datepicker sellerPOAExpiry" 
+                                            value="{!sellerPoaDate}" onchange="validatePastDate(this,'DOI');"/> <!-- objCase.POA_Expiry_Date_Seller__c -->
+                                        </div>
+                                        <div class="form-group spoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Issued by (Authority)</label>
+                                            <apex:inputField styleClass="form-control" onkeyup="validateTextField(this);"
+                                                        value="{!objCase.POA_Issued_By_Seller__c}"/>
+                                        </div>
+                                        <div class="fileupload fileupload-new spoa" data-provides="fileupload">
+                                        <input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+<!--                                                 <input type="file"/> -->
+                                                <apex:inputFile title="Browse"
+                                                        value="{!sellerPOA.body}"
+                                                        filename="{!sellerPOA.name}" 
+                                                        styleClass="inputFileSellerPOA"
+                                                        onchange="validateDocumentCompleteness();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+                                            </div>
+                                        </div>
+                                        <label class="spoa"><span style="color:red">*&nbsp;</span>Upload Power of Attorney</label>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h4>
+                                            Enter Buyer POA Details
+                                        </h4>
+                                        <div class="form-group">
+                                            <label>Buyer POA</label>&nbsp;&nbsp;
+                                            <apex:inputField styleClass="buyerPOAChk"
+                                                        value="{!objCase.Buyer_POA__c}" onchange="togglePOA();"/>
+                                        </div>
+                                        <div class="form-group bpoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Name of Attorney</label>
+                                            <apex:inputField styleClass="form-control" onkeyup="validateTextField(this);"
+                                                        value="{!objCase.POA_Name__c}"/>
+                                        </div>
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Relationship with Buyer</label> -->
+<!--                                             <apex:inputField styleClass="form-control" -->
+<!--                                                         value="{!objCase.POA_Relationship_with_Buyer__c}"/> -->
+<!--                                         </div> -->
+                                        <div class="form-group bpoa">
+                                            <label><span style="color:red">*&nbsp;</span>Purpose of POA</label>
+                                            <apex:inputField styleClass="form-control buyerPurpose"
+                                                        value="{!objCase.Purpose_of_POA__c}" onkeyup="validateTextField(this);"
+                                                        onchange="validateDocumentCompleteness();"/>
+                                        </div>
+                                        <div class="form-group bpoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Date of Issue <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.PastDateErrorMsg}"/></label>
+<!--                                             <input type="text" class="form-control datepicker buyerPOAExpiry" id="buyerDatepicker" -->
+<!--                                             onchange="validatePastDate(this,'DOI');"/> -->
+                                            <apex:inputText styleclass="form-control datepicker buyerPOAExpiry" 
+                                            value="{!buyerPoaDate}" onchange="validatePastDate(this,'DOI');"/> <!-- objCase.POA_Expiry_Date__c -->
+                                        </div>
+                                        <div class="form-group bpoa">
+                                            <label><span style="color:red">&nbsp;&nbsp;</span>Issued by (Authority)</label>
+                                            <apex:inputField styleClass="form-control" onkeyup="validateTextField(this);"
+                                                        value="{!objCase.POA_Issued_By__c}"/>
+                                        </div>
+                                        
+                                        <div class="fileupload fileupload-new bpoa" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <apex:inputFile title="Browse"
+                                                        value="{!buyerPOA.body}"
+                                                        filename="{!buyerPOA.name}" 
+                                                        styleClass="inputFileBuyerPOA"
+                                                        onchange="validateDocumentCompleteness();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+                                            </div>
+                                        </div>
+                                        <label class="bpoa"><span style="color:red">*&nbsp;</span>Upload Power of Attorney</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <section id="sec05">
+                            <div class="well">
+                                <h4>
+                                    Upload Documents
+                                </h4>
+                                <div class="row">
+                                    <apex:outputPanel rendered="{!ISNULL(lstInsertedPrimaryDocs)}">
+                                    <apex:repeat value="{!lstDocs}" var="docs">
+                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                                        <input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <apex:inputFile title="Browse"
+                                                        value="{!docs.objAttachment.body}"
+                                                        filename="{!docs.objAttachment.name}" 
+                                                        styleClass="inputFile{!docs.strRequired}"
+                                                        onchange="validateDocumentCompleteness();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+                                            </div>
+                                        </div>
+                                        <apex:outputlabel style="word-wrap: break-word;" rendered="{!docs.strRequired == 'Yes'}"><span style="color:red">*&nbsp;</span>{!docs.strType}</apex:outputlabel>
+                                        <apex:outputlabel style="word-wrap: break-word;" rendered="{!NOT(docs.strRequired == 'Yes')}"><span style="color:red">&nbsp;&nbsp;</span>{!docs.strType}</apex:outputlabel>
+                                        <br/>
+                                        <label>Is Valid</label>
+                                        <apex:selectList value="{!docs.blnIsValid}"
+                                            multiselect="false" size="1" 
+                                            styleClass="form-control">
+                                            <apex:selectOptions value="{!lstOptions}" />
+                                        </apex:selectList>
+                                        <br/><br/>
+                                    </div>
+                                    </apex:repeat>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!AND(NOT(ISNULL(lstInsertedPrimaryDocs)),lstInsertedPrimaryDocs.size >0)}">
+                                    <div class="col-lg-12">
+                                    <table class="paymentDue" width="100%" cellpadding="10">
+	                                    <thead>
+		                                    <tr>
+			                                    <th>Uploaded Document Name</th>
+			                                    <th>Is Valid</th>
+		                                    </tr>
+	                                    </thead>
+	                                    <tbody>
+	                                    <apex:repeat value="{!lstInsertedPrimaryDocs}" var="insertedDocs">
+	                                    <tr>
+		                                    <td>{!insertedDocs.Name}</td>
+		                                    <td>{!insertedDocs.isValid__c}</td>
+	                                    </tr>
+	                                    </apex:repeat>
+	                                    </tbody>
+                                    </table>
+                                    </div>
+                                    </apex:outputPanel>
+                                </div>
+                                <div align="right">
+                                    <apex:commandbutton styleclass="btn btn-sm btn-success submitDocuments" 
+                                    value="Save as Draft" action="{!submitCRF}"/>
+                                </div>
+                            </div>
+                            
+<!--                             <apex:outputpanel> -->
+                            <apex:outputpanel rendered="{!blnSectionAddDocs}">
+                            <div class="well">
+                                <h4>
+                                    Upload Additional Documents<div class="pull-right">
+                                    <apex:commandbutton styleclass="btn btn-sm btn-success skip" 
+                                    action="{!skipAdditionalDocs}" value="Skip"/>&nbsp;&nbsp;
+                                    <apex:commandbutton styleclass="btn btn-sm btn-success additionalDocuments" 
+                                    value="Add New Supporting Documents" action="{!addAdditionalDocument}"/>
+                                    </div>
+                                </h4>
+
+                                <div class="row">
+                                    <apex:outputPanel rendered="{!lstInsertedSupportingDocs.size <=0}">
+                                    <apex:repeat value="{!lstAdditionalDocs}" var="docs">
+                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                                        <input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <apex:inputFile title="Browse"
+                                                        value="{!docs.objAttachment.body}"
+                                                        filename="{!docs.objAttachment.name}" 
+                                                        styleClass="additionalInputFile"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+                                            </div>
+                                        </div>
+                                        <label ><span style="color:red">*&nbsp;</span>{!docs.strType}</label>
+                                        <br/>
+                                        <label>Is Valid</label>
+                                        <apex:selectList value="{!docs.blnIsValid}"
+                                            multiselect="false" size="1" 
+                                            styleClass="form-control">
+                                            <apex:selectOptions value="{!lstOptions}" />
+                                        </apex:selectList>
+                                        <br/><br/>
+                                    </div>
+                                    </apex:repeat>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!AND(NOT(ISNULL(lstInsertedSupportingDocs)),lstInsertedSupportingDocs.size >0)}">
+                                    <div class="col-lg-12">
+                                    <table class="paymentDue" width="100%" cellpadding="10">
+                                        <thead>
+                                            <tr>
+                                                <th>Uploaded Document Name</th>
+                                                <th>Is Valid</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                        <apex:repeat value="{!lstInsertedSupportingDocs}" var="insertedDocs">
+                                        <tr>
+                                            <td>{!insertedDocs.Name}</td>
+                                            <td>{!insertedDocs.isValid__c}</td>
+                                        </tr>
+                                        </apex:repeat>
+                                        </tbody>
+                                    </table>
+                                    </div>
+                                    </apex:outputPanel>
+                                </div>
+                                <div align="right">
+                                <apex:commandbutton value="Submit Additional Docs" action="{!insertAdditionalDocument}" 
+                                styleclass="btn btn-sm btn-success additionalDocs" rendered="{!AND(NOT(ISNULL(lstAdditionalDocs)),lstAdditionalDocs.size>0)}"/>
+                                </div>
+                            </div>
+                            </apex:outputpanel>
+                        </section>
+                        </apex:outputPanel>
+                        
+<!--                         <apex:outputPanel> -->
+                        <apex:outputPanel rendered="{!blnSectionThree}">
+                        <section id="sec06">
+                            <div class="well">
+                                <h4>
+                                    Buyer's Details 
+<!--                                     <apex:commandbutton styleclass="btn btn-xs btn-success" value="Add Joint Buyer" -->
+<!--                                     action="{!addJointBuyer}"/> -->
+                                </h4>
+
+                                <apex:outputPanel rendered="{!If(objCase.Buyer_Type__c == 'Corporate', true, false)}">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Enter Organization Details <small>(in english)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Organisation Name</label>
+                                            <apex:inputField styleclass="form-control organization buyerCompleteness" 
+                                                value="{!objBuyer.Organisation_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Expiry Date <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.PastDateErrorMsg}"/></label>
+                                            <apex:inputField styleclass="form-control datepicker crReg buyerCompleteness"
+                                            value="{!objBuyer.CR_Registration_Expiry_Date__c}" onchange="validateFutureDate(this,'CRE');"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Place</label>
+                                            <apex:inputField styleclass="form-control crPlace buyerCompleteness"
+                                                value="{!objBuyer.CR_Registration_Place__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h5>Enter Organization Details <small>(in arabic)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Organisation Name (Arabic)</label>
+                                            <apex:inputField styleclass="form-control organizationArabic buyerCompleteness"
+                                                value="{!objBuyer.Organisation_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Number</label>
+                                            <apex:inputField styleclass="form-control crNumber buyerCompleteness"
+                                                value="{!objBuyer.CR_Number__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Place (Arabic)</label>
+                                            <apex:inputField styleclass="form-control crPlaceArabic buyerCompleteness"
+                                                value="{!objBuyer.CR_Registration_Place_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                </apex:outputPanel>
+                                
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Enter Individual Details <small>(in english)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Title</label>
+                                            <apex:inputField styleclass="form-control title buyerCompleteness" 
+                                                value="{!objBuyer.Title__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>First Name</label>
+                                            <apex:inputField styleclass="form-control firstName buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!objBuyer.First_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Last Name</label>
+                                            <apex:inputField styleclass="form-control lastName buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!objBuyer.Last_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Nationality</label>
+                                            <apex:inputField styleclass="form-control nationality buyerCompleteness"
+                                                value="{!objBuyer.Nationality__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control" placeholder="Enter nationality"/> -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Passport No.</label>
+                                            <apex:inputField styleClass="form-control buyerCompleteness"
+                                                value="{!objBuyer.Passport_Number__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control" placeholder="Enter passport no."/> -->
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Place of Issue</label>
+                                            <apex:inputField styleclass="form-control placeOfIssue buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!objBuyer.Place_of_Issue__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control"  placeholder="Enter place of issue"/> -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Address line 1</label>
+                                            <apex:inputField styleclass="form-control address01 buyerCompleteness"
+                                                value="{!objBuyer.Address_Line_1__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 2</label>
+                                            <apex:inputField styleclass="form-control address02"
+                                                value="{!objBuyer.Address_Line_2__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 3</label>
+                                            <apex:inputField styleclass="form-control address03"
+                                                value="{!objBuyer.Address_Line_3__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 4</label>
+                                            <apex:inputField styleclass="form-control address04"
+                                                value="{!objBuyer.Address_Line_4__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Country</label>
+                                            <apex:inputField styleclass="form-control country buyerCompleteness"
+                                                value="{!objBuyer.Country__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>City</label>
+                                            <apex:inputField styleclass="form-control city buyerCompleteness"
+                                                value="{!objBuyer.City__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group"> <!-- <span title="tooltip here">&nbsp;?</span> -->
+                                            <label><span style="color:red">*&nbsp;</span>Date of Birth <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.BirthDateErrorMsg}"/></label>
+<!--                                             <apex:inputText styleclass="form-control datepicker dob buyerCompleteness" -->
+<!--                                                  value="{!objBuyer.Date_of_Birth__c}" onchange="validatePastDate(this,'DOB');"/> -->
+                                            <apex:inputField styleclass="form-control datepicker dob buyerCompleteness"
+                                                 value="{!objBuyer.Date_of_Birth__c}" onchange="validatePastDate(this,'DOB');"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h5>Enter Individual Details <small>(in arabic)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Title</label>
+                                            <apex:inputField styleclass="form-control arabicTitle buyerCompleteness"
+                                                value="{!objBuyer.Title_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>First Name <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicFirstName buyerCompleteness"
+                                                value="{!objBuyer.First_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Last Name <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicLastName buyerCompleteness"
+                                                value="{!objBuyer.Last_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Nationality <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicNationality buyerCompleteness"
+                                                value="{!objBuyer.Nationality_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Passport Expiry Date <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.PassportErrorMsg}"/></label>
+<!--                                             <apex:inputText styleclass="form-control datepicker passportExpiry buyerCompleteness" -->
+<!--                                             value="{!objBuyer.Passport_Expiry_Date__c}" onchange="validateFutureDate(this,'DOE');"/> -->
+                                            <apex:inputField styleclass="form-control datepicker passportExpiry buyerCompleteness"
+                                            value="{!objBuyer.Passport_Expiry_Date__c}" onchange="validateFutureDate(this,'DOE');"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Place of Issue <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicPlaceOfIssue buyerCompleteness"
+                                                value="{!objBuyer.Place_of_Issue_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Address line 1 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address01 buyerCompleteness"
+                                                value="{!objBuyer.Address_Line_1_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 2 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address02"
+                                                value="{!objBuyer.Address_Line_2_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 3 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address03"
+                                                value="{!objBuyer.Address_Line_3_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 4 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address04"
+                                                value="{!objBuyer.Address_Line_4_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Country <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicCountry buyerCompleteness"
+                                                value="{!objBuyer.Country_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>City <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicCity buyerCompleteness"
+                                                value="{!objBuyer.City_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h5>Contact Details</h5>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <label><span style="color:red">*&nbsp;</span>Phone Country Code</label>
+                                                       <apex:inputField styleclass="form-control phonecountry buyerCompleteness"
+                                                                value="{!objBuyer.Phone_Country_Code__c}" onchange="validateBuyerCompleteness();"/>
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label><span style="color:red">*&nbsp;</span>Phone No.</label>
+                                                        <apex:inputField styleclass="form-control phone buyerCompleteness"
+                                                            value="{!objBuyer.Phone__c}" onkeyup="validatePhoneNumber(this);"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label><span style="color:red">*&nbsp;</span>Email</label>
+                                                        <apex:inputField styleclass="form-control email buyerCompleteness"
+                                                            value="{!objBuyer.Email__c}" 
+                                                            onkeyup="validateEmail(this);"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div align="right">
+                                    <apex:commandbutton styleclass="btn btn-sm btn-success submitCRF" 
+                                    value="Submit" action="{!upsertBuyer}" onmouseover="validateBuyerCompleteness();"/>
+                                </div>
+                            </div>
+                        </section>
+                        
+<!--                         </apex:outputpanel> -->
+                        <apex:repeat value="{!lstJointBuyer}" var="jb">
+                            <section id="sec07">
+                            <div class="well">
+                                <h4>
+                                    Joint Buyer's Details
+<!--                                     <apex:commandbutton styleclass="btn btn-xs btn-success" value="Add Joint Buyer" -->
+<!--                                     action="{!addJointBuyer}" oncomplete="addBuyerResetStyle();"/>&nbsp;&nbsp; -->
+<!--                                     <apex:commandlink styleclass="btn btn-xs btn-danger" value="Remove Joint Buyer" -->
+<!--                                     action="{!removeJointBuyer}"> -->
+<!--                                     <apex:param name="delIndex" value="{!jb.intIndex}" assignTo="{!intDelIndex}"/> -->
+<!--                                     </apex:commandlink> -->
+                                    
+                                </h4>
+
+                                <apex:outputPanel rendered="{!If(objCase.Buyer_Type__c == 'Corporate', true, false)}">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Enter Organization Details <small>(in english)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Organisation Name</label>
+                                            <apex:inputField styleclass="form-control organization buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Organisation_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Expiry Date <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.FutureDateErrorMsg}"/></label>
+                                            <apex:inputField styleclass="form-control datepicker crReg buyerCompleteness"
+                                            value="{!jb.objJointBuyer.CR_Registration_Expiry_Date__c}" onchange="validateFutureDate(this,'CRE');"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Place</label>
+                                            <apex:inputField styleclass="form-control crPlace buyerCompleteness"
+                                                value="{!jb.objJointBuyer.CR_Registration_Place__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h5>Enter Organization Details <small>(in arabic)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Organisation Name (Arabic)</label>
+                                            <apex:inputField styleclass="form-control organizationArabic buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Organisation_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Number</label>
+                                            <apex:inputField styleclass="form-control crNumber buyerCompleteness"
+                                                value="{!jb.objJointBuyer.CR_Number__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>CR Registration Place (Arabic)</label>
+                                            <apex:inputField styleclass="form-control crPlaceArabic buyerCompleteness"
+                                                value="{!jb.objJointBuyer.CR_Registration_Place_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+                                </div>
+                                </apex:outputPanel>
+                                
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Enter Individual Details <small>(in english)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Title</label>
+                                            <apex:inputField styleclass="form-control title buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Title__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>First Name</label>
+                                            <apex:inputField styleclass="form-control firstName buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!jb.objJointBuyer.First_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Last Name</label>
+                                            <apex:inputField styleclass="form-control lastName buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!jb.objJointBuyer.Last_Name__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Nationality</label>
+                                            <apex:inputField styleclass="form-control nationality buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Nationality__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control" placeholder="Enter nationality"/> -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Passport No.</label>
+                                            <apex:inputField styleClass="form-control buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Passport_Number__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control" placeholder="Enter passport no."/> -->
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Place of Issue</label>
+                                            <apex:inputField styleclass="form-control placeOfIssue buyerCompleteness" onkeyup="validateTextField(this);"
+                                                value="{!jb.objJointBuyer.Place_of_Issue__c}" onchange="validateBuyerCompleteness();"/>
+                                            <!-- <input type="text" class="form-control"  placeholder="Enter place of issue"/> -->
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Address line 1</label>
+                                            <apex:inputField styleclass="form-control address01 buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Address_Line_1__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 2</label>
+                                            <apex:inputField styleclass="form-control address02"
+                                                value="{!jb.objJointBuyer.Address_Line_2__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 3</label>
+                                            <apex:inputField styleclass="form-control address03"
+                                                value="{!jb.objJointBuyer.Address_Line_3__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 4</label>
+                                            <apex:inputField styleclass="form-control address04"
+                                                value="{!jb.objJointBuyer.Address_Line_4__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Country</label>
+                                            <apex:inputField styleclass="form-control country buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Country__c}" onchange="validateBuyerCompleteness();setTimeout(function(){ addBuyerResetStyle();}, 10);" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>City</label>
+                                            <apex:inputField styleclass="form-control jbcity buyerCompleteness" id="jbcity" 
+                                                value="{!jb.objJointBuyer.City__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Date of Birth <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" title="{!$Label.BirthDateErrorMsg}"/></label>
+<!--                                             <apex:inputText styleclass="form-control datepicker dob buyerCompleteness" -->
+<!--                                                  value="{!jb.objJointBuyer.Date_of_Birth__c}" onchange="validatePastDate(this,'DOB');"/> -->
+                                            <apex:inputField styleclass="form-control datepicker dob buyerCompleteness"
+                                                 value="{!jb.objJointBuyer.Date_of_Birth__c}" onchange="validatePastDate(this,'DOB');"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h5>Enter Individual Details <small>(in arabic)</small></h5>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Title</label>
+                                            <apex:inputField styleclass="form-control arabicTitle buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Title_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>First Name <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicFirstName buyerCompleteness"
+                                                value="{!jb.objJointBuyer.First_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Last Name <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicLastName buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Last_Name_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Nationality <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicNationality buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Nationality_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>
+                                            <span style="color:red">*&nbsp;</span>Passport Expiry Date 
+                                            <img style="height:15px !important;" src="/img/alohaSkin/help_orange.png" 
+                                            title="{!$Label.PassportErrorMsg}"/>
+                                            </label>
+                                            <apex:inputField styleclass="form-control datepicker passportExpiry buyerCompleteness"
+                                            value="{!jb.objJointBuyer.Passport_Expiry_Date__c}" onchange="validateFutureDate(this,'DOE');"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Place of Issue <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicPlaceOfIssue buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Place_of_Issue_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Address line 1 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address01 buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Address_Line_1_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 2 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address02"
+                                                value="{!jb.objJointBuyer.Address_Line_2_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 3 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address03"
+                                                value="{!jb.objJointBuyer.Address_Line_3_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span>&nbsp;&nbsp;</span>Address line 4 <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control address04"
+                                                value="{!jb.objJointBuyer.Address_Line_4_Arabic__c}" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>Country <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicCountry buyerCompleteness"
+                                                value="{!jb.objJointBuyer.Country_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span style="color:red">*&nbsp;</span>City <small>(in arabic)</small></label>
+                                            <apex:inputField styleclass="form-control arabicCity buyerCompleteness"
+                                                value="{!jb.objJointBuyer.City_Arabic__c}" onchange="validateBuyerCompleteness();"/>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h5>Contact Details</h5>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <label><span style="color:red">*&nbsp;</span>Phone Country Code</label>
+                                                       <apex:inputField styleclass="form-control phonecountry buyerCompleteness"
+                                                                value="{!jb.objJointBuyer.Phone_Country_Code__c}" onchange="validateBuyerCompleteness();"/>
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label><span style="color:red">*&nbsp;</span>Phone No.</label>
+                                                        <apex:inputField styleclass="form-control phone buyerCompleteness"
+                                                            value="{!jb.objJointBuyer.Phone__c}" onkeyup="validatePhoneNumber(this);"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label><span style="color:red">*&nbsp;</span>Email</label>
+                                                        <apex:inputField styleclass="form-control email buyerCompleteness"
+                                                            value="{!jb.objJointBuyer.Email__c}" 
+                                                            onkeyup="validateEmail(this);"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div align="right">
+                                    <apex:commandbutton styleclass="btn btn-sm btn-success submitCRF" 
+                                    value="Submit" action="{!upsertBuyer}" onmouseover="validateBuyerCompleteness();"/>
+                                </div>
+                            </div>
+                        </section>
+                        </apex:repeat>
+                        </apex:outputPanel>
+                        
+<!--                         <apex:outputPanel rendered="{!blnSectionFour}"> -->
+<!--                         <section id="sec08"> -->
+<!--                             <div class="well"> -->
+<!--                                 <h4>Upload CRF</h4> -->
+<!--                                 <div class="row"> -->
+<!--                                     <div class="col-lg-12 col-md-6 col-xs-12 text-center"> -->
+<!--                                         <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/> -->
+<!--                                             <span class="btn btn-primary btn-file"> -->
+<!--                                                 <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span> -->
+<!--                                                 <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span> -->
+<!--                                                 <apex:inputFile title="Browse" -->
+<!--                                                         value="{!signedCRF.body}" -->
+<!--                                                         filename="{!signedCRF.name}"  -->
+<!--                                                         styleClass="inputFileSignedCRF" -->
+<!--                                                         onchange="enableGenerateLOA();"/> -->
+<!--                                             </span> -->
+<!--                                             <div> -->
+<!--                                                 <span class="fileupload-preview"></span> -->
+<!--                                                 <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a> -->
+<!--                                             </div> -->
+<!--                                         </div> -->
+<!--                                         <label>Upload Signed CRF</label> -->
+<!--                                     </div> -->
+<!--                                 </div> -->
+<!-- 	                            <div align="right"> -->
+<!-- 	                                <apex:commandbutton styleclass="btn btn-sm btn-success generateLOA"  -->
+<!-- 	                                value="Generate LOA" action="{!generateLOA}"/>&nbsp;&nbsp; -->
+<!-- 	                                <apex:commandLink styleclass="btn btn-sm btn-success viewSR" value="View CRF" onclick="openInNewTab();" /> -->
+<!-- 	                            </div> -->
+<!--                             </div> -->
+<!--                         </section> -->
+<!--                         </apex:outputPanel> -->
+
+                        <apex:outputPanel rendered="{!blnSectionFour}">
+                        <section id="sec09">
+                            <div class="well">
+                                <h4>
+                                    Upload LOA 
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <apex:inputFile title="Browse"
+                                                        value="{!uploadLOA.body}"
+                                                        filename="{!uploadLOA.name}" 
+                                                        styleClass="inputFileUploadLOA"
+                                                        onchange="enablePrintNOC();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+                                            </div>
+                                        </div>
+                                        <label>Upload Signed LOA</label>
+                                    </div>
+                                </div>
+                                <div align="right">
+<!--                                 <apex:commandbutton styleclass="btn btn-sm btn-success generateLOA"  -->
+<!--                                     value="Generate LOA" action="{!generateLOA}"/>&nbsp;&nbsp; -->
+                                <apex:commandLink styleclass="btn btn-sm btn-success genLoA" value="Generate LOA" onclick="genLoA();"/>
+                                <apex:commandbutton styleclass="btn btn-sm btn-success printNOC" 
+                                value="Submit Service Request" action="{!printNOC}"/>
+                                </div>
+                            </div>
+                        </section>
+                        </apex:outputPanel>
+                    </div>
+                    <!----------------------------------Sidebar Fixed---------------------------------------->
+                    <div class="col-md-3">
+                        <div class="well sideBarFixed profileDisplay">
+                            <apex:image url="{!URLFOR($Resource.PortalAssets, 'assets/img/customer1.jpg')}" width="100px;" height="100px;" />
+                            <h6>{!objSeller.Party_ID__c}</h6>
+                            <h4 align="center">{!objSeller.Salutation} {!objSeller.FirstName} {!objSeller.MiddleName} {!objSeller.LastName}</h4>
+                            <span>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                            </span>
+                            <label><a href="">View Portfolio</a></label>
+                            <h6>Organization Name</h6>
+                            <label style="color:blue">Damac</label>
+
+                            <h6>Nationality</h6>
+                            <label>{!objSeller.Nationality__pc}</label>
+                            
+                            <h6>Nationality</h6>
+                            <label>{!objSeller.Passport_Number__c}</label>
+                            
+                            <h6>Cr Number</h6>
+                            <label>{!objSeller.CR_Number__c}</label>
+                            
+                            <h6>Phone</h6>
+                            <label>{!objSeller.PersonMobilePhone}</label>
+
+                            <h6>Email</h6>
+                            <label>{!objSeller.PersonEmail}</label>
+                            
+                            <h6>POA</h6>
+                            <label style="color:blue">Bob Woolmer</label>
+                            
+                            <h6>Party Type</h6>
+                            <label>{!objSeller.Party_Type__c}</label>
+
+                            <h6>Customer Classification</h6>
+                            <label style="color:blue">A++</label>
+
+                            <h6>Bulk</h6>
+                            <label>{!objUnit.Regular_Bulk_Flag__c}</label>
+
+                            <h6>Joint Buyer</h6>
+                            <label><a href="" style="color:blue" class="btn btn-sm">Raymond Wejes</a></label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    
+<!--     </apex:form> -->
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/jquery.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/main.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap-datepicker.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap-multiselect.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/chosen.jquery.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/ease.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/fileinput.min.js')}" />
+<!--    <apex:includeScript -->
+<!--        value="{!URLFOR($Resource.PortalAssets, '/assets/js/steps.js')}" /> -->
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/upload.js')}" />
+
+</body>
+<script>
+    $(document).ready(function(){
+        bindEvents();
+        hideUnitDetails();
+        addBuyerResetStyle();
+        validateViewPaymentButton();
+        $('.submitDocuments').attr('disabled','disabled');
+        $('.submitCRF').attr('disabled','disabled');
+        $('.generateLOA').attr('disabled','disabled');
+        $('.printNOC').attr('disabled','disabled');
+        togglePOA();
+        displayLastSubmitButton();
+        //onPageLoad();
+        setTimeout(function(){ addBuyerResetStyle();}, 2000);
+    });
+    
+    function displayLastSubmitButton(){
+        var numItems = $('.submitCRF').length;
+        var count = 1;
+        $('.submitCRF').each(function(){
+            if(count < numItems){
+                $(this).hide();
+            }
+            count++;
+        });
+    }
+    
+    function scrollToSection(){
+        for(i =1; i<10; i++){
+            if(i != 4 && i != 5){
+                var cls = '#sec0'+i;
+                if($(cls).val() != undefined){
+                    $(cls)[0].scrollIntoView(true);
+                }
+            }
+        }
+    }
+    
+    function togglePOA(){
+        if($(".buyerPOAChk").is(":checked") == false){
+            $('.bpoa').hide();
+        }else{
+            $('.bpoa').show();
+        }
+        if($(".sellerPOAChk").is(":checked") == false){
+            $('.spoa').hide();
+        }else{
+            $('.spoa').show();
+        }
+        validateDocumentCompleteness();
+    }
+    
+    function validateViewPaymentButton(){
+        var selectedBuyerType = $('.buyerType').val();
+        var selectedRelationship = $('.relationship').val();
+        var selectedCaseType = $('.caseType').val();
+        var selectedUnit = $('.units').val();
+        if(selectedUnit != undefined && selectedUnit != 'None'
+        && selectedBuyerType != undefined && selectedBuyerType != ''
+        && selectedRelationship != undefined && selectedRelationship != ''
+        && selectedCaseType != undefined && selectedCaseType != ''){
+            $('.viewPaymentDetails').removeAttr('disabled');
+        }else{
+            $('.viewPaymentDetails').attr('disabled','disabled');
+        }
+    }
+    
+    function validateDocumentCompleteness(){
+        var allValid = false;
+        $('.inputFileYes').each(function(){
+            if($(this).val().trim() != undefined && $(this).val().trim() != ''){
+                allValid = true;
+                //$('.submitDocuments').removeAttr('disabled');
+            }else{
+                //$('.submitDocuments').attr('disabled','disabled');
+                allValid = false;
+                return false;
+            }
+        });
+        var sellerValid = false;
+        if($(".sellerPOAChk").is(":checked") == true){
+            if($('.sellerPurpose').val().trim() != ''
+            && $('.inputFileSellerPOA').val().trim() != ''){
+                sellerValid = true;
+            }
+        }else{
+            sellerValid = true;
+        }
+        
+        var buyerValid = false;
+        if($(".buyerPOAChk").is(":checked") == true){
+            if($('.buyerPurpose').val().trim() != ''
+            && $('.inputFileBuyerPOA').val().trim() != ''){
+                buyerValid = true;
+            }
+        }else{
+            buyerValid = true;
+        }
+        
+        if(buyerValid && sellerValid && allValid){
+            $('.submitDocuments').removeAttr('disabled');
+        }else{
+            $('.submitDocuments').attr('disabled','disabled');
+        }
+    }
+    
+    function enableGenerateLOA(){
+        if($('.inputFileSignedCRF').val().trim() != undefined 
+        && $('.inputFileSignedCRF').val().trim() != ''){
+            $('.generateLOA').removeAttr('disabled');
+        }else{
+            $('.generateLOA').attr('disabled','disabled');
+        }
+    }
+    
+    function enablePrintNOC(){
+        if($('.inputFileUploadLOA').val().trim() != undefined 
+        && $('.inputFileUploadLOA').val().trim() != ''){
+            $('.printNOC').removeAttr('disabled');
+        }else{
+            $('.printNOC').attr('disabled','disabled');
+        }
+    }
+    
+    function bindEvents() {
+        $('.datepicker').datepicker({ 
+            format: 'dd/mm/yyyy',
+            autoclose: true,
+            changeMonth: true,
+            changeYear: true
+        });
+    }
+    
+    function validateBuyerCompleteness(){
+        var jbSize = {!lstJointBuyer.size}+1;
+        if(jbSize>1){
+            //var individualLimit = (22*jbSize)-(jbSize-1);
+            //var corporateLimit = (28*jbSize)-(jbSize-1);
+            var individualLimit = (22*jbSize)-(jbSize-1);
+            var corporateLimit = (28*jbSize)-(jbSize-1);
+        }else{
+            var individualLimit = 22*jbSize;
+            var corporateLimit = 28*jbSize;
+        }
+        
+        console.log('individualLimit***********'+individualLimit);
+        console.log('corporateLimit***********'+corporateLimit);
+        var count = 0;
+        var selectedBuyerType = $('.buyerType').val();
+        $('.buyerCompleteness').each(function(){
+            if($(this).val().trim() != undefined 
+            && $(this).val().trim() != ''){
+                count++;
+                if((selectedBuyerType == 'Individual' && count == individualLimit)
+                || (selectedBuyerType == 'Corporate' && count == corporateLimit)){
+                    $('.submitCRF').removeAttr('disabled');
+                }else{
+                    $('.submitCRF').attr('disabled','disabled');
+                }
+            }
+        });
+        console.log('count***********'+count);
+    }
+    
+    function validateEmail(event){
+        var emailaddress = $(event).val().trim();
+        var regex = /^[a-zA-Z0-9]{1,20}[._]?[a-zA-Z0-9]{1,20}[@]{1}[a-zA-Z]{1,20}[.]{1}([a-zA-Z]{3,20}|[a-zA-Z]{2}.[a-zA-Z]{2,20})$/;
+        var blnValue = regex.test(emailaddress);
+        errorBorder(blnValue , event);
+    }
+    
+    function validatePhoneNumber(event){
+        var phoneNumber = $(event).val().trim();
+        var regex = /^[1-9]{1}[0-9]*$/;
+        var blnValue = regex.test(phoneNumber);
+        errorBorder(blnValue , event);
+    }
+    
+    function validateTextField(event) {
+        var nameField = $(event).val().trim();
+        var regex = /^[a-zA-Z\.\-\' ]*$/; 
+        var blnValue = regex.test(nameField);
+        errorBorder(blnValue , event);
+    }
+    
+    function errorBorder(blnValue, event){
+        if(blnValue){
+            console.log('blnValue was true*******'+blnValue);
+            $(event).css("border", "");
+            //$(event).next().hide();
+            validateBuyerCompleteness();
+        }else{
+            console.log('blnValue was false*******'+blnValue);
+            $(event).css("border", "2px solid red");
+            //$(event).after("<div style=\"color:red\">"+errorMsg+"</div>");
+            $('.submitCRF').attr('disabled','disabled');
+        }
+    }
+    
+    function validateFutureDate(event, field){
+        compareDate($(event).val(),field,event);
+    }
+    
+    function validatePastDate(event,field){
+        compareDate($(event).val(),field,event);
+    }
+    
+    function compareDate(dateVal,field,event){
+        console.log('dateVal***************'+dateVal);
+        if(dateVal != undefined && dateVal != 'undefined' 
+        && dateVal != '' && dateVal != ' '
+        && dateVal.trim().length == 10){
+            var isFutureDate = true;
+	        var expireDateArr = dateVal.split("/");
+	        var expireDate = new Date(expireDateArr[2], expireDateArr[1]-1, expireDateArr[0]);
+	        console.log('expireDate***********'+expireDate);
+	        var todayDate = new Date();
+	        console.log('todayDate***********'+todayDate);
+	        if(todayDate < expireDate){
+	            console.log('selected date is greater than today***********');
+	            if(field == 'DOE'){
+	                isFutureDate = validatePassportExpiry(expireDate);
+	                if(isFutureDate == 'true' || isFutureDate == true){
+	                    errorBorder(true , event);
+	                    validateBuyerCompleteness();
+	                }else{
+	                    errorBorder(false , event);
+	                }
+	            }else if(field == 'DOI' || field == 'DOB'){
+	                errorBorder(false , event);
+	            }else{
+	                isFutureDate = true;
+	                errorBorder(true , event);
+	                validateBuyerCompleteness();
+	            }
+	        }else{
+	            console.log('field******'+field);
+	            if(field == 'DOB'){
+	                isFutureDate = validateAge(expireDateArr[0],expireDateArr[1],expireDateArr[2]);
+	                    if(isFutureDate == 'false' || isFutureDate == false){
+	                    errorBorder(true , event);
+	                    validateBuyerCompleteness();
+	                }else{
+	                    errorBorder(false , event);
+	                }
+	            }else if(field == 'DOI'){
+	                errorBorder(true , event);
+	            }else{
+	                console.log('idhar aya******');
+	                isFutureDate = false;
+	                errorBorder(false , event);
+	            }
+	        }
+        }else{
+            console.log('Entered ELse portion*****************');
+            errorBorder(false , event);
+        }
+    }
+    
+    function validateAge(dt, mth, yr){
+        var isAgeValid = false;
+        var todayDate = new Date();
+        console.log('dt*****'+dt);
+        console.log('mth*****'+mth);
+        console.log('yr*****'+yr);
+        if(todayDate.getFullYear() - yr > 21){
+            isAgeValid = true;
+        }else if(todayDate.getFullYear() - yr == 21){
+            if((todayDate.getMonth()+1) - mth < 0){
+                isAgeValid = false;
+            }else if((todayDate.getMonth()+1) - mth == 0){
+                if(todayDate.getDate() - dt < 0){
+                    isAgeValid = false;
+                }else{
+                    isAgeValid = true;
+                }
+            }else if((todayDate.getMonth()+1) - mth > 0){
+                
+            }else{
+                isAgeValid = false;
+            }
+        }else{
+            isAgeValid = false;
+        }
+        if(isAgeValid == true){
+            return false;
+        }else{
+            return true;
+        }
+    }
+    
+    function validatePassportExpiry(expDate){
+        var todayDate = new Date();
+        var nDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate(),0,0,0,0);
+        console.log('todayDate**********',nDate);
+        console.log('expDate**********',expDate);
+        var diff = ((expDate - nDate)/3600000)/24;
+        console.log('diff**********',diff);
+        if(diff >= 30){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+    function addBuyerResetStyle(){
+        console.log('reset called**************');
+        $('[id$=jbcity]').addClass("form-control");
+        $('[id$=jbcity]').on('change',' ','validateBuyerCompleteness');
+    }
+    
+    function hideUnitDetails(){
+            var selCategory = $('select[id$=categories]').val();
+            if(selCategory == 'Unit Details'){
+                $('#unitDetails').show();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+            }
+            if(selCategory == 'Flags'){
+                $('#unitDetails').hide();
+                $('#flags').show();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+            }
+            if(selCategory == 'Unit Status'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').show();
+                $('#sr').hide();
+            }
+            if(selCategory == 'Open SRs'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').show();
+            }
+        }
+    
+    function openInNewTab(){
+     var url = '/apex/CRF?Id={!objCase.Id}&recTypeName=Assignment';
+     window.open(url,'_blank');
+    }
+    
+    function genLoA(){
+     var url = '/apex/generateLoa?Id={!objCase.Id}';
+     window.open(url,'_blank');
+    }
+    
+    function onPageLoad(){
+        console.log('*******returned url*****'+'{!strSoAURL}');
+        if('{!strSoAURL}' != undefined
+        && '{!strSoAURL}' != 'undefined'
+        && '{!strSoAURL}' != ''){
+            window.open('{!strSoAURL}','_blank');
+        }
+    }
+    
+    function showSoA(){
+        console.log('*******returned url*****'+'{!strSoAURL}');
+        window.open('{!strSoAURL}','_blank');
+    }
+</script>
+</html>
+</apex:component>

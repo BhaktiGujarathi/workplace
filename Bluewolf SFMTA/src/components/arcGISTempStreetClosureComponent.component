@@ -1,0 +1,388 @@
+<apex:component controller="SFMTAMappingSubController">
+    <apex:outputText rendered="{!init}"/>
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+            <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+            <title>Temp Signs</title>
+            <link rel="stylesheet" href="https://js.arcgis.com/3.18/dijit/themes/claro/claro.css" />
+            <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css" />
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS100, 'assets/styles/salesforce-lightning-design-system.css')}" />
+            <style>
+                html.body{height:100%;width:100%;margin:0;}
+                #map{
+                padding:0;
+                }
+                #header{
+                font-size: 1.1em;
+                font-family: sans-serif;
+                padding-left: 1em;
+                padding-top:4px;
+                color:#660000;
+                }
+                .templatePicker {
+                border: none;
+                }
+                .dj_ie .infowindow .window .top .right .user .content { position: relative; }
+                .dj_ie .simpleInfoWindow .content { position: relative; }
+
+                .forceCommunityNavigationMenu .menuItemLink, .forceCommunityNavigationMenu .menuItemLink.triggerLink {
+                    display: block;
+                    padding-top: 18px;
+                    padding-bottom: 18px;
+                    color: #333;
+                }
+                .forceCommunityNavigationMenu .menuItemLink, .forceCommunityNavigationMenu .menuItemLink.triggerLink, .forceCommunityNavigationMenu .subMenuItem a[aria-disabled=false] {
+                    font-family: Arial;
+                    font-weight: 300;
+                    font-size: 14px;
+                    max-width: 12.37rem;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    vertical-align: bottom;
+                    outline: 0;
+                }
+                .forceCommunityNavigationMenu .menuItemLink, .forceCommunityNavigationMenu .menuItemLink.triggerLink {
+                    padding: 7px 14px;
+                    display: inline-block;
+                    color: rgb(255, 255, 255);
+                    text-transform: uppercase;
+                }
+                a, button {
+                    cursor: pointer;
+                }
+                a {
+                    color: rgb(51, 153, 204);
+                    text-decoration: none;
+                    -webkit-transition: color .1s linear;
+                    transition: color .1s linear;
+                }
+                a {
+                    background-color: transparent;
+                }
+                *, *:before, *:after {
+                    box-sizing: border-box;
+                }
+            </style>
+            
+            <script src="https://js.arcgis.com/3.18/"></script>
+            <script>
+            var caselong = "{!caselong}"; 
+            var caselat = "{!caselat}";
+            var caseId = "{!caseId}";
+            var caseNum = "{!caseNumber}";  
+            var isAdmin = "{!isAdmin}"
+            var fromDate = "{!fromDate}";
+            var toDate = "{!toDate}";
+            var selectedTemplate;
+            var map;
+                require([
+                    "esri/map",
+                    "esri/toolbars/draw",
+                    "esri/toolbars/edit",
+                    "esri/graphic",
+                    "esri/config",
+                    "esri/InfoTemplate",
+                    "esri/Color",
+                    "esri/request",
+
+                    "esri/layers/FeatureLayer",
+
+                    "esri/symbols/SimpleMarkerSymbol",
+                    "esri/symbols/SimpleLineSymbol",
+                    "esri/symbols/SimpleFillSymbol",
+
+                    "esri/dijit/editing/TemplatePicker",
+
+                    "dojo/_base/array",
+                    "dojo/_base/event",
+                    "dojo/_base/lang",
+                    "dojo/parser",
+                    "dijit/registry",
+
+                    "esri/tasks/RelationshipQuery",
+                    "esri/tasks/QueryTask",
+                    "esri/tasks/query",
+
+                    "dijit/layout/BorderContainer", "dijit/layout/ContentPane",
+                    "dijit/form/Button", "dojo/domReady!"
+                ], function(
+                    Map, Draw, Edit, Graphic, EsriConfig, InfoTemplate, Color, EsriRequest,
+                    FeatureLayer,
+                    SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
+                    TemplatePicker,
+                    arrayUtils, event, lang, parser, registry,
+                    RelationshipQuery, QueryTask, Query
+                    ) {
+                    parser.parse();
+
+                    // refer to "Using the Proxy Page" for more information:  https://developers.arcgis.com/javascript/3/jshelp/ags_proxy.html
+                    EsriConfig.defaults.io.proxyUrl = "/proxy/";
+
+                    // This service is for development and testing purposes only. We recommend that you create your own geometry service for use within your applications.
+                    EsriConfig.defaults.geometryService = new esri.tasks.GeometryService("{!geometryServer}");
+
+                    var map = new Map("map", {
+                        basemap: "topo",
+                        center: [caselong, caselat],
+                        zoom: 13,
+                        slider: true
+                    });
+
+                    //map.on("layers-add-result", initEditor);
+                    dojo.connect(map, "onLayersAddResult", initEditor);
+
+                    var allPOI = new esri.layers.FeatureLayer("{!streetClosureURL}",{
+                        mode: esri.layers.FeatureLayer.MODE_SNAPSHOT, 
+                        outFields: ["*"]
+                    });
+
+                    var casePOI = new esri.layers.FeatureLayer("{!streetClosureURL}",{
+                        mode: esri.layers.FeatureLayer.MODE_SNAPSHOT, 
+                        outFields: ["*"]
+                    });
+
+                    /*
+                    var allPOI = new esri.layers.FeatureLayer("{!streetClosureURLOAUTH}" + "?token=" + "{!generatedToken}",{
+                        mode: esri.layers.FeatureLayer.MODE_SNAPSHOT, 
+                        outFields: ["*"]
+                    });
+
+                    var casePOI = new esri.layers.FeatureLayer("{!streetClosureURLOAUTH}" + "?token=" + "{!generatedToken}",{
+                        mode: esri.layers.FeatureLayer.MODE_SNAPSHOT, 
+                        outFields: ["*"]
+                    });
+                    */
+
+                    allPOI.setDefinitionExpression("CaseNumber != '" + caseNum + "'");
+                    casePOI.setDefinitionExpression("CaseNumber = '" + caseNum + "'");
+                    
+                    if(isAdmin === 'true'){
+                        dojo.connect(allPOI, "onUpdateEnd", function() {
+                            var defaultSymbol = new SimpleLineSymbol();
+                            defaultSymbol.setStyle(SimpleLineSymbol.STYLE_SOLID);
+                            defaultSymbol.setColor(new Color([0,255,255,1]));
+                            defaultSymbol.setWidth(4);
+
+                            dojo.forEach(this.graphics, function(graphic){
+                                graphic.setSymbol(defaultSymbol);
+                            });
+                        });
+                        
+                        map.addLayers([casePOI, allPOI]);
+                    }
+                    else{
+                        map.addLayers([casePOI]);
+                    }
+
+                    function initEditor(results) {
+                        var currentLayer = null;
+                        
+                        var featureLayers;
+                        if(isAdmin === 'true'){
+                            featureLayers = results[1].layer;
+                        }
+                        else{
+                            featureLayers = results[0].layer;
+                        }
+
+                        var templatePicker = new TemplatePicker({
+                            featureLayers: [featureLayers],
+                            grouping: true,
+                            rows: "auto",
+                            columns: "auto"
+                        }, "templatePickerDiv");
+
+                        templatePicker.startup();
+                        
+                        /*
+                        var featureLayers = arrayUtils.map(results.layers, function(result) {
+                            return result.layer;
+                        });
+
+                        var templatePicker = new TemplatePicker({
+                            featureLayers: featureLayers,
+                            grouping: true,
+                            rows: "auto",
+                            columns: "auto"
+                        }, "templatePickerDiv");
+
+                        templatePicker.startup();
+                        */
+
+                        var selectedTemplate;
+                        templatePicker.on("selection-change", function() {
+                            if( templatePicker.getSelected() ) {
+                                selectedTemplate = templatePicker.getSelected();
+                            }
+                        });
+
+                        var editToolbar = new Edit(map);
+                        editToolbar.on("deactivate", function(evt) {
+                            currentLayer.applyEdits(null, [evt.graphic], null);
+                        });
+
+                        var editingEnabled = false;
+                        featureLayers.on("dbl-click", function(evt) {
+                            event.stop(evt);
+                            if (editingEnabled === false) {
+                                editingEnabled = true;
+                                editToolbar.activate(Edit.EDIT_VERTICES , evt.graphic);
+                            } 
+                            else {
+                                editingEnabled = false;
+                                currentLayer = this;
+                                editToolbar.deactivate();
+                            }
+                        });
+
+                        var button;
+                        featureLayers.on("click", function(evt) {
+                            if(button){
+                                map.infoWindow.hide();
+                                button.destroy();
+                            }
+
+                            var graphicAttributes = evt.graphic.attributes;
+                            title = graphicAttributes.req_type;
+                            content = "<b>Case Number</b> " + graphicAttributes.CaseNumber;
+                            content += "</br><b>Salesforce Id</b> " + graphicAttributes.SalesforceCaseId;
+                            content += "</br><b>From</b> " + graphicAttributes.From_Date;
+                            content += "</br><b>To</b> " + graphicAttributes.To_Date;
+                            content += "</br><button id='deleteEntryButton' type='button'></button>";
+                            map.infoWindow.setTitle(title);
+                            map.infoWindow.setContent(content);
+                            map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+
+                            button = new dijit.form.Button({         
+                                label: "Delete",         
+                                onClick: function(){             
+                                    featureLayers.applyEdits(null,null,[evt.graphic]); 
+                                    map.infoWindow.hide();
+                                    button.destroy();
+                                }     
+                            }, "deleteEntryButton");  
+
+                            event.stop(evt);
+                            if (evt.ctrlKey === true || evt.metaKey === true) {  //delete feature if ctrl key is depressed
+                                featureLayers.applyEdits(null,null,[evt.graphic]);
+                                currentLayer = this;
+                                editToolbar.deactivate();
+                                editingEnabled=false;
+                            }
+                        });
+                        
+                        /*
+                        arrayUtils.forEach(featureLayers, function(featureLayer) {
+                            var editingEnabled = false;
+                            featureLayer.on("dbl-click", function(evt) {
+                                event.stop(evt);
+                                if (editingEnabled === false) {
+                                    editingEnabled = true;
+                                    editToolbar.activate(Edit.EDIT_VERTICES , evt.graphic);
+                                } 
+                                else {
+                                    editingEnabled = false;
+                                    currentLayer = this;
+                                    editToolbar.deactivate();
+                                }
+                            });
+
+                            featureLayer.on("click", function(evt) {
+                                var graphicAttributes = evt.graphic.attributes;
+                                title = graphicAttributes.req_type;
+                                content = "<b>Case Number</b> " + graphicAttributes.CaseNumber;
+                                content += "</br><b>Salesforce Id</b> " + graphicAttributes.SalesforceCaseId;
+                                content += "</br><b>From</b> " + graphicAttributes.From_Date;
+                                content += "</br><b>To</b> " + graphicAttributes.To_Date;
+                                content += "</br><button id='deleteEntryButton' type='button'></button>";
+                                map.infoWindow.setTitle(title);
+                                map.infoWindow.setContent(content);
+                                map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+
+                                var button = new dijit.form.Button({         
+                                    label: "Delete",         
+                                    onClick: function(){             
+                                        featureLayer.applyEdits(null,null,[evt.graphic]); 
+                                        map.infoWindow.hide();
+                                        button.destroy();
+                                    }     
+                                }, "deleteEntryButton");  
+
+                                event.stop(evt);
+                                if (evt.ctrlKey === true || evt.metaKey === true) {  //delete feature if ctrl key is depressed
+                                    featureLayer.applyEdits(null,null,[evt.graphic]);
+                                    currentLayer = this;
+                                    editToolbar.deactivate();
+                                    editingEnabled=false;
+                                }
+                            });
+                        });
+                        */
+
+                        var drawToolbar = new Draw(map);
+                        drawToolbar.activate(Draw.POLYLINE);    
+
+                        drawToolbar.on("draw-end", function(evt) {
+                            var newAttributes = {CaseNumber:caseNum, SalesforceCaseId:caseId, From_Date:fromDate, To_Date:toDate}; 
+                            var newGraphic = new Graphic(evt.geometry, null, newAttributes);
+                            selectedTemplate.featureLayer.applyEdits([newGraphic], null, null);
+                        });
+                        
+                    }
+                });
+            </script>
+        </head>
+        <body class="claro">
+            <apex:outputPanel id="headerStyling" rendered="{!IF(isInternal=='true',false,true)}">
+            <div class="profileMenuRegion" data-aura-rendered-by="147:0" style="padding:10px;">&nbsp;</div>
+
+            <div class="newHeader" data-aura-rendered-by="149:0">
+                <div data-region-name="newHeader" data-item-id="51612923-902e-40c3-85e3-81c75b287cfa" data-aura-rendered-by="94:0">
+                    <div class="ui-widget" data-aura-rendered-by="91:0">
+                        <div data-aura-rendered-by="82:0" class="forceCommunityRichText" data-aura-class="forceCommunityRichText">
+                            <div dir="ltr" data-aura-rendered-by="86:0" class="uiOutputRichText forceOutputRichText" data-aura-class="uiOutputRichText forceOutputRichText">
+                                <p data-aura-rendered-by="87:0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<img src="https://bwdev-customer.cs33.force.com/s/SFMTA-13-Logo-ONLINE-RGB-PNG-228459.png" class="sfdcCbImage"/></p> 
+                                <p data-aura-rendered-by="87:0">&nbsp;</p> 
+                                <p data-aura-rendered-by="87:0">&nbsp;</p> 
+                                <!--render facet: 87:0-->
+                            </div>
+                            <div class="clear" data-aura-rendered-by="89:0"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="navigation" data-aura-rendered-by="151:0">
+                <div data-region-name="navBar" data-item-id="8f17a0aa-69a5-4c49-953e-219eed035df8" data-aura-rendered-by="76:0">
+                    <div class="ui-widget" data-aura-rendered-by="73:0"><!--render facet: 68:0--><!--render facet: 70:0-->
+                        <nav data-aura-rendered-by="1:21;a" class="forceCommunityNavigationMenu" data-aura-class="forceCommunityNavigationMenu" style="border-top: 1px solid #aaaaaa; background: rgba(0, 0, 0, 0.2);">
+                            <div class="navigationMenuWrapper" data-aura-rendered-by="13:21;a">
+                                <ul class="navigationMenu" id="navigationMenu" data-aura-rendered-by="14:21;a">
+                                    <!--<li class="navigationMenuNode uiMenuItem" role="presentation" data-aura-rendered-by="32:21;a" data-aura-class="uiMenuItem">
+                                        <div class="menuItem" data-aura-rendered-by="34:21;a">
+                                            <a class="menuItemLink" role="menuitem" tabindex="0" title="My Open Cases" href="https://bwdev-customer.cs33.force.com/s/case/50035000000nRjNAAU" data-aura-rendered-by="35:21;a">Back</a>
+                                        </div>
+                                    </li>-->
+                                </ul>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+            </apex:outputPanel>
+            
+            <div data-dojo-type="dijit/layout/ContentPane" id="header" data-dojo-props="region:'top'" style="text-align: center;">
+                <span style="color:#008000"><strong>Signs</strong>: Case: {!caseNumber} </span>
+            </div>
+            
+            <div data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'left'" style="width: 300px;overflow:hidden;">  
+                <div id="templatePickerDiv"></div>
+                <!--<div id="editorDiv" ></div>-->
+            </div>
+            <div data-dojo-type="dijit/layout/ContentPane" id="map" data-dojo-props="region:'center'" style ="width:100%;height:500px;"></div>
+        </body>
+    </html>
+    
+</apex:component>

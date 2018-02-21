@@ -1,0 +1,44 @@
+<apex:page standardController="Case"  extensions="GenerateOfferAcceptanceLetterController" sidebar="false" showHeader="false" id="OfferAcceptancePage">
+
+<style>
+    #filter
+    {
+      display: none;
+      position: fixed;
+      top: 0%;
+      left: 0%;
+      width: 100%;
+      height: 100%;
+      background-color: #ffffff;
+      z-index:10;
+      opacity:0.6;
+      filter: alpha(opacity=50);
+    }
+</style>
+<apex:form id="offerAcceptancePDFForm">
+  <!-- loader image code starts -->
+  <div id="filter"></div>
+  <apex:actionStatus id="loadingStatus" onStart="startProcess();" onStop="endProcess();"/>
+  <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;"/> 
+  <!-- loader image code ends -->
+<apex:pageMessages id="message"/>
+  
+  <div style="text-align: center;">
+    <apex:commandButton value="Generate & Send Letter" action="{!generateOfferAcceptanceLetter}" reRender="offerAcceptancePanel,message" status="loadingStatus" disabled="{!blnIsOfferLetterGenerated}"/>
+  </div>
+
+  <script>
+    function startProcess()
+    {
+        document.getElementById('{!$Component.OfferAcceptancePage.offerAcceptancePDFForm.loadingdetail}').style.display = 'block';
+        document.getElementById('filter').style.display = 'block';
+    }
+
+    function endProcess()
+    {
+        document.getElementById("{!$Component.OfferAcceptancePage.offerAcceptancePDFForm.loadingdetail}").style.display = 'none';
+        document.getElementById('filter').style.display = 'none';
+    }
+  </script>
+</apex:form>
+</apex:page>

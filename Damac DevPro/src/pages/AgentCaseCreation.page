@@ -1,0 +1,428 @@
+<apex:page standardController="Case__c" extensions="AgentCaseCreationController" sidebar="true" cache="true" docType="html-5.0">
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+            <meta content="utf-8" http-equiv="encoding"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <title>Agent Support Management</title>
+            <script type="text/javascript">
+            </script>
+            <style type="text/css">
+                b.required-field::after { 
+                    content: "*";
+                    color: red;
+                }
+                .btn{
+                    width: 10%;
+                 }
+                 
+                 .header-home{
+                    background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Cases.jpg')}') no-repeat !important;
+                    -webkit-background-size: cover!important;
+                    -moz-background-size: cover!important;
+                    background-size: cover!important;
+                    position:relative;
+                }
+                
+                .error{
+                	margin:0px;
+                    display:none;
+                }
+                
+                .date-error{
+                	color:#f00;
+                    display:none;
+                }
+                
+                .table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td{
+                	border:none !important;
+                }
+
+                .apexp .bEditBlock.apexDefaultPageBlock .pbBody{
+                    margin:0px !important;
+                }
+
+                .message{
+                    margin:0px !important;
+                    margin-bottom:7px !important;
+                }
+
+                 @media only screen and (max-width: 768px){
+      
+                   .detailList,.detailList tr,body.editPage{
+                        width:100% !important;
+                        display:inline-block !important;
+                    }
+
+                    .dataCol {
+                        display:inline-block !important;
+                    }
+
+                    .labelCol{
+                        width:27% !important;
+                        text-align:left !important;
+                    }
+
+                    .dataCol{
+                        width:73% !important;
+                        display: inline-block !important;
+                    }
+                    .dateFormat{
+                        display: block !important;
+                    }
+                    input[type="text"], select, textarea {
+                        width: 95% !important;
+                    }
+                   .dataCol.col02+td {
+                        float:left !important;
+                    }
+
+                    .bEditBlock .pbButtonb,.bEditBlock .pbButton,body .bEditBlock .pbTitle {
+                        display:inline-block !important;
+                        width:100% !important;
+                    }
+
+                    .bEditBlock .pbButtonb,.bEditBlock .pbButton {
+                        text-align:center !important;
+                    }
+
+                    body .bEditBlock .pbTitle {
+                        text-align:left !important;
+                    }
+                    
+                    
+                }
+                
+                .message{
+                    padding: 10px !important;
+                    border: 1px solid #ddd !important;
+                    background: #FFFFFF !important;
+                    border-radius: 0px !important;
+                    font-family:Arial,sans-serif !important;
+                }
+
+
+            </style>
+        </head>
+        <body>
+            <apex:form id="frm">
+           <!--<div class="">
+                <div class="panel panel-default">
+                    <div class="panel-heading">Add Support Details</div>
+                    <div class="panel-body" id="pnl-suc">
+                       
+                         <div class="row">
+                            <div class="col-sm-12">
+                                <table class="table responsive">
+                                    <tbody>      
+                                        <tr>
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b class="required-field">Support Subject: </b>
+                                                <apex:selectList value="{!newCase.Case_Subject__c}" id="subjectId" size="1" label="Status1" styleClass="form-control col-sm-4" style="height: 34px;">
+                                                    <apex:selectOptions value="{!caseSubjectList}"/>
+                                                </apex:selectList>
+                                                <br/><div class="error">Please fill the Support Subject.</div>
+                                            </td>
+                                           
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b>Request Date Time (MM/dd/yyyy hh:mm AM/PM): </b>  
+                                                <apex:inputField type="datetime-local"  id="requestDate" showDatePicker="false" value=" {!newCase.Date_Time__c}" styleClass="form-control col-sm-4"/>
+                                            	<br/><div class="error">Please fill the Request Date Time.</div>
+                                                <div class="date-error">
+                                                    Please select future date.
+                                                </div>
+                                            </td> 
+                                       </tr>
+                                        <tr>
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b>Unit Number:</b>  
+                                               <apex:inputField id="unitNum" value="{!newCase.Unit_Number__c}" styleClass="form-control col-sm-4"/>
+                                                <br/><div class="error">Please fill the Unit Number.</div>
+                                            </td> 
+                                           <td class="col-sm-6 col-xs-12">
+                                                <b>Related CIL:</b>  
+                                                <apex:inputField id="relCIL" value="{!newCase.Inquiry_Number__c}" styleClass="form-control col-sm-4"/>
+                                               <br/><div class="error">Please fill the Related CIL.</div>
+                                            </td> 
+                                        </tr>
+                                        <tr style="width:80%;border-bottom:solid;border-width:3px;border-color: #0D80FC;">
+                                            <td  class="col-lg-6" >
+                                                <b style="font-style: italic">Other Information : </b>
+                                            </td>
+                                            <td  class="col-lg-6" >
+                                            </td>
+                                            <br/>
+                                         </tr>
+                                          <tr>
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b>Project Name:</b>
+                                                <apex:inputField id="projName" value="{!newCase.Project_Name__c}" styleClass="form-control col-sm-4"/> 
+                                            	<br/><div class="error">Please fill the Project Name.</div>
+                                            </td>
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b>Sales Office:</b>
+                                                <apex:inputField id="salesOffice" value="{!newCase.Sales_Office__c}" styleClass="form-control col-sm-4"/> 
+                                            	<br/><div class="error">Please fill the Sales Office.</div>
+                                              </td>
+                                        </tr>
+                                       
+                                        <tr id="luxuryCar" class="hideTR">
+                                            <td class="col-sm-6 col-xs-12">
+                                                <b>Pick Up Location:</b>  
+                                               <apex:inputField id="pickUpLocation" value="{!newCase.Pick_Up_Location__c}" styleClass="form-control col-sm-4"/>
+                                            	<br/><div class="error">Please fill the Pick Up Location.</div>
+                                            </td> 
+                                           <td class="col-sm-6 col-xs-12">
+                                                <b>Drop Off Location:</b>  
+                                                <apex:inputField id="dropUpLocation" value="{!newCase.Drop_Off_Location__c}" styleClass="form-control col-sm-4"/>
+                                            	<br/><div class="error">Please fill the Drop Off Location.</div>
+                                            </td> 
+                                        </tr>
+                                        <tr>
+                                         <td class="col-sm-6 hideTR col-xs-12">
+                                                <b>No of nights:</b>
+                                                <apex:inputField id="noOfNights" value="{!newCase.No_of_Nights__c}" styleClass="form-control col-sm-4"/> 
+                                        		<br/><div class="error">Please fill the No of nights.</div>
+                                         </td>
+                                         <td class="col-lg-6 col-xs-12">
+                                                <b class="required-field">Support Description: </b>  
+                                                <apex:inputField value="{!newCase.Case_Description__c}" style="resize:vertical;" id="description" styleClass="form-control col-sm-4"/> 
+												<br/><div class="error">Please fill the Support Description.</div>                                             
+                                         </td>                                               
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2" class="col-lg-4">                                              
+                                                <div id="saveButton" style="cursor:pointer !important"
+                                                    class="btn btn-primary col-lg-2 pull-right">Save</div>
+                                            </td>
+                                        </tr>
+
+                                     </tbody>
+                                </table>
+                            </div>                          
+                         </div>
+                    </div>
+                </div>
+            </div>-->
+                <apex:pageMessages id="messages"></apex:pageMessages>
+                <apex:pageBlock mode="edit">
+                    <apex:pageBlockButtons style="text-align:center">
+                       
+                        <apex:commandButton value="Save" action="{!saveCase}" reRender="messages" status="pleasewait" />
+                        <div class="btn" onclick="window.open('{!$Site.Prefix}/Damac_Cases','_self');">Cancel</div>
+                    </apex:pageBlockButtons>
+                    <apex:pageBlockSection id="case-info" columns="2" title="Information">
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="Support Subject"/>
+                                
+                                <apex:panelGroup styleClass="col02 requiredInput" layout="block">
+                                    <apex:panelGroup styleClass="requiredBlock" layout="block"/>
+                                    <apex:selectList value="{!newCase.Case_Subject__c}" id="subjectId" size="1">
+                                        <apex:selectOptions value="{!caseSubjectList}"/>
+                                    </apex:selectList>  
+                                </apex:panelGroup>
+                            </apex:pageBlockSectionItem>
+                            
+                            <apex:inputField id="requestDate" showDatePicker="true" value=" {!newCase.Date_Time__c}"/>
+                            <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="Support Description"/>
+                                <apex:panelGroup styleClass="col02 requiredInput" layout="block">
+                                    <apex:panelGroup styleClass="requiredBlock" layout="block"/>
+                                    <apex:inputField value="{!newCase.Case_Description__c}" style="resize:vertical;width:100%" id="description" /> 
+                                </apex:panelGroup>
+                            </apex:pageBlockSectionItem>
+                    </apex:pageBlockSection> 
+                    <apex:pageBlockSection id="additional-info" columns="2" title="Additional Details">
+                        <apex:inputField id="relCIL" value="{!newCase.Inquiry_Number__c}"/>
+                        <apex:inputField id="unitNum" value="{!newCase.Unit_Number__c}"/>
+                        <apex:inputField id="projName" value="{!newCase.Project_Name__c}"/>
+                        
+                        <apex:inputField id="noOfNights" value="{!newCase.No_of_Nights__c}" rendered="{!agentFieldHide == false}"/>
+                        <apex:inputField id="pickUpLocation" value="{!newCase.Pick_Up_Location__c}" rendered="{!agentFieldHide == false}"/>
+                        <apex:inputField id="dropUpLocation" value="{!newCase.Drop_Off_Location__c}" rendered="{!agentFieldHide == false}"/>
+                        <apex:inputField id="salesOffice" value="{!newCase.Sales_Office__c}"/> 
+                    </apex:pageBlockSection>
+                </apex:pageBlock>
+                <apex:actionFunction name="saveCases" action="{!saveCase}" reRender="messages"/>
+            </apex:form>           
+            <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/jquery.min.js')}"></script>    
+            <script type="text/javascript">
+                //Diana added the page-name
+                $('.page-name').text('Support');
+                 $(document).ready(function() {
+                     jQuery('input[type=text]').blur();
+                     var hideDiv = false ; 
+                     console.log('hideDiv '+hideDiv);
+                     hideDiv = {!agentFieldHide} ;
+                     if(hideDiv==true){
+                         console.log('hideDiv '+hideDiv);
+                         $(".hideTR").hide();
+                     }
+                 });
+            	
+            	/*var isValid = true;
+                 
+                $("#saveButton").click(function(){
+                    var subValue = $('[id$=subjectId]').val().trim();//document.getElementById('j_id0:frm:subjectId').value ;
+                    var dateValue = $('[id$=requestDate]').val();//document.getElementById('j_id0:frm:requestDate').value ;
+                    var noOfNights = $('[id$=noOfNights]').val(); //document.getElementById('j_id0:frm:noOfNights').value ;
+                    var salesOffice = $('[id$=salesOffice]').val();// document.getElementById('j_id0:frm:salesOffice').value ;
+                    var projectName = $('[id$=projName]').val(); //document.getElementById('j_id0:frm:projName').value ;
+                    var pickUpLoc = $('[id$=pickUpLocation]').val();// document.getElementById('j_id0:frm:pickUpLocation').value ;
+                    var dropOffUpLoc = $('[id$=dropUpLocation]').val(); //document.getElementById('j_id0:frm:dropUpLocation').value ;
+                    console.log('subValue '+subValue);
+                    
+                    
+                    if(isEmpty(subValue)){
+                     	showError($('[id$=subjectId]'));
+                    }
+                    else if(subValue.toLowerCase() == 'request for site viewing'){
+                       hideError();
+                       validateRequestDateTime(dateValue);
+                       validateSubject();
+                    }
+                    else if(subValue.toLowerCase() == 'book a hotel'){
+                       hideError();
+                       validateRequestDateTime(dateValue);
+                       validateSubject();
+                       
+                       if(isEmpty(noOfNights))
+                       	showError($('[id$=noOfNights]'));
+                    }
+                    else if(subValue.toLowerCase() == 'book a luxury car'){
+                       hideError();
+                       validateRequestDateTime(dateValue);
+                       validateSubject();
+                       if(isEmpty(pickUpLoc))
+                        showError($('[id$=pickUpLocation]'));
+                       if(isEmpty(dropOffUpLoc))
+                       	showError($('[id$=dropUpLocation]'));
+                    }
+                    else if(subValue.toLowerCase() == 'book a meeting room'){
+                       hideError();
+                       validateRequestDateTime(dateValue);
+                       validateSubject();
+                       if(isEmpty(salesOffice))
+                        showError($('[id$=salesOffice]'));
+                    }
+                    else if(subValue.toLowerCase() == 'request for training' || subValue.toLowerCase() == 'request for brochures'){
+                       hideError();
+                       validateRequestDateTime(dateValue);
+                       validateSubject();
+                       if(isEmpty(projectName))
+                         showError($('[id$=projName]'));
+                    }
+                    else if(subValue.toLowerCase() == 'query on unit commission'){
+                       hideError();
+                        //validateRequestDateTime(dateValue);
+                       validateSubject();
+                       if(isEmpty($('[id$=unitNum]').val()))
+                       	showError($('[id$=unitNum]'));
+                       if(isEmpty($('[id$=relCIL]').val()))
+                       	showError($('[id$=relCIL]'));
+                    }
+                    else{
+                     	hideError();
+                        validateSubject();
+                    }
+                    //alert(isValid);
+                    if(isValid){
+                        saveCases();
+                    }
+                    
+                    /*if(subValue=='' || subValue==null || subValue=='null'){
+                        //alert('Please fill the subject');
+                        $('#messages').text('Please fill the ')
+                        document.getElementById('j_id0:frm:subjectId').style.borderColor = "#C84A48" ;
+                        document.getElementById('j_id0:frm:subjectId').focus();
+                        return false ; 
+                    }else if(subValue !='UAT Feedback - Portal' &&  subValue !='Query on Unit Commission' && subValue !='Booking Related Queries'){
+                    
+                            if(subValue=='Book a Meeting Room' && (dateValue ==null || dateValue =='' || dateValue =='null' || salesOffice=='' || salesOffice==null || salesOffice=='null')){
+                                alert('Please enter the Request Date Time & SalesOffice');
+                                document.getElementById('j_id0:frm:requestDate').style.borderColor = "#C84A48" ;
+                                document.getElementById('j_id0:frm:requestDate').focus();
+                                return false ;
+                            }
+                            else if(subValue=='Book a Luxury Car' && (pickUpLoc=='' || pickUpLoc==null || pickUpLoc=='null' ||dropOffUpLoc=='' || dropOffUpLoc==null || dropOffUpLoc=='null' || dateValue ==null || dateValue =='' || dateValue =='null' )){
+                                alert('Please enter drop off location, pick up location & Request Date Time');
+                                document.getElementById('j_id0:frm:pickUpLoc').style.borderColor = "#C84A48" ;
+                                document.getElementById('j_id0:frm:pickUpLoc').focus();
+                                return false ;  
+                            }
+                            else if(subValue=='Book a Hotel' && (noOfNights=='' || noOfNights==null || noOfNights=='null') && (dateValue ==null || dateValue =='' || dateValue =='null' )){
+                                alert('Please enter Request Date Time & No of nights');
+                                document.getElementById('j_id0:frm:noOfNights').style.borderColor = "#C84A48" ;
+                                document.getElementById('j_id0:frm:noOfNights').focus();
+                                return false ;  
+                            }
+                            else if((subValue=='Request for Training' || subValue=='Request for Brochures' ) && (dateValue ==null || dateValue =='' || dateValue =='null' || projectName=='' || projectName==null || projectName=='null')){
+                                alert('Please enter the Request Date Time & Project');
+                                document.getElementById('j_id0:frm:projName').style.borderColor = "#C84A48" ;
+                                document.getElementById('j_id0:frm:projName').focus();
+                                return false ;  
+                            }
+                            else if(dateValue ==null || dateValue =='' || dateValue =='null' ){
+                                alert('Please enter the Request Date & Time');
+                                document.getElementById('j_id0:frm:requestDate').style.borderColor = "#C84A48" ;
+                                document.getElementById('j_id0:frm:requestDate').focus();
+                                return false ;                      
+                            }else if((dateValue !=null || dateValue !='') && selectedDate < today){
+                                    alert('Please select future date');
+                                    document.getElementById('j_id0:frm:requestDate').style.borderColor = "#C84A48" ;
+                                    document.getElementById('j_id0:frm:requestDate').focus();
+                                    return false ;
+                            }else{
+                                $('#saveButton').prop('disabled',true);
+                                saveCases();
+                            }                        
+                    }else{
+                                $('#saveButton').prop('disabled',true);
+                                saveCases();
+                            } 
+                   
+                });
+            
+            	function isEmpty(val){
+                 	if(val == '' || val == null)
+                        return true;
+                    else 
+                        return false;
+                }
+            
+            	function showError(id){
+                	$(id).closest('td').find('.error').show();
+                    isValid = false;
+                }
+            	
+           		function hideError(){
+                    $('.error').hide();
+                    isValid = true;
+                }
+            
+            	function validateRequestDateTime(dateValue){
+                      $('.date-error').hide();
+                        var today = new Date();
+                        var selectedDate = new Date($('[id$=requestDate]').val()+'+04:00');
+                        if(isEmpty(dateValue)){
+                         showError($('[id$=requestDate]')); 
+                         isValid = false;
+                        }
+                        else if(selectedDate < today){
+                           $('.date-error').show();
+                            isValid = false;
+                        }  
+                 }
+            
+            	function validateSubject(){
+                    if(isEmpty($('[id$=description]').val())){
+                      isValid = false;
+                      showError($('[id$=description]'));
+                    }
+                   
+                }*/
+            
+            </script>
+        </body>
+    </html>
+</apex:page>

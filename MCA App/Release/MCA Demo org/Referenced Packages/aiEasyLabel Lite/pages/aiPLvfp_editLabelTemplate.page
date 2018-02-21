@@ -1,0 +1,246 @@
+<apex:page docType="html-5.0" controller="aiell.aiPLctl_documentLabel" action="{!mLabelTemplatePageBuilder}">
+	<head>
+		<apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'jquery-1.9.1.min.js')}"/>
+	    <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'ForceTk.js')}"/>
+
+		<style type="text/css">
+			.ErrorMessage{
+				color: red;
+				font-weight: bold;
+			}
+		</style>	    
+	</head>
+	<body>
+		<apex:form >
+		
+			<apex:actionFunction name="afCallChangeLabelPageLayoutSelected" action="{!mChangeLabelPageLayoutSelected}" rerender="panelLabelPageLayoutSO">
+				<apex:param name="lplId" value=""/>
+			</apex:actionFunction>
+	       
+		    <apex:pageBlock title="Template for {!pSObjectType}" mode="edit">
+		    	<apex:facet name="header">
+				    <img src="{!URLFOR($Resource.ai_Resources, 'images/aiEasyLabelLogo.png')}" style="width:50px;height:50px;" class="aiEasyLabelLogo" onclick="window.open('http://www.alpha-index.co.uk/aiEasyLabel');"/>
+					<h3 class="mainTitle">&nbsp;Template for {!pSObjectType}</h3>
+				</apex:facet>
+		    
+		    	<apex:pageBlockButtons >
+			        <apex:commandButton value="Save" action="{!mSaveEditTemplate}"/>
+			        <apex:commandButton value="Cancel"  action="{!mCancelEditTemplate}"/>
+    			</apex:pageBlockButtons>    
+		    	<apex:pageMessages ></apex:pageMessages>
+				<apex:pageBlockSection title="General">
+					<apex:pageBlockSectionItem HelpText="{!$ObjectType.aiell__aiPL_LabelTemplate__c.fields.aiell__LabelPageLayout__c.inlineHelpText}">
+				        <apex:outputLabel value="Label Page Layout" for="selectLabelPageLayoutType"/>
+				        <apex:outputPanel id="panelLabelPageLayoutSO">
+					        <div class="requiredInput">
+	                    		<div class="requiredBlock"></div>
+								<apex:SelectList id="selectLabelPageLayoutType" value="{!pLabelTemplate.aiell__LabelPageLayout__c}" size="1" required="true" onchange="afCallChangeLabelPageLayoutSelected(this.options[this.selectedIndex].value)">
+									<apex:selectOptions value="{!pLabelPageLayoutTypeSOarray}"/>
+								</apex:SelectList>
+							<apex:commandButton value="New" action="{!mGoToNewLabelPageLayout}" style="visibility:{!pLabelPageLayoutNewVisible}"/>
+							<apex:commandButton value="Edit" action="{!mGoToEditLabelPageLayout}" style="visibility:{!pLabelPageLayoutVisible}"/>
+							</div>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+				        <apex:outputLabel value="Rotation" for="selectRotationType"/>
+				        <apex:outputPanel >
+					        <div class="requiredInput">
+	                    		<div class="requiredBlock"></div>
+								<apex:SelectList id="selectRotationType" value="{!pLabelTemplate.aiell__Rotation__c}" size="1" required="true">
+									<apex:selectOptions value="{!pRotationTypeSOarray}"/>
+								</apex:SelectList>
+							</div>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection title="Font">
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Font-Family" for="selectFontFamily"/>
+						<apex:SelectList id="selectFontFamily" value="{!pLabelTemplate.aiell__FontFamily__c}" size="1">
+							<apex:selectOptions value="{!pFontFamilySOarray}"/>
+						</apex:SelectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Font-Style" for="selectFontStyle"/>
+						<apex:selectCheckboxes id="selectFontStyle" value="{!pFontStyleSelected}" layout="pageDirection">
+							<apex:selectOptions value="{!pFontFamilyStyleSOarray}"/>
+						</apex:selectCheckboxes>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Font-Size" for="fontSizeInput"/>
+						<apex:outputPanel >
+							<div class="requiredInput">
+	                    		<div class="requiredBlock"></div>
+								<apex:inputField id="fontSizeInput" value="{!pLabelTemplate.aiell__FontSize__c}"/>
+								<apex:outputText value="pt"/><br/>
+								<apex:outputText value="Error: must be an integer* greater than 0" styleClass="ErrorMessage" rendered="{!pErrorTemplateFontSize}"/>
+							</div>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection title="Label padding">
+					<apex:facet name="header">
+						<h3 class="mainTitle">&nbsp;Label padding</h3>
+						<span style="float:right;">
+							Label Padding defines the margins WITHIN a label
+						</span>
+					</apex:facet>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Padding-Top" for="paddingTopInput"/>
+						<apex:outputPanel >
+							<apex:inputField id="paddingTopInput" value="{!pLabelTemplate.aiell__PaddingTop__c}"/>
+							<apex:outputText value="mm"/>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Padding-Bottom" for="paddingBottomInput"/>
+						<apex:outputPanel >
+							<apex:inputField id="paddingBottomInput" value="{!pLabelTemplate.aiell__PaddingBottom__c}"/>
+							<apex:outputText value="mm"/>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Padding-Left" for="paddingLeftInput"/>
+						<apex:outputPanel >
+							<apex:inputField id="paddingLeftInput" value="{!pLabelTemplate.aiell__PaddingLeft__c}"/>
+							<apex:outputText value="mm"/>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Padding-Right" for="paddingRightInput"/>
+						<apex:outputPanel >
+							<apex:inputField id="paddingRightInput" value="{!pLabelTemplate.aiell__PaddingRight__c}"/>
+							<apex:outputText value="mm"/>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection title="Fields">
+					<apex:facet name="header">
+						<h3 class="mainTitle">&nbsp;Fields</h3>
+						<span style="float:right;">
+							Select the fields to appear on the label
+						</span>
+					</apex:facet>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="First field" for="selectFirstFieldArray"/>
+						<apex:outputPanel >
+							<div class="requiredInput">
+	                    		<div class="requiredBlock"></div>
+								<apex:selectList id="selectFirstFieldArray" value="{!pLabelTemplate.aiell__FirstField__c}" size="1">
+						            <apex:selectOptions value="{!pFieldSOarray}"/>
+						        </apex:selectList><br/>
+						        <apex:outputText value="Error: You must enter a value" styleClass="ErrorMessage" rendered="{!pErrorTemplateFirstField}"/>
+					        </div>
+						</apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Second field" for="selectSecondFieldArray"/>
+						<apex:selectList id="selectSecondFieldArray" value="{!pLabelTemplate.aiell__SecondField__c}" size="1">
+				            <apex:selectOptions value="{!pFieldSOarray}"/>
+				        </apex:selectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Third field" for="selectThirdFieldArray"/>
+						<apex:selectList id="selectThirdFieldArray" value="{!pLabelTemplate.aiell__ThirdField__c}" size="1">
+				            <apex:selectOptions value="{!pFieldSOarray}"/>
+				        </apex:selectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fourth field" for="selectFourthFieldArray"/>
+						<apex:selectList id="selectFourthFieldArray" value="{!pLabelTemplate.aiell__FourthField__c}" size="1">
+				            <apex:selectOptions value="{!pFieldSOarray}"/>
+				        </apex:selectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fifth field" for="selectFifthFieldArray"/>
+						<apex:selectList id="selectFifthFieldArray" value="{!pLabelTemplate.aiell__FifthField__c}" size="1">
+				            <apex:selectOptions value="{!pFieldSOarray}"/>
+				        </apex:selectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Sixth field" for="selectSixthFieldArray"/>
+						<apex:selectList id="selectSixthFieldArray" value="{!pLabelTemplate.aiell__SixthField__c}" size="1">
+				            <apex:selectOptions value="{!pFieldSOarray}"/>
+				        </apex:selectList>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection title="Order">
+					<apex:facet name="header">
+						<h3 class="mainTitle">&nbsp;Order</h3>
+						<span style="float:right;">
+							Select the order to use on the labels
+						</span>
+					</apex:facet>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="First order" for="selectFirstFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectFirstFieldOrderArray" value="{!pLabelTemplate.aiell__FirstFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__FirstFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Second order" for="selectSecondFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectSecondFieldOrderArray" value="{!pLabelTemplate.aiell__SecondFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__SecondFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Third order" for="selectThirdFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectThirdFieldArray" value="{!pLabelTemplate.aiell__ThirdFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__ThirdFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fourth order" for="selectFourthFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectFourthFieldOrderArray" value="{!pLabelTemplate.aiell__FourthFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__FourthFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Fifth order" for="selectFifthFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectFifthFieldOrderArray" value="{!pLabelTemplate.aiell__FifthFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__FifthFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem >
+						<apex:outputLabel value="Sixth order" for="selectSixthFieldOrderArray"/>
+						<apex:outputPanel >
+							<apex:selectList id="selectSixthFieldOrderArray" value="{!pLabelTemplate.aiell__SixthFieldOrder__c}" size="1">
+					            <apex:selectOptions value="{!pFieldSOarray}"/>
+					        </apex:selectList>
+					        <apex:inputField value="{!pLabelTemplate.aiell__SixthFieldOrderType__c}"/>
+					        <apex:outputText value="Z - A"/>
+				        </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				<apex:outputText value="Integer* is a number without decimals" styleClass="ErrorMessage" rendered="{!pErrorTemplateFontSize}"/>
+			</apex:pageBlock>
+	        
+		</apex:form>
+	</body>
+</apex:page>

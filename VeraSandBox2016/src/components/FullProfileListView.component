@@ -1,0 +1,49 @@
+<!--
+/***********************************************************************************
+ * VF Component: FullProfileListView
+ * Created By : Ajinkya Hingne
+ -----------------------------------------------------------------------------------
+ * Description : Component for displaying section having a list of records in Full Profile page
+                 Metadata is stored in Full_Profile_Setting__c
+ -----------------------------------------------------------------------------------
+ * Version History:
+ * Version    Developer Name    Date          Detail Features
+   1.0        Ajinkya Hingne    22/04/2016    Initial Development
+ **********************************************************************************/
+ -->
+<apex:component controller="FullProfileListViewController" layout="block">
+
+    <apex:stylesheet value="{!URLFOR($Resource.TableStyling)}"/>
+
+    <!-- Attributes -->
+    <apex:attribute name="sobjectList" type="sObject[]" assignTo="{!sobjects}"
+            required="true"
+            description="List of records to be displayed"/>
+    <apex:attribute name="pageLabel" type="String" assignTo="{!page}"
+            required="true"
+            description="Page name where this component is included."/>
+    <apex:attribute name="sectionLabel" type="String" assignTo="{!section}"
+            description="Section name for the record."/>
+
+    <!-- Content -->
+    <apex:form >
+        <apex:outputPanel id="content">
+            <apex:pageBlock >
+                <apex:pageBlockSection title="{!sectionLabel}" columns="1" collapsible="true">
+                    <apex:pageBlockTable value="{!filteredSobjects}" var="record"
+                            rendered="{!filteredSobjects.size > 0}">
+                        <apex:repeat value="{!fieldNames}" var="fieldName">
+                            <apex:column headerValue="{!fieldApiNameLabelMap[fieldName]}">
+                                <apex:outputField value="{!record[fieldName]}" />
+                            </apex:column>
+                        </apex:repeat>
+                    </apex:pageBlockTable>
+                    <apex:outputPanel rendered="{!filteredSobjects.size == 0}">
+                        {!$Label.No_Records_Message}
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+
+</apex:component>

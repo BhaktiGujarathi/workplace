@@ -1,0 +1,65 @@
+<apex:page standardController="Opportunity" extensions="DealOfferController,DealOfferAttachmentController">
+
+    <style>
+      .emailcol1 {width:10%;font-weight:bold; text-align:right;vertical-align:top;}
+      .emailcol2 {width:90%; text-align:left;vertical-align:bottom;}
+    </style>
+
+    <style type="text/css">
+    
+        .headerRight {
+            text-align: right;
+        }
+
+    </style>
+
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+    <script type="text/javascript">
+
+        j$ = jQuery.noConflict();
+
+    </script>
+
+  <apex:form >
+    <apex:pageBlock >
+        <apex:pageBlockTable value="{!wrappers}" var="wrapper" id="tableAttachments" rendered="{!showDialog}">
+            <apex:column >
+                <apex:inputCheckbox value="{!wrapper.isSelected}"></apex:inputCheckbox>
+            </apex:column>
+            <apex:column value="{!wrapper.record.Name}" headerValue="Name"></apex:column>                    
+            <apex:column value="{!wrapper.attachmentSize}" headerValue="Size (KB)" style="text-align: right" headerClass="headerRight"></apex:column>
+        </apex:pageBlockTable>
+
+        
+
+        <apex:panelGrid border="0" width="100%" columns="2" columnClasses="emailcol1,emailcol2" cellpadding="8" cellspacing="8">
+            <apex:outputLabel value="From:"></Apex:outputLabel>
+            
+            <apex:selectList value="{!emailFromAddress}" size="1" multiselect="false">
+                <apex:selectOptions value="{!OrgWideEmailAddress}"></apex:selectOptions>
+            </apex:selectList>
+            <apex:outputLabel value="To:"></Apex:outputLabel>
+            <apex:inputText value="{!emailToAddress}" style="width:300px;" onchange="checkEmail(this)"/>
+            <apex:outputLabel value="CC:"></Apex:outputLabel>
+            <apex:inputText value="{!emailCCAddress}" style="width:300px;" onchange="checkEmail(this)"/>
+            <apex:outputLabel value="BCC"></Apex:outputLabel>
+            <apex:inputText value="{!emailBCCAddress}" style="width:300px;" onchange="checkEmail(this)"/>
+            <apex:outputLabel value="Subject:"></Apex:outputLabel>
+            <apex:inputText value="{!emailSubject}" style="width:300px;"/>
+            <apex:outputLabel value="Body:"></Apex:outputLabel>
+            <apex:outputPanel >
+            <apex:inputTextarea richText="true" value="{!emailBody}" rows="30" style="width:450px;"/>
+              <br/><br/>    
+            </apex:outputPanel>
+        </apex:panelGrid>
+
+        <apex:pageBlockButtons >
+            <apex:commandButton value="Back" action="{!backToStep3}"/>
+            <apex:commandButton value="Send Email" action="{!sendEmail}" />
+            <apex:commandButton value="Cancel" action="{!Cancel}"/>
+        </apex:pageBlockButtons>
+
+    </apex:pageBlock>              
+  </apex:form>
+</apex:page>

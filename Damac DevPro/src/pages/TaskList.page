@@ -1,0 +1,173 @@
+<apex:page controller="CREPortalHomeController" id="TaskListPage" showheader="false" sidebar="false" standardStylesheets="false">
+    <head>
+        <title>Task List</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-multiselect.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/normalize.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-default.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-style-bar.css')}" />
+
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+
+        <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}" />
+
+    </head>
+
+    <body>
+        <apex:form id="frmTaskList">
+            <div id="filter"></div>
+            <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" />
+            <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" />
+            <apex:outputPanel id="CREPanel">
+                <!-- Top Navbar -->
+                <nav class="navbar navbar-default navbar-fixed-top" id="navigationBar">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <a class="navbar-brand" href="#">Damac</a>
+                        </div>
+                        <div class="collapse navbar-collapse" id="myNavbar">
+                            <ul class="nav navbar-nav navbar-right">
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                        <i class="fa fa-bell" aria-hidden="true"></i>
+                                        <span class="label notification">10</span>
+                                    </a>
+                                </li>
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li class="top-profile-box dropdown">
+                                    <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                        <img src="{!URLFOR($Resource.PortalAssets, 'assets/img/user.png')}" class="top-user-image" />
+                                        <span class="top-user-name">Jane Doe</span>
+                                    </a>
+                                    <ul class="dropdown-menu site-dropdown user-dropdown">
+                                        <li><a href="#" class="wave-button"> View Profile</a></li>
+                                        <li><a href="#" class="wave-button">Settings</a></li>
+                                        <li><a href="#" class="wave-button">Logout</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+                <!-- Sidebar Menu -->
+                <div class="nav-side-menu" id="sideMenuBar">
+                    <div class="brand">Brand Logo</div>
+                    <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+                    <apex:outputPanel id="MenuPanel">
+                        <div class="menu-list">
+                            <ul id="menu-content" class="menu-content collapse out" style="background-color: black;">
+                                <li class="{!IF(home,'active','')}" style="background-color: black;"><a href="#" style="background-color: black;" onclick="selectSRType('Home');"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                                <li data-toggle="collapse" data-target="#cre" class="" style="background-color: black;">
+                                    <a style="background-color: black;"><i class="fa fa-delicious" aria-hidden="true"></i> CRE SRs <span class="arrow"></span></a>
+                                </li>
+                                <ul class="sub-menu collapse in" id="cre" style="background-color: black;">
+                                    <li class="{!IF(createAdditionalParking,'active','')}"><a href="#" onclick="selectSRType('AdditionalParking');">Additional Parking</a></li>
+                                    <li class="{!IF(createAOPT,'active','')}"><a href="#" onclick="selectSRType('AOPT');">AOPT</a></li>
+                                    <li class="{!IF(createBouncedCheque,'active','')}"><a href="#" onclick="selectSRType('BouncedCheque');">Bounced Cheque</a></li>
+                                    <li class="{!IF(createFundTransfer,'active','')}"><a href="#" onclick="selectSRType('FundTransfer');">Fund Transfer</a></li>
+                                    <li class="{!IF(createFurniturePackage,'active','')}"><a href="#" onclick="selectSRType('FurniturePackage');">Furniture Package</a></li>
+                                    <li class="{!IF(createMortgage,'active','')}"><a href="#" onclick="selectSRType('Mortgage');">Mortgage</a></li>
+                                    <li class="{!IF(createPenaltyWaiver,'active','')}"><a href="#" onclick="selectSRType('PenaltyWaiver');">Penalty Waiver</a></li>
+                                    <li class="{!IF(createProofOfPayment,'active','')}"><a href="#" onclick="selectSRType('ProofOfPayment');">Proof of Payment</a></li>
+                                    <li class="{!IF(createRefunds,'active','')}"><a href="#" onclick="selectSRType('Refunds');">Refunds</a></li>
+                                    <li class="{!IF(createCOCD,'active','')}"><a href="#" onclick="selectSRType('COCD');">COCD</a></li>
+                                    <li class="{!IF(createNOCforVisa,'active','')}"><a href="#" onclick="selectSRType('NOCVisa');">NOC For Visa</a></li>
+                                    <li class="{!IF(createEarlyHandover,'active','')}"><a href="#" onclick="selectSRType('EarlyHandover');">Early Handover</a></li>
+                                    <li class="{!IF(createHandover,'active','')}"><a href="#" onclick="selectSRType('Handover');">Handover</a></li>
+                                    <li class="{!IF(createRentalPool,'active','')}"><a href="#" onclick="selectSRType('RentalPool');">Rental Pool</a></li>
+                                    <li class="{!IF(createRentalPoolTermination,'active','')}"><a href="#" onclick="selectSRType('RentalPoolTermination');">RP Termination</a></li>
+                                    <li class="{!IF(createRentalPoolAssignment,'active','')}"><a href="#" onclick="selectSRType('RentalPoolAssignment');">RP Assignment</a></li>
+                                    <li class="{!IF(createTitleDeed,'active','')}"><a href="#" onclick="selectSRType('TitleDeed');">Title Deed</a></li>
+                                    <li class="{!IF(createComplaint,'active','')}"><a href="#" onclick="selectSRType('Complaint');">Complaint</a></li>
+                                </ul>
+                            </ul>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+
+                <!-- Main content -->
+                <section class="main-content-section">
+                    <div class="wrapper">
+                        <div class="row conversationTasks">
+
+                            <!-- Task List -->
+                            <div class="col-xs-12 col-sm-12 col-md-6">
+                                <c:TaskList />
+                            </div>
+                            <!-- Task List -->
+
+                            <div class="col-xs-12 col-sm-12 col-md-6">
+                                <c:FullCalendar />
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </apex:outputPanel>
+
+            <!-- Method to change cre create sr selection -->
+            <apex:actionFunction name="selectSRType" action="{!populateCreateSRBoolean}" status="blockUI" reRender="componentContainer,ComponentPanel,MenuPanel">
+                <apex:param name="srTypeValue" value="" assignTo="{!srType}" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="updateComponent" />
+
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap.min.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-datepicker.min.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/main.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-multiselect.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/upload.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/ease.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/modernizr.custom.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/classie.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/notificationFx.js')}" />
+            <script src="{!URLFOR($Resource.assets, '/assets/js/bootstrap-datepicker.min.js')}" />
+
+            <script>
+                $('.well input.datepicker').datepicker({});
+                $(document).ready(function() {
+                    $('#multi-select-demo').multiselect();
+                });
+
+                function startProcess() {
+                    console.log('NEw method called..');
+                    document.getElementById('{!$Component.TaskListPage.frmTaskList.loadingdetail}').style.display = 'block';
+                    document.getElementById('filter').style.display = 'block';
+                }
+
+                function endProcess() {
+                    document.getElementById('{!$Component.TaskListPage.frmTaskList.loadingdetail}').style.display = 'none';
+                    document.getElementById('filter').style.display = 'none';
+                }
+            </script>
+        </apex:form>
+    </body>
+
+</apex:page>

@@ -1,0 +1,339 @@
+<!--
+/***********************************************************************************
+ * VF : Nomination Evaluation
+ * Created By : Ajinkya Hingne
+ -----------------------------------------------------------------------------------
+ * Description : Allows user to evaluate a nomination related to particular training
+ -----------------------------------------------------------------------------------
+ * Version History:
+ * Version    Developer Name    Date          Detail Features
+   https://vera.my.salesforce.com/a041400000YKZli
+   1.0        Ajinkya Hingne    18/04/2016    Initial Development
+ **********************************************************************************/
+ -->
+<apex:page controller="NominationEvaluationController"
+        title="{!$Label.Nomination_Evaluation_Page_Title}"
+        docType="html-5.0" sidebar="false"
+        tabStyle="Training__c">
+    <html>
+        <head>
+            <title>{!$Label.Nomination_Evaluation_Page_Title}</title>
+            <apex:stylesheet value="{!URLFOR($Resource.TableStyling)}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.LoadingStatusCSS)}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.NominationEvaluationStyles)}"/>
+        </head>
+        <body>
+            <apex:form >
+                <apex:pageBlock id="contentBlock">
+
+                    <!-- Action status defined for loading/waiting status. -->
+                    <apex:actionStatus id="loadingPanel" layout="block">
+                        <apex:facet name="start">
+                            <div id="assign-action-spinner-main">
+                                <div id="assign-action-spinner-content">
+                                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif"
+                                        alt="{!$Label.Processing_Message}"
+                                        title="{!$Label.Processing_Message}" />
+                                    <p>{!$Label.Processing_Message}</p>
+                                </div>
+                            </div>
+                        </apex:facet>
+                    </apex:actionStatus>
+
+                    <br/>
+
+                    <!-- This panel gives user an option to select Training
+                         Rendered only if page is opened through tab or training id is not passed
+                    -->
+                    <apex:outputPanel id="trainingSelection"
+                                    rendered="{!$CurrentPage.parameters.id == null}">
+                        <apex:outputLabel >
+                            <b>{!$Label.Training_Selection_Label}</b>&nbsp;
+                        </apex:outputLabel>
+                        <apex:inputField value="{!nominationForLookup.Training__c}"
+                                        id="trainingSelector"
+                                        onchange="onTrainingSelect(event);" />
+                        <apex:actionFunction name="loadNominations" action="{!loadNominations}"
+                                            rerender="nominationsSection, nominationsPanel"
+                                            status="loadingPanel" />
+                    </apex:outputPanel>
+
+                    <br/><br/>
+
+                    <!-- Main section where Training and related records are displayed -->
+                    <apex:pageBlockSection id="trainingName" collapsible="false">
+                        <apex:facet name="header">
+                            <span class="panelTitle1">
+                                {!$Label.Nomination_Evaluation_Title}:
+                                    <span id="trainingNameSpan">
+                                        {!$CurrentPage.parameters.name}
+                                    </span>
+                            </span>
+                        </apex:facet>
+                    </apex:pageBlockSection>
+
+                    <!-- This section displays the Nomination records related to a Training -->
+                    <apex:pageBlockSection id="nominationsSection">
+                        <apex:facet name="header">
+                            <span class="sectionHeader panelTitle2">
+                                {!$Label.Nominations_Section_Title} ({!nominationCount})
+                            </span>
+                        </apex:facet>
+                    </apex:pageBlockSection>
+                    <apex:outputPanel id="nominationsPanel" styleClass="collapsiblePanel">
+                        <div class="main-container">
+                            <div class="container-new container-filter">
+                                <table class="result-table">
+                                    <thead class="header">
+                                        <tr>
+                                            <th> {!$Label.Evaluated_Indicator_Header}
+                                                <div>{!$Label.Evaluated_Indicator_Header}</div>
+                                            </th>
+                                            <th> {!$Label.Full_Profile_Header}
+                                                <div>{!$Label.Full_Profile_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Nomination_Header}
+                                                <div>{!$Label.Nomination_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Expert_Header}
+                                                <div>{!$Label.Expert_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Main_Profession_Header}
+                                                <div>{!$Label.Main_Profession_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Secondary_Profession_Header}
+                                                <div>{!$Label.Secondary_Profession_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Core_Expertise_1_Header}
+                                                <div>{!$Label.Core_Expertise_1_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Core_Expertise_2_Header}
+                                                <div>{!$Label.Core_Expertise_2_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Core_Expertise_3_Header}
+                                                <div>{!$Label.Core_Expertise_3_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Gender_Header}
+                                                <div>{!$Label.Gender_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Global_South_Header}
+                                                <div>{!$Label.Global_South_Header}</div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!nominatedExperts}" var="expert">
+                                            <tr>
+                                                <td>
+                                                    <apex:outputPanel rendered="{!expert.Evaluations__r.size > 0}">
+                                                        <img src="/img/func_icons/util/checkmark16.gif"
+                                                            title="{!$Label.Already_Evaluated_Image_Title}"
+                                                            alt="{!$Label.Already_Evaluated_Image_Title}" />
+                                                    </apex:outputPanel>
+                                                </td>
+                                                <td>
+                                                    <a href="{!$Label.Nomination_Full_Profile_Link + expert.Id}"
+                                                       target="_blank">
+                                                    <img src="/img/msg_icons/info16.png"
+                                                        title="{!$Label.View_Full_Profile_Image_Title} {!expert.Contact__r.Name}"
+                                                        alt="{!$Label.View_Full_Profile_Image_Title}" />
+                                                    </a>
+                                                </td>
+                                                <td>
+                                                    <apex:commandLink value="{!expert.Contact__r.JRRID__c}"
+                                                                    action="{!showSelectedNominationData}"
+                                                                    reRender="summaryPanel, evaluationsPanel"
+                                                                    status="loadingPanel">
+                                                        <apex:param name="selectedNominationId"
+                                                                    value="{!expert.Id}"
+                                                                    assignTo="{!selectedNominationId}"/>
+                                                    </apex:commandLink>
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Main_Profession__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Secondary_Profession__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Core_Expertise_1__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Core_Expertise_2__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Core_Expertise_3__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Gender__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!expert.Contact__r.Global_South__c}" />
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <br/>
+                        <!-- Buttons for pagination -->
+                        <div class="center">
+                            <apex:commandButton value="{!$Label.First_Page}"
+                                                action="{!firstPage}"
+                                                disabled="{!nominatedExperts.size == 0 ||
+                                                            nominationOffset == 0}"
+                                                reRender="nominationsPanel, evaluationsPanel"
+                                                status="loadingPanel" /> &nbsp;
+                            <apex:commandButton value="{!$Label.Previous_Page}"
+                                                action="{!previousPage}"
+                                                disabled="{!nominatedExperts.size == 0 ||
+                                                            nominationOffset == 0}"
+                                                reRender="nominationsPanel, evaluationsPanel"
+                                                status="loadingPanel" /> &nbsp;
+                            <apex:commandButton value="{!$Label.Next_Page}"
+                                                action="{!nextPage}"
+                                                disabled="{!nominatedExperts.size == 0 ||
+                                                            nominationCount <= nominationLimit ||
+                                                            nominationOffset == nominationCount - nominationLimit}"
+                                                reRender="nominationsPanel, evaluationsPanel"
+                                                status="loadingPanel" /> &nbsp;
+                            <apex:commandButton value="{!$Label.Last_Page}"
+                                                action="{!lastPage}"
+                                                disabled="{!nominatedExperts.size == 0 ||
+                                                            nominationCount <= nominationLimit ||
+                                                            nominationOffset == nominationCount - nominationLimit}"
+                                                reRender="nominationsPanel, evaluationsPanel"
+                                                status="loadingPanel" />
+                        </div>
+                        <br/>
+                    </apex:outputPanel>
+
+                    <!-- This section displays Application Summary of the selected Nomination -->
+                    <apex:outputPanel id="summaryPanel">
+                        <apex:pageBlockSection columns="1" id="summarySection">
+                            <apex:facet name="header">
+                                <span class="sectionHeader panelTitle2">
+                                    {!$Label.Application_Summary_Section_Title} {!selectedNomination.Name}
+                                </span>
+                            </apex:facet>
+                        </apex:pageBlockSection>
+                        <apex:outputPanel rendered="{!selectedNominationId != null &&
+                                                    selectedNomination.Application_Summary__c != null }"
+                                          styleClass="collapsiblePanel">
+                            <div class="summary-height">
+                            <apex:outputField value="{!selectedNomination.Application_Summary__c}" />
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- This section displays the Evaluations for a Nominations
+                         Also has buttons for adding and saving a Evaluation.
+                    -->
+                    <apex:outputPanel id="evaluationsPanel">
+                        <apex:pageBlockSection id="evaluationsSection">
+                            <apex:facet name="header">
+                                <span class="sectionHeader panelTitle2">
+                                    {!$Label.Evaluations_Section_Title} ({!evaluationCount}) {!selectedNomination.Name}
+                                </span>
+                            </apex:facet>
+                        </apex:pageBlockSection>
+                        <apex:outputPanel id="evaluationTablePanel" styleClass="collapsiblePanel">
+                        <div class="center">
+                                <apex:commandButton value="Add" action="{!addEvaluation}"
+                                                    disabled="{!isEditMode ||
+                                                            isUserEvaluated ||
+                                                            (selectedNominationId == null)}"
+                                                    rerender="evaluationsPanel"
+                                                    status="loadingPanel"
+                                                    oncomplete="showAddEvaluationRow();" /> &nbsp;
+                                <apex:commandButton value="Save" action="{!saveEvaluation}"
+                                                    disabled="{!!isEditMode}"
+                                                    rerender="evaluationsPanel,
+                                                            nominationsSection,
+                                                            nominationsPanel"
+                                                    status="loadingPanel"
+                                                    oncomplete="toggleEvaluationRowOnSave();" /> &nbsp;
+                                <apex:inputHidden value="{!isSaveSuccess}" id="savedIndicator" />
+                                <apex:commandButton value="Cancel" action="{!cancelEvaluation}"
+                                                    disabled="{!!isEditMode}"
+                                                    rerender="evaluationsPanel"
+                                                    status="loadingPanel"
+                                                    oncomplete="hideAddEvaluationRow();" />
+                            </div>
+                            <apex:pageMessages />
+                            <div class="main-container">
+                            <div class="container-new container-select">
+                                <table class="result-table">
+                                    <thead class="header">
+                                        <tr>
+                                            <th>{!$Label.Evaluation_Id_Header}
+                                                <div>{!$Label.Evaluation_Id_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Overall_Evaluation_Header}
+                                                <div>{!$Label.Overall_Evaluation_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Overall_Comments_Header}
+                                                <div>{!$Label.Overall_Comments_Header}</div>
+                                            </th>
+                                            <th>{!$Label.Created_By_Header}
+                                                <div>{!$Label.Created_By_Header}</div>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!evaluations}" var="evaluation">
+                                            <tr>
+                                                <td>
+                                                    <apex:outputField value="{!evaluation.Name}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!evaluation.Overall_Evaluation__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!evaluation.Overall_Comments__c}" />
+                                                </td>
+                                                <td>
+                                                    <apex:outputField value="{!evaluation.CreatedById}" />
+                                                </td>
+                                            </tr>
+                                        </apex:repeat>
+                                        <!-- This section is hidden by default.
+                                            When user clicks on Add button this section is made visible
+                                            to the user for creating an Evaluation.
+                                        -->
+                                        <tr id="newEvaluationRow" class="hidden">
+                                            <td>
+                                            </td>
+                                            <td>
+                                                <div class = "requiredInput">
+                                                <div class = "requiredBlock"></div>
+                                                <apex:inputField value="{!newEvaluation.Overall_Evaluation__c}" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class = "requiredInput">
+                                                <div class = "requiredBlock"></div>
+                                                <apex:inputField value="{!newEvaluation.Overall_Comments__c}" />
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {!$User.FirstName} {!$User.LastName}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+            </apex:form>
+        </body>
+        <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" />
+        <apex:includescript value="{!URLFOR($Resource.NominationEvaluationJs)}" />
+    </html>
+</apex:page>

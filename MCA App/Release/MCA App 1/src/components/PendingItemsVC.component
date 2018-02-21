@@ -1,0 +1,107 @@
+<!-- 
+    Author : Vasu Takasi
+    Created On: 1st Jul 2013
+    Component Name : PendingItemsVC
+    Description :   Used in PendingItemsVF page
+ --> 
+<apex:component controller="PendingItemsController" id="thePendingItemsComp" allowDML="true" access="global">
+<style>
+    .retrnBtn{
+        background:url({!URLFOR($Resource.ImagePlusMinus,'returnBtn.png')}) no-repeat left 2px; width:136px !important;
+        height:31px;
+        border:none;
+        font-size:12px;
+        text-align:right;
+        cursor:pointer;
+        padding-top:2px;
+    }
+</style>
+<script>
+    function removeBankorcredit(id,type,elementid){
+                //alert('Bank AccountId:'+id);
+                //alert('Type:'+type);
+                //alert('id---'+elementid);
+                var indexarray=new Array();
+                indexarray=elementid.split(':');
+                //alert(indexarray[7]);
+                if(type=='bank'){
+                    callbank(id,type,indexarray[7]);
+                    return false;
+                }
+                else if(type=='credit'){
+                    callcredit(id,type,indexarray[7]);
+                    return false;
+                }
+    }
+
+</script>
+ <div style="float:right;">
+    <input type="Button" Value="Return to Summary"  onclick="redirect()" Class="retrnBtn" />
+  </div>
+   <apex:pageMessages />
+    <apex:pageBlock title="Pending Items" mode="maindetail" id="pb">
+    <apex:actionfunction name="callbank" action="{!upadateremovebankcredit}" rerender="pbtba">
+        <apex:param value="" assignTo="{!Bankaccountid}" name="Bankaccountid"/>
+        <apex:param value="" assignTo="{!RecType}" name="RecType"/>
+        <apex:param value="" assignTo="{!indexofrow}" name="indexofrow"/>
+    </apex:actionfunction>
+    <apex:actionfunction name="callcredit" action="{!upadateremovebankcredit}" rerender="outcredit">
+        <apex:param value="" assignTo="{!Creditcardid}" name="Creditcardid"/>
+        <apex:param value="" assignTo="{!RecType}" name="RecType"/>
+        <apex:param value="" assignTo="{!indexofrow}" name="indexofrow"/>
+    </apex:actionfunction>
+     <apex:actionfunction name="redirect" action="{!redirectSummaryVF}" />
+        <apex:pageBlockSection title="Bank Accounts" columns="1" id="baPBS">
+         
+            <apex:outputpanel style="padding-left:50%;"> <apex:commandButton Value="Save & Refresh" action="{!updateBankAccounts}" /> </apex:outputpanel>
+            <apex:outputPanel id="outbank">
+                <apex:pageBlockTable value="{!lstPendingBankAcc}" var="objBA" id="pbtba">
+                    <apex:column HeaderValue="View">
+                        <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'view.png')}" style="cursor:pointer" onclick="window.open('/{!objBA.id}','_blank')" /> 
+                    </apex:column>
+                    <apex:column HeaderValue="Month" value="{!objBA.Month__c}" style="background-color:{!if(objBA.Month__c != '','','#F2F2F2')}" />
+                    <apex:column HeaderValue="Year" value="{!objBA.Year__c}" style="background-color:{!if(objBA.Year__c != null,'','#F2F2F2')}" />
+                    <apex:column HeaderValue="Bank Account Number" value="{!objBA.Bank_Account_Number__c}" style="background-color:{!if(objBA.name != '','','#F2F2F2')}"/>
+                    <apex:column HeaderValue="Deposits" value="{!objBA.Deposits__c}" style="background-color:{!if(text(objBA.Deposits__c) != '','','#F2F2F2')}" />
+                    <apex:column HeaderValue="Average Daily Balance" value="{!objBA.Average_Daily_Balance__c}" style="background-color:{!if(text(objBA.Average_Daily_Balance__c) != '','','#F2F2F2')}"/>
+                    <apex:column HeaderValue="Number of Negative Days" value="{!objBA.Number_of_Negative_Days__c}" style="background-color:{!if(text(objBA.Number_of_Negative_Days__c) != '','','#F2F2F2')}"/>
+                    <apex:column HeaderValue="Number of NSFs" value="{!objBA.Number_of_NSFs__c}" style="background-color:{!if(text(objBA.Number_of_NSFs__c) != '','','#F2F2F2')}"/>
+                    <apex:column HeaderValue="Matching App?" value="{!objBA.Matching_App__c}" />
+                    <apex:column HeaderValue="Data Request">
+                        <apex:inputField value="{!objBA.Data_Request__c}" />
+                    </apex:column>
+                    <apex:column HeaderValue="Remove">
+                        <apex:commandLink value="Remove" onclick="return removeBankorcredit('{!objBA.id}','bank','{!$Component.removebank}');" id="removebank"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+         </apex:outputPanel>
+        </apex:pageBlockSection>
+     <apex:pageBlockSection title="Credit Cards" columns="1" id="caPBS">
+        <!--Commented By :Ankush Date :16/09/2013 . For making one button for save and refresh @ Bank Account level-->
+        <!-- <apex:outputpanel style="padding-left:50%;"> <apex:commandButton Value="Save & Refresh" action="{!updateCreditCards}" /> </apex:outputpanel> -->
+        <apex:outputPanel id="outcredit">
+            <apex:pageBlockTable value="{!lstPendingCreditCards}" var="objCC" id="pbtcredit">
+                <apex:column HeaderValue="View" >
+                    <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'view.png')}" style="cursor:pointer" onclick="window.open('/{!objCC.id}','_blank')" />
+                </apex:column>
+                <apex:column HeaderValue="Month" value="{!objCC.Month__c}" style="background-color:{!if(objCC.Month__c != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Year" value="{!objCC.Year__c}" style="background-color:{!if(objCC.Year__c != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Account#" value="{!objCC.MID_Account_Number__c}" style="background-color:{!if(objCC.MID_Account_Number__c != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Total Net Processed-All" value="{!objCC.Total_Net_Processed_All__c}"  style="background-color:{!if(text(objCC.Total_Net_Processed_All__c) != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Number Of Transactions-All" value="{!objCC.Number_of_Transactions_All__c}" style="background-color:{!if(text(objCC.Number_of_Transactions_All__c) != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Total Net Processed AMEX Only" value="{!objCC.Total_Net_Processed_AMEX_only__c}" style="background-color:{!if(text(objCC.Total_Net_Processed_AMEX_only__c) != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Number Of Transactions Amex Only" value="{!objCC.Number_of_Transactions_AMEX_only__c}" style="background-color:{!if(text(objCC.Number_of_Transactions_AMEX_only__c) != '','','#F2F2F2')}"/>
+                <apex:column HeaderValue="Matching App?">
+                        <apex:inputField value="{!objCC.Matching_App__c}" />
+                </apex:column>
+                <apex:column HeaderValue="Data Request">
+                        <apex:inputField value="{!objCC.Data_Request__c}" />
+                </apex:column>
+                <apex:column HeaderValue="Remove">
+                        <apex:commandLink value="Remove" onclick="return removeBankorcredit('{!objCC.id}','credit','{!$Component.removecredit}');" id="removecredit"/>
+                </apex:column>
+            </apex:pageBlockTable>
+         </apex:outputPanel>
+     </apex:pageBlockSection>   
+    </apex:pageBlock>
+</apex:component>

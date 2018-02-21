@@ -1,0 +1,84 @@
+<apex:page docType="html-5.0" controller="aiell.aiPLctl_documentLabel" action="{!mInsertAllAveryRecords}">
+<head>
+    <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'jquery-1.9.1.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.aiell__ai_Resources, 'ForceTk.js')}"/>
+    
+    <script type="text/javascript">
+        
+        $( document ).ready(function() {
+            if('{!JSENCODE(pSObjectType)}' == ''){
+                alert('Please follow the program instruction for a good use');
+                window.open(window.location.protocol + "//" +window.location.host,'_self');
+            }
+        });
+        
+        function jsmPrintLabel(paOptionLabelSelected){
+                // Get all the parameters that we need to show the label PDF
+                var myParams = myParams + '&option='+paOptionLabelSelected;
+                myParams = myParams + '&SObjectType={!JSENCODE(pSObjectType)}';
+                myParams = myParams + '&ListViewId={!JSENCODE(pListViewIdSelected)}';
+                myParams = myParams + '&records={!JSENCODE(pSelectedSObjectIdArray)}';
+                
+                // Get the style that we want for the window which show the label PDF
+                var myStyle = 'height=600,location=no,resizable=yes,toolbar=no,status=no,menubar=no,scrollbars=1';
+                
+                // Now open the window to show the label PDF
+                window.open('/apex/aiPLvfp_checkLabelOverrun?' + myParams,'_blank',myStyle,1);
+        }
+        
+        function getCheckedBoxes(paCheckBoxesName) {
+            var checkboxes = document.getElementsByName(paCheckBoxesName);
+            var checkboxesChecked = '';
+            // loop over them all
+            for (var i=0; i<checkboxes.length; i++) {
+               // And stick the checked ones onto an array...
+               if (checkboxes[i].checked) {
+                  checkboxesChecked = checkboxes[i].value;
+               }
+            }
+            // Return the array if it is non-empty, or null
+            return checkboxesChecked;
+        }
+    </script>
+</head>
+    <body>
+    	
+        <apex:form >
+
+        <apex:pageBlock title="aiEasyLabel Lite" mode="edit">
+            <apex:facet name="header">
+                <img src="{!URLFOR($Resource.ai_Resources, 'images/aiEasyLabelLogo.png')}" style="width:50px;height:50px;" class="aiEasyLabelLogo" onclick="window.open('http://www.alpha-index.co.uk/aiEasyLabel');"/>
+                <h3 class="mainTitle">&nbsp;aiEasyLabel Lite</h3>
+            </apex:facet>
+            
+            <div id="divSelectOptionLabel" style="margin-top:5px;margin-left:15px;">
+            <apex:selectRadio value="{!pOptionLabelSelected}" id="selectOptionLabelList" layout="pageDirection">
+                <apex:selectOptions value="{!pOptionLabelSOArray}"/>
+            </apex:selectRadio>
+            </div>
+            
+            <div id="divPrinLabel" style="margin-top:5px;margin-left:116px;">
+                <apex:commandButton value="Edit Template" action="{!mGoToEditLabelTemplate}"/>
+                <apex:commandButton value="Print" onclick="jsmPrintLabel(getCheckedBoxes('{!$Component.selectOptionLabelList}'));"/>
+                <apex:commandButton value="Back" action="{!mBackListView}"/>
+            </div>
+            
+            <div id="warningBrowser" style="margin-top: 5px;margin-left:20px;">
+            	<h3><apex:outputText value="CAUTION: "/></h3>
+            	<apex:outputText value="Some browser reduce the page size when printing, see "/>
+            	<apex:outputLink value="https://appexchange.salesforce.com/servlet/servlet.FileDownload?file=00P3000000JOCG7EAP" id="browserCompatibility" target="_blank">
+            		browser compatibility details
+            	</apex:outputLink>
+            </div>
+            
+            <div id="upgradeFullVersion" style="margin-top: 25px; margin-left:20px;">
+            
+                <apex:outputText value="aiEasyLabel Pro allows you to print labels for any object."/><br/>
+                <apex:outputText value="It also allows you to automate printing labels"/><br/><br/>
+                <apex:outputText value="Premium support is also available"/><br/>
+                <apex:outputText value="Click "/><a href="http://www.alpha-index.com/aiEasyLabel" target="_blank">here</a><apex:outputText value=" for more information"/>
+            </div>
+        </apex:pageBlock>
+        </apex:form>
+    </body>
+</apex:page>

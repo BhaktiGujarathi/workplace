@@ -1,0 +1,406 @@
+<apex:page showHeader="true" docType="html-5.0" Controller="MovingRenawalNewController" action="{!Init}"  sidebar="true">
+    <style type="text/css">
+.custPopup {
+    background-color: white;
+    border-width: 2px;
+    border-style: solid;
+    z-index: 9999;
+    left: 50%;
+    padding: 10px;
+    position: fixed; 
+    /* These are the 3 css properties you will need to change so the popup
+                    displays in the center of the screen. First set the width. Then set
+                    margin-left to negative half of what the width is. You can add
+                    the height property for a fixed size pop up if you want.*/
+    width: 500px;
+    margin-left: -250px;
+    /*             top:100px; */
+    top: 50%;
+}
+
+.popupBackground {
+    background-color: black;
+    opacity: 0.20;
+    filter: alpha(opacity =   20);
+    position: ;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 9998;
+}
+
+.p2 {
+  display: hidden;
+}
+ .empty{display:none !important}
+ body .bPageBlock .pbBody .red .pbSubheader{
+                //background-color:#ffffff;
+            }
+             body .bPageBlock .pbBody .red .pbSubheader h3{
+                color:black;
+            }
+  body .bPageBlock .pbBody .pbSubheader {
+    border-style : solid;
+    border-color:  #1797C0;
+}
+</style>
+    <apex:form Id="formId">
+
+        <apex:outputPanel rendered="{!NOT(isRendered)}" id="mainPanel"> 
+     
+                <!-- Code for the popup -->
+            <apex:outputPanel id="tstpopup" >
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayPopUp}">
+                    <apex:pageBlock title="Delay Eligibility">
+                        <apex:selectList id="SelectDelayTime" value="{!DelayTime}"  size="1">
+                            <apex:selectOption itemLabel="--None--" itemValue="0" />
+                            <apex:selectOption itemLabel="1 Week" itemValue="1" />
+                            <apex:selectOption itemLabel="2 Week" itemValue="2" />
+                            <apex:selectOption itemLabel="3 Week" itemValue="3" />
+                            <apex:selectOption itemLabel="4 Week" itemValue="4" />
+                            <apex:selectOption itemLabel="5 Week" itemValue="5" />
+                            <apex:selectOption itemLabel="6 Week" itemValue="6" />
+                            <apex:selectOption itemLabel="7 Week" itemValue="7" />
+                            <apex:selectOption itemLabel="8 Week" itemValue="8" />
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Delay Time" action="{!delayTime}"
+                            rerender="pageMessageId,tstpopup"
+                            status="loadingAttachment" />
+                        <apex:CommandButton value="Cancel" action="{!ClosePopup}" />
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <!--    End of Popup -->
+
+
+            
+            <!-- Code for the popup Of Users -->
+            
+            <apex:outputPanel id="tstpopupuser">
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayUserPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayUserPopUp}">
+                    <apex:actionStatus id="loadingAttachment1" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel> 
+                    </apex:facet>
+                </apex:actionStatus>
+                    <apex:pageBlock title="Assign Opportunity Owner">
+                        <apex:selectList id="SelectUsers" value="{!SelectedUser}"
+                            size="1">
+                            <apex:selectOptions value="{!lstUser}"/>
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Assign & Create" action="{!createOpportunities}"
+                            rerender="tstpopupuser,pgmTable,pageMessageId,showThankyouPage" onComplete="CloseWindow()"
+                            status="loadingAttachment1" /> <!-- onComplete="CloseWindow()" -->
+                        <!-- <apex:CommandButton value="Cancel" action="{!CloseUserPopup}" />  -->
+                        <apex:commandLink action="{!CloseUserPopup}" value="Cancel" status="loadingAttachment1" id="theCommandLinkuser"/>
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <!--    End of Popup Code For Users-->
+
+
+            
+            <!-- Code for the popup For Follow Up Task -->  
+            <apex:outputPanel id="tstpopupusertask" >
+            
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayUserTaskPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayUserTaskPopUp}">
+                    <apex:actionStatus id="loadingAttachment2" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>
+                    <apex:pageBlock title="Assign Task Owner">
+                        <apex:selectList id="SelectUserTasks" value="{!SelectedUserTask}"
+                            size="1">
+                            <apex:selectOptions value="{!lstUser}"/>
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Assign & Create" action="{!createFollowupTask}"
+                            rerender="formId"  
+                            status="loadingAttachment2,thankyouPanelTaskId" />
+                        <apex:commandLink action="{!CloseUserTaskPopup}" value="Cancel" id="theCommandLink"/>                            
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+
+
+            <!--    End of Popup Code For Follow Up Task -->
+            <apex:pageBlock mode="maindetail" id="chartpageblock">
+                <apex:pageblockSection collapsible="true" title="Renewal Charts" columns="4">
+                    <apex:outputPanel id="chart" rendered="{!NOT(isRendered)}">
+                        <table width="100%">
+                            <tr>
+                            
+                                <td width="33%">
+                                    <analytics:reportChart cacheResults="false" size="small" 
+                                    reportId="{!$Label.ReportChart1}"> </analytics:reportChart>
+                                </td>
+
+                                <td width="33%">
+                                    <analytics:reportChart cacheResults="false" size="small" 
+                                    reportId="{!$Label.ReportChart2}"> </analytics:reportChart>
+                                </td>
+                                
+                                <td width="33%">
+                                    <analytics:reportChart cacheResults="false" size="small" 
+                                    reportId="{!$Label.ReportChart3}"> </analytics:reportChart>
+                                </td>
+
+                            </tr>
+                        </table>
+                    </apex:outputPanel>
+                </apex:pageblockSection>
+            </apex:pageBlock>
+
+            <br/>
+
+            <apex:pageBlock id="PageBlockId">
+                <apex:pageMessages id="pageMessageId" />
+                <apex:actionStatus id="loadingAttachment" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>
+
+                <apex:pageBlockButtons id="ButtonsId" location="both">
+                    <apex:commandButton onclick="saveDataController();"  value="Save"
+                        rerender="pageMessageId,chart,allopps" status="loadingAttachment" />
+                        
+                    <apex:commandButton value="Create Opportunities" onclick="passdataToController();"
+                        action="{!autoPopulate1}" status="loadingAttachment"  rerender="tstpopupuser,pageMessageId" />
+
+                            
+                    <apex:commandButton onclick="delayEligibilityController();"  action="{!autoPopulate1}"
+                        value="Delay Eligibility" rerender="tstpopup,pageMessageId" 
+                        status="loadingAttachment" />
+                    
+                    <apex:commandButton onclick="createFollowupTaskController();" action="{!autoPopulate1}"
+                        value="Create Follow Up Task" rerender="tstpopupusertask,pageMessageId" 
+                        status="loadingAttachment" />
+                    <apex:commandButton value="Mass Email" onclick="return sendMailController();"   
+                        rerender="sendEmailPanel,pageMessageId" status="loadingAttachment"/>
+
+                    <apex:commandButton value="Remove Opportunities" onclick="return sendOppIdsToRemove();" oncomplete="test()"
+                        status="loadingAttachment"/>
+                </apex:pageBlockButtons>  
+
+                <apex:outputPanel id="filterPanel">
+
+                    <table width="100%">
+                        <tr>
+                            <td width="2%"></td>
+                            <td width="17%"><apex:outputLabel value="Term %" />&nbsp;&nbsp;
+                                <apex:selectList id="SelectRenewalEligibiltyPer" value="{!RenewalEligibilityPer}" size="1">
+                                    <apex:selectOption itemLabel="--None--" itemValue="0" />
+                                    <apex:selectOption itemLabel="0-25%" itemValue="1" />
+                                    <apex:selectOption itemLabel="26-50%" itemValue="26" />
+                                    <apex:selectOption itemLabel="51-75%" itemValue="51" />
+                                    <apex:selectOption itemLabel="76-100%" itemValue="76" />
+                                </apex:selectList>
+                            </td>
+                            <td width="20%"><apex:outputLabel value="Funded" />&nbsp;&nbsp;
+                                <apex:selectList id="SelectRenewalDateFunded" value="{!RenewalDateFunded}" size="1">
+                                      <apex:selectOption itemLabel="--None--" itemValue="--None--" />
+                                      <apex:selectOption itemLabel="1-3 Months Ago" itemValue="1-3 Months Ago" />
+                                      <apex:selectOption itemLabel="4-6 Months Ago" itemValue="4-6 Months Ago" />
+                                      <apex:selectOption itemLabel="7-9 Months Ago" itemValue="7-9 Months Ago" />
+                                      <apex:selectOption itemLabel="10-12 Months ago" itemValue="10-12 Months ago" />
+                                      <apex:selectOption itemLabel="12+ Months" itemValue="12+ Months" />
+                                </apex:selectList>
+                            </td>
+                            <td width="23%"><apex:outputLabel value="Renewal Date"/>&nbsp;&nbsp;
+                                <apex:inputField value="{!cont.Estimated_Renewal_Date__c}" />
+                            </td>
+                            <td width="22%"><apex:outputLabel value="Bank" />&nbsp;&nbsp;
+                                <apex:inputField value="{!cont.Bank_Name__c}" />
+                            </td>
+                            <td width="15%"> <apex:outputLabel value="My Deals" />&nbsp;&nbsp;
+                                <apex:inputCheckbox value="{!myDealsCheckbox}"/>
+                            </td>
+                            <input id="hiddenElement" type="hidden" />
+                        </tr>
+                    </table>
+
+                    <table width="100%">
+                        <tr align="Center">
+                            <td>
+                                <apex:commandButton value="Filter"
+                                    action="{!getContractsAfterFilter}"
+                                    rerender="formId" status="loadingAttachment" 
+                                    style="width:90px;"/>
+                                    &nbsp;
+                                <apex:commandlink value="Clear Filter" action="{!clearFilter}" rerender="formId" status="loadingAttachment" />
+                            </td>
+                        </tr>
+                    </table>
+                </apex:outputPanel>
+
+
+                  <apex:outputPanel id="pgmTable" rendered="{!NOT(isRendered)}"> 
+                    <table id="allopps" class="display"  name="alloppsTable" style="width:100% border :10px double #990033;  ">  
+<!--                     <apex:pageBlockTable value="{!RenewalWrapperLst}" var="renwWrapper" id="pbtRenewals">-->
+                        <thead>
+                            <tr>
+                                <th>                
+                                    <apex:inputCheckbox onclick="checkAll(this,'checkBox');" id="theChkbx">
+                                    </apex:inputCheckbox>
+                                </th>
+                                <th>Remove             
+                                    <apex:inputCheckbox onclick="checkAllRemove(this,'checkBoxRemove');" id="theChkbxRemove">
+                                    
+                                    </apex:inputCheckbox>
+                                </th>
+                                <th >Opportunity Name</th>
+                                <th >Renewal Stage</th>
+                                <th >Bank</th>
+                                <th >Date Funded</th>
+                                <th >Funding $</th>
+                                <th >Payback $</th>
+                                <th >Terms</th>
+                                <th width="5%">Renewal Date</th>
+                                <th >Balance $</th>
+                                <th>Balance Date</th>
+                                <th width="10%">Term % Completed</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!RenewalWrapperLst}" var="renwWrapper">
+                                <tr>
+
+                                   <td> 
+                                   
+                                    <apex:inputCheckbox value="{!renwWrapper.isSelected}"  styleClass="iptCheckbox"  id="checkBox" html-data-oppId="{!renwWrapper.Contract.Id}">
+                                    <!--                             <apex:actionsupport event="onchange" action="{!autoPopulate1}" rerender="pageMessageId" status="loadingAttachment"/> -->
+                                     </apex:inputCheckbox>
+                                    </td>
+                                    
+                                    <td>                                   
+                                     <apex:inputCheckbox value="{!renwWrapper.contract['Remove_from_Renewal_Management__c']}"  styleClass="iptCheckboxRemove"  id="checkBoxRemove" html-data-oppRId="{!renwWrapper.Contract.Id}">
+<!--                                                                 <apex:actionsupport event="onchange" action="{!test}" status="loadingAttachment" rerender = "PageBlockId"/>                                      -->
+                                    
+                                     </apex:inputCheckbox>
+                                    </td>
+                                    
+
+                                   <td > 
+                                   <a href="/{!renwWrapper.contract['Id']}"
+                                    id="{!renwWrapper.contract['Id']}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}', '/{!renwWrapper.contract['Id']}/m?retURL=%2F{!renwWrapper.contract['Id']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}', '/{!renwWrapper.contract['Id']}/m?retURL=%2F{!renwWrapper.contract['Id']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Name']} </a>
+                                   </td>
+                                   <td>
+                                   <a href="/{!renwWrapper.contract['Next_Opportunity__c']}"
+                                    id="{!renwWrapper.contract['Next_Opportunity__c']}" html-data-nextoppId="{!renwWrapper.Contract.Next_Opportunity__c}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}', '/{!renwWrapper.contract['Next_Opportunity__c']}/m?retURL=%2F{!renwWrapper.contract['Next_Opportunity__c']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}', '/{!renwWrapper.contract['Next_Opportunity__c']}/m?retURL=%2F{!renwWrapper.contract['Next_Opportunity__c']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Next_Opportunity__r.stageName']}</a>
+<!--                                     {!renwWrapper.contract['Next_Opportunity__r.stageName']} -->
+                                  </td>
+                                   <td><a href="/{!renwWrapper.contract['AccountId']}"
+                                    id="{!renwWrapper.contract['AccountId']}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}', '/{!renwWrapper.contract['AccountId']}/m?retURL=%2F{!renwWrapper.contract['AccountId']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}', '/{!renwWrapper.contract['AccountId']}/m?retURL=%2F{!renwWrapper.contract['AccountId']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Bank_Name__r.Name']}</a>
+                                   
+<!--                                    {!renwWrapper.contract['Bank_Name__r.Name']} -->
+                                   </td>
+                                   <td> <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                            <apex:param value="{!renwWrapper.contract['Date_Funded__c']}" /> 
+                                        </apex:outputText>
+                                   </td>
+                                   <td>$
+                                   <apex:outputText iD="fundingAmt" value="{0}"> 
+                                            <apex:param value="{!renwWrapper.contract['Funding_Amount__c']}" /> 
+                                        </apex:outputText>
+<!--                                    ${!renwWrapper.contract['Funding_Amount__c']} -->
+                                   </td>
+                                   <td>
+                                   $
+                                   <apex:outputText iD="paybackAmt" value="{0}"> 
+                                            <apex:param value="{!renwWrapper.contract['Payback_Amount__c']}" /> 
+                                        </apex:outputText>
+<!--                                    ${!renwWrapper.contract['Payback_Amount__c']} -->
+                                   </td>
+                                   <td>{!renwWrapper.contract['Term_Months__c']}</td>
+                                   <td><apex:outputText iD="rENEWALdATE" value="{0,date,MM'/'dd'/'yyyy}"> 
+                                            <apex:param value="{!renwWrapper.contract['Estimated_Renewal_Date__c']}" /> 
+                                        </apex:outputText>
+                                   </td>
+                                   <td><apex:inputField styleClass="ratePerDayMarker"  Id="Bal" onchange="onChangeBalance('{!renwWrapper.contract.Id}',this.value);onChangeBalanceForAllOpp('{!renwWrapper.contract.Id}',this.value,'{!renwWrapper.contract.Current_Balance_Date__c}')" value="{!renwWrapper.contract['Balance__c']}"/></td>
+                                   <td>                      
+                                   
+                                   <apex:inputField value="{!renwWrapper.contract['Current_Balance_Date__c']}" onchange="onChangeBalanceDate('{!renwWrapper.contract.Id}',this.value);onChangeBalanceDateForAllOpp('{!renwWrapper.contract.Id}',this.value,'{!renwWrapper.contract.Balance__c}')" styleClass="balance{!renwWrapper.contract.Id}"/>
+                                   
+                                   </td>
+                                   <td style="padding:0">
+                                   <div style="float:left; width:110px">
+                                   <apex:outputField id="theImage" value="{!renwWrapper.contract['PaidImage__c']}" />
+                                   
+                                   </div>
+                                     <div style="float:right">
+                                        {!renwWrapper.contract['Term_Completed__c']}%
+                                    </div>
+                                   </td> 
+                                   
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>                       
+                </apex:outputPanel> 
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+                <br></br>
+            
+            <apex:commandButton rendered="{!setCon.hasPrevious}" value="first" action="{!setCon.first}"/>
+            <apex:commandButton rendered="{!setCon.hasPrevious}" value="Previous" action="{!setCon.previous}"/>
+            <apex:outputText rendered="{!(setCon.pageNumber * setCon.pageSize) < setCon.ResultSize}" value="{!setCon.pageNumber * setCon.pageSize} Of {!setCon.ResultSize}"></apex:outputText>
+            <apex:outputText rendered="{!(setCon.pageNumber * setCon.pageSize) >= setCon.ResultSize}" value="{!setCon.ResultSize} Of {!setCon.ResultSize}"></apex:outputText>
+            
+            <apex:commandButton rendered="{!setCon.hasNext}" value="next" action="{!setCon.next}"/>
+            
+            <apex:commandButton rendered="{!setCon.hasNext}" value="last" action="{!setCon.last}"/>
+      </apex:pageBlock>
+        </apex:outputPanel>
+	</apex:form>
+</apex:page>

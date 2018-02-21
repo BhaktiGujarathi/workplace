@@ -1,0 +1,361 @@
+<apex:component controller="McaApp.MCAOffersTabController" allowDML="true">
+
+    <apex:form id="records" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false"/>
+
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+
+      <script>
+
+        function runSaveAllOffers() {
+
+          setTimeout(function() {
+            saveAllOffers();
+          }, 1000);
+        }
+        
+        function runNewOffers() {
+
+          setTimeout(function() {
+            newOffers();
+          }, 1000);
+        }
+        
+        function runEditOffers() {
+
+          setTimeout(function() {
+            editOffers();
+          }, 1000);
+        }
+        t$(function () {
+            offerTabLabelOriginal = t$("[id*='offertab_lbl']").text();
+            computeOfferCalculations();
+        });
+        
+        function computeOfferCalculations() {
+            console.log('-----tab label component1----'+t$("[id*='offertab_lbl']").text());
+                var OffersTabLabel = 'Offers'+' ' ;//+ ' (' + {!containers.size} + ')';
+                t$("[id*='offertab_lbl']").text(OffersTabLabel);              
+                t$("[id*='offertab_lbl']").append('(' + {!containers.size} + ')');
+        }
+
+        function EmailOffers()
+        {            
+            window.open('{!DestURL}');            
+        }
+      </script>
+        <style>
+       .inputFieldCSS {
+                <!--padding-top: 0;-->
+                width: 55px;
+             }
+         #contentFrame {border:solid 1px #f00;} 
+       </style>
+        <apex:actionFunction action="{!saveAllOffers}" name="saveAllOffers" rerender="records,refreshComponent" status="loadingPanel" />
+        <apex:actionFunction action="{!newOffer}" name="newOffers" rerender="records,refreshComponent" status="loadingPanel" />
+        <apex:actionFunction action="{!editAll}" name="editOffers" rerender="records,refreshComponent" status="loadingPanel" />
+        
+        <apex:pageBlockButtons >
+
+            <input type="button" onclick="runNewOffers()" value="New Offer" class="btn"/>
+
+            <input type="button" onclick="runSaveAllOffers()" class="btn" value="Save"/>
+
+            <input type="button" onclick="runEditOffers()" value="Edit All" class="btn"/>
+
+            <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" ></apex:CommandButton>
+            <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" ></apex:CommandButton>
+            <apex:CommandButton action="{!refresh}" onclick="EmailOffers()" value="Send Offers" rerender="records,refreshComponent" status="loadingPanel"  immediate="true"></apex:CommandButton>
+
+        </apex:pageBlockButtons>
+
+        <apex:pageBlockSection columns="1" title="Offers ({!containers.size})" id="offers" collapsible="false">
+            <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+                <apex:inlineEditSupport event="ondblclick" />
+
+                <apex:column style="width:50px" styleClass="wrapperClass">
+
+                    <apex:outputLink value="/{!container.offer.Id}" target="blank" rendered="{!NOT(ISBLANK(container.offer.Id))}"> View </apex:outputLink>
+                        <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.offer.Id)),$ObjectType.McaApp__Offer__c.deletable)}"/>
+
+                        <apex:commandLink action="{!deleteOffer}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.offer.Id)),$ObjectType.McaApp__Offer__c.deletable)}" status="loadingPanel" >
+                            <apex:param name="recordToDelete" value="{!container.offer.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                            <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                        </apex:commandLink>
+
+                    <apex:commandLink value="Remove" action="{!removeOffer}" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.offer.Id))}" status="loadingPanel" >
+                        <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                    </apex:commandLink>
+
+                   <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputLabel value="High" /> <br />
+                            <apex:outputLabel value="Low" />
+                        </apex:outputPanel>
+                    </apex:facet>
+
+                </apex:column>
+
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Deal_Type__c.Label}" style="width:42px" styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Deal_Type__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.offer.McaApp__Deal_Type__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+                </apex:column>
+
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Amount__c.Label}" style="width:42px" styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}" />
+                    <apex:inputField value="{!container.offer.McaApp__Amount__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:80%"/>
+
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!fundingAmountHigh}" />
+                            </apex:outputText> <br />
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!fundingAmountLow}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+                
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Payoff_Amount__c.Label}" style="width:42px" styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Payoff_Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.offer.McaApp__Payoff_Amount__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!payOffAmountHigh}" />
+                            </apex:outputText> <br />
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!payOffAmountLow}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+                
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Net_Funded_Amount__c.Label}" style="width:42px" styleClass="wrapperClass">
+                    
+                    <apex:outputField value="{!container.offer.McaApp__Net_Funded_Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.offer.McaApp__Net_Funded_Amount__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!netAmountHigh}" />
+                            </apex:outputText> <br />
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!netAmountLow}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Payback_Amt__c.Label}" style="width:55px"  styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Payback_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.offer.McaApp__Payback_Amt__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:80%"/>
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!paybackHigh}" />
+                            </apex:outputText> <br />
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!paybackLow}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Rate__c.Label}" style="width:55px"  styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Rate__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}" style="width:55px"/>
+                    <apex:inputField value="{!container.offer.McaApp__Rate__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:55px"/>
+
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!rateHigh}" />
+                            </apex:outputText>
+                            <br />
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!rateLow}" />
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:column>
+
+                <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Term_Months__c.Label}" style="width:55px"  styleClass="wrapperClass">
+                    <apex:outputField value="{!container.offer.McaApp__Term_Months__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.offer.McaApp__Term_Months__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:80%"/>
+
+                    <apex:facet name="footer">
+                        <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                            <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                <apex:param value="{!termsHigh}" />
+                            </apex:outputText>
+                            <br />
+                        <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                            <apex:param value="{!termsLow}" />
+                        </apex:outputText>
+                    </apex:outputPanel>
+                </apex:facet>
+               </apex:column>
+          
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Holdback__c.Label}" style="width:55px" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Holdback__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Holdback__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:80%"/>
+
+           <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                  <apex:outputText value="{0, number, ###,###,###,##0.00}%">
+                    <apex:param value="{!holdbackHigh}" />
+                  </apex:outputText>
+              <br />
+                  <apex:outputText value="{0, number, ###,###,###,##0.00}%">
+                    <apex:param value="{!holdbackLow}" />
+                  </apex:outputText>
+            </apex:outputPanel>
+            </apex:facet>
+
+          </apex:column>
+
+         <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Payment_Amt__c.Label}" style="width:55px" styleClass="wrapperClass" >
+            <apex:outputField value="{!container.offer.McaApp__Payment_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Payment_Amt__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" style="width:80%"/>
+
+           <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!paymentAmountHigh}" />
+                  </apex:outputText>
+              <br />
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!paymentAmountLow}" />
+                  </apex:outputText>
+            </apex:outputPanel>
+            </apex:facet>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__PMT_Schedule__c.Label}" style="width:42px" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__PMT_Schedule__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__PMT_Schedule__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="" styleclass="input" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Origination_fee__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Origination_fee__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" styleClass="inputFieldCSS"/>
+
+             <apex:facet name="header">
+                 Orig.<br />Fee
+             </apex:facet>
+             
+             <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!originationFeeHigh}" />
+                  </apex:outputText>
+              <br />
+                  <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!originationFeeLow}" />
+                  </apex:outputText>
+            </apex:outputPanel>
+            </apex:facet>             
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Buy_Rate__c.Label}" styleclass="input" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Buy_Rate__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Buy_Rate__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" styleClass="inputFieldCSS"/>
+            <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!buyRateHigh}" />
+                </apex:outputText>
+                <br />
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!buyRateLow}" />
+                </apex:outputText>
+            </apex:outputPanel>
+        </apex:facet>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Expected__c.Label}" styleclass="input" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Expected__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Expected__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" styleClass="inputFieldCSS"/>
+         <apex:facet name="header">
+                 Expected <br /> %
+             </apex:facet>
+             <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!expectedHigh}" />
+                </apex:outputText>
+                <br />
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!expectedLow}" />
+                </apex:outputText>
+            </apex:outputPanel>
+        </apex:facet>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Payback_Funded__c.Label}" styleclass="input" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Payback_Funded__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Payback_Funded__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Referral_Payout__c.Label}" styleclass="input" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Referral_Payout__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Referral_Payout__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}" styleClass="inputFieldCSS"/>
+          <apex:facet name="header" >
+                 Referral <br />Payout %
+             </apex:facet>
+             <apex:facet name="footer">
+            <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!payoutHigh}" />
+                </apex:outputText>
+                <br />
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                    <apex:param value="{!payoutLow}" />
+                </apex:outputText>
+            </apex:outputPanel>
+        </apex:facet>
+          </apex:column>
+
+          <apex:column headerValue="Submission" styleClass="wrapperClass" >
+             <apex:selectList value="{!container.offer.McaApp__Submission__c}" size="1" id="values" rendered="{!OR((ISBLANK(container.offer.Id)),editAll)}">
+                 <apex:selectOptions value="{!submissionNames}"/>
+             </apex:selectList>
+              <apex:outputField value="{!container.offer.McaApp__Submission__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)),NOT(editAll))}">
+              <!--apex:inlineEditSupport disabled="true"/-->
+              </apex:outputField>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Funder__c.Label}" style="width:42px" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Funder__c}" >
+            <apex:inlineEditSupport disabled="true"/>
+            </apex:outputField>
+            
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Status__c.Label}" style="width:42px" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Status__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Status__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+          </apex:column>
+
+           <apex:column headerValue="{!$ObjectType.McaApp__Offer__c.Fields.McaApp__Details__c.Label}" style="width:100%" styleClass="wrapperClass">
+            <apex:outputField value="{!container.offer.McaApp__Details__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.offer.McaApp__Details__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll)}"/>
+
+          </apex:column>
+
+          
+        </apex:pageBlockTable>
+
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+</apex:component>

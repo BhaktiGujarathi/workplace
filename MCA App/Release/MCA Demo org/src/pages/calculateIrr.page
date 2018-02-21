@@ -1,0 +1,276 @@
+<apex:page controller="CalculateIRRController" showHeader="false" standardStylesheets="false" sidebar="true">
+    <head>
+        <style>
+        body {
+            background-color:#ffffff;  
+        }
+
+        .container { 
+            max-width: 100%;
+        }
+
+        a { 
+            display:block;
+            width:250px;
+            height:30px;
+            color: #0088DD;
+            text-decoration:none;
+            text-align:center;
+            font-size: 100px
+            outline: 0;
+        }
+        a:visited { color: #551a8b; border: none;
+            outline: none; }
+            a:hover { color: #06e; }​
+        a:hover {
+            color: #bdc3c7;
+            }
+        .form {
+            margin-top: -1em;
+          width: 100%;
+          background-color:#ffffff;
+          text-align:center;
+        }
+
+        td{
+            text-align:left;  
+            color: white;
+            font-size: 17px;
+            font-weight: normal;
+            font-family:Gill sans Mt,calibri;    
+        }
+
+
+        [type='text'] {
+              background-color:#eeeeee;
+              letter-spacing:2px;
+              font-size:28;
+              font-family:Gill sans Mt,calibri;
+              color: #0088dd;
+              border:none;
+              width: 50%;
+              height: 35px; 
+              line-height: 35px;
+              <!--
+              -->
+              margin-left:3%;
+              padding-left: 1em;
+              
+             <!-- padding-left: 1em;
+              font-family: Gill sans Mt,calibri;
+              text-color:white; 
+              height:26px; -->
+              
+            }
+            * {
+              font-family:Gill sans Mt,calibri;
+              font-size: 14pt;
+              color:#0088dd;  
+            }
+
+        [type='submit'] {
+            <!--
+                text-align: center;
+                color: white;
+                font-size:15pt;
+                background-color:  #0088dd;
+                align-center;
+                letter-spacing:2px;
+                border:none;
+                width:230px;
+                line-height:30px;
+                font-family:Gill sans Mt,calibri; -->
+                color: white;
+                font-size:15pt;
+                background-color: #0088dd;
+                align-center;
+                text-align:center;
+                border:none;
+                height:30px;
+                line-:height:30px;
+                width:235px;
+                font-weight:lighter;
+                font-family:Century Gothic;
+                letter-spacing: 2px;
+              
+             }
+              <!--  
+                font-weight: normal;
+                display: inline-block;
+                color: #fff !important;
+                text-decoration: none;
+                border: none;-->
+     
+            }
+                
+                [type='text']:focus {
+                 
+                  letter-spacing:1px;
+                  font-size:14pt;
+                  font-family:Century Gothic;
+                  color: #0088dd;
+                  border: 1;
+                 <!-- 
+                   padding-left: 1em;-->
+            }
+                .msg{
+                 text-color:red;
+                 font-style:italic; 
+                 font-size:14px;
+                }
+
+            h1{
+                font-family: Gill sans Mt,calibri;   
+                 <!--sans-serif; Century Gothic-->
+                color: #0088dd;
+                font-size:30pt;
+                font-weight:normal;
+                clear: both;
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                letter-spacing: 1px;       
+            }
+
+            h2{
+                font-family:Gill sans Mt, Calibri;
+                color: #0088dd;
+                font-size:12pt;
+                font-weight:normal;
+                clear: both;
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                letter-spacing: 2px;        
+            }
+
+            .field{
+                letter-spacing:2px;
+                font-size:12pt;
+                font-family:Gill sans Mt,calibri;
+                color:#0088dd;
+            }
+
+        link {
+            display: inline-block;
+            color: #fff !important;
+            text-decoration: none;
+            border: none;
+            color: white;
+            font-size: 18;
+            background-color: #2980b9;
+            width:275px;
+            align:center;
+            font-weight: normal;
+            font-family:Gill sans Mt,calibri;
+        }
+
+        </style>
+    </head>
+    <body bgcolor="#CEECF5">
+        <div class='container'>
+            <div class='form'>
+                <apex:form >
+                    <script>
+                        //jScript function called onchage of inputText with parameter "this"
+                        function myFunction(myValue){
+                        var afterCheck="";  //will contain only numeric value after removing comma and $
+                        pattAlpha=/[^0-9$,.]/gi; //regExp pattern to match the string contain only decimal or integer values     
+                        pattI=/[$,]/gi;         //patt to check is the string contain $ or , 
+                        var flag=true;
+                        var str=myValue.value;   
+                        //search if user input is numeric or not
+                        if(str.search(pattAlpha)!=-1){
+                            alert('Input must contain only numbers');   //if user input is not numeric 
+                        }
+                            // if user input contain $ or , in it remove them from the string and make it numeric only
+                        if(str.search(pattI)!=-1)
+                        {    flag=false;
+                           for(var i=str.length-1;i>=0;i--)
+                           {
+                               if(str[i]=="$"||str[i]==",")
+                                   continue;
+                               else
+                                   afterCheck=str[i]+afterCheck;  
+                           }
+                                               //alert(afterCheck);
+                         }
+                          //  if the input does not contain $ or , then after check should be the user input w/o any modification 
+                         if(flag==true)
+                            afterCheck=str;
+                         var myMoney=Number(afterCheck); //convert string to number
+                         var n=myMoney.toString();
+                         var patt=/[.]/gi;
+                         var index="";
+                         if(n.search(patt)!=-1)  //pattern found
+                         {
+                             index=n.length-n.indexOf(".");// index of decimal place will be used in function to tell how many no are there after . 
+                             index=index-1;
+                         }
+                         else 
+                            index=2;
+                         var formattedMoney = '$' + myMoney.formatMoney(index,',','.');
+                            myValue.value=formattedMoney ;
+                        } //end function myFunction
+                            
+                         Number.prototype.formatMoney = function(decPlaces, thouSeparator, decSeparator) {
+                            var n = this,
+                            decPlaces = isNaN(decPlaces = Math.abs(decPlaces)) ? 2 : decPlaces,
+                            decSeparator = decSeparator == undefined ? "." : decSeparator,
+                            thouSeparator = thouSeparator == undefined ? "," : thouSeparator,
+                            sign = n < 0 ? "-" : "",
+                            i = parseInt(n = Math.abs(+n || 0).toFixed(decPlaces)) + "",
+                            j = (j = i.length) > 3 ? j % 3 : 0;
+                            return sign + (j ? i.substr(0, j) + thouSeparator : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thouSeparator) + (decPlaces ? decSeparator + Math.abs(n - i).toFixed(decPlaces).slice(2) : "");
+                            }; 
+                    </script>
+                    <h1>XIRR CALCULATOR</h1>
+                    <span><apex:messages style="color:red; list-style-type: none;"/></span>
+                    <table width="80%" align="center">
+                        <tr>
+                          <td width="55%" ><h2 style="margin-left:40%">FUNDING AMOUNT</h2></td>
+                          <td><apex:inputText value="{!fundingAmountString}" required="true" label="Funding Amount" onchange="myFunction(this);"/></td>
+                      </tr>
+                      <tr>
+                          <td><h2 style="margin-left:40%">REPAYMENT AMOUNT</h2></td>
+                          <td><apex:inputText value="{!payBackAmtString}" required="true" label="Repayment Amount" onchange="myFunction(this);"/></td>
+                      </tr>
+                      <tr>
+                          <td><h2 style="margin-left:40%">TERM (MONTHS)</h2></td>
+                          <td><apex:inputText value="{!monthsString}" required="true" label="Term"/></td>
+                      </tr>
+                      <tr>
+                          <td><h2 style="margin-left:40%">FEES (REVENUE)</h2></td>
+                          <td><apex:inputText value="{!proccessFeeString}" label="Fees" onchange="myFunction(this);" /></td>
+                      </tr>
+                      <tr>
+                          <td><h2 style="margin-left:40%">COMMISSIONS (EXPENSES)</h2></td>
+                          <td><apex:inputText value="{!commissionAmtString}" label="Commissions" onchange="myFunction(this);" /></td>
+                      </tr>
+                    </table>
+                    <br/>
+                    <apex:outputPanel rendered="{!isIrrCalculated}" style="align:center">
+                    <table  width="100%">  
+                        <tr>
+                            <td  style="width:40%"> </td>
+                            <td  style="width:12%; letter-spacing:2px; font-family:Gill sans Mt,calibri; font-size:16pt;   color:#0088dd; text-align: right;">XIRR:</td>
+                            <td  style="width:8%;  letter-spacing:2px; font-family:Gill sans Mt,calibri; font-size:16pt;   color:#0088dd; text-align: left;"><apex:outputText value="{!calculatedIrr}"></apex:outputText></td>
+                            <td  style="width:40%"> </td> 
+                        </tr>
+                        <tr></tr>
+                    </table>
+                    <br/>
+                    </apex:outputPanel>
+                    <apex:commandButton value="CALCULATE XIRR" action="{!calc}" > </apex:commandButton><br/><br/>
+                    <apex:commandButton value="DOWNLOAD RESULT" action="{!downloadPdf}" rendered="{!isIrrCalculated}"></apex:commandButton>
+                </apex:form>
+            </div>
+
+            <div style="position:fixed; bottom:0; right:0; z-index: 999; background:white;">
+                <span style="letter-spacing:100;font-family:Gill sans Mt,calibri; color: #0088dd; font-size: 12pt;" >POWERED BY </span><apex:image url="{!$Resource.tinyLogo}" width="100" height="30" alt="Cloud My Biz"/>
+            </div>
+        </div>
+    </body>
+</apex:page>

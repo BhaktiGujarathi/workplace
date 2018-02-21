@@ -1,0 +1,899 @@
+<apex:page controller="DamacCompanyProfileController" action="{!init}">
+    <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+            <meta content="utf-8" http-equiv="encoding"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            <title>Agent Portal- Company Profile</title>
+            <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/damac-theme.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+            <style>
+                
+                .subcontainer{
+                padding:10px;
+                }
+                
+                .detailPage-section-heading{
+                padding:10px;
+                border-bottom:2px solid #0D80FC !important;
+                color: black !important;
+                font-weight: bold !important;
+                }
+                
+                .detailPage-label{
+                font-size: 12px !important;
+                font-family: Arial,sans-serif;
+                color:#A8A8A8 !important;
+                text-align:right !important;
+                }
+                
+                .detailPage-text{
+                font-size: 12px !important;
+                font-family: Arial,sans-serif;
+                color:black !important;
+                text-align:left !important;
+                }
+                
+                .detail-page-content-border{
+                border:1px solid  #F6F6F6;
+                }
+                
+                .border-bottom{
+                border-bottom:1px solid #F6F6F6;
+                }
+                
+                .custom-table thead > tr > th{
+                width:100px !important;
+                }
+                
+                .dataTables_filter{
+                width: 100% !important;
+                }
+                
+                /*Change specific to this page*/
+                @media only screen and (max-width: 767px){
+                .height-100vh {
+                width: 93vw !important;
+                margin:0px !important;
+                margin-top: 10px !important; 
+                }
+                
+                .role{
+                display:none !important;
+                }
+                }
+                
+                
+                .header-home{
+                background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Company_Profile.jpg')}') no-repeat !important;
+                -webkit-background-size: cover!important;
+                -moz-background-size: cover!important;
+                background-size: cover!important;
+                position:relative;
+                }
+            </style>
+        </head>
+        <body >
+            <div class="global-wrapper content-bg">
+                <apex:insert name="body">
+                    
+                    <section class="global-content-w-footer slds" id="company-profile-section">
+                        <div class="subcontainer">
+                            
+                            <div class="slds-grid slds-wrap">
+                                <apex:outputPanel rendered="{!$Permission.IsAdmin}" layout="Block" style="width:100%;text-align:center">
+                                    <apex:outputPanel rendered="{!isSRPending == false}" styleClass="slds-container--large slds-container--center slds-p-around--large">
+                                        <a href="apex/Process_Flow?FlowId={!registrationUpdatePageID}" class="slds-button slds-button--neutral">Edit</a>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel rendered="{!isSRPending == true}" styleClass="slds-container--large slds-container--center slds-p-around--large">
+                                        <a href="apex/Process_Flow?FlowId={!registrationUpdatePageID}&Id={!serviceRequestID}" class="slds-button slds-button--neutral">Pending SR</a>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </div>
+                            
+                            <apex:outputPanel id="individual" rendered="{!accountDetail.ispersonaccount}">
+                                <!-- Basic Information Section Individual-->
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                        Basic Information
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        First Name   
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.FirstName}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Last Name
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.LastName} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        ID Type
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.ID_Type__pc}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Broker Card Expiry Date
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Broker_Card_Expiry_Date__pc} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        ID Number
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.ID_Number__pc}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Broker Card Expiry Date
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Broker_Card_Number__pc} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        ID Expiry Date
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.ID_Expiry_Date__pc}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Designation
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Designation__pc} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Nationality
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Nationality__pc}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Eligible to Sell in Dubai
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Eligible_to_Sell_in_Dubai__pc} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            </apex:outputPanel>
+                            <apex:outputPanel id="corporate" rendered="{!not(accountDetail.ispersonaccount)}">
+                                <!-- Basic Information Section Corporate-->
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                        Basic Information
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Agency Name   
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Name}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Arabic Agency Name
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Agency_Name_Arabic__c} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Chat Name 
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Agency_Short_Name__c}
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Corporate Agency Type
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Corporate_Agency_Type__c} 
+                                    </div>
+                                </div>    
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                
+                                
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                        Incorporation Details
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Trade License Number
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Trade_License_Number__c}   
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Trade License Expiry Date
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        <apex:outputText value="{0,date,dd/MM/yyyy}"> 
+                                            <apex:param value="{!accountDetail.Trade_License_Expiry_Date__c}" /> 
+                                        </apex:outputText>  
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Date Of Incorporation
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        <apex:outputText value="{0,date,dd/MM/yyyy}"> 
+                                            <apex:param value="{!accountDetail.Date_of_Incorporation__c}" /> 
+                                        </apex:outputText>   
+                                    </div>
+                                    
+                                    
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        Country Of Incorporation
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.Country_of_Incorporation_New__c} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        ORN Number
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.ORN_Number__c} 
+                                    </div>
+                                    
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        City Of Incorporation
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        {!accountDetail.City_of_Incorporation_New__c} 
+                                    </div>
+                                </div>
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        RERA Expiry Date
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                            <apex:param value="{!accountDetail.RERA_Expiry_Date__c}"></apex:param>
+                                        </apex:outputText>
+                                    </div>
+                                    
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                        
+                                    </div>
+                                    <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                        
+                                    </div>
+                                </div>  
+                                <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            </apex:outputPanel>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                    Emails
+                                </div>
+                            </div>     
+                            
+                            
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Agency Email
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Agency_Email__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Alternate Agency Email
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Alternate_Agency_Email__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                    Additional Information
+                                </div>
+                            </div>  
+                            
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Witness Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Witness_Name__c} 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Witness Address
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Witness_Address__c} 
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Primary Language
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Primary_Language__c} 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Country of Sale
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Country_of_Sale__c} 
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>  
+                            
+                            
+                            <!-- Address section -->
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                    Address Information
+                                </div>
+                            </div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Address 1   
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Street__c} 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    City
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.City__c} 
+                                </div>
+                            </div>
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Address 2
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Street2__c} 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Country
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Country__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    State
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.State__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Fax
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Fax}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    P.O.Box/Zip/Postal Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.P_O_Box_Zip_Postal_Code__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    P.O.Box
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.P_O_Box_No__c}
+                                </div>
+                            </div>
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Zip/Postal Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Zip_Postal_Code__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Telephone
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Telephone__c}
+                                </div>
+                            </div>
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Mobile
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Agency_Mobile__c}
+                                </div>
+                            </div>   
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            
+                            
+                            <!-- Bank Details section -->
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                    Bank Details Section
+                                </div>
+                            </div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Beneficiary Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Beneficiary_Name__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Account Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Number__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Name__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Address
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Address__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Branch
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Branch__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    City 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_City__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Country 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Country__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank PO Box
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_PO_Box__c}
+                                </div>                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Zip Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Zip_Code__c}
+                                </div>  
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IBAN Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IBAN_Number__c}
+                                </div>  
+                            </div>
+                            
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IFSC Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IFSC_Code__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Swift Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Swift_Code__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Sort Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.SORT_Code_3__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Account Currency
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Currency__c}
+                                </div>
+                            </div>
+
+                            <!-- BANK 2 -->
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Beneficiary Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Beneficiary_Name_2__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Account Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Number_2__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Name_2__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Address
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Address_2__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Branch
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Branch_2__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    City 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_City_2__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Country 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Country_2__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank PO Box
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_PO_Box_2__c}
+                                </div>
+                                
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Zip Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Zip_Code_2__c}
+                                </div>  
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IBAN Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IBAN_Number_2__c}
+                                </div>  
+                            </div>
+                            
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IFSC Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IFSC_Code_2__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Swift Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Swift_Code_2__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Sort Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.SORT_Code_2__c}
+                                </div>
+                                
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Account Currency
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Currency__c}
+                                </div>
+                            </div>
+                            <!-- BANK 3 -->
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Beneficiary Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Beneficiary_Name_3__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Account Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Number_3__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Name
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Name_3__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Address
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Address_3__c}
+                                </div>
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Branch
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Branch_3__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    City 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_City_3__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Country 
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Country_3__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank PO Box
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_PO_Box_3__c}
+                                </div>
+                                
+                                
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Zip Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Zip_Code_3__c}
+                                </div>  
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IBAN Number
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IBAN_Number_3__c}
+                                </div>  
+                            </div>
+                            
+                            
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    IFSC Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.IFSC_Code_3__c}
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Swift Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Swift_Code_3__c}
+                                </div>
+                                
+                            </div>
+                            <div class="slds-size--12-of-12 detail-page-content-border"></div>
+                            <div class="slds-grid slds-wrap">
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Sort Code
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.SORT_Code_3__c}
+                                </div>
+                                
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label">
+                                    Bank Account Currency
+                                </div>
+                                <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text">
+                                    {!accountDetail.Bank_Account_Currency__c}
+                                </div>
+                            </div>
+                            
+                        </div>
+                        <div class="subcontainer">
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--12-of-12 section-header text-medium detailPage-section-heading">
+                                    Company Personnel
+                                </div>
+                            </div>
+                            
+                            <apex:repeat var="dataList" value="{!amendments}">
+                                <div class="accordion-container slds" style="margin:10px 0px">
+                                    <div class="accordion" style="padding:10px;background:#DEDEDE;color:Black;cursor:pointer;border:1px solid #ddd;">
+                                        {!dataList.Name}
+                                        <span class="role" style="display:{!IF((dataList.Portal_Administrator__c || dataList.Owner__c || dataList.Authorised_Signatory__c || dataList.Agent_Representative__c),'','none')}">(</span>
+                                        <span class="role" style="display:{!IF(dataList.Portal_Administrator__c,'','none')}">Portal Administrator</span>
+                                        <span class="role" style="display:{!IF(dataList.Portal_Administrator__c,'','none')}">,</span>
+                                        <span class="role" style="display:{!IF(dataList.Owner__c,'','none')}">Owner</span>
+                                        <span class="role" style="display:{!IF((dataList.Owner__c && (dataList.Authorised_Signatory__c || dataList.Agent_Representative__c) ) ,'','none')}">,</span>
+                                        <span class="role" style="display:{!IF(dataList.Authorised_Signatory__c,'','none')}">Authorised Signatory</span>
+                                        <span class="role" style="display:{!IF((dataList.Authorised_Signatory__c && dataList.Agent_Representative__c),'','none')}">,</span>
+                                        <span class="role" style="display:{!IF(dataList.Agent_Representative__c,'','none')}">Agent Representative</span>
+                                        <span class="role" style="display:{!IF((dataList.Portal_Administrator__c || dataList.Owner__c || dataList.Authorised_Signatory__c || dataList.Agent_Representative__c),'','none')}">)</span>
+                                        <img style="float:right;padding:8px;" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/tablesort-asc.gif')}"/>
+                                    </div>
+                                    <div class="accordion-detail slds-grid slds-wrap slds-wrap-override" style="padding:10px;display:none">
+                                        <apex:repeat var="fs" value="{!$ObjectType.Contact.FieldSets.Agency_Contact}">
+                                            
+                                            <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-label border-bottom">
+                                                {!fs.Label}
+                                            </div>
+                                            <div class="slds-size--6-of-12 slds-large-size--3-of-12 slds-p-around--small detailPage-text border-bottom">
+                                                <apex:outputField value="{!dataList[fs]}" />
+                                            </div>
+                                            
+                                            
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                            </apex:repeat>
+                            
+                            
+                            
+                            
+                        </div>
+                    </section> 
+                </apex:insert>
+            </div>
+            <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+            <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+            <script>
+            
+            
+            $(document).ready(function() {
+                $('.custom-table').DataTable({
+                    "bInfo": false,
+                    "pageLength": 10,
+                    "language": {
+                        "search": "<p class='SearchTitle'>Search</p>"
+                    },
+                    "lengthMenu": [10, 25, 50, 100],
+                    dom: 'lBfrtip',
+                    "oSearch": {"bSmart": false}
+                    
+                });
+                $('.custom-table tr>td>span>a').each(function(i, link){
+                    $(link).replaceWith($(link).text())
+                });
+                
+                $('.accordion').click(function(){
+                    $(this).closest('.accordion-container').siblings().find('.accordion-detail').each(function(){
+                        if($(this).css('display') == 'flex'){
+                            $(this).slideToggle();
+                        }
+                    });
+                    $(this).closest('.accordion-container').find('.accordion-detail').slideToggle();
+                });
+            });
+            </script>
+        </body>
+    </html>
+    
+</apex:page>

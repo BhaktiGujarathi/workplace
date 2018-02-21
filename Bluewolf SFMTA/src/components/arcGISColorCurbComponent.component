@@ -1,0 +1,314 @@
+<apex:component controller="SFMTAMappingSubController">
+    <apex:outputText rendered="{!init}"/>
+
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Color Curb</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.18/dijit/themes/claro/claro.css"/>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css"/>
+
+    <style>
+        .dj_ie .infowindow .window .top .right .user .content { position: relative; }
+        .dj_ie .simpleInfoWindow .content {position: relative;}
+
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow:hidden; }
+        #leftPane{
+        overflow:hidden;
+        border:none;
+        color:#5C832F;
+        }
+        #map{
+        border: 0 medium #382513;
+        padding:0;
+        }
+
+        .esriAttributeInspector{
+        atiLayerName:'Building Details'
+        }
+        .templatePicker{
+        border:none !important;
+        }
+        .templatePicker .grid .groupLabel{
+        display:none;
+        }
+    </style>
+
+    
+    <script>var dojoConfig = { parseOnLoad:true };</script>
+    
+    <script src="https://js.arcgis.com/3.18/"></script>
+    <script>
+
+
+        require([
+            "esri/map",
+            "esri/toolbars/draw",
+            "esri/toolbars/edit",
+            "esri/graphic",
+            "esri/Color",
+            "esri/config",
+            "esri/InfoTemplate",
+
+            "esri/layers/FeatureLayer",
+
+            "esri/symbols/SimpleMarkerSymbol",
+            "esri/symbols/SimpleLineSymbol",
+            "esri/symbols/SimpleFillSymbol",
+
+            "esri/tasks/RelationshipQuery",
+            "esri/tasks/QueryTask",
+            "esri/tasks/query",
+
+            "esri/dijit/editing/TemplatePicker",
+            "esri/dijit/AttributeInspector",
+
+            "dojo/_base/array",
+            "dojo/_base/event",
+            "dojo/_base/lang",
+            "dojo/parser",
+
+            "dijit/registry",
+            "dijit/form/Button",
+
+            "dijit/layout/BorderContainer", "dijit/layout/ContentPane",
+            "dijit/form/Button", "dojo/domReady!"
+        ], function(
+            Map, Draw, Edit, Graphic, Color, EsriConfig, InfoTemplate, 
+            FeatureLayer,
+            SimpleMarkerSymbol, SimpleLineSymbol, SimpleFillSymbol,
+            RelationshipQuery, QueryTask, Query, 
+            TemplatePicker, AttributeInspector, 
+            ArrayUtils, event, lang, Parser, 
+            Registry, Button
+      ) {
+
+        //require selection dijit
+        dojo.require("esri.map");
+        dojo.require("esri.dijit.editing.Editor-all");
+        dojo.require("dijit.layout.ContentPane");
+        dojo.require("dijit.layout.BorderContainer");
+        dojo.require("dijit.form.ValidationTextBox");
+
+        var caselong = "{!caselong}"; 
+        var caselat = "{!caselat}";
+        var caseId = "{!caseId}";
+        var caseNum = "{!caseNumber}";  
+        var isAdmin = "{!isAdmin}"
+        var fromDate = "{!fromDate}";
+        var toDate = "{!toDate}";
+        var selectedTemplate;
+        var map;
+      
+        function init() {
+            //This sample requires a proxy page to handle communications with the ArcGIS Server services. You will need to  
+            //replace the url below with the location of a proxy on your machine. See the 'Using the proxy page' help topic 
+            //for details on setting up a proxy page.
+            esri.config.defaults.io.proxyUrl = "/proxy/";
+            
+            //This service is for development and testing purposes only. We recommend that you create your own geometry service for use within your applications. 
+            esri.config.defaults.geometryService = new esri.tasks.GeometryService("{!geometryServer}");
+            
+            map = new esri.Map("map", { 
+                basemap: "topo",
+                center: [caselong, caselat],
+                zoom: 13,
+                slider: true
+            });
+            
+            dojo.connect(map, "onLayersAddResult", initEditor);
+            //Add the editable feature layer to the map
+            var allPOI = new esri.layers.FeatureLayer("{!colorCurbURLOAUTH}" + "?token=" + "{!generatedToken}",{
+                mode: esri.layers.FeatureLayer.MODE_ONDEMAND, 
+                outFields: ["*"]
+            });
+
+            var casePOI = new esri.layers.FeatureLayer("{!colorCurbURLOAUTH}" + "?token=" + "{!generatedToken}",{
+                mode: esri.layers.FeatureLayer.MODE_ONDEMAND, 
+                outFields: ["*"]
+            });
+
+            allPOI.setDefinitionExpression("CaseNumber != '" + caseNum + "'");
+            casePOI.setDefinitionExpression("CaseNumber = '" + caseNum + "'");
+            
+            if(isAdmin === 'true'){
+                dojo.connect(allPOI, "onUpdateEnd", function() {
+                    //var defaultSymbol = new esri.symbol.SimpleMarkerSymbol().setColor(new Color([0,0,255,0.0]));
+                    var defaultSymbol = new esri.symbol.SimpleMarkerSymbol();
+                    defaultSymbol.setStyle(SimpleMarkerSymbol.STYLE_CIRCLE);
+                    defaultSymbol.setSize(10);
+                    defaultSymbol.setColor(new Color([0,0,255,0.5]));
+
+                    dojo.forEach(this.graphics, function(graphic){
+                        graphic.setSymbol(defaultSymbol);
+                    });
+                });
+                
+                map.addLayers([casePOI, allPOI]);
+            }
+            else{
+                map.addLayers([casePOI]);
+            }
+        }
+
+        //partial functionality
+        function initEditor(results) {
+            //only one layer 
+            //var featureLayer = results[0].layer;
+            var featureLayer;
+            if(isAdmin === 'true'){
+                featureLayer = results[1].layer;
+            }
+            else{
+                featureLayer = results[0].layer;
+            }
+
+            var templatePicker = new esri.dijit.editing.TemplatePicker({
+                featureLayers: [featureLayer],
+                rows: "auto",
+                groupingEnabled:false,
+                columns: 1
+            },"templatePickerDiv");
+
+            templatePicker.startup();
+
+            templatePicker.on("selection-change", function() {
+                selectedTemplate = templatePicker.getSelected();
+            });
+
+            map.on("click", function(evt) {
+                if(selectedTemplate) {
+                    var incidentAttributes = {
+                        CaseNumber : caseNum,
+                        SalesforceCaseId : caseId,
+                        From_Date : fromDate,
+                        To_Date : toDate
+                    };
+                    var incidentGraphic = new Graphic(evt.mapPoint, null, incidentAttributes);
+                    featureLayer.applyEdits([incidentGraphic], null, null);
+                }
+            });
+
+            var button
+
+            featureLayer.on("click", function(evt) {
+                if(button){
+                    map.infoWindow.hide();
+                    button.destroy();
+                }
+
+                graphicAttributes = evt.graphic.attributes;
+                title = graphicAttributes.req_type;
+                content = "<b>Case Number</b> " + graphicAttributes.CaseNumber;
+                content += "</br><b>Salesforce Id</b> " + graphicAttributes.SalesforceCaseId;
+                content += "</br><b>From</b> " + graphicAttributes.From_Date;
+                content += "</br><b>To</b> " + graphicAttributes.To_Date;
+                content += "</br><button id='deleteEntryButton' type='button'></button>";
+                map.infoWindow.setTitle(title);
+                map.infoWindow.setContent(content);
+                map.infoWindow.show(evt.screenPoint, map.getInfoWindowAnchor(evt.screenPoint));
+
+                button = new dijit.form.Button({         
+                    label: "Delete",         
+                    onClick: function(){             
+                        featureLayer.applyEdits(null,null,[evt.graphic]); 
+                        map.infoWindow.hide();
+                        button.destroy();
+                    }     
+                }, "deleteEntryButton");    
+
+                //delete feature if ctrl key is depressed
+                if (evt.ctrlKey === true || evt.metaKey === true) {  
+                    featureLayer.applyEdits(null,null,[evt.graphic]);
+                    map.infoWindow.hide();
+                    button.destroy();
+                }                 
+            });
+
+            /*
+            var layerInfos = [{
+                "featureLayer":featureLayer,
+                "showAttachments":false,
+                "showDeleteButton":false,
+                "fieldInfos":[
+                    {"fieldName":"CaseNumber","label":"Case Number", "isEditable": false, "value":"test"},
+                    {"fieldName":"SalesforceCaseId","label":"Case Id", "isEditable": false},
+                    {"fieldName":"From_Date","label":"From", "isEditable": false},
+                    {"fieldName":"To_Date","label":"To", "isEditable": false}
+                ]
+            }];   
+            
+            //define the editor settings
+            var settings = {
+                map: map,
+                templatePicker:templatePicker,
+                layerInfos:layerInfos
+            };
+            var params = {settings: settings};
+            //Create the editor widget 
+            var editorWidget = new esri.dijit.editing.Editor(params);
+            editorWidget.startup();
+            */
+
+            //resize the info window (attribute inspector)
+            //map.infoWindow.resize(295,245);
+        }
+
+        dojo.ready(init);
+    });
+    </script>
+  </head>
+    <apex:outputPanel id="headerStyling" rendered="{!IF(isInternal=='true',false,true)}">
+    <div class="profileMenuRegion" data-aura-rendered-by="147:0" style="padding:10px;">&nbsp;</div>
+
+    <div class="newHeader" data-aura-rendered-by="149:0">
+        <div data-region-name="newHeader" data-item-id="51612923-902e-40c3-85e3-81c75b287cfa" data-aura-rendered-by="94:0">
+            <div class="ui-widget" data-aura-rendered-by="91:0">
+                <div data-aura-rendered-by="82:0" class="forceCommunityRichText" data-aura-class="forceCommunityRichText">
+                    <div dir="ltr" data-aura-rendered-by="86:0" class="uiOutputRichText forceOutputRichText" data-aura-class="uiOutputRichText forceOutputRichText">
+                        <p data-aura-rendered-by="87:0">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<img src="https://bwdev-customer.cs33.force.com/s/SFMTA-13-Logo-ONLINE-RGB-PNG-228459.png" class="sfdcCbImage"/></p> 
+                        <p data-aura-rendered-by="87:0">&nbsp;</p> 
+                        <p data-aura-rendered-by="87:0">&nbsp;</p> 
+                        <!--render facet: 87:0-->
+                    </div>
+                    <div class="clear" data-aura-rendered-by="89:0"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation" data-aura-rendered-by="151:0">
+        <div data-region-name="navBar" data-item-id="8f17a0aa-69a5-4c49-953e-219eed035df8" data-aura-rendered-by="76:0">
+            <div class="ui-widget" data-aura-rendered-by="73:0"><!--render facet: 68:0--><!--render facet: 70:0-->
+                <nav data-aura-rendered-by="1:21;a" class="forceCommunityNavigationMenu" data-aura-class="forceCommunityNavigationMenu" style="border-top: 1px solid #aaaaaa; background: rgba(0, 0, 0, 0.2);">
+                    <div class="navigationMenuWrapper" data-aura-rendered-by="13:21;a">
+                        <ul class="navigationMenu" id="navigationMenu" data-aura-rendered-by="14:21;a">
+                            <!--<li class="navigationMenuNode uiMenuItem" role="presentation" data-aura-rendered-by="32:21;a" data-aura-class="uiMenuItem">
+                                <div class="menuItem" data-aura-rendered-by="34:21;a">
+                                    <a class="menuItemLink" role="menuitem" tabindex="0" title="My Open Cases" href="https://bwdev-customer.cs33.force.com/s/case/50035000000nRjNAAU" data-aura-rendered-by="35:21;a">Back</a>
+                                </div>
+                            </li>-->
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </div>
+    </apex:outputPanel>
+      <body class="claro">
+            <div data-dojo-type="dijit/layout/ContentPane" id="header" data-dojo-props="region:'top'" style="text-align: center;">
+                <span style="color:#008000"><strong>Color Curb</strong>: Case: {!caseNumber} </span>
+            </div>
+            
+            <div data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'left'" style="width:100%;overflow:hidden;">  
+                <div id="templatePickerDiv"></div>
+                <!--<div id="editorDiv" ></div>-->
+            </div>
+            <div data-dojo-type="dijit/layout/ContentPane" id="map" data-dojo-props="region:'center'" style ="width:100%;height:500px;"></div>
+      </body>
+
+    </html>
+
+</apex:component>

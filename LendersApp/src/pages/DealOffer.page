@@ -1,0 +1,1038 @@
+<apex:page standardController="Opportunity" extensions="DealOfferController" sidebar="false" title="{!opp.Name} - Add Offers" tabStyle="Opportunity">
+    <style>
+        .rich-tabhdr-side-cell {
+            height: 30px;
+            font-weight: bold;
+            font-size: 13px;
+            vertical-align: middle;
+        }
+
+        .tabActiveClass {
+            background-color: white;
+            color: #015ba7;
+            background-image:none;
+        }
+
+        .tabInActiveClass {
+            background-color: #dceff4;
+            color: #015ba7;
+            background-image:none;
+        }
+
+        body .bPageBlock, body .secondaryPalette.bPageBlock {
+            background-color: white !important;
+        }
+
+        .rich-tabpanel-content {
+            background-color: white;
+        }
+
+        .pbTitle {
+            white-space: nowrap !important;
+        }
+    </style>
+    <!--<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>-->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <script>
+
+        j$ = jQuery.noConflict();
+        //Check All unCheck All function
+
+        var _showTermDays = {!showTermDays};
+        var BUSINESS_DAYS = {!numberOfBusinessDays};
+
+
+        function removeSpecialChars(val) {
+
+            val = val.replace(/,/g,"");
+            
+            if (val.indexOf('.') != -1) {
+
+                val = val.split('.')[0];
+            }
+
+            return val;
+        }
+
+
+        function checkBoxSelection(selectVal,className) {
+
+            //Get all checkbox elements
+            var selElements = document.getElementsByClassName(className);
+            
+            for (var i = 0; i < selElements.length; i++) {
+
+                selElements[i].checked = selectVal.checked;
+            }
+        }
+
+        function numberWithCommas(x) {
+
+            return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+        //Calculate monthly pb
+        function calculateMonthlyPB(monthpbId, pbId, termId, holdbackId, dailyPBAmtId, perGrossId, dailyAchId, dealTypeId) {
+
+            var pb = document.getElementById(pbId).value;
+            var term = document.getElementById(termId).value;
+
+            if (_showTermDays) {
+
+                term = term / BUSINESS_DAYS;
+            }
+
+            //payback / term
+            if (pb != null && term != null && term != 0) {
+                var mon = pb / term;
+                document.getElementById(monthpbId).value = mon.toFixed(2);
+            }
+            else {
+
+                document.getElementById(monthpbId).value = 0;
+            }
+
+            //Calculate monthly pb amt dependent values
+            monthlyPBAmtOnchange(monthpbId, holdbackId, dailyPBAmtId, perGrossId, dailyAchId, dealTypeId);
+        }
+
+        //Max factor rate on change
+        function rateOnchange(termId,payBackId,monthPB,facMonth,maxFRate,fundedId,dealLenId,holdbackId,dailyPBAmtId,perGrossId,dailyAchId,dealTypeId) {
+
+            var rate = document.getElementById(maxFRate).value;
+
+            //Error if non numeric character  exists
+            if ((rate.indexOf(".") > -1 && !rate.match("^[0-9]\.[0-9]+$")) || (rate.indexOf(".") <= -1 && !rate.match("^[0-9]+$"))) {
+
+                //console.log('dsnt match-rate on change');
+                return;
+            }
+
+            //Calculate factor per Month
+            calculateFactorPerMonth(facMonth, maxFRate, termId, false);
+
+            //Calculate Payback & other dependent values
+
+            fundedOnchange(fundedId, payBackId, maxFRate, monthPB, termId, holdbackId, dailyPBAmtId, perGrossId, true, dailyAchId, dealTypeId);
+        }
+
+        //Calculate Daily ACH
+        function calculateDailyACH(dailyAchId,monthlyPBId,holdbackId,dealTypeId) {
+
+            var monthlyPb = document.getElementById(monthlyPBId).value.replace(/,/g,"");
+            var dealTypeVal = document.getElementById(dealTypeId).value;
+
+            //if ACH then daily ACH = Daily PB = MonthlyPB/21
+            if (dealTypeVal == 'ACH' && monthlyPb != null && monthlyPb != '') {
+
+                document.getElementById(dailyAchId).value = monthlyPb / BUSINESS_DAYS;
+            }
+            else if (dealTypeVal == 'MCA') {
+
+                document.getElementById(dailyAchId).value = '';
+            }
+            else if (dealTypeVal == 'Hybrid') {
+
+                var adjMonthCC = document.getElementById('{!$Component.fmId.adjmonthlyCCSalesID}').value.replace(/,/g,"");
+                var monthCC = document.getElementById('{!$Component.fmId.monthlyCCSalesID}').value.replace(/,/g,"");
+                var holdback = document.getElementById(holdbackId).value;
+
+                if (monthCC.indexOf('.') != -1) {   
+                    monthCC = monthCC.split('.')[0];
+                }
+
+                //calculate daily ACH from adjusted monthly cc sales
+                if (adjMonthCC != null && adjMonthCC != '' && monthlyPb != null && monthlyPb != '' && holdback != null && holdback != '') {
+
+                    var adjHoldbck = (adjMonthCC * holdback) / 100;
+                    var finalOp = (monthlyPb - adjHoldbck) / BUSINESS_DAYS;
+                    document.getElementById(dailyAchId).value = finalOp.toFixed(2);
+                }
+
+                else if (monthCC != null && monthCC != '' && monthlyPb != null && monthlyPb != '' && holdback != null && holdback != '') {
+
+                    var monthHoldbck = (monthCC * holdback) / 100;
+                    var finalOp =  (monthlyPb - monthHoldbck) / BUSINESS_DAYS;
+                    document.getElementById(dailyAchId).value = finalOp.toFixed(2);
+                }
+
+            }
+        }
+
+        function calculateFundedOverride() {
+
+            var elemsFunded = document.getElementsByClassName('fundedClass');//get each row offer funded
+            var elemsTerm = document.getElementsByClassName('termClass');//get each row offer term values
+            var elemsRate = document.getElementsByClassName('rateClass');//get each row offer rate values
+            var elemsPB = document.getElementsByClassName('paybackClass');//get each row offer PB values
+            var elemsMonthPB = document.getElementsByClassName('monthlyPBAmountClass');//get each row offer monthly pb values
+            var elemsPerGross = document.getElementsByClassName('percentageofGrossClass');//get each row offer % gross values
+            var elemsHoldback = document.getElementsByClassName('holdbackClass');
+            var elemsDailyPBAmount = document.getElementsByClassName('dailyPBAmountClass'); // Daily PB Amt
+            var elemsAmtReq = document.getElementsByClassName('amtReqClass');
+            var elemsdealType = document.getElementsByClassName('dealTypeClass');
+            var elemsdealACH = document.getElementsByClassName('dealACHClass');
+
+            for (var i = 0; i < elemsFunded.length; i++) {
+
+                calculateFunded(elemsFunded[i].id, elemsTerm[i].id, elemsRate[i].id, elemsPB[i].id, elemsMonthPB[i].id, elemsHoldback[i].id, elemsDailyPBAmount[i].id, elemsPerGross[i].id,false, elemsAmtReq[i].checked, elemsdealACH[i].id, elemsdealType[i].id);
+            }
+
+            offerRender();
+        }
+
+
+        //Calculate Funded
+        function calculateFunded(fundedId, termId, maxFRate, paybackId, monthlyPBId, holdbackId, dailyPBAmtId, perGrossId, flag, amtReq, dailyAchId, dealTypeId) {
+
+            var rate = document.getElementById(maxFRate).value;
+            var maxMonthpmt = document.getElementById('{!$Component.fmId.MaxmonthlypmtID}').value.replace(/,/g,"");
+            var term = document.getElementById(termId).value;
+            var overrideFunded = j$('[id$=overrideFunded]').val();
+            overrideFunded = overrideFunded.replace(/,/g,"");
+            
+            if (overrideFunded.length > 0) {
+                
+                document.getElementById(fundedId).value = overrideFunded;
+            }
+            else {
+                
+                if (maxMonthpmt == 'undefined') {
+
+                    maxMonthpmt = '0';
+                }
+
+                var tmp = document.getElementById(fundedId);
+                j$(tmp).parent().parent().find('maxPercentageofGrossClass').val();
+
+                var masterMaxGross = j$(tmp).parent().parent().find('.maxPercentageofGrossClass').val(); 
+
+
+                if (masterMaxGross != null && masterMaxGross > 0) {
+
+                    masterMaxGross = masterMaxGross / 100;
+
+                    var monthlyGrossSales = {!IF(opp.McaApp__Gross_monthly_Sales__c <> null, opp.McaApp__Gross_monthly_Sales__c, 0)};
+                    var adjustedMonthlyGrossSales = document.getElementById('{!$Component.fmId.adjMonthlyGrossSalesId}').value;
+                    adjustedMonthlyGrossSales = removeSpecialChars(adjustedMonthlyGrossSales);
+
+                    if (adjustedMonthlyGrossSales != null && adjustedMonthlyGrossSales != '') {
+
+                        maxMonthpmt = adjustedMonthlyGrossSales * masterMaxGross;
+
+                        console.log(adjustedMonthlyGrossSales);
+                        console.log(masterMaxGross);
+                    }
+                    else if (monthlyGrossSales != null && monthlyGrossSales != '') {
+
+                        maxMonthpmt = monthlyGrossSales * masterMaxGross; 
+                    }
+                }
+
+                if (_showTermDays) {
+                    maxMonthpmt = maxMonthpmt / BUSINESS_DAYS;
+                }
+
+                if (!amtReq && rate != null && maxMonthpmt != null && term != null && rate != 0) {
+                    
+                    var funded = Math.round((term * maxMonthpmt) / rate);
+                    
+                    var modFunded = funded % 500;
+                    
+                    if (modFunded != 0) {
+                        
+                        if (modFunded < 250) {
+
+                            funded = funded - modFunded;
+                        }
+                        else if (modFunded >= 250) {
+
+                            funded = funded - modFunded + 500;
+                        }
+                    }
+
+                    document.getElementById(fundedId).value = funded;
+                }
+            }
+
+            //Calculate dependent values after funded change
+            fundedOnchange(fundedId, paybackId, maxFRate, monthlyPBId, termId, holdbackId, dailyPBAmtId, perGrossId, flag, dailyAchId, dealTypeId);
+        }
+
+        //Calculate factor per month
+        function calculateFactorPerMonth(facMonth, maxFRate, termId, flag) {
+
+            var rate = document.getElementById(maxFRate).value;
+            var term = document.getElementById(termId).value;
+
+            if (_showTermDays) {
+                term = term / BUSINESS_DAYS;                
+            }
+
+            if (rate != null && term != null && term != 0) {
+
+                permonth = ((rate - 1) / term) * 100;
+                document.getElementById(facMonth).value = permonth.toFixed(2);
+            }
+
+            if (flag) {
+
+                offerRender();
+                offerRender1();
+            }
+        }
+
+        //Method to Calculate Payback, Monthly PB Amount, Factor/month
+        function termOnChange(termId, payBackId, monthPB, facMonth, maxFRate, fundedId, dealLenId, holdbackId, dailyPBAmtId, perGrossId, dailyAchId, dealTypeId) {
+
+            var maxMonthpmt = document.getElementById('{!$Component.fmId.MaxmonthlypmtID}').value.replace(/,/g,"");
+            var rate = document.getElementById(maxFRate).value;
+            var term = termId.value;
+
+            //Calculate funded
+            calculateFunded(fundedId, termId.id, maxFRate, payBackId, monthPB, holdbackId, dailyPBAmtId, perGrossId, false, false, dailyAchId, dealTypeId); //Calculates funded, payback, monthly PB
+
+            //Calculate Factor per month
+            calculateFactorPerMonth(facMonth, maxFRate, termId.id, false);
+
+            //calculate deal length
+            calculateDealLength(termId.id, dealLenId, true);
+
+        }
+
+        //Calculate Deal Length
+        function calculateDealLength(termId,dealLenId,flag) {
+
+            var term = document.getElementById(termId).value
+            var today = new Date();
+            var futureDate = new Date();
+
+            if (_showTermDays) {
+                
+                document.getElementById(dealLenId).value = term;                
+            }
+            else {
+
+                var termDays = term * BUSINESS_DAYS;
+
+                //var termDays = Math.round(term * 30.4368);            
+                //futureDate.setDate(futureDate.getDate() + termDays);
+                //if (term != null) {
+                    // var dLen = calculateWorkingDays(today, futureDate);
+                    document.getElementById(dealLenId).value = termDays;
+                // }
+            }
+
+            if (flag) {
+
+                offerRender();
+                offerRender1();
+            }
+        }
+
+        function calculateWorkingDays(startDate, endDate) {
+
+
+            var workingdays = 0;
+            var sd = new Date(startDate);
+            var ed = new Date(endDate);
+            var weekday = new Array(7);
+
+
+            weekday[0] = "Sunday";
+            weekday[1] = "Monday";
+            weekday[2] = "Tuesday";
+            weekday[3] = "Wednesday";
+            weekday[4] = "Thursday";
+            weekday[5] = "Friday";
+            weekday[6] = "Saturday";
+
+            while (sd <= ed) {
+
+                var day = weekday[sd.getDay()];
+
+                if (day != "Saturday" && day != "Sunday") {
+
+                    workingdays++;
+                }
+
+                sd.setDate(sd.getDate() + 1);
+            }
+
+            return workingdays;
+
+        }
+
+        //Calculate values when Funded changes
+        function fundedOnchange(fundedId, paybackId, rateId, monthlyPBId, termId, holdbackId, dailyPBAmtId, perGrossId, flag, dailyAchId, dealTypeId) {
+
+            var rate = document.getElementById(rateId).value;
+            var funded = document.getElementById(fundedId).value.replace(/,/g,"");
+            var payback = document.getElementById(paybackId);
+
+            //Calculate Payback
+            if (rate != null && funded != null) {
+                var pb =  funded * rate;
+                payback.value = pb.toFixed(2);
+            }
+
+
+
+            var auxFunded = document.getElementById(fundedId).value;
+            var auxOriginationFee = document.getElementById(fundedId).parentNode.parentNode.getElementsByClassName('origFee1');
+            var auxOriginationFeePer = document.getElementById(fundedId).parentNode.parentNode.getElementsByClassName('origFeePer1');
+
+            auxOriginationFee[0].value = Number(auxFunded.replace(/,/g,'')) * Number(auxOriginationFeePer[0].value.replace(/,/g,'')) / 100;
+
+
+
+            payBackOnchange(fundedId, paybackId, rateId, monthlyPBId, termId, holdbackId, dailyPBAmtId, perGrossId, flag, dailyAchId, dealTypeId);
+        }
+
+        //Calculate dependent values on Monthly PB change
+        function monthlyPBAmtOnchange(monthPBAmtId, holdbackId, dailyPBAmtId, perGrossId, dailyAchId, dealTypeId){
+
+            var monthPBAmt = document.getElementById(monthPBAmtId).value.replace(/,/g,"");
+            var adjmonthCCSale = document.getElementById('{!$Component.fmId.adjmonthlyCCSalesID}').value.replace(/,/g,"");
+
+            calculateHoldback(monthPBAmtId, document.getElementById('{!$Component.fmId.adjmonthlyCCSalesID}').id, holdbackId, dailyAchId, dealTypeId);
+
+            //Calculate Daily PB Amount
+            calculateDailyPB(dailyPBAmtId, monthPBAmtId);
+
+            //Calculate % gross
+            calculatePerGross(perGrossId, monthPBAmtId);
+        }
+
+        //calculate Daily PB
+        function calculateDailyPB(dailyPBAmtId, monthPBAmtId) {
+
+            var monthPBAmt = document.getElementById(monthPBAmtId).value.replace(/,/g,"");
+
+            if (monthPBAmt != null) {
+
+                var daily = monthPBAmt / BUSINESS_DAYS;
+
+                document.getElementById(dailyPBAmtId).value = daily.toFixed(2);
+            }
+        }
+
+        //Calculate holdback
+        function calculateHoldback(monthPBAmtId,adjmonthCCSaleId,holdbackId,dailyAchId,dealTypeId){
+
+            var monthPBAmtVal = document.getElementById(monthPBAmtId).value;
+            var monthPBAmt;
+
+            if (monthPBAmtVal != null) {
+
+                monthPBAmt = monthPBAmtVal.replace(/,/g,"");
+            }
+
+            var adjmonthCCSaleVal = document.getElementById(adjmonthCCSaleId).value;
+            var adjmonthCCSale;
+
+            if (adjmonthCCSaleVal != null) {
+
+                adjmonthCCSale = adjmonthCCSaleVal.replace(",","");
+
+                adjmonthCCSale = adjmonthCCSaleVal.replace(/,/g,"");
+            }
+            
+            //get monthlyCCSales
+            var monthCCSale = document.getElementById('{!$Component.fmId.monthlyCCSalesID}').value.replace(/,/g,"");
+
+
+            if (adjmonthCCSale.indexOf('.') != -1) {
+            
+                adjmonthCCSale = adjmonthCCSale.split('.')[0];
+            }
+
+            if (monthCCSale.indexOf('.') != -1) {
+            
+                monthCCSale = monthCCSale.split('.')[0];
+            }
+
+            if (parseInt(0 + j$('.maxHoldbackAmount').val()) > 0) {                        
+            
+                maxHoldbackAmount = parseInt(0 + j$('.maxHoldbackAmount').val());
+            }
+            else {
+            
+                maxHoldbackAmount = 100;
+            }
+
+            //Calculate Holdback
+            if (monthPBAmt  != null && monthPBAmt != '' && adjmonthCCSale  != null && adjmonthCCSale  != '' && adjmonthCCSale != 0) {
+
+                var hldVal = (monthPBAmt / adjmonthCCSale) * 100;
+
+                if (hldVal > 100) {
+            
+                    hldVal = 99;                         
+                }
+
+                if (hldVal > maxHoldbackAmount) {
+            
+                    hldVal = maxHoldbackAmount;                         
+                } 
+
+                if (hldVal.toFixed(2) < 100) {
+            
+                    document.getElementById(holdbackId).value = hldVal.toFixed(2);
+                }
+                else {
+            
+                    document.getElementById(holdbackId).value = 99;
+                }
+
+                var hldValinputId = holdbackId + 'NonDec';
+
+                var auxAmountNonDec = parseFloat(hldVal).toFixed(0);
+
+                if (auxAmountNonDec >= 100) {
+            
+                    auxAmountNonDec = 99;
+                }
+
+                if (auxAmountNonDec > maxHoldbackAmount) {
+            
+                    auxAmountNonDec = maxHoldbackAmount;                         
+                } 
+
+                document.getElementById(hldValinputId).value = auxAmountNonDec;
+            }
+            else if (monthCCSale != null && monthCCSale != '' && monthCCSale != 0) {
+
+                var hldVal1 = (monthPBAmt / monthCCSale) * 100;
+
+                if (hldVal1 > 100) {
+                    
+                    hldVal1 = 99;                         
+                }
+
+                if (hldVal1 > maxHoldbackAmount) {
+                    
+                    hldVal1 = maxHoldbackAmount;                         
+                }                
+
+                if (hldVal1 < 100) {
+                    
+                    document.getElementById(holdbackId).value = hldVal1.toFixed(2);
+                }
+                else {
+                    
+                    document.getElementById(holdbackId).value = 99;
+                }
+
+                var hldValinputId = holdbackId + 'NonDec';
+
+                var auxAmount = parseFloat(hldVal1).toFixed(0);
+
+                if (auxAmount >= 100) {
+                    
+                    auxAmount = 99;
+                }
+
+                if (auxAmount > maxHoldbackAmount) {
+                    
+                    auxAmount = maxHoldbackAmount;                         
+                }
+
+                document.getElementById(hldValinputId).value = auxAmount;
+            }
+            else {
+
+                var hldValinputId = holdbackId + 'NonDec';
+                document.getElementById(hldValinputId).value = "";   
+            }
+
+            //Calculate Daily ACH
+            calculateDailyACH(dailyAchId, monthPBAmtId, holdbackId, dealTypeId);
+        }
+
+        //Assin holdback value
+        function holdbackOnchange(holdbackNonDec, holdbackId, monthlyPBId, dailyAchId, dealTypeId) {
+
+            document.getElementById(holdbackId).value = holdbackNonDec.value;
+
+            //Error if non numeric character  exists
+            if (!holdbackNonDec.value.match("^[0-9]+$")) {
+
+                // console.log('dsnt match-holdback on change');
+                return;
+            }
+
+            //Calculate Daily ACH
+            calculateDailyACH(dailyAchId, monthlyPBId, holdbackId, dealTypeId);
+        }
+
+        //Calculate values when payback changes
+        function payBackOnchange(fundedId, paybackId, rateId, monthlyPBId, termId, holdbackId, dailyPBAmtId, perGrossId, flag, dailyAchId, dealTypeId) {
+            
+            var rate = document.getElementById(rateId).value;
+            var pb = document.getElementById(paybackId).value;
+
+            calculateMonthlyPB(monthlyPBId, paybackId, termId, holdbackId, dailyPBAmtId, perGrossId, dailyAchId, dealTypeId);
+
+            if (flag) {
+
+                offerRender();
+                offerRender1();
+            }
+
+        }
+
+        //Calculate dependent fields on max Percent gross onchange
+        function maxPercentGrossOnChange(maxmonthlypmtID, maxPercentGrossId, adjMonthlyGrossSalesId, flag) {
+
+
+            //get month Gross sales
+            var monthGrossSale = document.getElementById('{!$Component.fmId.monthlyGrossSalesID}').value.replace(/,/g,"");
+            //Calculate max Monthly Pmt = Max % Gross * Adjusted Monthly Gross Sales
+            var currentMaxPerG = document.getElementById(maxPercentGrossId).value.replace(/,/g,"");
+            var currentAdjMonthGross = document.getElementById(adjMonthlyGrossSalesId).value.replace(/,/g,"");
+
+            //Error if non numeric character  exists
+            if (!currentMaxPerG.match("^[0-9]+$")) {
+
+                // console.log('Does not match');
+                return;
+            }
+
+            //Calculate Max Monthly Pmt if Adjusted Monthly Gross Sales not null
+            var maxMonthPmt;
+            if (currentMaxPerG != '' && currentMaxPerG != null && currentAdjMonthGross != null && currentAdjMonthGross != '') {
+
+                maxMonthPmt = (currentMaxPerG  * currentAdjMonthGross) / 100;
+            }
+
+            //Calculate if Adjusted Monthly Gross Sales null & Monthly Gross Sales not null
+            else if (monthGrossSale != null && monthGrossSale != '' && currentMaxPerG != '' && currentMaxPerG != null) {
+                maxMonthPmt = (currentMaxPerG  * monthGrossSale) / 100;
+            }
+
+
+            if (maxMonthPmt != null && maxMonthPmt != '') {
+
+                document.getElementById(maxmonthlypmtID).value = numberWithCommas(maxMonthPmt.toFixed(0));
+                document.getElementById('{!$Component.fmId.maxmonthlypmtID}').value = maxMonthPmt.toFixed(0);
+            }
+            else {
+            
+                maxMonthPmt = 0;
+                document.getElementById(maxmonthlypmtID).value = numberWithCommas(maxMonthPmt.toFixed(0));
+                document.getElementById('{!$Component.fmId.maxmonthlypmtID}').value = maxMonthPmt.toFixed(0);
+            }
+
+            //Calculate max Monthly Pmt dependent field values
+            maxMonthlypmtOnchange(maxmonthlypmtID, flag);
+        }
+
+        //Calculate max Monthly Pmt dependent field values on change
+        function maxMonthlypmtOnchange(maxmonthlypmtID, flag) {
+
+            //Calculate all offer funded values
+            var elemsFunded = document.getElementsByClassName('fundedClass');//get each row offer funded
+            var elemsTerm = document.getElementsByClassName('termClass');//get each row offer term values
+            var elemsRate = document.getElementsByClassName('rateClass');//get each row offer rate values
+            var elemsPB = document.getElementsByClassName('paybackClass');//get each row offer PB values
+            var elemsMonthPB = document.getElementsByClassName('monthlyPBAmountClass');//get each row offer monthly pb values
+            var elemsPerGross = document.getElementsByClassName('percentageofGrossClass');//get each row offer % gross values
+            var elemsHoldback = document.getElementsByClassName('holdbackClass');
+            var elemsDailyPBAmount = document.getElementsByClassName('dailyPBAmountClass'); // Daily PB Amt
+            var elemsAmtReq = document.getElementsByClassName('amtReqClass');
+            var elemsdealType = document.getElementsByClassName('dealTypeClass');
+            var elemsdealACH = document.getElementsByClassName('dealACHClass');
+
+            maxmonthlypmtID = document.getElementById(maxmonthlypmtID).value.replace(",","");
+
+            j$('span [id$=maxmonthlypmtID]').text('$' + numberWithCommas(maxmonthlypmtID));
+
+            for (var i = 0; i < elemsFunded.length; i++) {
+                calculateFunded(elemsFunded[i].id, elemsTerm[i].id, elemsRate[i].id, elemsPB[i].id, elemsMonthPB[i].id, elemsHoldback[i].id, elemsDailyPBAmount[i].id, elemsPerGross[i].id,false, elemsAmtReq[i].checked, elemsdealACH[i].id, elemsdealType[i].id);
+            }
+
+            if (flag) {
+
+                offerRender();
+                offerRender1();
+            }
+        }
+
+        //Calculate % of Gross
+        function calculatePerGross(perGrossId, monthlyPBId) {
+
+            var monthGrossSale = document.getElementById('{!$Component.fmId.monthlyGrossSalesID}').value.replace(/,/g,"");
+            var adjMonthGross = document.getElementById('{!$Component.fmId.adjmonthlyGrossSalesID}').value.replace(/,/g,"");
+            var maxPercentGross = document.getElementById('{!$Component.fmId.maxPercentGrossID}').value.replace(/,/g,"");
+
+            var monthPb = document.getElementById(monthlyPBId).value;
+
+            var perGross = document.getElementById(perGrossId);
+            monthlyPBId = '#' + monthlyPBId.replace(/(:|\.)/g,'\\\\$1');
+
+            var doCalculate = j$(monthlyPBId).closest('tr').find('.doCalculateMaxGross').prop('checked');
+            // j$(monthlyPBId).closest('tr').find('.doCalculateMaxGross').prop('checked');
+
+            // var calculation = document.getElementById("doCalculateMaxGross");
+
+            // j$('[id$="doCalculateMaxGross"]')
+
+            if (adjMonthGross != null && adjMonthGross != '' && monthPb != null && monthPb  != '') {
+
+                var result = (monthPb/adjMonthGross ) * 100;
+
+                if (perGross != null) {
+            
+                    perGross.value = result;
+                }
+            }
+
+            else if (monthGrossSale != null && monthPb != null && monthGrossSale != 0) {
+
+                var result = (monthPb/monthGrossSale ) * 100;
+
+                if (perGross != null) {
+            
+                    perGross.value = result;
+                }
+            }
+
+
+        }
+
+        function adjMonthlyGrossSaleOnChange(maxmonthlypmtID, maxPercentGrossId, adjMonthlyGrossSalesId) {
+            
+            document.getElementById('{!$Component.fmId.adjmonthlyGrossSalesID}').value = numberWithCommas(document.getElementById(adjMonthlyGrossSalesId).value);
+
+            var currentAdjMonth = document.getElementById(adjMonthlyGrossSalesId).value.replace(/,/g,"");
+
+            //Error if non numeric character  exists
+            if (!currentAdjMonth.match("^[0-9]+$")) {
+            
+                //console.log('Non numeric');
+            }
+
+            maxPercentGrossOnChange(maxmonthlypmtID, maxPercentGrossId, adjMonthlyGrossSalesId, true);
+        }
+
+        function adjMonthlyCCSaleOnChange(adjMonthlyCCSales) {
+          
+            var elemsHoldback = document.getElementsByClassName('holdbackClass');
+            var elemsMonthlyPBAmount = document.getElementsByClassName('monthlyPBAmountClass'); <!-- to calculate Monthly PB Amt -->
+            var elemsdealType = document.getElementsByClassName('dealTypeClass');
+            var elemsdealACH = document.getElementsByClassName('dealACHClass');
+            
+            var currentAdjMonth = adjMonthlyCCSales.value;
+
+            //Error if non numeric character  exists
+            
+            currentAdjMonth = currentAdjMonth.replace(/,/g, "");
+
+            if (currentAdjMonth.indexOf('.') != -1) {
+          
+                currentAdjMonth = currentAdjMonth.split('.')[0];
+            }
+
+            if (!currentAdjMonth.match("^[0-9]+$")) {
+
+                //console.log('Non numeric adj month');
+                //return;
+                currentAdjMonth = null;
+                adjMonthlyCCSales.value = null;
+            }
+
+            //get monthlyCCSales
+            var monthCCSale = document.getElementById('{!$Component.fmId.monthlyCCSalesID}').value.replace(/,/g,"");
+
+            //Calculate Offer holdback
+            for (var i = 0; i < elemsHoldback.length; i++) {
+
+                calculateHoldback(elemsMonthlyPBAmount[i].id, adjMonthlyCCSales.id, elemsHoldback[i].id, elemsdealACH[i].id, elemsdealType[i].id);
+            }
+
+            offerRender();
+            offerRender1();
+        }
+
+        //change funded if amount requested changes
+        function amountRequestedOnchange(amtReq) {
+          
+            var elemsAmtReq = document.getElementsByClassName('amtReqClass');
+            var elemsFunded = document.getElementsByClassName('fundedClass');
+
+            var amtReqValue = amtReq.value.replace(",","");
+
+            if (amtReqValue == null || amtReqValue == '') {
+
+                return;
+            }
+
+            for (var i = 0; i < elemsAmtReq.length; i++) {
+
+                if (elemsAmtReq[i].checked) {
+
+                    elemsFunded[i].value = amtReqValue;
+                }
+            }
+        }
+
+        //Check email if valid
+        function checkEmail(email) {
+
+            var filter = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+            if (email.value == null || email.value == '') {
+
+                return;
+            }
+
+
+
+
+            if (email.value.indexOf(",") > -1) {
+
+                var eleEmail = email.value.split(',');
+                for (var i = 0;i < eleEmail.length; i++) {
+
+                        
+                    if (!filter.test(eleEmail[i].trim())) {
+
+                        alert('Please provide a valid email address');
+                        eleEmail[i].focus;
+                        return;
+                    }
+                }
+
+            }
+            else if (email.value.indexOf(";") > -1) {
+
+                var eleEmail = email.value.split(';');
+
+                for (var i = 0;i < eleEmail.length; i++) {
+
+                    console.log(eleEmail[i]);
+          
+                    if (!filter.test(eleEmail[i].trim())) {
+
+                        alert('Please provide a valid email address');
+                        eleEmail[i].focus;
+                        return;
+                    }
+                }
+            }
+            else {
+          
+                if (!filter.test(email.value.trim())) {
+
+                    alert('Please provide a valid email address');
+                    email.focus;
+                    return;
+                }
+            }
+
+         }
+
+    </script>
+
+    <apex:form id="fmId">
+        <apex:inputHidden id="maxmonthlypmtID" value="{!opp.Max_Monthly_PMT__c}"/>
+        <apex:inputHidden id="monthlyCCSalesID" value="{!opp.McaApp__Credit_Card_Sales__c}"/>
+        <apex:inputHidden id="monthlyGrossSalesID" value="{!opp.McaApp__Gross_monthly_Sales__c}"/>
+        <apex:inputHidden id="adjmonthlyCCSalesID" value="{!opp.AdjustedMonthlyCCSales__c}"/>
+        <apex:inputHidden id="adjmonthlyGrossSalesID" value="{!opp.AdjustedMonthlyGrossSales__c}"/>
+        <apex:inputHidden id="maxPercentGrossID" value="{!opp.Max_Gross__c}"/>
+        <!-- <apex:inputHidden id="overrideFundedID" value="{!opp.Funding_Amount_Override__c}"/> -->
+    </apex:form>
+    <apex:outputpanel >
+        <apex:actionstatus id="loadStatus1">
+            <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #000;height: 100%; width:100%; top:0;position:fixed; left:0;opacity:0.65;width:100%;">
+                    <div class="waitingHolder" style="width: 91px; ">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription" style="font-weight:bold;font-size:16px;">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionstatus>
+    </apex:outputpanel>
+    <apex:outputLabel > «  &nbsp;</apex:outputLabel><apex:outputLink value="/{!oppId}" style="color:#015ba7;font-size: 95.3%;">Back to Opportunity</apex:outputLink>
+    <br/><br/><apex:pageMessages ></apex:pageMessages>
+
+    <apex:tabPanel switchType="client" value="{!currentTab}" id="theTabPanel" activeTabClass="tabActiveClass" inactiveTabClass="tabInActiveClass">
+        <apex:tab label="Step1: Deal Summary" name="default" id="tabStart">
+            <apex:form >
+                <apex:pageBlock mode="edit" title=" " >
+                    <apex:pageBlockSection title="Deal Summary" columns="1" collapsible="true">
+                        <apex:panelGrid columns="10" width="100%" cellpadding="3" cellspacing="8" border="0" columnClasses="col1, col2, col3,col4, col5, col6,col7, col8, col9,col10" >
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Account.fields.Name.label}"/>
+                            <apex:outputField value="{!opp.Account.Name}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Credit_Card_Sales__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Credit_Card_Sales__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Amount_Requested__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Amount_Requested__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__ISO__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__ISO__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Account.fields.McaApp__Years_in_Business__c.label}"/>
+                            <apex:outputField value="{!opp.Account.McaApp__Years_in_Business__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Gross_monthly_Sales__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Gross_monthly_Sales__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.AdjustedMonthlyCCSales__c.label}"/>
+                            <apex:outputField value="{!opp.AdjustedMonthlyCCSales__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Sales_Rep__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Sales_Rep__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Account.fields.McaApp__NumberofLocations__c.label}"/>
+                            <apex:outputField value="{!opp.Account.McaApp__NumberofLocations__c}"/>
+
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Account.fields.McaApp__NSFs_Avg__c.label}"/>
+                            <apex:outputField value="{!opp.Account.McaApp__NSFs_Avg__c}"/>
+
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Use_of_Proceeds__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Use_of_Proceeds__c}"/>
+
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Balance__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Balance__c}"/>
+
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Average_Daily_Balance__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Average_Daily_Balance__c}"/>
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Deal_Rating__c.label}"/>
+                            <apex:outputField value="{!opp.Deal_Rating__c}"/>
+                            
+                            <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Credit_Score__c.label}"/>
+                            <apex:outputField value="{!opp.McaApp__Credit_Score__c}"/>
+                        </apex:panelGrid>
+                    </apex:pageBlockSection>
+                    <apex:pageBlockSection title="{!$ObjectType.Opportunity.fields.McaApp__Funded_Notes__c.label}">
+                            <apex:outputField value="{!opp.McaApp__Funded_Notes__c}"/> 
+                             <apex:outputField value="{!opp.Underwriting_Notes__c}"/>
+                    </apex:pageBlockSection>
+
+                    <apex:pageBlockSection title="Bank Statements" columns="1">
+                    <apex:outputLabel rendered="{!lstBankStatements.size<=0}"> No Bank Statements Found</apex:outputLabel>
+                        <apex:pageBlockTable value="{!lstBankStatements}" var="bankStatement" rendered="{!lstBankStatements.size>0}">
+<!--                         <apex:inlineEditSupport/> -->
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Month__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Month__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Year__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Year__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Deposits__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Deposits__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Average_Daily_Balance__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Average_Daily_Balance__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Number_of_NSFs__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Number_of_NSFs__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Number_of_Negative_Days__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Number_of_Negative_Days__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Bank_Account__c.Fields.McaApp__Bank_Account_Number__c.Label}">
+                            <apex:outputField value="{!bankStatement.McaApp__Bank_Account_Number__c}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Credit Card Sales" columns="1">
+                    <apex:outputLabel rendered="{!lstCreditCard.size<=0}"> No Credit Card Sales Found</apex:outputLabel>
+                        <apex:pageBlockTable value="{!lstCreditCard}" var="creditCardSales" rendered="{!lstCreditCard.size>0}">
+<!--                         <apex:inlineEditSupport/> -->
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Month__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__Month__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Year__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__Year__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Total_Net_Processed_All__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__Total_Net_Processed_All__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Number_of_Transactions_All__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__Number_of_Transactions_All__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__MID_Account_Number__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__MID_Account_Number__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Credit_Card__c.Fields.McaApp__Processor_Name__c.Label}">
+                            <apex:outputField value="{!creditCardSales.McaApp__Processor_Name__c}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                <apex:pageBlockSection title="Stips" columns="1">
+                    <apex:outputLabel rendered="{!lstStips.size<=0}"> No Stips Found</apex:outputLabel>
+                        <apex:pageBlockTable value="{!lstStips}" var="stip" rendered="{!lstStips.size>0}">
+<!--                         <apex:inlineEditSupport/> -->
+                        <apex:column width="15%" headerValue="{!$ObjectType.McaApp__Stips__c.Fields.Name.Label}">
+                            <apex:outputField value="{!stip.Name}"/>
+                        </apex:column>
+
+                        <apex:column width="10%" headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Status__c.Label}">
+                            <apex:outputField value="{!stip.McaApp__Status__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Requested_by__c.Label}">
+                            <apex:outputField value="{!stip.McaApp__Requested_by__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Date_Requested__c.Label}">
+                            <apex:outputField value="{!stip.McaApp__Date_Requested__c}"/>
+                        </apex:column>
+
+                        <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Submission__c.Label}">
+                            <apex:outputField value="{!stip.McaApp__Submission__c}"/>
+                        </apex:column>
+                        
+                        <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Recv_d__c.Label}">
+                            <apex:outputField value="{!stip.McaApp__Recv_d__c}"/>
+                        </apex:column>
+                        
+                        <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.Notes__c.Label}">
+                            <apex:outputField value="{!stip.Notes__c}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+
+                    <apex:pageBlockButtons location="bottom">
+                            <apex:commandButton value="Next" action="{!goToStep1}"/>
+                    </apex:pageBlockButtons>
+                </apex:pageBlock>
+            </apex:form>
+        </apex:tab>
+
+        <!-- Tab 2 Select Offers  -->
+        <apex:tab label="Step 2: Select Offers" name="step1" id="tabOne">
+            <apex:include pageName="DealFinalizeOffers" />
+        </apex:tab>
+
+        <!-- Tab 3Select Stips  -->
+        <apex:tab label="Step 3: Select Stips" name="step2" id="tabTwo">
+            <apex:include pageName="DealOfferSelectStips" />
+        </apex:tab>
+
+        <!-- Tab 4 Finalize Offer  -->
+        <apex:tab label="Step 4: Review" name="step3" id="tabThree">
+            <apex:include pageName="DealOfferReview" />
+        </apex:tab>
+
+        <!-- Tab 5 Send Email  -->
+        <apex:tab label="Step 5: Send Email" name="step4" id="tabFour">
+            <apex:include pageName="DealOfferEmail" />
+        </apex:tab>
+    </apex:tabPanel>
+
+
+</apex:page>

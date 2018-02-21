@@ -1,0 +1,350 @@
+<apex:page controller="CustomerController" id="customer" showHeader="false" sidebar="false" applyHtmlTag="false"
+    applyBodyTag="false" standardStylesheets="false">
+  <html lang="en">
+    <head>
+      <title>Dashboard</title>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+      <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap.min.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/style.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-datepicker.min.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-multiselect.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/diff-theme.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/normalize.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-default.css')}" />
+      <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-style-bar.css')}" />
+
+      <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+      <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+      <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+      <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+
+      <link rel="stylesheet" href="{!URLFOR($Resource.fullCalendar, 'fullcalendar.min.css')}" />
+      <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}" />
+      <script src="{!URLFOR($Resource.fullCalendar, 'lib/jquery-ui.min.js')}" />
+      <script src="{!URLFOR($Resource.fullCalendar, 'lib/moment.min.js')}" />
+      <script src="{!URLFOR($Resource.fullCalendar, 'fullcalendar.min.js')}" />
+    </head>
+    <body>
+      <style>
+        
+        .chartSection .well {
+            min-height: 370px;
+            margin-bottom: 0px;
+        }
+        #filter {
+          display: none;
+          position: fixed;
+          top: 0%;
+          left: 0%;
+          width: 100%;
+          height: 100%;
+          background-color: #ffffff;
+          z-index: 10;
+          opacity: 0.6;
+          filter: alpha(opacity=50);
+        }
+        .portfolioNTasks .well {
+            min-height: 430px;
+        }
+      </style>
+      <apex:form id="form">
+
+        <!-- rerenders the page content -->
+        <apex:actionFunction name="switchView" action="{!populateCreateSRBoolean}" status="blockUI" reRender="view">
+            <apex:param name="view" value="" assignTo="{!srType}" />
+            <apex:param name="codType" value="" assignTo="{!codType}" />
+        </apex:actionFunction>
+        <!-- rerenders the page content -->
+
+        <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" >
+          <apex:facet name="start" >
+            <div id="block-screen"></div>
+            <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" />
+          </apex:facet>
+        </apex:actionStatus>
+
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-default navbar-fixed-top">
+          <div class="container-fluid">
+            <div class="navbar-header">
+              
+                
+              
+              <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                  
+                          
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#">Damac</a>
+            </div>
+            <div class="search-bar">
+              <div class="form-group">
+                <input type="search" class="form-control" placeholder="Search for properties, service requests ..." onfocus="this.placeholder = ''" onblur="this.placeholder = 'Search for properties, service requests ...'" />
+                <i class="fa fa-search" aria-hidden="true"></i>
+              </div>
+            </div>
+
+
+            <div class="collapse navbar-collapse" id="myNavbar">
+
+              <ul class="nav navbar-nav navbar-right">
+                <li >
+                 <div id="google_translate_element"></div><script type="text/javascript">
+                  function googleTranslateElementInit() {
+                    new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'ar,ru,zh-CN', layout: google.translate.TranslateElement.InlineLayout.SIMPLE, multilanguagePage: true}, 'google_translate_element');
+                  }
+                  </script><script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+                </li>
+              
+                <li class="top-notification-box">
+                  <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                    <i class="fa fa-bell" aria-hidden="true"></i>
+                    <span class="label notification">10</span>
+                  </a>
+                </li>
+                <li class="top-notification-box">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <i class="fa fa-envelope" aria-hidden="true"></i>
+                  </a>
+                </li>
+                <li class="top-notification-box">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                    <i class="fa fa-calendar" aria-hidden="true"></i>
+                  </a>
+                </li>
+                <li class="top-profile-box dropdown">
+                  <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                    <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/user.png')}" class="top-user-image" />
+                    <span class="top-user-name">{!$User.FirstName + ' ' + $User.LastName}</span>
+                  </a>
+                  <ul class="dropdown-menu site-dropdown user-dropdown">
+                    <li><a href="#" class="wave-button" onclick="switchView('MyProfileView');"> View Profile</a></li>
+                    <li><a href="#" class="wave-button">Settings</a></li>
+                    <li><a href="/secur/logout.jsp" class="wave-button">Logout</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+        <!-- Top Navbar -->
+
+        <!-- Sidebar Menu -->
+        <div class="nav-side-menu">
+          <div class="brand" style="padding-bottom: 16px; padding-top: 16px;">
+            <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/Damac_logo.png')}" width="150" />
+          </div>
+          <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+          <div class="menu-list">
+
+            <ul id="menu-content" class="menu-content collapse out">
+              <li class="active" onclick="switchView('Home')"><a href="#"><i class="fa fa-dashboard fa-lg"></i> My Dashboard</a></li>
+              <li  data-toggle="collapse" data-target="#customer" class="collapsed">
+                <a><i class="fa fa-bolt" aria-hidden="true"></i> Self Services <span class="arrow"></span></a>
+              </li>
+
+              <ul class="sub-menu collapse" id="customer">
+                <!-- <li><a href="additional-parking.html"> Additional Parking</a></li>
+                <li><a href="add-unit-portfolio.html"> Add Unit to Portfolio</a></li>
+                <li><a href="assignment.html">Assignment</a></li>
+                <li  data-toggle="collapse" data-target="#products" class="collapsed">
+                  <a>Contact Details <span class="arrow"></span></a>
+                </li>
+                <ul class="sub-menu collapse" id="products">
+                  <li><a href="primary-details.html">Primary Details</a></li>
+                  <li><a href="secondary-details.html">Secodnary Details</a></li>
+                  <li><a href="name-nationality.html">Name/ Nationality</a></li>
+                  <li><a href="update-passport.html">Passport Details</a></li>
+                </ul>
+                <li><a href="complaint.html">Complaint</a></li>
+                <li><a href="early-handover.html">Early Handover</a></li>
+                <li><a href="furniture-package.html">Furniture Package</a></li>
+                <li><a href="handover.html">Handover</a></li>
+                <li><a href="mortgage.html">Mortgage</a></li>
+                <li><a href="noc-visa.html">NOC Visa</a></li>
+                <li><a href="proof-of-payment.html">Proof of Payment</a></li>
+                <li><a href="rental-pool.html">Rental Pool</a></li>
+                <li><a href="title-deed.html">Title Deed</a></li>
+                <li><a href="utility-registration.html">Utility Registration</a></li> -->
+                <li class="{!IF(createAdditionalParking,'active','')}"><a href="#" onclick="switchView('AdditionalParking');">Additional Parking</a></li>
+                <li class="{!IF(createAOPT,'active','')}"><a href="#" onclick="switchView('AOPT');">AOPT</a></li>
+                <li class="{!IF(createBouncedCheque,'active','')}"><a href="#" onclick="switchView('BouncedCheque');">Bounced Cheque</a></li>
+                <li class="{!IF(createFundTransfer,'active','')}"><a href="#" onclick="switchView('FundTransfer');">Fund Transfer</a></li>
+                <li class="{!IF(createFurniturePackage,'active','')}"><a href="#" onclick="switchView('FurniturePackage');">Furniture Package</a></li>
+                <li class="{!IF(createMortgage,'active','')}"><a href="#" onclick="switchView('Mortgage');">Mortgage</a></li>
+                <li class="{!IF(createPenaltyWaiver,'active','')}"><a href="#" onclick="switchView('PenaltyWaiver');">Penalty Waiver</a></li>
+                <li class="{!IF(createProofOfPayment,'active','')}"><a href="#" onclick="switchView('ProofOfPayment');">Proof of Payment</a></li>
+                <li class="{!IF(createRefunds,'active','')}"><a href="#" onclick="switchView('Refunds');">Refunds</a></li>
+                <li  data-toggle="collapse" data-target="#contact-details" class="collapsed">
+                    <a>Change of Details <span class="arrow"></span></a>
+                </li>
+                <ul class="sub-menu collapse" id="contact-details">
+                    <li class="{!IF(createRefunds,'active','')}" ><a href="#" onclick="switchView('COCD', 'Change of Details')">Primary Details</a></li>
+                    <li class="{!IF(createRefunds,'active','')}" ><a href="#" onclick="switchView('COCD', 'Change of Joint Buyer')">Secondary Details</a></li>
+                    <li class="{!IF(createRefunds,'active','')}" ><a href="#" onclick="switchView('COCD', 'Name Nationality Change')">Name/ Nationality</a></li>
+                    <li class="{!IF(createRefunds,'active','')}" ><a href="#" onclick="switchView('COCD', 'Passport Detail Update')">Passport Details</a></li>
+                </ul>
+                <!-- <li class="{!IF(createCOCD,'active','')}"><a href="#" onclick="switchView('COCD');">COCD</a></li> -->
+                <li class="{!IF(createNOCforVisa,'active','')}"><a href="#" onclick="switchView('NOCVisa');">NOC For Visa</a></li>
+                <li class="{!IF(createEarlyHandover,'active','')}"><a href="#" onclick="switchView('EarlyHandover');">Early Handover</a></li>
+                <li class="{!IF(createHandover,'active','')}"><a href="#" onclick="switchView('Handover');">Handover</a></li>
+                <li class="{!IF(createRentalPool,'active','')}"><a href="#" onclick="switchView('RentalPool');">Rental Pool</a></li>
+                <li class="{!IF(createRentalPoolTermination,'active','')}"><a href="#" onclick="switchView('RentalPoolTermination');">RP Termination</a></li>
+                <li class="{!IF(createRentalPoolAssignment,'active','')}"><a href="#" onclick="switchView('RentalPoolAssignment');">RP Assignment</a></li>
+                <li class="{!IF(createTitleDeed,'active','')}"><a href="#" onclick="switchView('TitleDeed');">Title Deed</a></li>
+                <li class="{!IF(createComplaint,'active','')}"><a href="#" onclick="switchView('Complaint');">Complaint</a></li>
+              </ul>
+
+              <li><a href=""><i class="fa fa-building-o fa-lg"></i> Project update</a></li>
+              <li><a href=""><i class="fa fa-group fa-lg"></i> Community portal</a></li>
+              <li><a href=""><i class="fa fa-bullseye fa-lg"></i> Loyalty / Referals</a></li>
+              <li><a href=""><i class="fa fa-tags fa-lg"></i> Damac offers</a></li>
+              <li><a href=""><i class="fa fa-commenting-o fa-lg"></i> Feedback</a></li>
+              <li><a href=""><i class="fa fa-rss fa-lg"></i> News</a></li>
+
+
+            </ul>
+          </div>
+        </div>
+        <!-- Sidebar Menu -->
+
+        <!-- Main content -->
+        <section class="main-content-section dashboardSection">
+          <div class="wrapper">
+            <apex:outputPanel id="view">
+              <c:CustomerDashboard rendered="{!home}"/>
+              <apex:outputPanel rendered="{!createAdditionalParking}">
+                Create Additional Parking SR Rendered
+              </apex:outputPanel>
+              <apex:outputPanel rendered="{!createAOPT}">
+                Create AOPT SR Rendered
+                <!-- <c:AOPTServiceRequest > </c:AOPTServiceRequest> -->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createBouncedCheque}">
+                Create Bounced Cheque SR Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createFundTransfer}">
+                Create Fund Transfer SR Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createFurniturePackage}">
+                Create Furniture Package SR Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createMortgage}">
+                <!--c:MortgageProcess accountId="{!selectedAccountId}" /-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createRefunds}">
+                Create Refunds SR Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel id="PWContainer" rendered="{!createPenaltyWaiver}">
+                <!-- <c:PenaltyWaiver accId="{!selectedAccountId}"/> -->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createProofOfPayment}">
+                Create Proof of Payment Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel id="cocdPanel" rendered="{!createCOCD}">
+                <!-- <c:ChangeOfDetailPage accountId="{!selectedAccountId}"/> -->
+                <c:ChangeOfDetailPage_CloneCC accountId="{!selectedAccountId}" requestType="{!codType}" />
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createEarlyHandover}">
+                Create Early Handover SR Rendered
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createNOCforVisa}">
+                <!-- <c:NOCVisa accId="{!selectedAccountId}"/> -->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createRentalPool}">
+                <!--c:RentalPoolCRE accId="{!selectedAccountId}" /-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createTitleDeed}">
+                <!--c:TitleDeedCRE accId="{!selectedAccountId}" /-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createHandover}">
+                <!--c:HandoverCRE accId="{!selectedAccountId}" /-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createRentalPoolTermination}">
+                <!--c:RentalPoolTermination accId="{!selectedAccountId}" /-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createRentalPoolAssignment}">
+                Rental Pool Assignment
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!createComplaint}">
+                <!--c:ComplaintPage accountId="{!selectedAccountId}"/-->
+              </apex:outputPanel>
+
+              <apex:outputPanel rendered="{!isMyProfileView}">
+                  <c:My_Profile accountId="{!selectedAccountId}" />
+              </apex:outputPanel>
+
+            </apex:outputPanel>
+          </div>
+          <!-- Wrapper Ends here -->
+        </section>
+        <!-- Main content Ends Here -->
+
+      </apex:form>
+    </body>
+
+    <script>
+        $(document).ready(function() {
+            $('.well input.datepicker').datepicker({});
+            $('#multi-select-demo').multiselect();
+        });
+
+        function startProcess() {
+            document.getElementById('{!$Component.customer.form.loadingdetail}').style.display = 'block';
+            document.getElementById('filter').style.display = 'block';
+        }
+
+        function endProcess() {
+            document.getElementById('{!$Component.customer.form.loadingdetail}').style.display = 'none';
+            document.getElementById('filter').style.display = 'none';
+        }
+
+    </script>
+
+    <!-- External Scripts -->
+    <!-- <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}" /> -->
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap.min.js')}" />
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-datepicker.min.js')}" />
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/main.js')}" />
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-multiselect.js')}" />
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/upload.js')}" />
+    <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/ease.js')}" />
+    <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/modernizr.custom.js')}" />
+    <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/classie.js')}" />
+    <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/notificationFx.js')}" />
+    <script src="{!URLFOR($Resource.assets, '/assets/js/bootstrap-datepicker.min.js')}" />
+
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/button.js')}" />
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/checkbox.js')}" />
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/steps.js')}" />
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/moment.js')}" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js"></script>
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/utils.js')}" />
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/fullcalendar.js')}" />
+    <!-- <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/jquery.nicescroll.min.js')}" /> -->
+    <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/customerchart.js')}" />
+    <!-- External Scripts -->
+
+  </html>
+</apex:page>

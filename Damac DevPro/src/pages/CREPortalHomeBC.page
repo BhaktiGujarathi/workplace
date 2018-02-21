@@ -1,0 +1,280 @@
+<apex:page id="CREPage" showheader="false" sidebar="false" controller="CREPortalHomeController" standardStylesheets="false" applyBodyTag="false">
+
+    <head>
+        <title>Bounced Cheque</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <!--apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/style.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-multiselect.css')}"/-->
+        
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-multiselect.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}"/>
+        
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+
+    </head>
+    
+    <style>
+        #filter
+        {
+            display: none;
+            position: fixed;
+            top: 0%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index:10;
+            opacity:0.6;
+            filter: alpha(opacity=50);
+        }
+        .sideBarFixed {
+            position: absolute!important;
+        }
+        .fontColor
+        {
+            color:black;
+        }
+    </style>
+    
+    <body>
+        <apex:form id="CREForm">
+            <div id="filter"></div>
+            <apex:actionStatus id="loadingStatus" onStart="startProcess();" onStop="endProcess();"/>
+            <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;"/>
+            <apex:outputPanel id="CREPanel">
+                <!---------------------- Top Navbar ------------------------>
+                <nav class="navbar navbar-default navbar-fixed-top" id="navigationBar">
+                    <div class="container-fluid">
+                        <div class="navbar-header">
+                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                                <span class="icon-bar"></span>
+                            </button>
+                            <a class="navbar-brand" href="#">Damac</a>
+                        </div>
+                        <div class="collapse navbar-collapse" id="myNavbar">
+                            <ul class="nav navbar-nav navbar-right">
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                        <i class="fa fa-bell" aria-hidden="true"></i>
+                                        <span class="label notification">10</span>
+                                    </a>
+                                </li>
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-envelope" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li class="top-notification-box">
+                                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fa fa-calendar" aria-hidden="true"></i>
+                                    </a>
+                                </li>
+                                <li class="top-profile-box dropdown">
+                                    <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                        <img src="{!URLFOR($Resource.PortalAssets, 'assets/img/user.png')}" class="top-user-image" />
+                                        <span class="top-user-name">Jane Doe</span>
+                                    </a>
+                                    <ul class="dropdown-menu site-dropdown user-dropdown">
+                                        <li><a href="#" class="wave-button"> View Profile</a></li>
+                                        <li><a href="#" class="wave-button">Settings</a></li>
+                                        <li><a href="#" class="wave-button">Logout</a></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
+                <!-- Sidebar Menu -->
+                <div class="nav-side-menu" id="sideMenuBar">
+                    <div class="brand">Brand Logo</div>
+                    <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+                    <apex:outputPanel id="MenuPanel">
+                        <div class="menu-list">
+                            <ul id="menu-content" class="menu-content collapse out">
+                                <li><a href="CRE-additional-parking.html"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                                <li  data-toggle="collapse" data-target="#cre" class="" >
+                                    <a><i class="fa fa-delicious" aria-hidden="true"></i> CRE SRs <span class="arrow"></span></a>
+                                </li>
+                                <ul class="sub-menu collapse in" id="cre">
+                                    <li class="{!IF(createAdditionalParking,'active','')}"><a href="#" onclick="selectSRType('AdditionalParking');">Additional Parking</a></li>
+                                    <li class="{!IF(createAOPT,'active','')}"><a href="#" onclick="selectSRType('AOPT');">AOPT</a></li>
+                                    <li class="active"><a href="#" onclick="selectSRType('BouncedCheque');">Bounced Cheque</a></li>
+                                    <li class="{!IF(createFundTransfer,'active','')}"><a href="#" onclick="selectSRType('FundTransfer');">Fund Transfer</a></li>
+                                    <li class="{!IF(createFurniturePackage,'active','')}"><a href="#" onclick="selectSRType('FurniturePackage');">Furniture Package</a></li>
+                                    <li class="{!IF(createMortgage,'active','')}"><a href="#" onclick="selectSRType('Mortgage');">Mortgage</a></li>
+                                    <li class="{!IF(createPenaltyWaiver,'active','')}"><a href="#" onclick="selectSRType('PenaltyWaiver');">Penalty Waiver</a></li>
+                                    <li class="{!IF(createProofOfPayment,'active','')}"><a href="#" onclick="selectSRType('ProofOfPayment');">Proof of Payment</a></li>
+                                    <li class="{!IF(createRefunds,'active','')}"><a href="#" onclick="selectSRType('Refunds');">Refunds</a></li>
+                                    <li class="{!IF(createCOCD,'active','')}"><a href="#" onclick="selectSRType('COCD');">COCD</a></li>
+                                    <li class="{!IF(createEarlyHandover,'active','')}"><a href="#" onclick="selectSRType('EarlyHandover');">Early Handover</a></li>
+                                    <li class="{!IF(createNOCforVisa,'active','')}"><a href="#" onclick="selectSRType('NOCVisa');">NOC For Visa</a></li>
+                                </ul>
+                            </ul>
+                        </div>
+                    </apex:outputPanel>
+                </div>
+
+                <!---------------------- Main content ------------------------>
+                <section class="main-content-section">
+                    <div class="wrapper">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <apex:outputPanel id="ComponentPanel">
+
+                                    <apex:outputPanel rendered="{!createAdditionalParking}">
+                                        Create Additional Parking SR Rendered
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!createAOPT}">
+                                        Create AOPT SR Rendered
+                                        <!-- <c:AOPTServiceRequest > </c:AOPTServiceRequest> -->
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel >
+                                        <c:CREBouncedChequeComponent_2 />
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!createFundTransfer}">
+                                        
+                                       
+                                    </apex:outputPanel>
+                                                                      
+                                    <apex:outputPanel rendered="{!createFurniturePackage}">
+                                        Create Furniture Package SR Rendered
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!createMortgage}">
+                                        Create Mortgage SR Rendered
+                                    </apex:outputPanel>
+                                    
+                                    <apex:outputPanel rendered="{!createRefunds}">
+                                       Create Refunds SR Rendered                                      
+                                    </apex:outputPanel>                                    
+ 
+                                    <apex:outputPanel id="PWContainer" rendered="{!createPenaltyWaiver}">
+                                       
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!createProofOfPayment}">
+                                        Create Proof of Payment Rendered
+                                    </apex:outputPanel>
+
+                                   
+
+                                    <apex:outputPanel id="cocdPanel" rendered="{!createCOCD}">
+                                        <!--<c:ChangeOfDetailPage accountId="0017E00000aqcZm"/>-->
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!createEarlyHandover}">
+                                        Create Early Handover SR Rendered
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel >
+                                    <!--
+                                        <c:NOCVisa renderNOCVisa="{!createNOCforVisa}"/>
+                                    -->
+                                    </apex:outputPanel>
+
+                                </apex:outputPanel>
+                            </div>
+
+                            <!----------------------------------Sidebar Fixed---------------------------------------->
+                            <div class="col-md-3">
+                                <div class="well sideBarFixed profileDisplay" id="profileBar">
+                                    <img src="{!URLFOR($Resource.PortalAssets, 'assets/img/customer1.jpg')}" />
+                                    <h6>#CD - 3214DSA</h6>
+                                    <h4>Mr. Robert Downey Jr. </h4>
+                                    <span>
+                                        <i class="fa fa-star" aria-hidden="true"></i>
+                                        <i class="fa fa-star" aria-hidden="true"></i>
+                                        <i class="fa fa-star" aria-hidden="true"></i>
+                                        <i class="fa fa-star" aria-hidden="true"></i>
+                                        <i class="fa fa-star" aria-hidden="true"></i>
+                                    </span>
+                                    <label><a href="">View Portfolio</a></label>
+                                    <h6>Organization Name</h6>
+                                    <label>Damac</label>
+
+                                    <h6>Contact Details</h6>
+                                    <label>+971-2313-242-425</label>
+
+                                    <h6>Email</h6>
+                                    <label>robert.d@gmail.com</label>
+
+                                    <h6>POA</h6>
+                                    <label>Bob Woolmer</label>
+
+                                    <h6>Nationality</h6>
+                                    <label>American</label>
+
+                                    <h6>Party Type</h6>
+                                    <label>Value</label>
+
+                                    <h6>Customer Classification</h6>
+                                    <label>A++</label>
+
+                                    <h6>Bulk</h6>
+                                    <label>Value</label>
+
+                                    <h6>Joint Buyer</h6>
+                                    <label><a href="" class="btn btn-sm">Raymond Wejes</a></label>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </apex:outputPanel>
+
+            <!-- Method to change cre create sr selection -->
+            <apex:actionFunction name="selectSRType" action="{!populateCreateSRBoolean}" status="blockUI" reRender="componentContainer,ComponentPanel,MenuPanel">
+                <apex:param name="srTypeValue" value="" assignTo="{!srType}" />
+            </apex:actionFunction>
+
+            <apex:actionFunction name="updateComponent" />
+
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-datepicker.min.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/main.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-multiselect.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/upload.js')}"/>
+            <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/ease.js')}"/>
+
+            <script>
+                $('.well input.datepicker').datepicker({
+                });
+                $(document).ready(function() {
+                    $('#multi-select-demo').multiselect();
+                });
+                
+                function startProcess() {
+                    console.log('NEw method called..');
+                    document.getElementById('{!$Component.CREPage.CREForm.loadingdetail}').style.display = 'block';
+                    document.getElementById('filter').style.display = 'block';
+                }
+            
+                function endProcess() {
+                    document.getElementById('{!$Component.CREPage.CREForm.loadingdetail}').style.display = 'none';
+                    document.getElementById('filter').style.display = 'none';
+                }
+                
+            </script>
+        </apex:form>
+    </body>
+
+</apex:page>

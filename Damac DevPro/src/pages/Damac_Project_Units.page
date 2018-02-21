@@ -1,0 +1,863 @@
+<apex:page showHeader="true" sidebar="true" controller="DamacProjectUnitsController" readOnly="true" cache="true">
+<html>
+    <!-- apex page attribute readonly is added to ensure the page viewstate issue doesnt occur and limit is extended to show 10000 records: PLEASE NOTE - there can not be any DML operations performed if readOnly is 
+    set to true. If there is a need to remove readOnly then please add the pagination logic to query max
+    1000 records at a time -->
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Agent Portal- Projects</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/lightning-responsive.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/damac-theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+        <link href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/nouislider.min.css')}" rel="stylesheet" type="text/css"/>
+        <link href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/nouislider.override.min.css')}" rel="stylesheet" type="text/css"/>
+        <style>
+            .global-content-w-footer{
+                padding-bottom:10px !important;
+            }
+            
+             .header-home{
+                background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Projects.jpg')}') no-repeat !important;
+                -webkit-background-size: cover!important;
+                -moz-background-size: cover!important;
+                background-size: cover!important;
+                position:relative;
+            }
+
+            .custom-table thead > tr > th{
+                width:100px !important;
+            }
+
+            .padding-slider{
+                padding:40px 33px 30px !important;
+            }
+            
+            .noUi-tooltip{
+                padding:3px !important;
+            }
+            .no-bg-image{
+                background:#000000 !important;
+            }
+            
+          .dataTables_filter{
+               float:right;
+               padding-right:10px;
+               width:auto !important;
+               padding-bottom:8px !important;
+           }
+
+            label,p{
+                margin:0px !important;
+            }
+
+            .dataTables_filter .SearchTitle{
+                padding:6px 20px 10px;
+                margin:0px !important;
+                box-sizing: border-box !important; 
+                
+            }
+
+            .btn{
+                vertical-align: middle !important;
+                text-align: center !important;
+                background: #0D80FC !important;
+                border: none !important;
+                border-radius: 0px !important;
+                color: white !important;
+                font-size: 13px !important;
+                font-family: Arial,sans-serif !important;
+                min-height: 30px !important;
+                min-width: 100px !important;
+                padding: 5px !important;
+                cursor: pointer !important;
+                padding: 6px !important;
+                text-decoration: none !important;
+                display: inline-block;
+                margin-bottom: 0;
+                font-weight: normal;
+                text-align: center;
+                vertical-align: middle;
+                -ms-touch-action: manipulation;
+                touch-action: manipulation;
+                cursor: pointer;
+                background-image: none;
+                border: 1px solid transparent;
+                white-space: nowrap;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.42857143;
+                border-radius: 4px;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                box-sizing: border-box;
+            }
+            
+            .dataTables_filter input{
+                box-sizing: border-box !important; 
+            }
+            
+            
+           .dt-buttons{
+               padding-left:5px;
+           }
+            
+            .btn,.slds-button, .slds-button--neutral{
+                font-size:13px !important;
+                font-weight:bold !important;
+            }
+
+            .height-100vh{
+                width:100%;
+            }
+            
+            label{
+                margin-bottom:0px !important;
+            }
+            
+             @media only screen and (max-width: 767px){
+                .dt-buttons{
+                    display:block !important;
+                    width:100% !important;
+                }
+
+                .dataTables_filter{
+                    width:90% !important;
+                    display: block !important;
+                }
+
+                .height-100vh{
+                    width:85vw;
+                }
+             }
+            
+          
+        </style>
+    </head>
+<body >
+    <apex:actionStatus id="pleasewait" stopText="">
+        <apex:facet name="start">
+            <div>
+            <!-- to disable whole page when user clicks on next button  -->
+                <div class="popupBackground override-bg"></div>
+                <div class="PopupPanel">
+                    <img src="{!$Resource.Portal_Loading_Image}"/>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <div class="global-wrapper content-bg">
+        <apex:insert name="body slds">
+            <apex:form id="project-form">
+                <section class="global-content-w-footer" id="project-section">
+                    <div class="slds-container--large banner-tint slds">
+                        <div class="slds-grid slds-wrap slds-wrap-override slds-p-around--medium ie-padding">
+                            <div class="slds-size--1-of-1 slds-medium-size--10-of-12">
+                                <div class="slds-grid slds-wrap slds-wrap-override">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Type
+                                    </div>
+                                    <div id="type-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected" onclick="selectFilterItems($(this),TypeSelected)">
+                                            <div class="all-pin "></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!projectType}" var="types">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),TypeSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">
+                                                {!types}
+                                            </div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap slds-wrap-override">           
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Bedrooms
+                                    </div>
+                                    <div id="bedroom-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected " onclick="selectFilterItems($(this),BedroomSelected)">
+                                            <div class="all-pin"></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!bedrooms}" var="bedroom">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),BedroomSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">
+                                                {!bedroom}
+                                            </div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                               
+                                <div class="slds-grid slds-wrap slds-wrap-override">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Floor Package Type
+                                    </div>
+                                    <!--<div id="floor-package-items" class="slds-size--1-of-1 slds-medium-size--4-of-12 padding-5  items">
+                                        <select  id="floorType" class="slds-size--1-of-1">
+                                            <option value=" ">--None--</option>
+                                            <apex:repeat value="{!floorPackageType}" var="fp">
+                                                <option value="{!fp}">{!fp}</option>
+                                            </apex:repeat>
+                                        </select>
+                                    </div>-->
+                                    <div id="floor-type-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected " onclick="selectFilterItems($(this),FloorTypeSelected)">
+                                            <div class="all-pin"></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!floorPackageType}" var="fp">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),FloorTypeSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">
+                                                {!fp}
+                                            </div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                        
+                                </div>
+                                <div class="slds-grid slds-wrap slds-wrap-override">
+            
+                                        <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                            Floor Package Name
+                                        </div>
+                                        <div id="floor-package-name" class="slds-size--1-of-1 slds-medium-size--4-of-12 padding-5 items">
+                                            <select id="floorName" class="slds-size--1-of-1">
+                                                <option value=" ">--None--</option>
+                                                <apex:repeat value="{!floorPackageName}" var="fn">
+                                                    <option value="{!fn}">{!fn}</option>
+                                                </apex:repeat>
+                                            </select>
+                                        </div>
+                                   
+                                </div>
+                                <div class="slds-grid slds-wrap slds-wrap-override">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Price
+                                    </div>
+                                    <div id="pricerange-items" class="slds-size--1-of-1 slds-medium-size--4-of-12 slds-grid slds-wrap padding-5 items">
+                                       <div class="padding-slider slds-size--1-of-1">
+                                            <div id="priceRange" class="rangeSlider"></div>
+                                        </div>
+                                        
+                                    </div>   
+                                </div>
+                                
+                            </div>
+
+                            <div class="slds-size--1-of-1 slds-medium-size--2-of-12" style="text-align:center">
+                                <div class="slds-grid slds-wrap">
+                                    <div class="slds-size--1-of-2"></div>
+                                    <div class="slds-button slds-button--neutral slds-size--1-of-2" style="margin-top:5px" id="filter" onclick="filterInventories();">Filter</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="slds-container--large " style="margin-top:7px;background: #FFFFFF; padding-top:10px">
+                        <div class="height-100vh">
+                            <div class="text-medium padding-5" style="font-weight: bold !important">
+                               Project : {!propertyName}
+                            </div>
+                            <apex:outputPanel id="inventoryList">
+                              <div class="table-responsive">
+                                <table class="table responsive custom-table">
+                                <thead>
+                                    <tr>
+                                        <apex:repeat value="{!$ObjectType.Inventory__c.FieldSets.Project_Unit}" var="DetailsList">
+                                            <th>
+                                                {!DetailsList.Label}
+                                            </th>
+                                        </apex:repeat>
+                                        <th class="no-bg-image">More</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <apex:repeat var="dataList" value="{!inventories}">
+                                        <tr>
+                                            <apex:repeat var="f" value="{!$ObjectType.Inventory__c.FieldSets.Project_Unit}">
+                                                <td>
+
+                                                    <apex:outputPanel rendered="{!IF(f.Type == 'currency',true,false)}">
+                                                        <apex:outputText value="{!dataList.CurrencyIsoCode}{0, number,  ###,##0.00}"> 
+                                                            <apex:param value="{!dataList[f]}"/> 
+                                                        </apex:outputText>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel rendered="{!IF(f.Type != 'currency',true,false)}">
+                                                        <apex:outputField value="{!dataList[f]}" style="text-transform: uppercase;"/>
+                                                    </apex:outputPanel>
+                                                </td>
+                                            </apex:repeat>
+                                            <td>
+                                                <a onclick="showDetail('{!dataList.Id}');" style="cursor:pointer !important;color:#0D80FC">View</a>
+                                            </td>
+                                        </tr>
+                                    </apex:repeat>
+                                </tbody>
+                                </table>
+                               </div>   
+                            </apex:outputPanel>  
+                            <div class="padding-5 disclaimer" style="color:Black;font-size:12px">
+                                Disclaimer - all prices exclude applicable DLD fees.
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <apex:inputHidden id="areaSqFtMin" value="{!areaSqFtMin}"></apex:inputHidden>
+                <apex:inputHidden id="areaSqFtMax" value="{!areaSqFtMax}"></apex:inputHidden>
+                <apex:inputHidden id="priceMin" value="{!priceMin}"></apex:inputHidden>
+                <apex:inputHidden id="priceMax" value="{!priceMax}"></apex:inputHidden>
+                <apex:actionFunction name="filterInventoryList" action="{!filterInventories}" rerender="inventoryList" status="pleasewait" oncomplete="initDataTable();">
+                    <apex:param name="BedroomsSelected" value=""></apex:param>
+                    <apex:param name="TypeSelected" value=""></apex:param>
+                    <apex:param name="floorPackageTypeSelected" value="" assignTo="{!floorPackageTypeSelected}"></apex:param>
+                    <apex:param name="floorPackageNameSelected" value="" assignTo="{!floorPackageNameSelected}"></apex:param>
+                </apex:actionFunction>
+            </apex:form>
+        </apex:insert>
+    </div>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/jquery.min.js')}"></script>
+    <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/nouislider.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <script>
+        var BedroomSelected = [];
+        var TypeSelected = [];
+        var FloorTypeSelected = [];
+        
+        function selectFilterItems(object,list){
+            $(object).toggleClass('filter-item-selected');
+
+            if($(object).find('.filter-item-text').text().trim() === 'All'){
+                $(object).closest('.items').find('.other-than-all').removeClass('filter-item-selected');
+                list.length = 0;
+                if($(object).hasClass('filter-item-selected'))
+                    addItem('All',list);
+            }
+            else{
+                $(object).closest('.items').find('.all').removeClass('filter-item-selected');
+                removeItem($(object).closest('.items').find('.all').text().trim(),list);
+
+                if($(object).hasClass('filter-item-selected'))
+                    addItem($(object).find('.filter-item-text').text().trim(),list);
+                else
+                    removeItem($(object).find('.filter-item-text').text().trim(),list);
+
+            }
+        }
+
+        function addItem(item,list){
+            if($.inArray(item,list)<0)
+                list.push(item);
+        }
+
+        function removeItem(item,list){
+          var i = list.indexOf(item);
+          if(i != -1) {
+            list.splice(i, 1);
+          }
+        }
+
+        function filterInventories(){
+            console.log('entered');
+            console.log('**TypeSelected'+TypeSelected);
+            console.log('**BedroomSelected'+BedroomSelected);
+            filterInventoryList("'" + BedroomSelected.join("','")+"'" + "" ,
+                "'" + TypeSelected.join("','")+"'" + "","'" + FloorTypeSelected.join("','")+"'" + "" ,$('#floorName').val().trim());
+        }
+
+       
+        
+        $(document).ready(function(){
+            console.log('{!bedroomsSelectedFromURL}');
+            var bedroomSelectedFromURL = '{!bedroomsSelectedFromURL}';
+            if(null != bedroomSelectedFromURL && '' != bedroomSelectedFromURL){
+                var bedroomSelectedList = bedroomSelectedFromURL .split(',');
+                BedroomSelected = bedroomSelectedList;
+                $('#bedroom-items .filter-item-text').each(function(){
+                    for(bedroomSelected in bedroomSelectedList){
+                        if(null != $(this).text() && $(this).text().trim() == bedroomSelectedList[bedroomSelected].trim()){
+                            $(this).parent().addClass('filter-item-selected');
+                            $('#bedroom-items .all').removeClass('filter-item-selected');
+                       }
+                    }
+                });
+            }
+            
+            var typeSelectedFromURL = '{!typeSelectedFromURL}';
+            if(null != typeSelectedFromURL && '' != typeSelectedFromURL ){
+                var typeSelectedList = typeSelectedFromURL.split(',');
+                TypeSelected = typeSelectedList;
+                $('#type-items .filter-item-text').each(function(){
+                    for(typeSelected in typeSelectedList){
+                        if(null != $(this).text() && $(this).text().trim() == typeSelectedList[typeSelected].trim()){
+                            $(this).parent().addClass('filter-item-selected');
+                            $('#type-items .all').removeClass('filter-item-selected');
+                       }
+                    }
+                });
+            }
+
+            var floorPackageTypeSelected = '{!floorPackageTypeSelected}';
+            if(null != floorPackageTypeSelected && '' != floorPackageTypeSelected ){
+                var floorPackageTypeLst = floorPackageTypeSelected.split(',');
+                FloorTypeSelected = floorPackageTypeLst;
+                $('#floor-type-items .filter-item-text').each(function(){
+                    for(typeSelected in floorPackageTypeLst){
+                        if(null != $(this).text() && $(this).text().trim() == floorPackageTypeLst[typeSelected].trim()){
+                            $(this).parent().addClass('filter-item-selected');
+                            $('#floor-type-items .all').removeClass('filter-item-selected');
+                       }
+                    }
+                });
+            }
+
+            if('{!floorPackageNameSelected}' != '')
+                $('#floorName').val('{!floorPackageNameSelected}');
+
+        });
+    </script>
+    <apex:outputPanel id="scriptTag">
+        <script>
+
+             function showDetail(Id){
+                var TypeDownload = [];
+                $('#type-items .filter-item-selected').each(function(){ 
+                    console.log($(this).find('.filter-item-text').text());
+                    TypeDownload.push($(this).find('.filter-item-text').text().trim());
+                });
+
+                var BedroomDownload = [];
+                $('#bedroom-items .filter-item-selected').each(function(){ 
+                    console.log($(this).find('.filter-item-text').text());
+                    BedroomDownload.push($(this).find('.filter-item-text').text().trim());
+                });
+
+                var minVal = $('[id$=priceMin]').val();
+                var maxVal = $('[id$=priceMax]').val();
+                
+                var floorName = $('#floorName').val().trim();
+
+                var floorTypeDownload = [];
+                $('#floor-type-items .filter-item-selected').each(function(){ 
+                    console.log($(this).find('.filter-item-text').text());
+                    floorTypeDownload.push($(this).find('.filter-item-text').text().trim());
+                });
+
+                 if('{!$User.UIThemeDisplayed}' != 'Theme4t'){
+                     window.open('{!$Site.Prefix}/'+Id+'?sfdc.tabName={!tabName}&Type={!typeSelectedFromURL}&Bedrooms={!bedroomsSelectedFromURL}&Location={!locationSelectedFromURL}&UnitType='+TypeDownload+'&UnitBedrooms='+BedroomDownload+'&MinPrice='+minVal+'&MaxPrice='+maxVal+'&floorPkgType='+floorTypeDownload+'&floorPkgName='+floorName,'_self');
+                }else{
+                    sforce.one.navigateToURL(encodeURI('{!$Site.Prefix}/'+Id+'?sfdc.tabName={!tabName}&Type={!typeSelectedFromURL}&Bedrooms={!bedroomsSelectedFromURL}&Location={!locationSelectedFromURL}&UnitType='+TypeDownload+'&UnitBedrooms='+BedroomDownload+'&MinPrice='+minVal+'&MaxPrice='+maxVal+'&floorPkgType='+floorTypeDownload+'&floorPkgName='+floorName));
+                }
+
+              
+            }
+
+             $(document).ready(function() {
+                
+                initDataTable();
+                /*createSlider('areaRange',{!inventoryAreaRange.min__c},{!inventoryAreaRange.max__c},{!inventoryAreaRange.step__c},{!inventoryAreaRange.step__c},{!inventoryAreaRange.min__c},
+                                    {!inventoryAreaRange.max__c},false,false,false);
+                    
+                        $('[id$=areaSqFtMin]').val({!inventoryAreaRange.min__c});
+                        $('[id$=areaSqFtMax]').val({!inventoryAreaRange.max__c});
+                       
+                        initPriceRangeSlider(false);*/
+                
+                 /*$('#priceRangeDpDwn').change(function(){
+                     initPriceRangeSlider(true);
+                 });*/
+            
+                var priceMin = {!priceMin};
+                 var priceMax = {!priceMax};
+                 var priceMinRange ={!priceMinRange};
+                 var priceMaxRange = {!priceMaxRange};
+
+                if(priceMax != 0 && priceMin != 0){
+                    priceMin = (priceMin === priceMax)?0:priceMin;
+                }else{
+                    priceMax = 1;
+                }
+
+                if(priceMinRange != 0 && priceMaxRange != 0){
+                     priceMinRange = (priceMinRange === priceMaxRange)?0:priceMinRange;
+                }else{
+                    priceMaxRange = 1;
+                }
+               
+                console.log(priceMin);
+                console.log(priceMax);
+                console.log(priceMinRange);
+                console.log(priceMaxRange);
+            
+                createSlider('priceRange',priceMin,priceMax,100,100,priceMinRange,priceMaxRange,true,false,false);
+
+
+                var ms_ie = false;
+                var ua = window.navigator.userAgent;
+                var old_ie = ua.indexOf('MSIE ');
+                var new_ie = ua.indexOf('Trident/');
+            
+                if ((old_ie > -1) || (new_ie > -1)) {
+                    ms_ie = true;
+                }
+            
+                if ( ms_ie && $('.show-mob-tablet ').css('display') == 'block') {
+                    $('.banner-tint').removeClass('slds');
+                    $('.ie-padding').css('padding','10');
+                    
+                } 
+                //$('[id$=priceMin]').val({!priceMinRange});
+                //$('[id$=priceMax]').val({!priceMaxRange});
+            });
+
+
+            
+            function initDataTable(){
+                $('.custom-table').DataTable({
+                    "bInfo": false,
+                    "pageLength": 30,
+                    "language": {
+                        "search": "<p class='SearchTitle'>Search</p>"
+                    },
+                    "autoWidth": true,
+                    "lengthMenu": [10, 25, 50, 100],
+                    dom: 'lBfrtip',                    
+                    buttons: [
+                        { text: 'Back', className: 'back btn' },
+                        { text: 'Download', className: 'download btn' }
+                    ],
+                    columnDefs: [
+                       {    "targets": [ 0 ],
+                            "visible": false,
+                            "searchable": false
+                        },
+                        {
+                            "targets":[7,8,9],
+                            "type":'formatted-num'
+                        }
+                    ],
+                    "oSearch": {"bSmart": false}
+                });
+                $('.custom-table tr>td>span>a').each(function(i, link){
+                    $(link).replaceWith($(link).text())
+                });
+
+                jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+                  
+                 
+                    "formatted-num-asc": function ( a, b ) {
+                        var c,d;
+
+                        if("" !== jQuery.trim(a)){
+                            var n = a.substring(a.indexOf('>')+1, a.indexOf('</')); 
+                            var f = n.split(' ');
+                            c = 1 * parseFloat(f[2].replaceAll(',','')).toFixed(2);
+                            
+                        }else{
+                            c=0;
+                        }
+
+                        if("" !== jQuery.trim(b)){
+                            var n = b.substring(b.indexOf('>')+1, b.indexOf('</')); 
+                            var f = n.split(' ');
+                            d = 1* parseFloat(f[2].replaceAll(',','')).toFixed(2);
+                            
+                        }else{
+                            d=0
+                        }
+
+
+                        var h= c < d ? -1 : c > d ? 1 : 0;
+                        return h;
+                    },
+                 
+                    "formatted-num-desc": function ( a, b ) {
+                         var c,d;
+
+                        if("" !== jQuery.trim(a)){
+                            var n = a.substring(a.indexOf('>')+1, a.indexOf('</')); 
+                            var f = n.split(' ');
+                            c = 1* parseFloat(f[2].replaceAll(',','')).toFixed(2);
+                            
+                        }else{
+                            c=0;
+                        }
+
+                        if("" !== jQuery.trim(b)){
+                            var n = b.substring(b.indexOf('>')+1, b.indexOf('</')); 
+                            var f = n.split(' ');
+                            d = 1* parseFloat(f[2].replaceAll(',','')).toFixed(2);
+                            
+                        }else{
+                            d=0
+                        }
+
+
+                        var h = c < d ? 1 : c > d ? -1 : 0;
+                        return h;
+                    }
+                });
+                
+                $('.download').click(function(){
+
+                    var TypeDownload = [];
+                    $('#type-items .filter-item-selected').each(function(){ 
+                        console.log($(this).find('.filter-item-text').text());
+                        TypeDownload.push($(this).find('.filter-item-text').text().trim());
+                    });
+
+                    var BedroomDownload = [];
+                    $('#bedroom-items .filter-item-selected').each(function(){ 
+                        console.log($(this).find('.filter-item-text').text());
+                        BedroomDownload.push($(this).find('.filter-item-text').text().trim());
+                    });
+
+                    var minVal = $('[id$=priceMin]').val();
+                    var maxVal = $('[id$=priceMax]').val();
+                    window.open('{!$Site.Prefix}/apex/Availability?propId={!marketingName}&agentId={!userId}&Type='+
+                        TypeDownload+'&Bedrooms='+BedroomDownload+'&MinPrice='+minVal+'&MaxPrice='+maxVal,'_blank');
+                });
+
+                $('.back').click(function(){
+                    var locationVal = getParameterByName('Location',window.location.href); 
+                    var propTypeVal = getParameterByName('Type',window.location.href); 
+                    var propBedrooms = getParameterByName('Bedrooms',window.location.href); 
+
+                    window.open('{!$Site.Prefix}/apex/Damac_Projects?sfdc.tabName={!tabName}&Type='+propTypeVal+'&Bedrooms='+propBedrooms+'&Location='+locationVal,'_self');
+                });
+                
+            }
+
+            String.prototype.replaceAll = function(search, replacement) {
+                var target = this;
+                return target.replace(new RegExp(search, 'g'), replacement);
+            };
+
+            function getParameterByName(name, url) { 
+                if (!url) url = window.location.href; 
+                name = name.replace(/[\[\]]/g, "\\$&"); 
+                var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"), 
+                results = regex.exec(url); 
+                if (!results) return null; 
+                if (!results[2]) return ''; 
+                return decodeURIComponent(results[2].replace(/\+/g, " ")); 
+            }
+            
+            function initPriceRangeSlider(isAlreadyInititalised){
+                var priceRangeSelectedVal = $('#priceRangeDpDwn').val();
+                var minPriceRange = 0;
+                var maxPriceRange = 1;
+                var minHandlerVal = '-';
+                var maxHandlerVal = '-';
+                var shouldDisableTheSlider = false;
+                
+                //disable the slider
+                if(priceRangeSelectedVal == 'All'){
+                    
+                    //shouldDisableTheSlider = true;
+                     $('[id$=priceMin]').val('');
+                     $('[id$=priceMax]').val('');
+                  
+                }
+                else if(priceRangeSelectedVal== '>10000000'){
+                    $('[id$=priceMin]').val(10000000);
+                    $('[id$=priceMax]').val('');
+                }
+                else{
+                     minPriceRange = getMinMax(priceRangeSelectedVal).min;
+                     maxPriceRange = getMinMax(priceRangeSelectedVal).max;
+                    $('[id$=priceMin]').val(minPriceRange);
+                     $('[id$=priceMax]').val(maxPriceRange); 
+                }
+                /*else if(priceRangeSelectedVal== '>5000000'){
+                    
+                }
+                else{
+                   minPriceRange = getMinMax(priceRangeSelectedVal).min;
+                   maxPriceRange = getMinMax(priceRangeSelectedVal).max;
+                   minHandlerVal = minPriceRange;
+                   maxHandlerVal = maxPriceRange;
+                }
+                
+                
+                 createSlider('priceRange',minHandlerVal,maxHandlerVal,{!inventoryPriceConfiguration.step__c},{!inventoryPriceConfiguration.step__c},minPriceRange,
+                            maxPriceRange,true,isAlreadyInititalised,shouldDisableTheSlider);*/
+            }
+            
+           function getMinMax(value){
+
+                var jsonMinMax = {min:'',max:''};
+
+                if(value != ''){
+                    var indRange = value.split('-');
+                    var minString = '';
+                    var maxString = '';
+                    if(null!=indRange[0] && '' != indRange[0]){
+                        minString =  replace(indRange[0].trim());
+                    }
+                    
+                    if(null!=indRange[1] && '' != indRange[1]){ 
+                      maxString = replace(indRange[1].trim());
+                    }
+                    jsonMinMax= {min:minString,max:maxString};
+                }
+
+                return jsonMinMax;
+            }
+            
+            function createSlider(idName,startHandler,endHandler,margin,step,minRange,maxRange,formatNeeded,isAlreadyInititalised,shouldDisableTheSlider){
+                    var id = document.getElementById(idName);
+                    if(!shouldDisableTheSlider)
+                        id.removeAttribute('disabled');
+
+                    if(isAlreadyInititalised)
+                    id.noUiSlider.destroy();
+                     
+                    noUiSlider.create(id, {
+                        tooltips: true,
+                        start: [startHandler, endHandler], // 4 handles, starting at...
+                        margin: margin, // Handles must be at least 300 apart
+                        //limit: 600, // ... but no more than 600
+                        connect: true, // Display a colored bar between the handles
+                        behaviour: 'tap-drag', // Move handle on tap, bar is draggable
+                        step: step,
+                        
+                        range: {
+                            'min': minRange,
+                            'max': maxRange
+                        },
+                        format:{
+                            to: function ( value ) {
+                                
+                                if(formatNeeded){
+                                   var suffixes = ["", "K","M","B","T"];
+
+                                    if(value != null && value != ''){
+                                     var logVal = Math.log(value)/Math.LN10;
+                                      var suffixNum = parseInt(logVal/3);
+                                      var shortValue = parseFloat((suffixNum != 0 ? (value / Math.pow(1000,suffixNum)) : value));
+                                      if (shortValue % 1 != 0)  shortNum = shortValue.toFixed(1);
+                                      return (shortValue).toFixed(2)+suffixes[suffixNum];
+                                    }
+                                    else if(value == 0){
+                                      return 0;
+                                    } 
+                                }
+                                return value;
+                              },
+                              from: function ( value ) {
+
+                                return value;
+                                
+                              }
+                        },
+                        pips: { // Show a scale with the slider
+                            mode: 'steps',
+                            stepped: true,
+                            density: 4,
+                            format:{
+                                to: function ( value ) {
+                                    
+                                   if(formatNeeded){
+                                       var suffixes = ["", "K", "M"];
+
+                                        if(value != null && value != ''){
+                                          var logVal = Math.log(value)/Math.LN10;
+                                          var suffixNum = parseInt(logVal/3);
+                                          var shortValue = parseFloat((suffixNum != 0 ? (value / Math.pow(1000,suffixNum)) : value));
+                                          if (shortValue % 1 != 0)  shortNum = shortValue.toFixed(1);
+                                          return (shortValue).toFixed(2)+suffixes[suffixNum];
+                                        }
+                                        else if(value == 0){
+                                          return 0;
+                                        } 
+                                    }
+                                    return value;
+                                  },
+                                  from: function ( value ) {
+
+                                    return value;
+                                    
+                                  }
+                            }
+                        }
+                    });
+
+                    if(shouldDisableTheSlider){
+                         $('#'+idName+' .noUi-tooltip').text('-');
+                        $('#'+idName+' .noUi-tooltip').html('-');
+                         
+                         $('#'+idName+' .noUi-value-large').text('-');
+                         id.setAttribute('disabled',true);
+                        
+                    }
+
+                    $('.noUi-tooltip').css('padding','10px 20px');
+
+                     id.noUiSlider.on('update', function( values, handle ) {
+                        if(shouldDisableTheSlider){
+                            $('#'+idName+' .noUi-tooltip').text('-');
+                        }
+
+                        if(idName== 'areaRange'){
+                           $('[id$=areaSqFtMin]').val(values[0]);
+                           $('[id$=areaSqFtMax]').val(values[1]);
+                        }
+                        else if(idName == 'priceRange'){
+                            /*var priceRangeDpDwnVal = $('[id$=priceRangeDpDwn]').val();
+                            if(priceRangeDpDwnVal == 'All'){
+                               $('[id$=priceMin]').val('');
+                               $('[id$=priceMax]').val(''); 
+                            }
+                            else{*/
+                     
+                                 $('[id$=priceMin]').val(replace(values[0]));
+                               $('[id$=priceMax]').val(replace(values[1]));
+                            // }
+                        }
+
+                    });
+                }
+                
+                function replace(value){
+
+                    var returnVal = value;
+                    /*returnVal = returnVal.replace('K','000');
+                    returnVal = returnVal.replace('M','000000');
+                    returnVal = returnVal.replace('B','000000000');
+                    returnVal = returnVal.replace('T','000000000000');*/
+                   
+                                
+                    if(returnVal.indexOf('K')>-1){
+                        returnVal  = returnVal.replace('K','');
+                        returnVal  = returnVal*1000;
+                    }
+                    else if(returnVal.indexOf('M')>-1){
+                        returnVal  = returnVal.replace('M','');
+                        returnVal  = returnVal*1000000;
+                    }
+                    else if(returnVal.indexOf('B')>-1){
+                        returnVal  = returnVal.replace('B','');
+                        returnVal  = returnVal*1000000000;
+                    }
+                    else if(returnVal.indexOf('T')>-1){
+                        returnVal  = returnVal.replace('T','');
+                        returnVal  = returnVal*1000000000000;
+                    }
+                    return returnVal;
+                }
+        </script>
+    </apex:outputPanel>
+    
+</body> 
+</html>
+</apex:page>

@@ -1,0 +1,275 @@
+<apex:page controller="assignmentProcessController">
+	<html xmlns="http://www.w3.org/2000/svg"
+		xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="x-ua-compatible" content="ie=edge" />
+<title>Tenant Status Matrix Grid</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- Import the Design System style sheet -->
+<apex:slds />
+</head>
+<script
+	src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<apex:form >
+	<body>
+		<div class="slds-scope">
+
+			<table id="documents"
+				class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_col-bordered slds-table_striped verification">
+				<thead>
+					<tr class="slds-text-title_caps">
+						<th scope="col" colspan="12">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="center">
+								<b>SERVICE REQUEST - TRANSFER OF OWNERSHIP</b>
+							</div>
+						</th>
+					</tr>
+				</thead>
+
+				<tr class="slds-text-title_caps">
+					<th scope="col" colspan="7">
+						<div class="slds-hyphenate" title="Verify the Landlord"
+							align="left">
+							<b>Attachments</b>
+						</div>
+					</th>
+					<th scope="col" colspan="5">
+						<div class="slds-hyphenate" title="Verify the Landlord"
+							align="center">
+							<b>Verified</b>
+						</div>
+					</th>
+				</tr>
+				<apex:repeat value="{!lstDocs}" var="docs">
+					<tr class="slds-text-title_caps">
+						<td scope="col" colspan="4">
+							<div class="slds-hyphenate" title="Verify the Landlord"
+								align="left">
+								<b>{!docs.strType}</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Landlord"
+								align="left">
+								<apex:inputFile title="Browse"
+									value="{!docs.objAttachment.body}"
+									filename="{!docs.objAttachment.name}" />
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Landlord"
+								align="left">
+								<apex:commandButton action="{!view}" value="View"
+									styleClass="slds-button slds-button--brand" />
+							</div>
+						</td>
+						<td scope="col" colspan="2">
+							<div class="slds-hyphenate" title="Verify the Landlord"
+								align="left">
+								<apex:inputCheckbox value="{!docs.blnIsValid}" disabled="true" />
+							</div>
+						</td>
+					</tr>
+				</apex:repeat>
+			</table>
+			<table id="poa"
+				class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_col-bordered slds-table_striped verification">
+				<thead>
+					<tr class="slds-text-title_caps">
+						<th scope="col" colspan="6">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="center">
+								<b>Seller - Power of Attorney (if applicable)</b>
+							</div>
+						</th>
+						<th scope="col" colspan="6">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="center">
+								<b>Buyer - Power of Attorney (if applicable)</b>
+							</div>
+						</th>
+					</tr>
+					<tr class="slds-text-title_caps">
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Seller_POA__c}"/>
+								<b>Name</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField value="{!objCase.POA_Name_Seller__c}" required="{!objCase.Seller_POA__c}"/>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Buyer_POA__c}"/>
+								<b>Name</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField value="{!objCase.POA_Name__c}" required="{!objCase.Buyer_POA__c}"/>
+							</div>
+						</td>
+					</tr>
+					<tr class="slds-text-title_caps">
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Seller_POA__c}"/>
+								<b>Relationship with Seller</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField required="{!objCase.Seller_POA__c}" value="{!objCase.POA_Relationship_with_Seller__c}" />
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Buyer_POA__c}"/>
+								<b>Relationship with Buyer</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField value="{!objCase.POA_Relationship_with_Buyer__c}" required="{!objCase.Buyer_POA__c}"/>
+							</div>
+						</td>
+					</tr>
+					<tr class="slds-text-title_caps">
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Seller_POA__c}"/>
+								<b>Date of Expiry</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField required="{!objCase.Seller_POA__c}" 
+								value="{!objCase.POA_Expiry_Date_Seller__c}" 
+								onchange="validateFutureDate(this);"
+								id="sellerPoaExpiry" styleClass="sellerPoaExpiry"
+								style="min-width:80px;"/>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Buyer_POA__c}"/>
+								<b>Date of Expiry</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField value="{!objCase.POA_Expiry_Date__c}" 
+								required="{!objCase.Buyer_POA__c}"
+								onchange="validateFutureDate(this);"
+								id="buyerPoaExpiry" styleClass="buyerPoaExpiry"
+								style="min-width:80px;"/>
+							</div>
+						</td>
+					</tr>
+					<tr class="slds-text-title_caps">
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Seller_POA__c}"/>
+								<b>Issued By</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField required="{!objCase.Seller_POA__c}" value="{!objCase.POA_Issued_By_Seller__c}" />
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:outputText value="*" style="color:red" rendered="{!objCase.Buyer_POA__c}"/>
+								<b>Issued By</b>
+							</div>
+						</td>
+						<td scope="col" colspan="3">
+							<div class="slds-hyphenate" title="Verify the Tenant"
+								align="left">
+								<apex:inputField value="{!objCase.POA_Issued_By__c}" required="{!objCase.Buyer_POA__c}"/>
+							</div>
+						</td>
+					</tr>
+
+				</thead>
+			</table>
+			<table id="docVerifyButton"
+				class="slds-table slds-table_bordered slds-table_cell-buffer slds-table_col-bordered slds-table_striped verification">
+				<tr class="slds-text-title_caps">
+					<!-- 
+            <td  colspan="6">
+                <apex:commandButton action="{!redAssignmentBuyerDetails}" value="Save as DRAFT" styleClass="slds-button slds-button--brand"/>
+            </td>
+             -->
+					<td colspan="12">
+						<div align="right">
+							<apex:commandButton action="{!redAssignmentBuyerDetails}"
+								value="Next" styleClass="slds-button slds-button--brand" />
+						</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+	</body>
+</apex:form>
+<script>
+	j$ = jQuery.noConflict();
+	function validateFutureDate(event){
+		console.log('event**************',event);
+		var isFuture = compareDate(j$(event).val());
+		console.log('event.target.id*********'+event.id);
+		
+		console.log('isFuture***********'+isFuture);
+		if(isFuture == 'true' || isFuture == true){
+			console.log('Date is true******');
+			console.log('********'+j$("."+j$(event).attr('class')).siblings());
+			j$("#"+j$(event).attr('class')+"ErrorDiv").remove();
+		}else{
+			console.log('Date is FALSE******');
+			var cls = j$(event).attr('class');
+			cls = cls+"ErrorDiv";
+			j$("."+j$(event).attr('class')).siblings().append("<div Id="+cls+" style=\"color:red\">Expiry date cannot be less than today</div>");
+		}
+	}
+	
+	function validatePastDate(event){
+		var isFuture = compareDate(j$(event).val());
+		console.log('isFuture***********'+isFuture);
+	}
+	
+	function compareDate(dateVal){
+		var isFutureDate = false;
+		var expireDateArr = dateVal.split("/");
+		var expireDate = new Date(expireDateArr[2], expireDateArr[1]-1, expireDateArr[0]);
+		console.log('expireDate***********'+expireDate);
+		var todayDate = new Date();
+		if (todayDate < expireDate){
+			console.log('selected date is greater than today***********');
+			isFutureDate = true;
+		}
+		return isFutureDate;
+	}
+</script>
+</html>
+</apex:page>

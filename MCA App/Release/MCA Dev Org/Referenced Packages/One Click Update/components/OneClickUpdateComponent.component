@@ -1,0 +1,66 @@
+<apex:component id="compnent" controller="OneClickUpdate.OneClickUpdateController" allowDML="true" access="global" >
+    <apex:includeScript value="{!URLFOR($Resource.OneClickUpdate__OneClickUpdateStaicResource, 'jquery.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.OneClickUpdate__OneClickUpdateStaicResource, 'jQuery.select2OptionPicker.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.OneClickUpdate__OneClickUpdateStaicResource, 'select2OptionPicker.css')}"/>
+
+    <script>
+        j$ = jQuery.noConflict();
+        window.onload = function() {
+            j$('[class^="select2OptionPicker"]').select2OptionPicker();
+            if(!{!$Label.oneclickupdate__Config_ShowNoneOption})
+                j$('.select2OptionPicker li:contains("--None--")').remove();   
+        }
+        
+        j$(document).ready(function() {
+                j$('[class^="select2OptionPicker"]').on('change', function(e) {
+                  //j$('#loading-image').show();                                            
+                  var actualfieldAPi = e.target.className;
+                  var fieldApi= actualfieldAPi.replace('select2OptionPicker_','');
+                  passStringToController(fieldApi,this.value);
+                  //j$('#loading-image').hide();
+                });
+                }
+            );
+    </script>
+    <apex:attribute access="global" id="oapi" name="object_api_name" type="String" assignTo="{!objectapiname}" required="true" description=""/>
+    <apex:attribute access="global" id="rid" name="record_id" type="String" assignTo="{!recordid}" required="true" description=""/>
+    <apex:pagemessages id="pmgs"/>
+    <apex:form id="repeatForm1" >
+        <apex:outputPanel id="redirectOP">
+            <Script>
+                if({!refreshPage}) {
+                    top.location.href='/{!recordid}';
+                }
+            </Script>
+        </apex:outputPanel>
+        <!--
+        <div id="loading-image">
+            <img src="/img/loading.gif">Updating..</img>
+        </div>
+        -->
+        <apex:variable id="varComp" var="cnt" value="{!0}" />
+        <div>
+            <apex:repeat value="{!PCforThisObject1}" id="fieldLoop" var="obj">
+                <table id="tableId">
+                    <tr id="trId">
+                        <td id="tdId1"> 
+                            <span style="float:left;font-size:small;font-weight:bold;font-family:Arial,Helvetica,sans-serif;width:150px;display: block;margin-right:10px;">
+                                {!mapFieldAPIAgainstFieldLabel[obj.OneClickUpdate__Field_API_Name__c]}:
+                            </span>
+                        </td>
+                        <td id="tdId1">
+                            <span id="span{!cnt}" style="margin-left:0px;float:left;">
+                                <apex:inputField label="{!obj.OneClickUpdate__Field_API_Name__c}" value="{!RecordDetail[obj.OneClickUpdate__Field_API_Name__c]}" required="false" id="select2OptionPicker" styleClass="select2OptionPicker_{!obj.OneClickUpdate__Field_API_Name__c}"/>
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+                <apex:variable id="varComp2" var="cnt" value="{!cnt+1}"/>
+            </apex:repeat>
+        </div>
+        <apex:actionFunction name="passStringToController" action="{!updateValue}" reRender="pmgs,redirectOP">
+            <apex:param name="fieldApi" value="" assignTo="{!field_api_name}" />
+            <apex:param name="value" value="" assignTo="{!field_current_value}" />
+        </apex:actionFunction>
+    </apex:form>
+</apex:component>

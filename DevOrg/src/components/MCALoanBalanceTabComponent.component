@@ -1,0 +1,175 @@
+<apex:component controller="MCALoanBalanceTabController" allowDML="true">
+    <style>
+        .columnWidth {
+            width: 99px;
+        }
+    </style>
+    <apex:form id="records" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false"/>
+        <style>
+            .heightClass{
+            height: inherit !important;
+        }
+        </style>
+        <c:MCAJQTabComponent />
+
+        <apex:pageBlock mode="inlineedit" >
+            <script type="text/javascript">
+                t$(".saveBtn").click(function(){      
+                    t$('.saveBtn').prop('disabled', true);
+                }); 
+            </script>
+            <apex:actionFunction action="{!saveAllLoans}" name="saveAllLoans" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeLoanBalCalculations()" />
+            <apex:actionFunction action="{!newLoanBalance}" name="newLoans" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeLoanBalCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editLoans" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeLoanBalCalculations()"/>
+            <apex:pageBlockButtons location="top" >
+                <apex:outputpanel rendered="{!$ObjectType.Loan_Balance__c.createable}">
+                    <input type="button" onclick="runNewLoanBal()" class="btn" value="New Loan Balance" />
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Loan_Balance__c.updateable,$ObjectType.Loan_Balance__c.createable)}">
+                    <input type="button" onclick="runSaveAllLoans()" class="btn saveBtn" value="Save" /> 
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!$ObjectType.Loan_Balance__c.updateable}">
+                    <input type="button" onclick="runEditLoanBal()" class="btn" value="Edit All" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeLoanBalCalculations()"></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" 
+                    oncomplete="computeLoanBalCalculations()" rendered="{!OR($ObjectType.Loan_Balance__c.updateable,$ObjectType.Loan_Balance__c.createable)}"></apex:CommandButton>
+            </apex:pageBlockButtons>
+            <div class="test" id="ManageSubmission1">
+                <div class="container-new">
+                    <table class="tablesorting tablesorter">
+                        <thead class="header">
+                            <tr>
+                                <th><div></div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Funder__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Funder__c.Label}</div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Balance__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Balance__c.Label}</div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Daily_Payment__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Daily_Payment__c.Label}</div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Notes__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Notes__c.Label}</div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Maturity_Date__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Maturity_Date__c.Label}</div></th>
+                                <th>{!$ObjectType.Loan_Balance__c.Fields.Active__c.Label}<div>{!$ObjectType.Loan_Balance__c.Fields.Active__c.Label}</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!containers}" var="container">
+                                <tr>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputLink value="/{!container.loanBalance.Id}" target="blank" rendered="{!NOT(ISBLANK(container.loanBalance.Id))}"> View </apex:outputLink>
+                                            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)),$ObjectType.Loan_Balance__c.deletable)}"/>
+                                            <apex:commandLink action="{!deleteLoanBalance}" value="Del" rerender="records,refreshComponent" 
+                                            rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)),$ObjectType.Loan_Balance__c.deletable)}" 
+                                            status="loadingPanel" oncomplete="computeLoanBalCalculations()">
+                                                <apex:param name="recordToDelete" value="{!container.loanBalance.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                                            </apex:commandLink>
+
+                                            <apex:commandLink action="{!removeLoanBalance}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.loanBalance.Id))}" status="loadingPanel" oncomplete="computeLoanBalCalculations()">
+                                                <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                            </apex:commandLink>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputPanel styleClass="statusPicklistDiv">
+                                                <apex:selectList value="{!container.loanBalance.Funder__c}" size="1" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited, funderPicklist)}">
+                                                    <apex:selectOptions value="{!BankNames}"/>
+                                                </apex:selectList>
+
+                                                <!--                 <a href="/{!container.loanBalance.Funder__c}"> -->
+                                                <apex:outputField value="{!container.loanBalance.Funder__c}" id="editValue" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"
+                                                styleClass="isEdit" />
+                                                <!--                  </a> -->               
+                                            </apex:outputPanel>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.loanBalance.Balance__c}" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.loanBalance.Balance__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.loanBalance.Daily_Payment__c}" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.loanBalance.Daily_Payment__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.loanBalance.Notes__c}" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.loanBalance.Notes__c}" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                         <apex:outputField value="{!container.loanBalance.Maturity_Date__c}" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                         <apex:inputField value="{!container.loanBalance.Maturity_Date__c}" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.loanBalance.Active__c}" rendered="{!AND(NOT(ISBLANK(container.loanBalance.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.loanBalance.Active__c}" rendered="{!OR((ISBLANK(container.loanBalance.Id)), editAll, container.isedited)}"/>
+                                      
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                        <tfoot class="footertotalrow">
+                            <tr>
+                                <td class="totalRow">
+                                    <apex:outputLabel value="Total" rendered="{!containers.size > 0}"/>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                        <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                            <apex:param value="{!balanceTotal}" />
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                        <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                            <apex:param value="{!paymentTotal}" />
+                                        </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>       
+        </apex:pageBlock>
+        <script type="text/javascript">
+            function computeLoanBalCalculations() {
+                console.log('-----tab label component1----'+t$("[id*='loanBaltab_lbl']").text());
+                console.log('-----------------------newconsoleloanbal' + {!containers.size});
+                var loanBalTabLabel = 'Loan Balances';// + ' (' + {!containers.size} + ')';
+                t$("[id*='loanBaltab_lbl']").text(loanBalTabLabel);               
+                t$("[id*='loanBaltab_lbl']").append(' (' + {!containers.size} + ')');
+            }
+        </script>
+    </apex:form>
+    <script type="text/javascript">
+        var loanBalTabLabelOriginal ;
+        function runSaveAllLoans() {
+
+            setTimeout(function() {
+                saveAllLoans();
+            }, 1000);
+        }
+
+        t$(function () {
+            loanBalTabLabelOriginal = t$("[id*='loanBaltab_lbl']").text();
+            computeLoanBalCalculations();
+        });
+        
+        function runNewLoanBal() {
+            setTimeout(function() {
+                newLoans();
+            }, 500);
+        }
+        
+        function runEditLoanBal() {
+
+          setTimeout(function() {
+            editLoans();
+          }, 500);
+        }
+    </script>
+</apex:component>

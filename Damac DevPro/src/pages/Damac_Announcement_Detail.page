@@ -1,0 +1,261 @@
+<apex:page showHeader="true" sidebar="true" controller="DamacAnnouncementDetailController" cache="true">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Agent Portal- Announcement Detail</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/damac-theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/bootstrap.min.css')}" />
+        <style>
+            .button-group{
+                padding:20px 0px !important;
+                border-bottom:1px solid #ddd !important;
+            }
+            
+            .announcement-title{
+                color:#0D80FC !important;
+            }
+            
+            .announcement-content{
+                padding:10px 20px;
+                text-align:justify !important;
+            }
+            
+            .announcement{
+                border-bottom:1px solid #ddd;
+            }
+            
+            .subcontainer{
+                min-height:400px !important;
+            }
+            
+            .modal-content{
+                border-radius:0px !important;
+            }
+
+            .modal-title{
+                background: #0D80FC !important;
+                font-size:18px !important;
+                text-align:center;
+                font-family: Arial,sans-serif !important;
+                padding:10px !important;
+                color:#FFFFFF !important;
+            }
+
+            .modal-header{
+                border:0px !important;
+            }
+            
+            .announcement-documentation-title{
+                padding-bottom:10px !important;
+                font-weight:bold !important;
+                color:Black !important;
+            }
+        </style>
+    </head>
+    
+    <body>
+      <div class="global-wrapper content-bg">
+        <apex:insert name="body slds">
+            <apex:form id="announcement-detail-form">
+                <apex:actionStatus id="pleasewait" stopText="">
+                    <apex:facet name="start">
+                        <div>
+                        <!-- to disable whole page when user clicks on next button  -->
+                            <div class="popupBackground override-bg"></div>
+                            <div class="PopupPanel">
+                                <img src="{!$Resource.Portal_Loading_Image}"/>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <apex:pageMessages id="messages"></apex:pageMessages>
+                <section class="global-content-w-footer slds" id="announcement-section">
+                    <div class="subcontainer" style="padding:10px">
+                        <div class="button-group slds-grid slds-wrap">
+                            <div style="margin:auto">
+                                <div class="slds-button slds-button--neutral" style="float:left" onclick="window.location.href='{!URLFOR($Page.Damac_Announcements,null)}'">BACK</div>
+                            </div>
+                           
+                            
+                        </div>
+                        <div class="padding-10 announcement">
+                            <div class="announcement-title text-medium">
+                                 <apex:outputText value="{!announcement.Title__c}"></apex:outputText>
+                            </div>
+                            <div class="announcement-content text-small text-color-black">
+                                <apex:outputField value="{!announcement.Description__c}"></apex:outputField>
+                            </div>
+                        </div>
+                       <!-- <apex:outputPanel rendered="{!isAuthorisedToUpload}">
+                            <div class="slds-grid slds-wrap" style="padding:10px">
+                                <div class="slds-size--1-of-1 announcement-documentation-title text-medium text-color-black">
+                                    Announcement Documentation Details
+                                   
+                                </div>
+                                <div class="slds-size--1-of-1">
+                                    <div class="slds-button slds-button--neutral download " style="float:left;height:auto !important">
+                                           <img src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/download.png')}" style="width:30px;display:inline"></img>
+                                           <p class="text-color-white" style="display:inline;padding:10px !important">DOWNLOAD</p>
+                                     </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!IF(AND(isAuthorisedToUpload == false,(announcementRequest.Announcement_URL__c != null || announcementRequest.Announcement_URL__c != '')),true,false)}">
+                            <div class="slds-grid slds-wrap" style="padding:10px">
+                                <div class="slds-size--1-of-1 announcement-documentation-title text-medium text-color-black">
+                                    Announcement Documentation Details
+                                   
+                                </div>
+                                <div class="slds-size--1-of-1">
+                                    <div class="slds-button slds-button--neutral download " style="float:left;height:auto !important">
+                                           <img src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/download.png')}" style="width:30px;display:inline"></img>
+                                           <p class="text-color-white" style="display:inline;padding:10px !important">DOWNLOAD</p>
+                                     </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>-->
+                        <div class="slds-grid slds-wrap" style="padding:10px">
+                            <apex:outputPanel rendered="{!downloadAttachmentSize >0}">
+                            <div class="slds-size--1-of-1 announcement-documentation-title text-medium text-color-black">
+                                Announcement Documentation Details
+                               
+                            </div>
+                            </apex:outputPanel>
+                            <div class="slds-size--1-of-1">
+                                <apex:repeat value="{!downloadAttachments}" var="attachment">
+                                    <a class="slds-button slds-button--neutral"
+                                     target="_BLANK" href="{!$Label.Salesforce_URL}/servlet/servlet.FileDownload?file={!attachment.Id}" style="margin:10px 0px;height:auto !important">
+                                           <img src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/download.png')}" style="width:30px;display:inline"></img>
+                                           <p class="text-color-white" style="display:inline;padding:10px !important">
+                                               {!attachment.Name}
+                                           </p>
+                                     </a>
+                                 </apex:repeat>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </apex:form>
+        </apex:insert>
+    </div>
+    <!--<apex:outputPanel id="announcement-detail">
+         <apex:form id="announcement_form">
+            
+            <div class="modal fade" id="announcement_popup" role="dialog" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        
+                    </div>
+                    <div class="modal-body slds">
+                        <div class="slds-grid slds-wrap">
+                            <div class="slds-size--1-of-1 slds-p-around--small">
+                                 <div class="text-medium text-color-black">
+                                    Information :
+                                </div>
+                                <div class="text-small text-color-black slds-p-around--small">
+                                     <li>Please update the details below if you prefer customization to the document.</li>
+                                    <apex:outputPanel rendered="{!announcementRequest.Announcement_URL__c != null }">
+                                     <li> If you have already uploaded the document please click on SKIP to download the document.</li>
+                                    </apex:outputPanel>
+                                    <li>You will recieve an email shortly once the details are saved.</li>
+                                </div>
+                            </div>
+                            <div class="slds-size--1-of-1">
+                                <div class="slds-form-element slds-p-around--small">
+                                  <label class="slds-form-element__label text-medium" for="selectSample1">
+                                      Upload Logo
+                                  </label>
+                                  <div class="slds-form-element__control">
+                                      <apex:inputFile value="{!logoBlobFile}" FileName="{!headerAttachment.name}"></apex:inputFile>
+                                  </div>
+                                  
+                                </div>
+                            </div>
+                            
+                            <div class="slds-size--1-of-1">
+                                <div class="slds-form-element slds-p-around--small">
+                                  <label class="slds-form-element__label text-medium" for="selectSample1">
+                                      Footer
+                                  </label>
+                                  <div class="slds-form-element__control">
+                                    <apex:inputTextarea id="announcement_footer" style="width:100%" rows="5"
+                                         value="{!announcementRequest.Footer__c}">
+                                    </apex:inputTextarea>
+                                  </div>
+                                  
+                                </div>
+                            </div>
+                            <div style="margin:auto !important" class="slds-grid slds-wrap">
+                                <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                    <div class="slds-button slds-button--neutral" data-dismiss="modal" style="cursor:pointer;">Cancel</div>
+                                </div>
+                            
+                                <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                    <apex:commandButton styleClass="slds-button slds-button--neutral" style="cursor:pointer;background:#0D80FC;color:white" action="{!saveAnnouncement}" value="Save"></apex:commandButton>
+                                </div>
+                              
+                               <apex:outputPanel rendered="{!announcementRequest.Announcement_URL__c != null }">
+                                    <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                        <a class="slds-button slds-button--neutral" style="cursor:pointer;background:#0D80FC;color:white" href="{!announcementRequest.Announcement_URL__c}" target="_blank"> Skip</a>
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>    
+             </div>
+            
+          </apex:form>
+       </apex:outputPanel>-->
+        <apex:form >
+            <apex:actionFunction name="getAnnouncementRequestDetail" action="{!getAnnouncementRequestDetail}" reRender="announcement-detail" oncomplete="$('#announcement_popup').modal('show');">
+                <apex:param name="Id" value=""></apex:param>
+            </apex:actionFunction>
+       </apex:form>
+       <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/bootstrap.min.js')}"></script>
+       <apex:outputPanel id="scriptTag">
+        <script>
+            $('.page-name').text('Announcements');
+             $(document).ready(function(){
+                
+                $('.download').click(function(){
+                    
+                    if({!isAuthorisedToUpload}){
+                        
+                       uploadDetails('{!announcementRequest.Id}');
+                    }
+                    else{
+                        
+                        if('{!announcementRequest.Announcement_URL__c}' != null && '{!announcementRequest.Announcement_URL__c}' != ''){
+                            window.open('{!announcementRequest.Announcement_URL__c}');
+                        }
+                        
+                    }
+                     
+                });
+                
+             });
+             
+            function uploadDetails(obj){
+            
+                if(null != obj && obj != ''){
+                    getAnnouncementRequestDetail(obj);
+                }
+                else{
+                    getAnnouncementRequestDetail(''); 
+                }
+                
+            }
+            
+            
+        </script>
+        </apex:outputPanel>
+    </body>
+</html>
+</apex:page>

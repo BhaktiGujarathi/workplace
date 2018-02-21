@@ -1,0 +1,607 @@
+<apex:page standardController="Account" extensions="FundingApplicationController" sidebar="false"> 
+	<style>
+		table
+		{
+			border-collapse:collapse;
+			width:100%;
+		}
+		table, td, th
+		{
+			border:1px solid black;
+		}
+		th{
+			border-bottom: 0px;
+		}
+		td{
+			border-top: 0px;
+		}
+	</style>
+	
+	<script Language="JavaScript">
+		function openConga() 
+		{ 
+			window.open('{!URLFOR($Action.Opportunity.Create_PDF,Opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes');
+		}  
+		function SendCongaPDF() 
+		{ 
+			window.open('{!URLFOR($Action.Opportunity.Send_PDF,Opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes');
+		} 
+	</script>
+	
+	<apex:form title="Funding Apllication">
+	<apex:pageMessages id="pageMessageId" />
+		<div align="center">
+			 <br/>
+             <apex:commandButton action="{!editPage}" value="Edit"/>&nbsp;
+             <apex:commandButton action="{!cancel}" value="Cancel"/>&nbsp;
+             <apex:commandButton value="Create PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"
+											         onclick="openConga()"/>
+		     <apex:commandButton value="Send PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"
+		     									   onclick="SendCongaPDF()"/>
+			
+		</div>
+         <br/>   
+       	<table >
+           		
+       		 <tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		         BUSINESS INFORMATION
+		      </th>
+		     </tr>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Legal Business Name"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="D.B.A."/>
+          			</th>
+          			
+          		</tr>
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Legal_Name__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.DBA__c}"/>
+          			</td>
+          			
+          		</tr>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Type of Entity"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Federal Tax ID#"/>
+          			</th>
+          			
+          		</tr>
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Type_of_Entity__c}"/>
+          			</td>
+          			
+          			<td>
+          				<apex:outputField value="{!Account.Federal_Tax_ID_No__c}"/>
+          			</td>
+          		</tr>
+          		
+          	</table>
+          	
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Legal Address"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="City"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="State"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Zip"/>		
+          			</th>
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Legal_Address__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Legal_Address_City__c}" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Legal_Address_State__c}" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Legal_Address_Zip__c}" />		
+          			</td>
+          		</tr>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Physical Address (If different)"/>
+          			</th>
+          			<th>
+					<apex:outputLabel value="City"/>
+				</th>
+				<th>
+					<apex:outputLabel value="State"/>
+				</th>
+				<th>
+					<apex:outputLabel value="Zip"/>
+				</th>
+          		</tr>
+          			<td>
+          				<apex:outputField value="{!Account.Physical_Address__c}"/>
+          			</td>
+          			<td>
+					<apex:outputField value="{!Account.Physical_Address_City__c}" />
+				</td>
+				<td>
+					<apex:outputField value="{!Account.Physical_Address_State__c}" />
+				</td>
+				<td>
+					<apex:outputField value="{!Account.Physical_Address_Zip__c}" />
+				</td>
+          	</table>
+          	
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Phone #"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Cellular #"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Fax #"/>
+          			</th>
+          		</tr>
+          		
+          		<tr>
+				<td>
+          				<apex:outputField value="{!Account.Phone}" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Cellular_No__c}"/> 
+          			</td>   
+          			<td>
+          				<apex:outputField value="{!Account.Fax}" />
+          			</td>        			
+          		</tr>
+          		
+          	</table>
+          	
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Date Business Established (MM/YY)" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Length of Ownership"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Requested Amount of Funds" />
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Use of Proceeds" />  
+          			</th>
+          		</tr>
+          		
+          		<tr>
+				<td>
+          				<apex:outputField value="{!Account.Date_Business_Established__c}" /> 
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Length_of_Ownership__c}"/>
+          			</td>   
+          			<td>
+          				<apex:outputField value="{!opportunity.Requested_Amount_of_Funds__c}" />
+          			</td> 
+          			<td>
+          				<apex:outputField value="{!Account.Use_of_Proceeds__c}" />  
+          			</td>        			
+          		</tr>
+          	</table>
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Industry Type" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Gross Monthly Sales (All revenue)"/>
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Credit Card Sales – Monthly Average" />
+          			</th>
+          		</tr>
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Industry}" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Gross_monthly_Sales__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Credit_Card_Sales__c}" label="Credit Card Sales - Monthly Average"/>
+          			</td>	
+          		</tr>
+          	</table>
+          	
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Website" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Email"/>
+          			</th>	
+          		</tr>
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Website}" />
+			
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Email__c}"/>
+          			</td>		
+          		</tr>	
+          	</table>
+          	<table >
+          		 <tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		         OWNER/OFFICER INFORMATION
+		      </th>
+		     </tr>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Name" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Title"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="% of Ownership"/>
+          			</th>	
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Name__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Title__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Ownership1_Percentage__c}" />
+          			</td>	
+          		</tr>
+          		
+          	</table>
+          	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Residence Address" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="City"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="State"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Zip"/>
+          			</th>
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Home_Address__c}" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_City__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_State__c}" />
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Zip__c}" />
+          			</td>	
+          		</tr>
+          		
+          		
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Home Phone #" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Social Security #"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Date of Birth"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Drivers License #"/>
+          			</th>
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Home_Phone__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.SSN__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_DOB__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_1_Driver_License__c}"/>
+          			</td>	
+          		</tr>
+          	</table>
+          	
+          	<table>
+          		 <tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		      	2nd OWNER/OFFICER INFORMATION (if applicable)   
+		      </th>
+		     </tr>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Name" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Title"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="% of Ownership"/>
+          			</th>	
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_name__c}" Label="Name"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_Title__c}" label="Title" />
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Ownership2_Percentage__c}" label="% of Ownership" />
+          			</td>
+          			
+          		</tr>
+          	</table>
+          	
+          	
+          	
+          	
+          	 	<table>
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Residence Address" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="City"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="State"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Zip"/>
+          			</th>
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_Home_Address__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_City__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_State__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_Zip__c}"/>
+          			</td>	
+          		</tr>
+          		
+          		
+          		<tr>
+          			<th>
+          				<apex:outputLabel value="Home Phone #" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Social Security #"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Date of Birth"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Drivers License #"/>
+          			</th>
+          		</tr>
+          		
+          		<tr>
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_Home_Phone__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.SSN_2__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_DOB__c}" />
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Owner_2_Drivers_License__c}" />
+          			</td>	
+          		</tr>
+          	</table>
+          	
+          	<table>
+          		 <tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		      	BANK INFORMATION 
+		      </th>
+		     </tr>	
+		     
+		     <tr>
+		     	<th>
+          				<apex:outputLabel value="Bank Name (Business)" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Contact Name"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Phone"/>
+          			</th>	
+		     </tr>	
+		     
+		     <tr>
+		     	<td>
+          				<apex:outputField value="{!Account.Bank_Name__c}"/>
+          			</td>
+          			<td>
+          				<apex:outputField value="{!Account.Bank_Contact__c}"/>
+          			</td>	
+          			<td>
+          				<apex:outputField value="{!Account.Bank_Phone__c}" />
+          			</td>	
+		     </tr>
+          		 <tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		      	BUSINESS/TRADE REFERENCES
+		      </th>
+		     </tr>	
+		     
+		     <tr>
+		     	<th>
+          				<apex:outputLabel value="Business Name" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Contact name/ Account #"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Phone #"/>
+          			</th>	
+		     </tr>	
+		     
+		     <tr>
+		     	<td>
+		     		<apex:outputField value="{!Account.Business_Name__c}"/>
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Business_Contact_Account__c}" label="Contact Name/Account #"/>
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Business_Phone__c}" />	
+		     	</td>
+		     </tr>
+          	</table>
+          	
+          	<table>
+          		<tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		      	PROPERTY INFORMATION
+		      </th>
+		     </tr>	
+		     
+		      <tr>
+		     	<th>
+          				<apex:outputLabel value="Landlord/Mortgagee Name" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Contact Name"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Phone #"/>
+          			</th>	
+		     </tr>	
+		     
+		     <tr>
+		     	<td>
+		     		<apex:outputField value="{!Account.Landlord_Mortgagee__c}" />
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Landlord_Contact_Name__c}" />
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Landlord_Phone__c}"/>
+		     	</td>	
+		     </tr>
+          	</table>
+          	<table>
+          		 <tr>
+		     	<th>
+          				<apex:outputLabel value="Lease start date" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Time Remaining"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Monthly Payment"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Square Footage (Approx)"/>
+          			</th>	
+		     </tr>	
+		     <tr>
+		     	<td>
+		     		<apex:outputField value="{!Account.Lease_start_date__c}" />
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Time_Left_On_Lease__c}" />
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Monthly_Payment__c}"  />
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!Account.Square_Footage__c}"  />
+		     	</td>
+		     </tr>
+          	</table>
+          	<table>
+          		<tr>
+		      <th COLSPAN="3" style="background-color:#cccccc;">
+		      	OTHER IMPORTANT INFORMATION
+		      </th>
+		     </tr>	
+		     
+          		 <tr>
+		     	<th>
+          				<apex:outputLabel value="Have you ever used a Business Cash Advance?" /> 
+          			</th>
+          			<th>
+          				<apex:outputLabel value="Prior Cash Advance Company"/>
+          			</th>	
+          			<th>
+          				<apex:outputLabel value="Balance"/>
+          			</th>	
+		     </tr>	
+		     
+		     <tr>
+		     	<td>
+		     		<apex:outputField value="{!opportunity.Ever_used_a_Business_Cash_Advance__c}"/>
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!opportunity.Cash_Advance_Company__c}" label="Prior Cash Advance Company"/>
+		     	</td>
+		     	<td>
+		     		<apex:outputField value="{!opportunity.Balance__c}" />	
+		     	</td>
+		     </tr>	
+      	</table>
+      	
+      	<div align="center">
+			 <br/>
+             <apex:commandButton action="{!editPage}" value="Edit"/>&nbsp;
+             <apex:commandButton action="{!cancel}" value="Cancel"/>&nbsp;
+             <apex:commandButton value="Create PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"
+											     onclick="openConga()"/>
+			 <apex:commandButton value="Send PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"
+		     									   onclick="SendCongaPDF()"/>
+			<br/>
+		</div>
+	</apex:form>
+</apex:page>

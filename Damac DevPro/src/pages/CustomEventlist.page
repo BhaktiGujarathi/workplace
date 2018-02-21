@@ -1,0 +1,41 @@
+<apex:page standardController="Inquiry__c" extensions="CustomEventList"
+    sidebar="false" showHeader="false">
+    <apex:form >
+        <apex:pageBlock >
+            <div align="center">
+                <apex:outputPanel >
+                    <apex:commandButton title="New Event" value="New Event"
+                        action="javascript&colon;;"
+                        onclick="window.top.location= ('/00U/e?what_id={!Inquiry__c.Id}&retURL={!Inquiry__c.Id}');" />
+                    <br />
+                </apex:outputPanel>
+            </div>
+            <apex:outputPanel rendered="{!wrapperObj.eventList.size > 0}">
+                <apex:pageBlockTable value="{!wrapperObj.eventList}" var="event">
+                    <apex:column headerValue="Action" styleClass="actionColumn">
+                        <apex:outputLink value="/{!event.Id}/e" title="Edit Task"
+                            styleClass="actionLink">Edit</apex:outputLink>
+                    </apex:column>
+                    <apex:repeat value="{!wrapperObj.fieldList}" var="f">
+                        <apex:column rendered="{!f !='OwnerId' && f != 'Subject' && f!='WhoId'}"
+                            value="{!event[f]}">
+                            <apex:facet name="header">{!f}</apex:facet>
+                        </apex:column>
+                        <apex:column rendered="{!f == 'Subject'}"
+                            style="white-space: nowrap">
+                            <apex:facet name="header">{!f}</apex:facet>
+                            <apex:outputLink value="javascript&colon;;"
+                                onclick="window.top.location='/{!event.id}';">{!event[f]}</apex:outputLink>
+                        </apex:column>
+                    </apex:repeat>
+                </apex:pageBlockTable>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!wrapperObj.eventList.size == 0}">
+                <apex:pageBlockSection >
+                    <apex:outputText value="No event exists at the moment." style="font-weight: bold;"/><br/>
+                    <apex:outputText value="To create a new event use the New Event button." style="font-weight: bold;"/>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

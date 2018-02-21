@@ -1,0 +1,190 @@
+<apex:page sidebar="false" showHeader="false" controller="PortalSurveyDemoController">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+     <style>
+        table {
+            border-collapse: collapse;
+        }
+        
+        td {
+            padding-top: 5.5em;
+            padding-bottom: 5.5em;
+        }
+        table td, table td * {
+            vertical-align: top;
+        }
+        
+     </style>
+     <apex:slds />
+     
+     <apex:pageMessages id="msgId"/>
+     
+     <apex:outputText style="font-weight: 600;padding: 41px;" value="DAMAC CUSTOMER SATISFACTION SURVEY"/>
+     
+     <br/><br/>
+     
+     <apex:outputPanel layout="block">
+         <apex:outputText style="font-weight: 600;padding: 41px;" value="Dear {!$User.FirstName} {!$User.LastName}"/><br/>
+         <apex:outputText style="font-weight: 600;padding: 41px;" value="Thank you for taking out time to provide your feedback. With the intension of improving your experience with DAMAC, we request you to take 5 mins to share your inputs."/>
+     </apex:outputPanel>
+     
+     <br/><br/>
+     
+     <apex:outputPanel layout="block" style="padding: 41px;">
+         <apex:outputPanel layout="block">
+             <table>
+                 <tr style="border-top: 10px solid transparent;">
+                     <td style="width: 50%;">
+                        <apex:outputText value="A. Recent mode of communication with us : "></apex:outputText> 
+                     </td>
+                     
+                     <td>
+                         <input type="radio" name="MOC" value="Email" >Email </input><br/>
+                         <input type="radio" name="MOC" value="Phone Call">Phone Call </input><br/>
+                         <input type="radio" name="MOC" value="Walk In">Walk In</input>
+                     </td>
+                 </tr>
+                 <tr style="vertical-align:top; border-top: 70px solid transparent;" id="OtherRow">
+                     <td>
+                        <apex:outputText value="B. Purpose of contact : "></apex:outputText> 
+                     </td>
+                     
+                     <td style="vertical-align:top"> 
+                         <select id="dropDownId">
+                              <option value=""></option>
+                              <option value="Assignment">Assignment</option>
+                              <option value="Contract">Contract</option>
+                              <option value="NOC">NOC</option>
+                              <option value="Handover">Handover</option>
+                              <option value="Others">Others</option>
+                         </select>
+                     </td>
+                 </tr>
+             </table>
+         </apex:outputPanel>
+         
+         <br/><br/><br/><br/>
+         
+         <apex:outputPanel layout="block">
+             <table>
+                 <tr>
+                     <td>
+                        <apex:outputText value="1. From your experience, please share your feedback by marking appropriate boxes below : "></apex:outputText> 
+                     </td>
+                 </tr>
+                 <tr>
+                     <td style="color: rgba(12, 12, 228, 0.98); padding-left: 156px;">
+                        <apex:outputText value="Please rate us using the following scale"/> <br/>
+                        <apex:outputText value="1.Highly Dissatisfied"/> <br/>
+                        <apex:outputText value="2.Satisfied"/> <br/>
+                        <apex:outputText value="3.Happy"/> <br/>
+                        <apex:outputText value="4.Not Applicable"/>
+                     </td>
+                 </tr>
+             </table>
+         </apex:outputPanel>
+         
+         <apex:outputPanel layout="block">
+             <table>
+                 <tr id="CRP">
+                     <td style="width: 50%;">
+                        <apex:outputText value="a. Please rate our customer service representative on Politeness"></apex:outputText> 
+                     </td>
+                     <td>
+                         <input type="radio" name="CRP" value="1" onClick="appendTextBox()">1</input><br/>
+                         <input type="radio" name="CRP" value="2" onClick="removeTextBox()">2</input><br/>
+                         <input type="radio" name="CRP" value="3" onClick="removeTextBox()">3</input><br/>
+                         <input type="radio" name="CRP" value="4" onClick="removeTextBox()">4</input>
+                     </td>
+                 </tr>
+                 <tr style="border-top: 70px solid transparent;" >
+                     <td>
+                        <apex:outputText value="b. Please rate our customer service on knowledge levels:"></apex:outputText> 
+                     </td>
+                     <td>
+                         <input type="radio" name="CKL" value="1" >1 </input><br/>
+                         <input type="radio" name="CKL" value="2">2</input><br/>
+                         <input type="radio" name="CKL" value="3">3</input><br/>
+                         <input type="radio" name="CKL" value="4">4</input>
+                     </td>
+                 </tr>
+             </table>
+         </apex:outputPanel>
+         
+         <apex:outputPanel layout="block">
+             <table>
+                 <tr style="border-top: 70px solid transparent;">
+                     <td style="width: 50%;">
+                        <apex:outputText value="2. How many times did you have to contact DAMAC customer service department before your requirement/problem was resolved?"></apex:outputText> 
+                     </td>
+                     <td>
+                         <input type="radio" name="TT" value="Once" >Once</input><br/>
+                         <input type="radio" name="TT" value="Twice">Twice</input><br/>
+                         <input type="radio" name="TT" value="3-5">3 - 5 Times</input><br/>
+                         <input type="radio" name="TT" value="NA">NA</input>
+                     </td>
+                 </tr>
+                 <tr style="border-top: 70px solid transparent;">
+                     <td>
+                        <apex:outputText value="3. How do you primarily lodge a complaint or ask for after paleo service"></apex:outputText> 
+                     </td>
+                     <td>
+                         <input type="radio" name="CS" value="Online" >Online</input><br/>
+                         <input type="radio" name="CS" value="Telephone">Telephone</input><br/>
+                         <input type="radio" name="CS" value="CSR in the office">CSR in the office</input><br/>
+                         <input type="radio" name="CS" value="Email">Email</input>
+                     </td>
+                 </tr>
+             </table>
+         </apex:outputPanel>
+         <apex:outputPanel layout="block" >
+             <apex:form >
+                 <apex:actionFunction action="{!insertResposne}" name="insertResponse" oncomplete="return false" reRender="msgId"/>
+                 <apex:inputHidden id="csKnow" value="{!csKnow}"/>
+                 <apex:inputHidden id="csPolite" value="{!csPolite}"/>
+                 <apex:inputHidden id="moc" value="{!moc}"/>
+                 <apex:inputHidden id="poc" value="{!poc}"/>
+                 <apex:inputHidden id="tc" value="{!tc}"/>
+                 <apex:inputHidden id="mocomplaint" value="{!mocomplaint}"/>
+                 <apex:commandButton onclick="return submitResponse();" value="Submit" style="margin-left: 359px; margin-top: 50px; width: 126px; height: 30px;"/>
+             </apex:form>
+         </apex:outputPanel>
+     </apex:outputPanel>
+     
+     <script>
+         
+         $('select').on('change', function() {
+             if( this.value == 'Others' ){
+                 $('tr#OtherRow td:last').append($('<textarea cols="65" rows="10" id="OtherInfo" placeholder="Please specify the purpose.."/>'));
+             }
+             else {
+                 $('#OtherInfo').remove();
+             }
+         })
+         
+         function submitResponse() {
+             if( $('input[name=MOC]:checked').val() != null ) {
+                  $("[id*='moc']").val( $('input[name=MOC]:checked').val() );
+             }
+             if( $('input[name=CRP]:checked').val() != null ){ 
+                 $("[id*='csPolite']").val( $('input[name=CRP]:checked').val() ) ;
+             }
+             if( $('input[name=CKL]:checked').val() != null ){ 
+                 $("[id*='csKnow']").val( $('input[name=CKL]:checked').val() ) ;
+             }
+             if( $('input[name=CS]:checked').val() != null ){ 
+                   $("[id*='mocomplaint']").val( $('input[name=CS]:checked').val() ) ;
+             }
+             if( $('input[name=TT]:checked').val() != null ){ 
+                 $("[id*='tc']").val( $('input[name=TT]:checked').val() );
+             }
+             if( $('#dropDownId :selected').text() != '' ) {
+                  $("[id*='poc']").val( $('#dropDownId :selected').text() );
+             }
+             insertResponse();
+             return false;
+         }
+         
+         
+         
+     </script>
+</apex:page>

@@ -1,0 +1,802 @@
+<apex:page controller="RentalPoolTerminationProcess" sidebar="false" showHeader="false" standardstylesheets="false" applyBodytag="false" docType="html-5.0">
+<html lang="en">
+    <head>
+        <title>Dashboard</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-multiselect.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}"/>
+
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Raleway"/>
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800"/>
+
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+
+    </head>
+    <body>
+<apex:form id="form">
+        <!---------------------- Top Navbar ------------------------>        
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="#">Demac</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                <i class="fa fa-bell" aria-hidden="true"></i>
+                                <span class="label notification">10</span>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-calendar" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-profile-box dropdown">
+                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                <img src="assets/img/user.png" class="top-user-image" />
+                                <span class="top-user-name">Jane Doe</span>
+                            </a>
+                            <ul class="dropdown-menu site-dropdown user-dropdown">
+                                <li><a href="#" class="wave-button"> View Profile</a></li>
+                                <li><a href="#" class="wave-button">Settings</a></li>
+                                <li><a href="#" class="wave-button">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Sidebar Menu -->
+        <div class="nav-side-menu">
+            <div class="brand">Brand Logo</div>
+            <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+            <div class="menu-list">
+                <ul id="menu-content" class="menu-content collapse out">
+                    <li><a href="CRE-additional-parking.html"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                    <li  data-toggle="collapse" data-target="#cre" class="active collapsed" >
+                        <a><i class="fa fa-delicious" aria-hidden="true"></i> CRE SR's <span class="arrow"></span></a>
+                    </li>
+                    <ul class="sub-menu collapse in" id="cre">
+                        <li><a href="CRE-additional-parking.html">Additional Parking</a></li>
+                        <li><a href="CRE-aopt.html">AOPT</a></li>
+                        <li><a href="CRE-bounced-cheque.html">Bounced Cheque</a></li>
+                        <li><a href="CRE-funds-transfer.html">Fund Transfer</a></li>
+                        <li><a href="CRE-furniture-package.html">Furniture Package</a></li>
+                        <li><a href="CRE-mortgage.html">Mortgage</a></li>
+                        <li><a href="CRE-penalty-waiver.html">Penalty Waiver</a></li>
+                        <li><a href="CRE-proof-of-payment.html">Proof of Payment</a></li>
+                        <li><a href="CRE-refunds.html">Refunds</a></li>
+                        <li><a href="CRE-cocd.html">COCD</a></li>
+                        <li class="active"><a href="CRE-early-handover.html">Early Handover</a></li>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+
+            <div class="wrapper">
+
+                <div class="row">
+
+                    <div class="col-md-8">
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Rental Pool Termination
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Select Rental Pool unit for Termination</label>
+                                            <apex:selectList styleClass="form-control" value="{!strSelectedUnit}" multiselect="false" size="1" id="selectUnit">
+                                               <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}"/>
+                                               <apex:selectOptions value="{!lstUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+<!--                                     <div class="col-lg-6"> -->
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Mode of Request</label> -->
+<!--                                             <select class="form-control"> -->
+<!--                                                 <option>Mode 1</option> -->
+<!--                                                 <option>Mode 2</option> -->
+<!--                                             </select> -->
+<!--                                         </div> -->
+<!--                                     </div> -->
+                                </div>
+                                <br/>
+<div class="row">
+                                    <div class="col-lg-8">
+                                        <ul class="nav nav-pills">
+                                            <li role="presentation" class="active"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a></li>
+                                            <li role="presentation"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a></li>
+                                            <li role="presentation"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a></li>
+                                            <li role="presentation"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a></li>
+                                        </ul>
+
+
+
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>The Trump Estates Park Residences</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>Dubailand, Dubai, UAE</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!objBookingUnit.Bedroom_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!objBookingUnit.Booking_Unit_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!objBookingUnit.Permitted_Use__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/ Off plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool_Status__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Price</b></td>
+                                                                    <td>{!objBookingUnit.Unit_Selling_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Area</b></td>
+                                                                    <td>{!objBookingUnit.Area__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Promotion/Scheme/Option/Campaign</b></td>
+                                                                    <td>{!objBookingUnit.Related_Promotion_Title__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Invoices raised</b></td>
+                                                                    <td>{!objBookingUnit.Final_Invoice__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Amount paid</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Penalties</b></td>
+                                                                    <td>{!objBookingUnit.Penalty_Amount__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Overdue</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Deal Team</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Type</b></td>
+                                                                    <td>{!objBookingUnit.Booking_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Built Up Price</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Plot Price</b></td>
+                                                                    <td>{!objBookingUnit.Plot_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Payment Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Statement of Account</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Date</b></td>
+                                                                    <td>{!objBookingUnit.CreatedDate}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Date</b></td>
+                                                                    <td>{!objBookingUnit.Agreement_Date__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Floor Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>JOPD Area</b></td>
+                                                                    <td>{!objBookingUnit.JOPD_Area__c}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan2">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td>{!objBookingUnit.Dispute_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td>{!objBookingUnit.DSR_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortgage</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Court Case</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DP OK</b></td>
+                                                                    <td>{!objBookingUnit.DP_OK__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DOC OK</b></td>
+                                                                    <td>{!objBookingUnit.Doc_OK__c}</td>
+                                                                </tr>
+                                                            </tbody>
+
+
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan3">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>OQOOD Registered</b></td>
+                                                                    <td>{!objBookingUnit.OQOOD_Reg_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL sent</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO flag</b></td>
+                                                                    <td>{!objBookingUnit.Early_Handover__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO flag</b></td>
+                                                                    <td>{!objBookingUnit.Handover_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>{!objBookingUnit.PCC_Generate__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool__c}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                            <apex:repeat value="{!lstOpenCase}" var="openCase" id="openCaseID">
+                                                                <tr>
+                                                                    <td><b>{!openCase.CaseNumber}</b></td>
+                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!openCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <br />
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <thead>
+                                                                <th colspan="2">Closed SRs</th>
+                                                            </thead>
+                                                            <tbody>
+                                                                <apex:repeat value="{!lstCloseCase}" var="closeCase" id="closeCaseID">
+                                                                <tr>
+                                                                    <td><b>{!closeCase.CaseNumber}</b></td>
+                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!closeCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                
+</div>
+</div>
+                                      <div class="col-lg-4">
+                                        <h5>Additional Information</h5>
+                                        <div class="details">
+                                            <div class="row detailHeading">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4>1500000</h4>
+                                                </div>
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>% Received</h6>
+                                                    <h4>24%</h4>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Under Assignment?</h6>
+                                                        <h5>500000</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>AR PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penality/Overdues (Portfolio level)</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdues/dues towards Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties/ Late payment fee on Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Other units under Rental Pool</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Hospitality Dues</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                    </div> 
+                                </div>
+                                <span class="pull-right">
+                                            <apex:commandButton styleclass="btn btn-sm btn-success" oncomplete="viewSOA();" action="{!SOAtobeGenerated}" value="Generate Statement of Account"/>
+                                        </span>
+                                <br/><br/>
+                            </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>Select Details</h4>
+                                <div class="row">
+<!--                                     <div class="col-lg-6"> -->
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Unit List</label> -->
+<!--                                             <select class="form-control" id="sel1"> -->
+<!--                                                 <option>Unit 1</option> -->
+<!--                                             </select> -->
+<!--                                         </div> -->
+
+<!--                                     </div> -->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Rental Pool End date per Agreement</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strRPEndDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Mode of disptach of termination letter</label>
+                                            <apex:selectList styleClass="form-control" value="{!strSelectedMode}" multiselect="false" size="1">
+                                               <apex:selectOptions value="{!lstModes}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--<div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Terminate unit from</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strTerminatefromDate}" />
+                                        </div>
+                                    </div>
+                                    
+                                </div>-->
+                                
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <p>*Please note that there is a notice period of 1 year for termination of unit from Rental Pool</p>
+                                    </div>
+                                </div>
+
+
+
+                                <br />
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Termination Date</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strTerminationDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Final Settlement Amount</label>
+                                            <apex:inputText styleClass="form-control" value="{!strFinalAmount}" />
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </section>
+
+
+<section id="">
+
+                            <div class="well">
+                                <h4>
+                                    Enter POA Details
+                                </h4>
+                                <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <label>POA?</label>
+                                        <apex:inputCheckbox value="{!blnPoAValue}" style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <apex:outputPanel id="POAInfoBlock">
+                                <div class="row">
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name of Attorney<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control" value="{!strPOAName}" html-placeholder="Enter name" id="POANameID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Purpose of POA<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputTextarea styleClass="form-control" id="newDesc" value="{!strPOARelationWithOwner}"/>
+<!--                                             <apex:selectList styleClass="form-control" value="{!strPOARelationWithOwner}" multiselect="false" size="1"> -->
+<!--                                                <apex:selectOptions value="{!lstRelationShip}"/> -->
+<!--                                             </apex:selectList> -->
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Issue<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strPOAExpiryDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued by (Authority)<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control" value="{!strPOAIssuedBy}" html-placeholder="Enter name" id="issuedByID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                         <apex:outputPanel layout="block">
+                                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Power of Attorney</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="POAAttach" onchange="attachPOAFile();" />
+                                                    </span>
+                                                    <div>
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>
+                                    
+                                </div>
+
+                               </apex:outputPanel>
+                            </div>
+                        </section>
+
+<section id="">
+                            <div class="well">
+                                <h4>
+                                    Upload Documents 
+                                    <span class="pull-right">
+                                        <apex:commandButton value="Save Draft" styleClass="btn btn-sm" style="margin-left: 197px;" action="{!createRentalPoolSR}" reRender="pageM" oncomplete="complete();" status="processStatus"/>
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="return downloadCRF();" value="View CRF" />
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="return downloadAgreement();" value="Rental Agreement"/>
+                                        <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" style="margin-left: 5px;" action="{!submitCase}" reRender="pageM" oncomplete="complete();" status="processStatus"/>
+                                    </span>
+                                </h4>
+                                <br/>
+
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                                        <input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <input type="file" id="CRFAttach" onchange="attachCRFFile();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Upload Signed CRF</label>
+                                    </div>
+                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <input type="file" id="AgreementAttach" onchange="attachAgreementFile();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Signed Rental Pool Agreement</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                       
+
+                    </div>
+                    <!----------------------------------Sidebar Fixed---------------------------------------->
+                    <div class="col-md-4">
+                        <div class="well sideBarFixed profileDisplay">
+                            <img src="assets/img/customer1.jpg" />
+                            <h6>#CD - 3214DSA</h6>
+                            <h4>Mr. Robert Downey Jr. </h4>
+                            <span>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>                               
+                            </span>
+                            <label><a href="">View Portfolio</a></label>
+                            <h6>Organization Name</h6>
+                            <label>Damac</label>
+
+                            <h6>Contact Details</h6>
+                            <label>+971-2313-242-425</label>
+
+                            <h6>Email</h6>
+                            <label>robert.d@gmail.com</label>
+
+                            <h6>POA</h6>
+                            <label>Bob Woolmer</label>
+
+                            <h6>Nationality</h6>
+                            <label>American</label>
+
+                            <h6>Party Type</h6>
+                            <label>Value</label>
+
+                            <h6>Customer Classification</h6>
+                            <label>A++</label>
+
+                            <h6>Bulk</h6>
+                            <label>Value</label>
+
+                            <h6>Joint Buyer</h6>
+                            <label><a href="" class="btn btn-sm">Raymond Wejes</a></label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-datepicker.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/main.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/button.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/checkbox.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-multiselect.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/upload.js')}"/>   
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/ease.js')}"/> 
+        <script>
+            $('.well input.datepicker').datepicker({
+            });
+            $(document).ready(function() {
+                $('#multi-select-demo').multiselect();
+            });
+            
+            window.onload = function(){
+             window.scrollTo(0, 0); 
+             $('[id$=POAInfoBlock]').hide();
+            }
+            
+            function hasAttorney() {
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+            }
+            
+            $('.POAExpiryDate').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            });
+            
+            $('.UnitAvailableFrom').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            });
+            
+            $('.RentalPoolDate').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            });
+            
+            function attachPOAFile(){
+                    var filename = document.getElementById("POAAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=POAAttachName]').val(filename);
+                        var fbody = document.getElementById("POAAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=POAAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+                
+             function attachCRFFile() {
+                    console.log( document.getElementById("CRFAttach").files[0] );
+                    var filename = document.getElementById("CRFAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=CRFAttachName]').val(filename);
+                        var fbody = document.getElementById("CRFAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=CRFAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+                
+                function attachAgreementFile() {
+                    console.log( document.getElementById("AgreementAttach").files[0] );
+                    var filename = document.getElementById("AgreementAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=AgreementAttachName]').val(filename);
+                        var fbody = document.getElementById("AgreementAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=AgreementAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+                
+             function downloadCRF() {
+                    window.open("/apex/PenaltyWaiverCRF");
+                    return false;
+            }
+             function downloadAgreement() {
+                    window.open("/apex/RentalPoolAgreement");
+                    return false;
+            } 
+            
+            function viewSOA() {
+                    window.open("/apex/StatementOfAccountPage");
+                    return false;
+            }
+            
+          function complete() {
+            window.scrollTo(0, 0);
+          }
+        </script>
+        </apex:form>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,311 @@
+<apex:page cache="false" tabstyle="Account" controller="DAMAC_ConfirmRequestController" id="ReviewFinal" sidebar="false" showheader="{!showHeaderAndSidebar}" applyHtmlTag="{!showHeaderAndSidebar}">
+         <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/> 
+        <script src="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.js')}"></script>
+        <apex:stylesheet value="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.css')}"/>
+        <style>
+            .sidebar-components {
+                /*padding-top:20px; 
+                width: 17.5% !important;;*/
+                float:left;
+                /*margin-right: 1.5%;*/
+                background-color: #f6f6f6; 
+                /*padding-left: 1px;*/
+                box-sizing: border-box;
+                width: 100%;
+            }
+            td.main-row, .sidebar, .dashboard-content{
+                padding-top: 0px !important;
+                vertical-align: top;
+            }
+            td.main-row {
+                vertical-align: top;
+                width: 230px !important;
+                padding: 0;
+                border: 1px solid #cbcbcb;
+            }        
+            /* This is for the full screen DIV */
+             .popupBackground {
+                 /* Background color */
+                 background-color:black;
+                 opacity: 0.20;
+                 filter: alpha(opacity = 20);
+              
+                 /* Dimensions */
+                 left : 0;
+                bottom : 0;
+                right : 0;
+                top : 0;
+                 z-index: 998;
+                 position: fixed;
+                 display:block;
+                 background-position : center;
+                  background-repeat : no-repeat;
+             }
+            
+             /* This is for the message DIV */
+             .PopupPanel {
+                /* Background color */
+                /*border: solid 2px #00205B;
+                background-color: white;
+                */
+                /* Dimensions */
+                left: 45%;
+                width: 100px;
+                //margin-left: -100px;
+                top: 50%;
+                height: 100px;
+                z-index: 999;
+                position: fixed;
+             }
+             body .bPageTitle {padding: 0}
+            .page-title.row h3,.page-title.row h4, 
+            .page-title.row h5{ color: #000;}
+            
+            .dashboard-content {border: none; padding-top:0px; padding-right: 10px;}
+    
+            .nosidebarCell > table.row { margin: 0; }  
+            
+            .dyncPanel .bPageBlock .pbHeader .pbTitle{
+                display: none;
+            }
+            .pageTitle {
+                color: #454a50;
+                font-size: 18px;
+                font-weight: bold;
+                margin-top: 35px;
+                margin-bottom: 13px;
+            }
+            .pageDescription {
+                color: #454a50;
+                line-height: 1.5;
+                margin-bottom: 13px;
+                font-size: 13px;
+            }
+            
+            /*fixing side spacing*/          
+            .nosidebarCell {padding: 0;}
+            .bodyDiv .outerNoSidebar table .sidebarCell {padding-right: 1px;}
+            .bodyDiv .outerNoSidebar table .sidebarCell #NavigDiv {border-left: 1px solid #cbcbcb;}
+            
+            html body .bPageBlock.brandSecondaryBrd {border-top-color: #1ebe93!important;}
+            .hd_div {width: 100%;}
+            #DyncPnl .bPageBlock {
+                /*border:none !important;*/
+                margin-bottom:0 !important;
+                margin-top:10px;
+            }
+            #btnsDiv .bPageBlock .pbHeader .pbTitle{
+                display: none;
+            }
+            .pbTitle{
+                /*display:inline !important;*/
+             }
+             .panel-container
+            {
+                padding-top: 15px;
+                padding-bottom: 15px;
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            body a:hover
+            {
+                text-decoration: none !important;
+            }
+            /*.labelWrapper,.fieldWrapper
+            {
+                
+                padding-bottom: 10px !important;
+            }*/
+
+
+
+        </style>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+        <link rel="stylesheet" href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/footable.standalone.min.css')}" />
+         <c:Damac_Registration_Override_CSS ></c:Damac_Registration_Override_CSS>
+         <style>
+             table{
+                    table-layout: fixed !important;
+                }
+             .footable{
+                table-layout:auto !important;
+             }
+            .labelWrapper{
+                font-size: 12px !important;
+                font-family: Arial,sans-serif !important;
+                color:#A8A8A8 !important;
+                text-align:right !important;
+                font-weight:normal !important;
+            }
+
+            .fieldWrapper{
+                 font-size: 12px !important;
+                font-family: Arial,sans-serif !important;
+                color:black !important;
+                text-align:left !important;
+            }
+
+            .pageBlockSectionWrapper .fieldWrapper, .pageBlockSectionWrapper .labelWrapper{
+                border-bottom: 1px solid #ddd !important;
+                padding:12px !important;
+            }
+
+            body .bEditBlock .pbBottomButtons, body .apexp .bPageBlock.apexDefaultPageBlock .pbBottomButtons,
+            body .secondaryPalette.bPageBlock, body .individualPalette .secondaryPalette.bPageBlock,
+             body .secondaryPalette.bPageBlock .pbHeader table  {
+                border:none !important;
+            }
+
+            body .bPageBlock .pbBody .pbSubheader .hideListButton{
+                display:none !important;
+            }
+
+            body .bPageBlock .pbBody .pbSubheader{
+                margin:0px !important;
+                margin-top:7px !important;
+            }
+
+            .dataRow {
+                font-family:Arial,sans-serif !important;
+                font-size:12px !important;
+            }
+
+            .apexp .bPageBlock.apexDefaultPageBlock .pbBody .pbSubheader h3{
+                font-size:15px !important;
+            }
+
+            .bPageBlock .detailList .data2Col{
+                padding:10px !important;
+            }
+
+
+
+         </style>
+        <div class="container-fluid">
+            <apex:actionStatus id="pleasewait" stopText="">
+                <apex:facet name="start">
+                    <div>
+                        <div class="popupBackground override-bg">&nbsp;</div>
+                        <div class="PopupPanel">
+                            <img src="{!$Resource.Portal_Loading_Image}"/>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            <div>
+               
+                <c:Damac_Header rendered="{!showHeaderAndSidebar == false}"></c:Damac_Header>
+                <table class="row page-bg" style="width:100%;">
+                <tbody>
+                    <tr>
+                        <td class="main-row display-on" id="SidebarCell">
+                            <div class="main-row sidebar-components">
+                                <div id="NavigDiv">
+                                   <c:DPFSideBarComponent id="MenuComp" curPageId="{!strPageId}" rerender="MainPnl"/>                      
+                                </div>
+                            </div>
+                         </td>
+                         <td id="bodyCell" class="panel-container large-12 columns">
+                            <div class="pageHeading">
+                                <h3 style="display: block; font-size: 18px;">{!pageTitle}</h3>
+                            </div>
+                            <apex:form id="RevFrm">
+                                <apex:pagemessages id="Msg"/>
+                                <apex:inputhidden id="hdnActionId" value="{!strActionId}"/>
+                                <apex:actionfunction name="InvokeAction" action="{!DynamicButtonAction}" status="pleasewait" rerender="Msg"/>
+                                <apex:actionfunction name="SaveRecord" action="{!CommitRecord}" status="pleasewait" rerender="errormsg,hdnCurrentPageId,MenuComp,MainPnl,Msg"/>
+                                <apex:actionfunction name="NavigatePage" action="{!goTopage}" status="pleasewait" rerender="Msg">
+                                    <apex:param name="NextPageId" value="" assignTo="{!strNavigatePageId}"/>
+                                </apex:actionfunction>
+                                <apex:actionfunction name="ActEditSection" action="{!EditSectionDetails}" status="pleasewait" rerender="Msg">
+                                    <apex:param name="EditSecPageId" value="" assignTo="{!EditSecPageId}"/>
+                                </apex:actionfunction>
+                                <div id="DyncPnl" class="dyncPanel">
+                                    <!-- <apex:dynamicComponent componentValue="{!DyncPgMainPBTop}"/> -->
+                                    <apex:dynamicComponent componentValue="{!DyncPgMainPB}"/>
+                                    <apex:pageBlock id="CompanyPersonnelPB" rendered="{!amdList.Size > 0}">
+                                    <apex:pageBlockSection id="amdListSection" title="Company Personnel"  columns="1">
+                       
+                                     <apex:pageBlockTable id="table" value="{!amdList}" var="amd" >
+                                                
+                                                <apex:column headerValue="First Name" value="{!amd.First_Name__c}" />
+                                                <apex:column headerValue="Last Name" value="{!amd.Last_Name__c}" />
+                                                <apex:column headerValue="Shareholding %" value="{!amd.Shareholding__c}" headerClass="mob-responsive" />
+                                                <apex:column headerValue="Owner" value="{!amd.Owner__c}" headerClass="mob-responsive" />
+                                                <apex:column headerValue="Portal Administrator" value="{!amd.Portal_Administrator__c}" headerClass="mob-responsive" />
+                                                <apex:column headerValue="Agent Representative" value="{!amd.Agent_Representative__c}" headerClass="mob-responsive" />
+                                                <apex:column headerValue="Authorized Signatory" value="{!amd.Authorised_Signatory__c}" headerClass="mob-responsive"/>       
+                                                <apex:column headerValue="Marked For Deletion" value="{!amd.Mark_for_Deletion__c}" headerClass="mob-responsive"/>
+                                                    
+                                                <apex:column headerValue="Email" headerClass="desktop-responsive" value="{!amd.Email__c}" />
+                                                <apex:column headerValue="Id Issue Date" headerClass="desktop-responsive" value="{!amd.ID_Issue_Date__c}" />
+                                                <apex:column headerValue="ID Type" headerClass="desktop-responsive" value="{!amd.ID_Type__c}" />
+                                                <apex:column headerValue="ID Number" headerClass="desktop-responsive" value="{!amd.ID_Number__c}" />
+                                                <apex:column headerValue="ID Expiry Date" headerClass="desktop-responsive" value="{!amd.ID_Expiry_Date__c}" />
+                                                <apex:column headerValue="Broker Card Number" headerClass="desktop-responsive" value="{!amd.Broker_Card_Number__c}" />
+                                                <apex:column headerValue="Broker Card Expiry Date" headerClass="desktop-responsive" value="{!amd.Broker_Card_Expiry_Date__c}" />
+                                                <!--<apex:column headerValue="Title" value="{!amd.Title__c}" />-->
+                                                <apex:column headerValue="Designation" headerClass="desktop-responsive" value="{!amd.Designation__c}" />
+                                                <apex:column headerValue="Mobile Country Code" value="{!amd.Mobile_Country_Code__c}" headerClass="desktop-responsive" />
+                                                <apex:column headerValue="Mobile" value="{!amd.Mobile__c}" headerClass="desktop-responsive" />
+                                                <apex:column headerValue="Nationality" value="{!amd.Nationality__c}" headerClass="desktop-responsive"/>
+
+                                     </apex:pageBlockTable>
+
+
+                                  </apex:pageBlockSection>
+                                    </apex:pageBlock>
+                                    <div id="btnsDiv">
+                                        <apex:dynamicComponent componentValue="{!DyncPgMainPBBottom}"/>
+                                    </div>
+                                </div>
+                                <script>
+                                    var hdnMenu = '{!strHiddenPageIds}';
+                                    if(hdnMenu!=null && hdnMenu!=''){
+                                        var hdnsize = hdnMenu.indexOf(",");
+                                        if(hdnsize>-1){
+                                            var hdnPgLst = hdnMenu.split(',');
+                                            for(i = 0; i < hdnPgLst.length;i++){
+                                                if(document.getElementById(hdnPgLst[i])!=null){
+                                                    document.getElementById(hdnPgLst[i]).style.display = 'none';
+                                                }
+                                            }
+                                        }else{
+                                            if(document.getElementById(hdnMenu)!=null)
+                                                document.getElementById(hdnMenu).style.display = 'none';
+                                        }
+                                    }
+                                </script>
+                            </apex:form>
+                            </td>
+                    </tr>
+                </tbody>
+            </table>
+                    </div>
+        </div>
+		 <script src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/jquery.min.js')}"></script>
+         <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/footable.min.js')}"></script>
+        <script>
+            function DoAction(ButtonSectionId,IgnoreReqFlds){
+                document.getElementById('ReviewFinal:RevFrm:hdnActionId').value = ButtonSectionId;
+                InvokeAction();
+            }
+            function Navigate_To_Page(NextPG){
+                NavigatePage(NextPG);
+            }
+            if(jQuery){
+                $('.detailList').addClass('table table-bordered');
+            }
+
+             //save sr and keep the user on the same page 
+            function SaveDetails(){
+               
+                   SaveRecord();
+               
+            }
+
+            $('.desktop-responsive').attr('data-breakpoints','xs sm md lg');
+            $('.mobile-responsive').attr('data-breakpoints','xs sm');
+            $('.list').footable();
+    </script>
+</apex:page>

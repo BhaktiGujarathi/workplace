@@ -1,0 +1,261 @@
+/* 
+ *  
+ *  Description -  Test Class for DynamicFundingApplicationController1
+ * 
+ *  Version           Author                 Date                 Description 
+ *  1.0               Ripal Patel            13-July 2015           Initial Draft 
+
+ */
+@isTest
+private class FundingApplicationControllerTest  {
+
+ 
+      
+    //this method will test the save and quick save functionality used on Funding Application Page.
+    static testMethod void DynamicFundingApplicationSaveAndQuickSaveTesting() {
+       
+        //created a single record of account
+        Account accRecord = FundingApplicationControllerTest.createAccountRecords();
+        insert accRecord; //account record inserted
+        System.assertNotEquals(null, accRecord);
+       
+       
+           //created list of contract record
+        List<Contact> conList = FundingApplicationControllerTest.createContactRecords(2);
+        insert conList; //contract list inserted 
+        System.assertNotEquals(null, conList);
+       
+       //created a single opportunity record 
+        Opportunity opportunity = new Opportunity(Name = 'Test Opp1', 
+                                          CloseDate = Date.today(),
+                                          AccountId = accRecord.Id,
+                                          StageName = 'Application Sent', 
+                                          McaApp__Owner_1__c = conList[0].Id,
+                                          McaApp__Owner_2__c = conList[1].Id); 
+        insert opportunity;
+        system.assertNotEquals(null, opportunity.Id);
+        
+        Test.startTest();
+            PageReference pageRef = Page.FundingApplication;
+            pageRef.getParameters().put('oppId', opportunity.Id);
+            pageRef.getParameters().put('id', accRecord.Id);
+            pageRef.getParameters().put('newApplication', 'true');
+            
+            //created instance of FundingApplicationController class
+            FundingApplicationController fundingApplication = new FundingApplicationController();
+            fundingApplication.opportunity.McaApp__Owner_1__c = conList[0].Id;
+            fundingApplication.flag = true;
+            fundingApplication.isError = false;
+            fundingApplication.opportunity.McaApp__Owner_1__c = conList[0].Id;
+            fundingApplication.opportunity.McaApp__Owner_2__c = conList[1].Id;
+            
+            fundingApplication.oppListToUpdate2ndOwnerOfficerInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            fundingApplication.oppListToUpdateOwnerOfficerInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            fundingApplication.oppListToUpdateBankTradeInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            fundingApplication.oppListToUpdatePropertyInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            fundingApplication.oppListToUpdateOtherInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            fundingApplication.oppListToUpdateBusiInfo = fundingApplication.objUtility.getOpportunityListBusiInfo(string.valueOf(opportunity.Id));
+            
+            
+            conList[0].Title = 'Testing Title';
+            update conlist[0];
+            System.assertNotEquals(null, conlist[0].Id);
+          
+            fundingApplication.Owner1LastName = 'TestLast';
+            fundingApplication.Owner2LastName = 'TestLast2';
+          
+            fundingApplication.Owner1FirstName = 'Testfrst1';
+            fundingApplication.Owner2FirstName = 'Testfrst2';
+            
+            fundingApplication.getConatactOptions();
+            fundingApplication.relatedContact();
+            fundingApplication.objAccount = accRecord;
+            fundingApplication.selectedContactOwner1 = conList[1].Id;
+            fundingApplication.selectedContactOwner2 = conList[1].Id;
+          
+            fundingApplication.Contacta = conList[0];
+            fundingApplication.conForOwner1 = conList[0];
+            fundingApplication.changeOwner1();
+            fundingApplication.conForOwner2 = conList[1];
+            fundingApplication.changeOwner2();
+          
+            fundingApplication.QuickSave1();
+            fundingApplication.conForOwner2.McaApp__Drivers_License__c = 'sa!@';
+            fundingApplication.conForOwner1.McaApp__Drivers_License__c = 'sa!@';
+            fundingApplication.objAccount.McaApp__Federal_Tax_ID_No__c = '12@1';
+            fundingApplication.objAccount.Website = 'asdf';
+            fundingApplication.objAccount.Fax='12345678901';
+            fundingApplication.objAccount.McaApp__Date_Business_Established__c = Date.Today().addDays(1);
+            fundingApplication.conForOwner2.McaApp__Social_Security_Number1__c = '1234';
+            fundingApplication.conForOwner2.McaApp__Of_Ownership__c = 111;
+            fundingApplication.QuickSave1();
+            fundingApplication.Save();    
+            
+            Contact con = [Select Id,Title from Contact where Id =: conList[0].Id];
+            fundingApplication.openConga1();
+            fundingApplication.cancel();
+            fundingApplication.editPage();
+        
+            //created instance of FundingApplicationController class
+            FundingApplicationController fundingApplication1= new FundingApplicationController();
+            fundingApplication.opportunity.McaApp__Owner_1__c = conList[0].Id;
+            fundingApplication.opportunity.McaApp__Owner_2__c = conList[1].Id;
+           
+            Contact objContact = new Contact(FirstName='Test1', LastName='Test1',AccountId = accRecord.Id);
+            insert objContact;
+            fundingApplication.Owner2LastName = 'Test1';
+            fundingApplication.conForOwner2.FirstName = 'Test1';
+            fundingApplication.oldContactOwner2.add(objContact);
+            //fundingApplication.QuickSave1();
+           
+            FundingApplicationController fundingApplication2= new FundingApplicationController();
+            fundingApplication2.opportunity.McaApp__Owner_1__c = null;     
+            Contact dupContact = new Contact();
+            dupContact.FirstName = 'Test Contact';
+            dupContact.LastName = 'Test Contact';
+            insert dupContact;
+            fundingApplication2.Owner1LastName = 'Test Contact';
+            fundingApplication2.conForOwner1.FirstName = 'Test Contact';
+            //fundingApplication2.QuickSave1();
+           
+            FundingApplicationController fundingApplication3= new FundingApplicationController();
+            fundingApplication3.opportunity.McaApp__Owner_2__c = null;     
+            Contact dupContact1 = new Contact();
+            dupContact1.FirstName = 'Test Contact11';
+            dupContact1.LastName = 'Test Contact11';
+            insert dupContact1;
+            fundingApplication3.Owner2LastName = 'Test Contact11';
+            fundingApplication3.conForOwner2.FirstName = 'Test Contact11';
+            //fundingApplication3.QuickSave1();
+
+            Contact freshContact = new Contact();
+            freshContact.FirstName = 'Test Contact1';
+            freshContact.LastName = 'Test Contact1';
+            insert freshContact;
+            fundingApplication2.Owner1LastName = 'Test Contact1';
+            fundingApplication2.conForOwner1.FirstName = 'Test Contact1';
+            //fundingApplication2.QuickSave1();
+
+            fundingApplication2.Owner2LastName = 'Test Contact123';
+            fundingApplication2.conForOwner2.FirstName = 'Test Contact123';
+        Test.stopTest();
+     
+        //Ripal
+        //created instance of FundingApplicationController class
+
+        FundingApplicationController fundingApplication5= new FundingApplicationController();
+        fundingApplication5.docuSign();
+        fundingApplication5.cancel1();  
+        fundingApplication5.SendCongaPDF1();
+        fundingApplication5.submissionWizard1();
+        //dynamicfundingApplication5.openConga1();
+        fundingApplication5.docuSign1();
+        fundingApplication5.getFieldsBusiInfo();
+        fundingApplication5.getFieldsOwnerOfficerInfo();
+        fundingApplication5.getFields2ndOwnerOfficerInfo();
+        fundingApplication5.getFieldsBankTradeInfo();
+        fundingApplication5.getFieldsPropertyInfo();
+        fundingApplication5.getFieldsOtherInfo();
+        fundingApplication5.init();       
+
+        //FundingApplicationController fundingApplication6= 
+           // new FundingApplicationController();
+            
+        //pageRef.getParameters().put('oppId', opportunity4.Id);
+        //pageRef.getParameters().put('id', accRecord.Id);
+       //pageRef.getParameters().put('newApplication', 'false');
+    }
+    
+    
+    
+    //Method will create dummy records of Account
+    public static Account createAccountRecords(){
+        
+        Account account = new Account(Name = 'Test Account2',
+                                      McaApp__Email__c='testacc@gmail.com',
+                                      Phone = '9898989895');   
+        return account;
+    }
+    
+    //Method will create dummy records of Contacts
+    public static list<Contact> createContactRecords(Integer pCountOfContact){
+        
+       List<Contact> conList = new List<Contact>();
+       for(Integer intIndex = 0; intIndex < pCountOfContact; intIndex ++){
+            
+            Contact objCon = new Contact();
+            objCon.FirstName = 'testOpp' + intIndex;
+            objCon.LastName = 'testOppLast' + intIndex;
+            
+          
+            conList.add(objCon);                       
+        }//End for
+        return conList; 
+    }
+    static testMethod void dynamicfundingApplication() {
+        Account accRecord = FundingApplicationControllerTest.createAccountRecords();
+        insert accRecord; //account record inserted
+        System.assertNotEquals(null, accRecord);
+        
+        //created list of contact record
+       List<Contact> conList = FundingApplicationControllerTest.createContactRecords(2);
+       insert conList; //contract list inserted 
+       System.assertNotEquals(null, conList);
+       
+       Opportunity opportunity = new Opportunity(Name = 'Test Opp1', 
+                                          CloseDate = Date.today(),
+                                          StageName = 'Application Sent', 
+                                          AccountId = accRecord.Id,
+                                          McaApp__Owner_1__c = conList[0].Id,
+                                          McaApp__Owner_2__c = conList[1].Id); 
+       insert opportunity;
+        
+        ApexPages.currentPage().getParameters().put('console' , 'isconsole');
+        ApexPages.currentPage().getParameters().put('id', accRecord.Id);
+        ApexPages.currentPage().getParameters().put('oppId', opportunity.Id);
+        ApexPages.currentPage().getParameters().put('newApplication', 'false');
+        FundingApplicationController controllerInstance = new FundingApplicationController();
+        controllerInstance.init();
+        controllerInstance.selectedContactOwner1 = conList[0].Id;
+        controllerInstance.changeOwner1();
+        
+        //controllerInstance.selectedContactOwner2 = '-None-';
+        controllerInstance.selectedContactOwner1 = '-None-';
+        controllerInstance.changeOwner1();
+        
+        controllerInstance.opportunity.McaApp__Owner_1__c = null;
+        controllerInstance.opportunity.McaApp__Owner_1_Ownership__c  = null;
+        controllerInstance.QuickSave1();
+        controllerInstance.opportunity.McaApp__Owner_2__c = null;
+        controllerInstance.opportunity.McaApp__Owner_2_Ownership__c = null;
+        controllerInstance.QuickSave1();
+        
+        controllerInstance.selectedContactOwner1 = 'New';
+        controllerInstance.changeOwner1();
+        
+    }
+    
+    
+    static testMethod void dynamicfundingAppNegativeTest() {
+        ApexPages.currentPage().getParameters().put('console' , 'is console');
+        
+        ApexPages.currentPage().getParameters().put('newApplication', 'true');
+        ApexPages.currentPage().getParameters().put('accountName', 'TestName');
+        FundingApplicationController controllerInstance = new FundingApplicationController();
+        controllerInstance.init();
+        
+        controllerInstance.selectedContactOwner2 = 'New';
+        controllerInstance.selectedContactOwner1 = 'New';
+        controllerInstance.changeOwner1();
+        controllerInstance.changeOwner2();
+        
+        controllerInstance.selectedContactOwner2 = '-None-';
+        controllerInstance.selectedContactOwner1 = '-None-';
+        controllerInstance.changeOwner2();
+        controllerInstance.changeOwner1();
+        
+        
+        
+    }
+    
+}

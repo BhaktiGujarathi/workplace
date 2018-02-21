@@ -1,0 +1,148 @@
+<apex:page standardController="Account" id="myPage" extensions="AgentToPCMappingController">
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <apex:form id="myForm">
+        <apex:pageBlock id="PB" title="Add PCs to {!Account.Name}">
+            <apex:actionStatus id="myStatus">
+                <apex:facet name="start">
+                    <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                        <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                            <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                            <span class="waitingDescription">Please Wait...</span>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            <div align="center">
+                <apex:commandButton status="myStatus" value="Save" onclick="if(!validations()){return false};" action="{!addPCsToAgency}" rerender="PB"/>
+                <apex:commandButton value="Cancel" immediate="true" action="/{!Account.id}"/>
+            </div>
+            <apex:pageMessages id="erroBlock"/>
+            <apex:pageBlockSection id="searchSection" columns="2">
+                <apex:pageBlockSectionItem id="userName">
+                    <apex:outputLabel value="User Name" for="uName" />
+                    <c:Autocomplete id="uName" required="false" SObject="User" labelField="Name" valueField="Id" targetFields="{!selUserName}" conString="Profile.Name=\'Property Consultant\'{!IF(CONTAINS(existingPCIDS,'('),' AND ID NOT IN '+existingPCIDS,'')} " /><!-- AND ID NOT IN {!existingPCIDS} -->
+                    <!--<apex:inputText id="uName" value="{!selUserName}"/>-->
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="userSMName">
+                    <apex:outputLabel value="Sales Manager" for="smName" />
+                    <c:Autocomplete id="smName" required="false" SObject="User" labelField="Name" valueField="Id" targetFields="{!selSM}" conString="Profile.Name=\'{!$Label.SM_Profile}\'" />
+                    <!--<apex:inputText id="smName" value="{!selSM}"/>-->
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="userhosName">
+                    <apex:outputLabel value="HOS" for="hosName" />
+                    <c:Autocomplete id="hosName" required="false" SObject="User" labelField="Name" valueField="Id" targetFields="{!selHOS}" conString="Profile.Name=\'{!$Label.HOS_Profile}\'" />
+                    <!--<apex:inputText id="hosName" value="{!selHOS}"/>-->
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="userdosName">
+                    <apex:outputLabel value="DOS" for="dosName" />
+                    <c:Autocomplete id="dosName" required="false" SObject="User" labelField="Name" valueField="Id" targetFields="{!selDOS}" conString="Profile.Name=\'{!$Label.DOS_Profile}\'" />
+                    <!--<apex:inputText id="dosName" value="{!selDOS}"/>-->
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <br/>
+            <div align="center">
+                <apex:commandButton id="sButton" status="myStatus" action="{!searchUsers}" value="Search" rerender="userTable,erroBlock" />
+            </div>
+            <br/>
+            <apex:outputPanel id="userTable">
+                <apex:pageBlockSection title="Total Property Consultants : {!total}" collapsible="false"/>
+                <apex:pageBlockTable value="{!allPCUsers}" var="userRec">
+                    <apex:column width="40px">
+                        <apex:facet name="header"> 
+                            <apex:inputCheckbox id="allSelect" onchange="toggleSelectAll(this);" />
+                        </apex:facet>
+                        <apex:inputCheckbox id="oneSelect" value="{!userRec.IsActive}" onchange="toggleItem();"/>
+                    </apex:column>
+                    <apex:column headerValue="Name" >
+                        <apex:outputLink value="/{!userRec.id}" target="_blank">{!userRec.Name}</apex:outputLink>
+                    </apex:column>
+                    <apex:column headerValue="Role" value="{!userRec.UserRole.Name}"/>
+                </apex:pageBlockTable>
+                <div align="center">
+                    <apex:commandButton value="First Page" action="{!Firstbtn}" disabled="{!hasPrevious}" reRender="userTable"/>
+                    <apex:commandButton value="PreviousPage" action="{!prvbtn}" disabled="{!hasPrevious}" reRender="userTable"/>
+                    <apex:commandButton value="NextPage" action="{!Nxtbtn}" disabled="{!hasNext}"  reRender="userTable"/>
+                    <apex:commandButton value="LastPage" action="{!lstbtn}" disabled="{!hasNext}" reRender="userTable"/>
+                </div>
+                Display records per page <apex:selectList value="{!noOfRecToDisplay}" size="1" >
+                <apex:selectOption itemLabel="5" itemValue="05" ></apex:selectOption>
+                <apex:selectOption itemLabel="10" itemValue="10"></apex:selectOption>
+                <apex:selectOption itemLabel="20" itemValue="20"></apex:selectOption>
+                <apex:selectOption itemLabel="30" itemValue="30"></apex:selectOption>
+                <apex:actionSupport event="onchange" reRender="userTable" action="{!updatePage}"/>
+                </apex:selectList><br/>
+                
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel id="scriptTag">
+        <script type="text/javascript">
+        
+            /*
+            * set row level checkboxes based on "all checkbox" state
+            */
+            var $j = jQuery.noConflict();
+            
+            function validations(){
+                
+                var cbs = $j("input[id$=oneSelect]");
+                var isdatesPresent = true;
+                if(cbs.filter(':checked').length == 0){
+                    alert('Please select at least one PC');
+                    return false;
+                }
+                
+                return isdatesPresent;
+            }
+            
+            function toDateVal(dateStr) {
+                var parts = dateStr.split("/");
+                return new Date(parts[2], parts[1] - 1, parts[0]);
+            }
+            
+            function dateformat(input){
+                if (!(input == '' || input == null || input == 'undefined')){
+                    var year = input.slice(-4),
+                    month = ['Jan','Feb','Mar','Apr','May','Jun',
+                             'Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(input.substr(4,3))+1,
+                    day = input.substr(8,2);
+                
+                    var output = year + '-' + (month<10?'0':'') + month + '-' + day;
+                    var dateValue = new Date(year, month - 1, day);
+                    return dateValue;
+                } else return null;
+            }
+        
+            function toggleSelectAll(checkbox){
+                
+                //all checkbox is selected
+                if(checkbox.checked){
+                    //set all row level checkboxes selected
+                    $j( "input[id$=oneSelect]" ).prop('checked', true);
+                }
+                else{
+                    //set all row level checkboxes de-selected
+                    $j( "input[id$=oneSelect]" ).prop('checked', false);
+                }
+            }
+            
+            /*
+            * set "all checkbox" based on state of row level checkboxes
+            */
+            function toggleItem(checkbox){
+                var cbs = $j("input[id$=oneSelect]");
+                //all row level checkboxes selected
+                if(cbs.filter(':not(:checked)').length==0){
+                    //set "all checkbox" selected
+                    $j("input[id$=allSelect]").prop('checked', true);
+                }
+                else{
+                    //set "all checkboxes" de-selected
+                    $j("input[id$=allSelect]").prop('checked', false);
+                }
+            }
+        </script>
+    </apex:outputPanel>
+</apex:page>

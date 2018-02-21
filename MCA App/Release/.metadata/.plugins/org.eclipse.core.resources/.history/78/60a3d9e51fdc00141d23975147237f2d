@@ -1,0 +1,207 @@
+<apex:component controller="MCAAttachmentTabController" allowDML="true">
+ 
+ <apex:form id="records" styleClass="records">
+	 <style>
+	 	 #dropbox {
+	              width: 90%;
+	             height:25px;
+	             padding: 1.145em;
+	             margin: 0 auto;
+	             margin-bottom:14px;
+	             border: 1px grey;
+	             border-style: solid;
+	             color:black;
+	             font:weight:bold;
+	             font-size:14px;
+	             border-color: grey !important;
+	             //border-radius:20px;
+	             background-color:white;
+	            }
+	            #preview {
+	              display: none;
+	              margin: 1.125em auto;
+	              border: 1px solid pink;
+	            }
+	 </style>
+ 	<script>
+		t$( document ).ready(function() {
+		    computeAttachmentCalculations();
+		});
+		 	
+ 		var attachmentTabLabelOriginal ;
+ 		function runSaveAllAttachment() {
+
+          setTimeout(function() {
+            saveAllAttachments();
+          }, 500);
+        }
+        t$(function () {
+            attachmentTabLabelOriginal = t$("[id*='attachmenttab_lbl']").text();
+            computeAttachmentCalculations();
+        });
+        function attachFile(){
+        	window.open('https://ap1.salesforce.com/p/attach/NoteAttach?pid={!opportunity.Id}&parentname={!opportunity.Name}&retURL=%2F{!opportunity.Id}','_blank');
+        }
+        function computeAttachmentCalculations() {
+            console.log('-----tab label component1----'+t$("[id*='attachmenttab_lbl']").text());
+                var AttachmentTabLabel = 'Attachments'+' ';//+ ' (' + {!containers.size} + ')';
+                t$("[id*='attachmenttab_lbl']").text(AttachmentTabLabel);
+               
+                t$("[id*='attachmenttab_lbl']").append('(' + {!containers.size} + ')');
+        }
+        function submissionWizard()
+	    {
+	          window.open('/apex/SubmissionWizard?id={!opportunity.Id}&accId={!opportunity.AccountId}');
+	    }
+ 	</script>
+ 	<script type="text/javascipt">
+        function Reload(){
+        	console.debug('enter111');
+            window.location.href=window.location.href;
+        }
+     </script>
+
+    <c:MCAJQTabComponent />
+    	<apex:actionFunction action="{!CollectData}" name="collectDataBase64" reRender="records" oncomplete=" window.top.location.reload(true);">
+            <apex:param name="data" id="data" value="" />
+            <apex:param name="name" id="name" value="" />
+        </apex:actionFunction>
+     <apex:pageBlock id="Op">
+     <div style="border-width:2px;border:4px #69c;height:auto;width:auto;border-radius:17px;">  &nbsp; 
+     	<div id="dropbox">
+            <span id="droplabel">Drop file here for upload...</span>
+        </div>
+        <apex:outputPanel id="Op1">
+            <img id="preview" src="" alt="[ image will display here ]" />
+         </apex:outputPanel>
+       </div>
+     <apex:actionFunction action="{!saveAllAttachments}" name="saveAllAttachments" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeAttachmentCalculations()"/>
+     	<apex:pageBlockButtons >
+     		 <apex:CommandButton action="{!refresh}" onclick="attachFile()" value="Attach File" rerender="records,refreshComponent" immediate="true" status="loadingPanel" oncomplete="computeAttachmentCalculations()"></apex:CommandButton>
+     		 <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records,refreshComponent" status="loadingPanel"></apex:CommandButton>
+     		 <apex:CommandButton action="{!saveAllAttachments}" onclick="runSaveAllAttachment()" value="Save" oncomplete="computeAttachmentCalculations()" rerender="records,refreshComponent"></apex:CommandButton>
+     		 <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeAttachmentCalculations()"></apex:CommandButton>
+     		 <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" immediate="true" status="loadingPanel" oncomplete="computeAttachmentCalculations()"></apex:CommandButton>
+     		 <apex:commandButton action="{!refresh}" value="Submit to Banks" styleClass="btnCss" onclick="submissionWizard()" />
+     	</apex:pageBlockButtons>
+     	
+     	<apex:pageBlockSection columns="1" title="Attachments ({!containers.size})" collapsible="false">
+        <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column >
+            <apex:outputLink value="/servlet/servlet.FileDownload?file={!container.attachment.Id}" target="blank" rendered="{!NOT(ISBLANK(container.attachment.Id))}"> View </apex:outputLink>
+<!--             <a href="/servlet/servlet.FileDownload?file={!container.attachment.Id}" download="{!container.attachment.name}">View</a>   -->
+            <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(container.attachment.Id))}"/>
+            <apex:commandLink action="{!deleteAttachment}" value="Del" rerender="records,refreshComponent" rendered="{!NOT(ISBLANK(container.attachment.Id))}" status="loadingPanel" immediate="true" oncomplete="computeAttachmentCalculations()">
+              <apex:param name="recordToDelete" value="{!container.attachment.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+          </apex:column>
+
+          <apex:column headerValue="Title">
+            <apex:outputField value="{!container.attachment.Name}" rendered="{!AND(NOT(ISBLANK(container.attachment.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.attachment.Name}" rendered="{!OR((ISBLANK(container.attachment.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.attachment.Fields.Description.Label}">
+				 <apex:outputField value="{!container.attachment.Description}" rendered="{!AND(NOT(ISBLANK(container.attachment.Id)), NOT(editAll))}"/>
+            	 <apex:inputField value="{!container.attachment.Description}" rendered="{!OR((ISBLANK(container.attachment.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="Type">
+				 <apex:outputLabel value="Attachment"></apex:outputLabel>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.attachment.Fields.IsPrivate.Label}">
+            <apex:outputField value="{!container.attachment.IsPrivate}" rendered="{!AND(NOT(ISBLANK(container.attachment.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.attachment.IsPrivate}" rendered="{!OR((ISBLANK(container.attachment.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.attachment.Fields.SystemModstamp.Label}">
+            <apex:outputField value="{!container.attachment.SystemModstamp}" rendered="{!AND(NOT(ISBLANK(container.attachment.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.attachment.SystemModstamp}" rendered="{!OR((ISBLANK(container.attachment.Id)), editAll)}"/>
+          </apex:column>
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+     </apex:pageBlock>
+      
+    
+    <script type="text/javascript">
+        var fName = '';
+        var dropbox = document.getElementById('dropbox');
+    
+        // # Using an EventListener object
+        var dropListener = {
+    
+            handleEvent: function(event){
+                if (event.type === 'dragenter') { this.onDragEnter(event); }
+                if (event.type === 'dragexit') { this.onDragExit(event); }
+                if (event.type === 'dragover') { this.onDragOver(event); }
+                if (event.type === 'drop') { this.onDragDrop(event); }
+            },
+    
+            onDragEnter: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+                console.debug('enter')
+            },
+    
+            onDragExit: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            },
+    
+            onDragOver: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            },
+    
+            onDragDrop: function(event){
+                event.preventDefault();
+                event.stopPropagation();
+            
+                var files = event.dataTransfer.files,
+                file = files;
+    
+                if (files.length) {
+                    file = files[0];
+                    document.getElementById('droplabel').innerHTML = 'Please wait...Uploading ' +
+                    file.name;
+    
+                    this.processImage(file);
+                }
+            },
+    
+            processImage: function(file){
+                
+                fName = file.name;
+                if (! file.type.match('image.*')) {
+                    document.getElementById('droplabel').innerHTML ='Please wait...Uploading ' +
+                    file.name;
+                   // return;
+                }
+    
+                var reader = new FileReader();
+            
+                reader.onloadend = this.onReaderLoadEnd;
+                
+                reader.readAsDataURL(file);
+            },
+            
+            onReaderLoadEnd: function(event){
+                var img = document.getElementById("preview");
+                img.src = event.target.result;
+                collectDataBase64(img.src,fName );
+            }
+        };
+    
+        // ## Adding drag and drop event listeners
+        dropbox.addEventListener('dragenter', dropListener, false);
+        dropbox.addEventListener('dragexit', dropListener, false);
+        dropbox.addEventListener('dragover', dropListener, false);
+        dropbox.addEventListener('drop', dropListener, false);
+    </script>
+    
+ </apex:form>
+</apex:component>

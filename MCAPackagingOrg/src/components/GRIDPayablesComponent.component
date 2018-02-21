@@ -1,0 +1,215 @@
+<apex:component controller="GRIDPayablesController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!payEditAllFlag}" access="global" />
+
+    <apex:form id="Payablesform" styleClass="records">
+        <apex:outputLabel rendered="{!payIsRefrenceField}">Please remove '{!payRefrenceFieldLabel}' field from the 'GRIDPayableFieldSet' field set, as referenced fields are not allowed.</apex:outputLabel>
+        <apex:outputPanel id="paytable" title="Payable" rendered="{!NOT(payIsRefrenceField)}">
+            <script type="text/javascript">
+                
+                t$ = jQuery.noConflict();
+                    t$(document).ready(function()
+                    {
+                        t$(".disBtn").prop('disabled', true);
+                        t$("a").attr("onmouseover","");
+                        t$("[id*='payableTab_lbl']").text( 'Payables'+' ({!payRecordCount})');
+                        
+                        t$('#payablesTableInner tr').hover(
+                        function() {
+                            t$(this).addClass('hoverhighlight');
+                            }, function() {
+                            t$(this).removeClass('hoverhighlight');
+                        });
+                    });
+                //save functionality
+                
+                
+            </script>
+        <apex:pageBlock mode="inlineEdit">
+            
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Payable__c.createable}">
+                    <input type="button" onclick="runNewPayable()" class="{!if(payIsDisable,'btnDisabled disBtn','btn')}" value="New Payable" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!AND($ObjectType.Payable__c.updateable, NOT(payEditAllFlag))}">
+                    <apex:CommandButton action="{!editAllPayables}" value="Edit All" disabled="{!payIsDisable}" rerender="paytable" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Payable__c.updateable, $ObjectType.Payable__c.createable)}">
+<!--                <input type="button" onclick="runSavePayables()" class="btn saveBtn" value="Save" status="loadingPanel" />-->
+                    <input type="button" onclick="runSavePayables()" class="{!if(payIsDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+                    
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refreshPayables}" value="Refresh" disabled="{!payIsDisable}" rerender="paytable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshPayables}" value="Cancel" disabled="{!payIsDisable}" rerender="paytable" status="loadingPanel" immediate="true" />
+            </apex:pageBlockButtons>
+            
+                <apex:pageMessages id="paypgMsgId" escape="false" />
+
+                <table class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="payablesTableInner">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!payFieldsetList}" var="payField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!payField.label}"/>
+                                    <apex:outputPanel rendered="{!AND(payField.type != 'textarea', payField.type != 'multipicklist', payField.type != 'phone')}"> 
+                                        <img src= "{!IF(paySortExprFieldApi==payField.fieldPath, IF(paySortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name="{!payField.fieldPath}" class="sorting" onclick="sortCallPayables('{!payField.type}');" />
+                                    </apex:outputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!payWrapperLst}" var="payWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!payWraper.payIndex + 1}"/>
+                                <apex:outputPanel style="display: none;">
+                                    <apex:inputfield value="{!payWraper.pay['Opportunity__c']}" />
+                                </apex:outputPanel>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!payWraper.pay.Id}" target="blank" rendered="{!NOT(ISBLANK(payWraper.pay.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!AND(NOT(ISBLANK(payWraper.pay.Id)), $ObjectType.Payable__c.deletable)}"/>
+                                <apex:commandLink action="{!deletePay}" value="Del" rerender="paytable" rendered="{!AND(NOT(ISBLANK(payWraper.pay.Id)), $ObjectType.Payable__c.deletable)}" status="loadingPanel">
+                                    <apex:param name="payIndexToRemove" value="{!payWraper.payIndex}" assignTo="{!payIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deletePay}" value="Remove" rerender="paytable" rendered="{!(ISBLANK(payWraper.pay.Id))}"  styleClass="removeRow" status="loadingPanel" immediate="true">
+                                <apex:param name="payIndexToRemove" value="{!payWraper.payIndex}" assignTo="{!payIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!payFieldsetList}" var="payfield">
+                                <td>
+                                    <apex:outputField value="{!payWraper.pay[payfield]}" rendered="{!AND(IF(payWraper.payEdit = false, true, false),NOT(ISBLANK(payWraper.pay.Id)))}" />
+                                    <apex:inputField value="{!payWraper.pay[payfield]}" rendered="{!OR(IF(payWraper.payEdit = true, true, false),ISBLANK(payWraper.pay.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr class = "headerRow">
+                            <td><b>Total</b></td>
+                            <td></td>
+                            <apex:repeat value="{!payFieldsetList}" var="payfield">
+                                <td>
+                                    <!-- apex:outputText value="{!payFieldToSumMap[payfield.fieldPath]}" rendered="{!payFieldToSumMap[payfield.fieldPath] != 100}" / -->
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}" rendered="{!AND(payFieldToSumMap[payfield.fieldPath] != -999.999,payfield.type== 'currency')}" >
+                                         <apex:param value="{!payFieldToSumMap[payfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                     <apex:outputText value="{0, number, ###,###,###,##0.00}" rendered="{!AND(payFieldToSumMap[payfield.fieldPath] != -999.999,payfield.type!= 'currency')}" >
+                                         <apex:param value="{!payFieldToSumMap[payfield.fieldPath]}" />
+                                    </apex:outputText>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                {!IF((payOffsetsize + 1) > payRecordCount, IF(payRecordCount - payBlockSize <= 0, 0, payRecordCount - payBlockSize), payOffsetsize + 1)} - {!payWrapperLst.size + payOffsetsize} of {!payRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="paytable" action="{!beginningPayable}" status="loadingPanel" rendered="{!IF(payOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="paytable" action="{!previousPayable}"  status="loadingPanel" rendered="{!IF(payOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="paytable" action="{!nextPayable}" status="loadingPanel" rendered="{!IF(payWrapperLst.size + payOffsetsize < payRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="paytable" action="{!endPayable}" status="loadingPanel" rendered="{!IF(payWrapperLst.size + payOffsetsize < payRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+             </apex:pageBlock>
+              <apex:inputHidden value="{!paySortExpression}" id="paySortHiddencriterian"/>
+              <apex:inputHidden value="{!paySortDirection}" id="paySortHiddenOrder"/>
+              <apex:inputHidden value="{!paySortExprFieldApi}" id="paySortFieldApi"/>
+        </apex:outputPanel>
+        
+        <apex:actionFunction action="{!newPay}" name="newPay" rerender="paytable" status="loadingPanel"/>
+        <apex:actionFunction action="{!savePayables}" name="savePayables" rerender="paytable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortPayables}" name="sortAllPayables" rerender="paytable" status="loadingPanel" >
+            <apex:param name="payTypeParam" value="" /> 
+        </apex:actionFunction>
+
+       
+        
+    </apex:form>
+    <script>
+        function runNewPayable() 
+        {
+            setTimeout(function() 
+            {               
+                newPay();
+            }, 100);
+        }
+        
+        function runSavePayables() 
+        {
+            setTimeout(function() 
+            {               
+                savePayables();
+            }, 100);
+        }
+        
+        function sortCallPayables(payFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                 var payElement = event.target;
+                 var newPaySortCol = t$(payElement).attr("Name"); // new sort field
+                 t$("input[id$='paySortFieldApi']").val(newPaySortCol);
+                 var oldPaySortCol = t$("input[id$='paySortHiddencriterian']").val();
+                 var indexPay;
+                 var payTempSortExpr;
+                 if(newPaySortCol.endsWith('__c')) 
+                 {
+                     indexPay = newPaySortCol.indexOf('__');
+                 }
+                 else if(newPaySortCol.endsWith('Id'))
+                 {
+                     indexPay = newPaySortCol.indexOf('Id');
+                 }
+                
+                if(indexPay != null) {
+                    payTempSortExpr = newPaySortCol.substring(0, indexPay);
+                }
+                else 
+                {
+                    payTempSortExpr = newPaySortCol;
+                }
+
+               //if(String(newPaySortCol) == String(oldPaySortCol))
+               if(oldPaySortCol.indexOf(payTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='paySortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='paySortHiddenOrder']").val("DESC");
+                      t$(payElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='paySortHiddenOrder']").val("ASC");
+                      t$(payElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    t$("input[id$='paySortHiddencriterian']").val(newPaySortCol); 
+                    sortAllPayables(payFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='paySortHiddencriterian']").val(newPaySortCol);
+                    t$("input[id$='paySortHiddenOrder']").val("ASC");
+                    t$(payElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllPayables(payFieldDataType);
+                }
+        }
+    </script>
+</apex:component>

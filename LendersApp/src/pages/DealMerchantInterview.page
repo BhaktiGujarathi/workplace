@@ -1,0 +1,175 @@
+<apex:page standardController="MerchantInterviewQuestion__c" extensions="DealMerchantInterviewController" sidebar="false" recordSetVar="merchantinterviewquestions" tabStyle="Opportunity">
+
+    <apex:sectionHeader title="Merchant Interview"/>
+    <apex:form onsubmit="return testUnload()">
+
+        <!-- to avoid confirm message for save button click-->
+        <input type="hidden" id="wasformsubmitted" value="N" />
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
+        <!--Confirm before on close-->
+        <script  TYPE="text/javascript">  //LANGUAGE="JavaScript1.2"
+
+            j$ = jQuery.noConflict();
+
+            var myEvent = window.attachEvent || window.addEventListener;
+                
+            var chkevent = window.attachEvent ? 'onbeforeunload' : 'beforeunload'; /// make IE7, IE8 compatable
+            myEvent(chkevent, function(e) { // For >= IE7, Chrome, Firefox
+                console.log('event');
+                
+                if (document.getElementById('wasformsubmitted').value == 'N') {
+
+                    console.log('event if');
+                    
+                    var confirmationMessage = '';  // a space
+                    (e || window.event).returnValue = confirmationMessage;
+                    
+                    return confirmationMessage;
+                }
+
+                 document.getElementById('wasformsubmitted').value = 'N';
+            });
+
+            function testUnload() {
+
+                console.log('function');
+                document.getElementById('wasformsubmitted').value = 'Y';
+                return true;
+            }
+
+            function toggleImage() {
+
+                j$(document).ready(function() {
+
+                    var i = 0;
+
+                    j$(".completedCheckboxes").each(function(){
+
+                        if (j$(this).is(':checked')) {
+
+                            j$(".confirmImage")[i].style.display = '';
+                            j$(".warningImage")[i].style.display = 'none';
+                        }
+
+                        else {
+
+                            j$(".confirmImage")[i].style.display = 'none';
+                            j$(".warningImage")[i].style.display = '';
+                        }
+
+                        i++;
+                    });
+
+                });
+            }
+
+        </script>
+
+        <script>
+            //call after page loaded
+            window.onload=toggleImage();
+        </script>
+
+        <apex:pageBlock mode="edit">
+            <Apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!saveQuestions}"/>
+                <apex:commandButton value="Quick Save" action="{!quickSave}"/>
+                <apex:commandButton value="Cancel" action="{!cancel}"/>
+            </Apex:pageBlockButtons>
+            <apex:pageBlockSection title="MERCHANT INTERVIEW HEADER">
+                <apex:inputField value="{!opp.Interviewee__c}" />
+                <apex:inputField value="{!opp.Completed__c}" />
+                <apex:inputField value="{!opp.Date_Interview__c}" />
+                <apex:inputField value="{!opp.Interview_Score__c}" />
+                <apex:inputField value="{!opp.Interview_Status__c}" />
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="DEAL SNAPSHOT/SUMMARY">
+                <apex:inputField value="{!opp.Account.Name}" />
+                <apex:inputField value="{!opp.McaApp__App_Received_Date__c}" />
+                <apex:inputField value="{!opp.Underwriting_Stage__c}" />
+                <apex:inputField value="{!opp.Account.McaApp__Years_in_Business__c}" />
+                <apex:outputField label="Owner Name" value="{!opp.McaApp__Owner_1__r.Name}" />
+            </apex:pageBlockSection>
+            <br/>
+            <apex:pageBlockSection columns="2">
+                <apex:inputField value="{!opp.McaApp__Funded_Notes__c}" style="height:100px;"/>
+                <apex:inputField value="{!opp.Underwriting_Notes__c}" style="height:100px;"/>
+            </apex:pageBlockSection>
+            <apex:pageBlockSection title="INTERVIEW QUESTIONS: " columns="1">
+                <apex:actionFunction name="rerenderTopPanel" rerender="panel1" />
+                <apex:outputPanel id="panel1">
+                    <apex:variable value="{!0}" var="num"/>
+                    <apex:pageBlockTable value="{!lstQuestion}" var="Q">
+                        <apex:column headerValue="Completed" width="10%">
+                            <apex:image url="/img/msg_icons/confirm32.png" id="confirmImgId1" style="display:none" styleClass="confirmImage"/>
+                            <apex:image url="/img/msg_icons/warning32.png" id="warningImgId1" style="display:none" styleClass="warningImage"/>
+                        </apex:column>
+                        <apex:column headerValue="Category" width="20%">
+                            <apex:outputField value="{!Q.Category__c}"/>
+                        </apex:column>
+                        <apex:column headerValue="Question" width="20%">
+                            <apex:outputField value="{!Q.Question__c}"/>
+                        </apex:column>
+                        <apex:column headerValue="Interview Notes/Answer" width="50%">
+                            <apex:inputField value="{!Q.InterviewNotes__c}" style="width:400px;height:60px;" onchange="setCompleted(this,'{!$Component.completedId}')">
+                            </apex:inputField>
+
+                            <apex:inputField id="completedId" styleClass="completedCheckboxes" value="{!Q.Completed__c}" onchange="toggleImage()" onclick="toggleImage()">
+                            </apex:inputField>
+                            <apex:variable var="num" value="{!num+ 1}"/>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+
+            <apex:pageBlockSection title="VERIFICATIONS FLAGGED FOR INTERVIEW:" columns="1">
+                <apex:actionFunction name="rerenderTopPanel2" rerender="panel2" />
+                <apex:outputPanel id="panel2">
+                    <apex:pageBlockTable value="{!lstUWQuestion}" var="Q">
+                        <apex:column headerValue="Completed" width="10%">
+                            <apex:image url="/img/msg_icons/confirm32.png" id="confirmImgId1" style="display:none" styleClass="confirmImage"/>
+                            <apex:image url="/img/msg_icons/warning32.png" id="warningImgId1" style="display:none" styleClass="warningImage"/>
+                            <apex:outputField value="{!Q.objVer.Completed__c}" rendered="{!Q.type=='verification'}"/>
+                            <apex:outputField value="{!Q.objStip.Completed__c}" rendered="{!Q.type=='stip'}"/>
+                        </apex:column>
+                        <apex:column headerValue="Name" width="20%">
+                            <apex:outputLink value="/{!Q.objVer.id}" rendered="{!Q.type=='verification'}">{!Q.objVer.Name}</apex:outputLink>&nbsp;
+                            <Apex:outputLabel value="({!Q.type})" rendered="{!Q.type=='verification'}"></Apex:outputLabel>
+                            <apex:outputLink value="/{!Q.objStip.id}" rendered="{!Q.type=='stip'}">{!Q.objStip.Name}</apex:outputLink>&nbsp;
+                            <Apex:outputLabel value="({!Q.type})" rendered="{!Q.type=='stip'}"></Apex:outputLabel>
+                        </apex:column>
+                        <apex:column headerValue="Underwriting/Stip Notes" width="20%">
+                            <apex:outputField value="{!Q.objQues.Question__c}"/>
+                        </apex:column>
+                        <apex:column headerValue="Interview Notes/Answer" width="50%">
+                            <apex:inputField value="{!Q.objQues.InterviewNotes__c}" style="width:400px;height:60px;" onchange="setCompleted(this,'{!$Component.completedId1}')">
+                            </apex:inputField>
+                            <apex:inputField id="completedId1" styleClass="completedCheckboxes" value="{!Q.objQues.Completed__c}" onchange="toggleImage()" onclick="toggleImage()">
+                            </apex:inputField>
+                        </apex:column>
+                    </apex:pageBlockTable>
+                </apex:outputPanel>
+
+                <script>
+
+                    function setCompleted(ans,comp) {
+
+                        if (ans.value != null && ans.value != '') {
+
+                            document.getElementById(comp).checked = true;
+                            toggleImage();
+                        }
+
+                        else {
+
+                            document.getElementById(comp).checked = false;
+                            toggleImage();
+                        }
+                    }
+
+                </script>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

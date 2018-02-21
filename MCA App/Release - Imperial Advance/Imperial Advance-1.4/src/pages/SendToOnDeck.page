@@ -1,0 +1,90 @@
+<apex:page controller="SendToOndeckController" tabStyle="Opportunity">
+	
+	<style>
+		.message {
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+		}	
+		
+		.spinner {
+			margin-left: -23%;
+			background: white;
+			text-align: center;
+			padding: 50px 0;		
+		}
+	</style>
+	
+	<apex:sectionHeader title="Send to OnDeck" subtitle="{!opportunity.Name}" />
+	
+	<div class="ptBreadcrumb">
+		&nbsp;«&nbsp;<a href="/{!opportunity.Id}">Back to: {!opportunity.Name}</a>
+	</div>
+	
+	<br />	
+
+    
+	<apex:pageMessages id="messages" />
+	
+	<script>
+        window.onload = function() {
+            doPrequal();
+        };
+	</script>
+	
+	<apex:form >
+	   
+        <apex:actionFunction name="doPrequal" action="{!doPrequal}" rerender="messages,content" />
+		<apex:actionFunction name="showSubmitLoader" action="{!showSubmitLoader}" rerender="messages,content" oncomplete="submitToOndeck();" />
+		<apex:actionFunction name="submitToOndeck" action="{!submitToOnDeck}" rerender="messages,content" />
+		
+		<apex:pageBlock id="content">
+			
+			<apex:pageBlockButtons location="top">
+				<apex:commandButton value="Retry Prequalification" onclick="event.preventDefault(); window.location.reload();" disabled="{!showLoader}" />
+				<apex:commandButton value="Submit to OnDeck" onclick="event.preventDefault(); showSubmitLoader();" rendered="{!enableSubmit}" />				
+			</apex:pageBlockButtons>
+            
+            <apex:pageBlockSection id="loader" columns="1" rendered="{!showLoader}">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="" /> 
+		            <div class="spinner">
+		                <img src="https://partners.ondeck.com/partnerportal/images/animatedLoader.gif" />
+		            </div>  
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            			
+			<apex:pageBlockSection title="Offer Information" rendered="{!AND(NOT(showLoader), OR(enableSubmit, showPrequal))}" collapsible="false">
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Offered Amount" />	
+					<apex:outputText value="${0, number, ###,##0.00}">
+					  <apex:param value="{!businessData.prequalAmountDecimal}"/>
+					</apex:outputText>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Offered Term (Months)" />	
+					<apex:outputText value="{!businessData.prequalTerm}" />			
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="URL" />	
+					<apex:outputPanel >
+						<a href="{!businessData.url}" target="_blank">{!businessData.url}</a>
+					</apex:outputPanel>			
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Used Business Credit Info" />	
+					<apex:outputText value="{!businessData.businessCredit}" />			
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Used Personal Credit Info" />	
+					<apex:outputText value="{!businessData.personalCredit}" />			
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			
+			<apex:pageBlockTable value="{!businessData.errorDescriptions}" var="error" rendered="{!businessData.errorDescriptions.size > 0}">
+				<apex:column headerValue="Error Description">
+					{!error}
+				</apex:column>
+			</apex:pageBlockTable>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

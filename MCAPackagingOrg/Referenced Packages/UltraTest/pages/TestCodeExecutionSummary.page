@@ -1,0 +1,646 @@
+<apex:page controller="ESUT.TestCodeExecutionSummaryController" tabStyle="Execution_Summary__tab"
+             id="page" title="{!$Label.esut__Apex_Test_Result}" sidebar="false" readOnly="true">
+            
+<apex:sectionHeader title="Execution Summary Details"/>
+
+<apex:includeScript value="{!URLFOR($Resource.ESUT__TestCodeExect_resource,'js/jquery-1.8.3.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.ESUT__TestCodeExect_resource,'js/jquery-ui.js')}" />
+<apex:stylesheet value="{!URLFOR($Resource.ESUT__TestCodeExect_resource,'css/jquery-ui.css')}" />
+
+<style>
+    .ui-state-hover .ui-icon,  
+    .ui-state-focus .ui-icon {   
+        background-image:url("{!$Resource.IconsActive}");  
+    }  
+  
+    .ui-state-active .ui-icon {
+        background-image: url("{!$Resource.IconsActive}"); 
+    } 
+    .ui-state-default .ui-icon {
+        background-image: url("{!$Resource.IconsDefault}"); 
+    }
+    .ui-icon,
+    .ui-widget-content .ui-icon {
+        background-image:  url("{!$Resource.IconsContent}");
+    }
+    .ui-widget-header .ui-icon {
+        background-image:  url("{!$Resource.IconsContent}");
+    }
+  </style> 
+
+<head>
+    <meta charset="utf-8" />
+<!--            <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.0/themes/base/jquery-ui.css" />  -->
+    <script>
+    $(function() {
+    $( "#accordion" ).accordion({
+            heightStyle: "content",
+            collapsible: true
+    }); 
+    });
+    </script> 
+</head>
+<style>
+    .ui-menu { position: absolute; width: 50px; float:right;}
+</style>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script>
+    $(function() {
+        $( "#rerun1" )
+        .button().attr("disabled", "disabled")
+        .click(function() {
+        })
+        .next()
+        .button({
+            text: false,
+            icons: {
+            primary: "ui-icon-gear",
+            secondary: "ui-icon-triangle-1-s"
+            }
+        })
+        .click(function() {
+            var menu = $( this ).parent().next().show().position({
+            my: "left top",
+            at: "left bottom",
+            of: this
+            });
+            $( document ).one( "click", function() {
+            menu.hide();
+            });
+            return false;
+        })
+        .parent()
+        .buttonset()
+        .next()
+        .hide()
+        .menu();
+    });
+
+    // Load the Visualization API and the piechart package.
+    google.load('visualization', '1.0', {
+        'packages' : [ 'gauge' ]
+    });
+    
+    google.load('visualization', '1.0', {
+        'packages' : [ 'corechart' ]
+    });
+    
+    google.load('visualization', '1.0', {'packages' : [ 'annotatedtimeline' ]});
+    
+    function drawChart() {
+        $( "#accordion" ).accordion({
+            heightStyle: "content",
+            collapsible: true
+        });
+        $(function() {
+        $( "#rerun" )
+        .button().attr("disabled", "disabled")
+        .click(function() {
+        })
+        .next()
+        .button({
+            text: false,
+            icons: {
+            primary: "ui-icon-gear",
+            secondary: "ui-icon-triangle-1-s"
+            }
+        })
+        .click(function() {
+            var menu = $( this ).parent().next().show().position({
+            my: "left top",
+            at: "left bottom",
+            of: this
+            });
+            $( document ).one( "click", function() {
+            menu.hide();
+            });
+            return false;
+        })
+        .parent()
+        .buttonset()
+        .next()
+        .hide()
+        .menu();
+        });
+        //alert('{!JSENCODE(strSelectedExecutionDateTime)}');
+        
+        var summaryName=document.getElementById('page:formSummary:blkSelectlist:pbSection:executionDateTime').value;
+        //alert(summaryName);
+
+       ESUT.TestCodeExecutionSummaryController.getOverAllTestCodeCoverage(summaryName, function(result, event) {
+        
+            var overallCoverage = Math.round(result*Math.pow(10,2))/Math.pow(10,2);
+            
+            // Create the data table.
+            var data = google.visualization.arrayToDataTable([
+                    [ 'Label', 'Value' ], [ '', overallCoverage ], ]);
+
+            var options = {
+                width : 250,
+                height : 150,
+                greenFrom : parseInt({!$Label.Recommended_Code_Coverage}),
+                greenTo : 100,
+                redFrom : 0,
+                redTo : parseInt({!$Label.Recommended_Code_Coverage}),
+                minorTicks : 5
+            };
+
+            var chart = new google.visualization.Gauge(document
+                    .getElementById('chart_div1'));
+            chart.draw(data, options);
+        });
+        
+       ESUT.TestCodeExecutionSummaryController.getClassWiseCodeCoverage(summaryName, function(result,
+                event) {
+            // Create the data table.
+            var data = new google.visualization.DataTable();
+
+            data.addColumn('string',
+                    'Class Wise Code Coverage');
+            data.addColumn('number', 'Code Coverage %');
+
+            for ( var i = 0; i < result.length; i++) {
+                var r = result[i];
+                data.addRow([
+                        r.className,
+                        Math.round(r.codeCoverage * Math.pow(10, 2))
+                                / Math.pow(10, 2)                               
+                                ]);
+            }
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart = new google.visualization.ColumnChart(document
+                    .getElementById('chart_div2'));
+            chart.draw(data, {
+                width : 800,
+                height : 350,
+                legend : {
+                    position : 'top',
+                    textStyle : {
+                        color : 'black',
+                        fontSize : 10
+                    }
+                },
+                isStacked : false,
+                vAxis : {
+                    title : 'Code Coverage Percentage',
+                    textStyle : {
+                        fontSize : 10
+                    }
+                },
+                hAxis : {
+                    textStyle : {
+                        fontSize : 9
+                    },
+                    showTextEvery : 1,
+                    slantedText : true
+                }
+            });
+        }, {
+            escape : true
+        });
+        
+        var categoryName=document.getElementById('page:formSummary:blkSelectlist:pbSection:classCategory').value;
+        //alert(summaryName);
+        ESUT.TestCodeExecutionSummaryController.fetchSummaryRecords(categoryName, function(result, event){
+            
+            var data = new google.visualization.DataTable();
+            data.addColumn('datetime', 'Execution Datetime');
+            data.addColumn('number', 'Tests Run');
+            data.addColumn('string', 'title1');
+            data.addColumn('string', 'text1');
+            data.addColumn('number', 'Tests Succeeded');
+            data.addColumn('string', 'title2');
+            data.addColumn('string', 'text2');
+            data.addColumn('number', 'Test Failed');
+            data.addColumn('string', 'title3');
+            data.addColumn('string', 'text3');
+            data.addColumn('number', 'Average Code Coverage');
+            data.addColumn('string', 'title4');
+            data.addColumn('string', 'text4');
+            
+            for(var i = 0; i < result.length; i++) {
+                var r = result[i];
+                data.addRow([new Date(r.intYear, r.intMonth, r.intDay, r.intHour, r.intMinute), 
+                            r.intTestsRun, null, null, 
+                            r.intTestsSucceeded, null, null,
+                            r.intTestsFailed, null, null,
+                            r.intCodeCoverage, 'Code Coverage', r.intCodeCoverage.toString()]);
+            }
+        
+        var annotatedtimeline = new google.visualization.AnnotatedTimeLine(document.getElementById('chart_div3'));
+        annotatedtimeline.draw(data, {displayAnnotations: true, 
+                                      scaleColumns: [0,3], 
+                                      scaleType: 'allfixed', 
+                                      annotationsWidth: 5, 
+                                      colors: ['#0000FF','#008000','#FF0000','#FFA500'],
+                                      thickness: 1,
+                                      displayZoomButtons: false});      
+                    
+        },
+        {
+            escape : true
+        });
+    }
+    
+</script>
+
+    <apex:stylesheet value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'css/TestExecutor.css')}" />
+    <apex:outputLabel value="{!$Label.esut__Record_Deleted}" rendered="{!blnRecordDeleted}" style="color:Gray;font-weight:bold" /> 
+    <apex:form id="formSummary">
+        
+    
+            <apex:pageBlock id="blkSelectlist" title="{!$Label.esut__ExecutionSummary}" rendered="{!blnSummaryId}">
+                <apex:pageBlockSection id="pbSection" columns="2"
+                                       showHeader="false">
+                    
+                
+                    <apex:outputtext value="{!$Label.esut__ClassCategory}" />                
+                    <apex:selectList multiselect="false" size="1" value="{!strSelectedClsCategory}" id="classCategory">
+                    <apex:actionSupport status="status" event="onchange" action="{!displayValue}" reRender="formSummary"/>
+                        <apex:selectOptions value="{!lstClsCategory}" /> 
+                    </apex:selectList>
+                    
+                    <apex:outputtext value="{!$Label.esut__SelectTag}" rendered="{!blnTagVisible}"/>                 
+                    <apex:selectList multiselect="false" size="1" value="{!strTagName}"
+                                     rendered="{!blnTagVisible}">
+                    <apex:actionSupport status="status" action="{!popualteExecutionDateTime}" event="onchange" reRender="formSummary"/>
+                        <apex:selectOptions value="{!lstAllTagNames}" />
+                    </apex:selectList>
+                                
+                    <apex:outputtext value="{!$Label.esut__DateTime}" rendered="{!blnListVisible}"/>                 
+                    <apex:selectList multiselect="false" size="1" value="{!strSelectedExecutionDateTime}"  rendered="{!blnListVisible}" 
+                            id="executionDateTime">
+                    <apex:actionSupport status="status" event="onchange" action="{!hideSummaryPanel}" reRender="formSummary"/>
+                        <apex:selectOptions value="{!lstExecutionDateTime}" />
+                    </apex:selectList>
+                    <apex:pageMessages />   
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockButtons id="pbButtons" location="bottom" rendered="{!blnListVisible}">
+                    <apex:commandbutton id="viewSummary" action="{!viewSummaryResult}" status="status" reRender="formSummary" 
+                                        title="{!$Label.esut__ViewSummary}" value="{!$Label.esut__View_Summary}" oncomplete="drawChart();"/>                   
+                </apex:pageBlockButtons>
+                <apex:actionStatus id="status"> 
+                    <apex:facet name="start">
+                        <center>
+                            <table>
+                                <tr>
+                                    <td><img src="/img/loading.gif" /></td>
+                                    <td></td>
+                                    <td></td>
+                                    <td>{!$Label.TestCodeExecutor_Loading}</td>
+                                </tr>
+                            </table>
+                        </center>
+                    </apex:facet>
+            </apex:actionStatus>                
+        </apex:pageBlock>
+        
+        <apex:outputPanel rendered="{!blnCheckId}">
+        <div id="accordion">
+        <h3>{!$Label.Execution_Summary_Dashboard}</h3>
+        <div>
+        <apex:pageBlock id="blkGraph" title="Dashboard">            
+            <table align="center">
+                <tr>
+                    <td colspan="2"><center><apex:outputLabel value="{!$Label.esut__Trend_Report}" 
+                        style="font-weight:bold" />
+                        <div id='chart_div3' style='width: 750px; height: 300px;'></div>
+                        <apex:outputLabel value="{!messageTrendReport}" 
+                        style="color:Gray;font-style:italic" /></center>
+                    </td>  
+                </tr>
+                <tr><td><label>&nbsp;</label></td>
+                </tr>
+                <tr><td><label>&nbsp;</label></td>
+                </tr>
+                <tr>
+                    <td><center><apex:outputLabel value="{!gaugeChartLabel}" 
+                        style="font-weight:bold" />
+                        <div id='chart_div1'></div>
+                        <apex:outputLabel value="{!messageGaugeChart}" 
+                        style="color:Gray;font-style:italic" /></center>
+                    </td>
+                    <td><center><apex:outputLabel value="{!$Label.esut__Class_Wise_Code_Coverage}" 
+                        style="font-weight:bold" />
+                        <div id='chart_div2'></div>
+                        <apex:outputLabel value="{!messageBarChart}" 
+                        style="color:Gray;font-style:italic" /></center>
+                    </td>
+                </tr>
+            </table>
+<!--            </apex:pageBlockSection> -->
+        </apex:pageBlock>
+        </div>
+        
+        <h3>{!$Label.Test_Code_Execution_Results}</h3>
+        <div>           
+            <div style="float:right; margin-right:50px;"> 
+                <div>
+                    <button id="rerun" style="width:0px; height:0px;"></button>
+                    <button id="select">{!$Label.Export_Summary_Details}</button>
+                </div>
+                <ul>
+                    <li><apex:commandlink action="{!exportToPdf}" target="_blank" title="{!$Label.esut__Export_To_Pdf}"> 
+                            <apex:image value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'img/pdf_icon.png')}"  width="30" height="25">
+                            </apex:image> 
+                        </apex:commandlink> </li>
+                    <li><apex:commandlink action="{!exportToExcel}" target="_blank" title="{!$Label.esut__Export_To_Excel}"> 
+                            <apex:image value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'img/excel_icon1.png')}" width="25" height="25">
+                            </apex:image> 
+                        </apex:commandlink></li>
+                </ul>
+            </div>
+            <br/>
+            <br/>
+        <apex:pageBlock id="blkSummary" title="{!$Label.esut__Summary}" rendered="{!blnCheckId}">
+            
+            <apex:pageBlockSection id="secSummary"
+                                   columns="1"
+                                   showHeader="false">
+                
+                <apex:outputField label="{!$Label.esut__Test_Executed_On}" value="{!objTstCodeSummary.ESUT__ExecutionDateTime__c}"/> 
+                <apex:outputField label="{!$Label.esut__Tests_Run}" value="{!objTstCodeSummary.ESUT__NumberOfTestRuns__c}"/>
+                <apex:outputField label="{!$Label.esut__Test_Successes}" value="{!objTstCodeSummary.ESUT__NumberOfTestSucceeded__c}"/>
+                <apex:outputField label="{!$Label.esut__Test_Failures}" value="{!objTstCodeSummary.ESUT__NumberOfTestFailed__c}"/>
+                <apex:outputField label="{!$Label.esut__Average_Code_Coverage}" value="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+
+        <apex:pageBlock id="blkTestSuccessTemp" title="{!$Label.esut__Test_Method_Execution_Details}" rendered="{!blnCheckId}">
+            
+            <apex:repeat value="{!testClassResultList}" var="TestMethodDetail">
+                
+                <apex:pageBlockSection id="secMethodDetails"
+                                       columns="1"
+                                       title="{!TestMethodDetail.strClassName}">                    
+                
+                    <apex:pageBlockTable columns="5" value="{!TestMethodDetail.successFailureList}" var="methodDetail" width="100%">
+                            
+                            <apex:column width="30%">
+                                <apex:facet name="header">{!$Label.esut__Test_Method_Name}</apex:facet>
+                                <apex:outputText value="{!methodDetail.ESUT__TestMethod_Name__c}"/>
+                            </apex:column>
+                            
+                            <apex:column width="15%">
+                                <apex:facet name="header">{!$Label.esut__Status}</apex:facet>
+                                <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Fail}" 
+                                                width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Fail'}"/>
+                                <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Pass'}"/>
+                            </apex:column>
+                            
+                            <apex:column width="15%">
+                                <apex:facet name="header">{!$Label.esut__Message}</apex:facet>
+                                <apex:outputText value="{!methodDetail.ESUT__FailureMessage__c}"/>
+                            </apex:column>
+                            <apex:column width="40%">
+                                <apex:facet name="header">{!$Label.esut__Stack_Trace}</apex:facet>
+                                <apex:outputText value="{!methodDetail.ESUT__StackTrace__c}"/>
+                            </apex:column>                                                              
+                                
+                    </apex:pageBlockTable>
+                </apex:pageBlockSection>
+            </apex:repeat>
+        </apex:pageBlock>           
+        
+        <apex:pageBlock id="blkCoverage" title="{!$Label.esut__Code_Coverage}" rendered="{!blnCheckId}">
+            
+            <apex:pageBlockSection id="secClassCoverage"
+                                   columns="1"
+                                   title="{!$Label.esut__Class_Coverage_Details}">
+                                   
+                <apex:pageBlockTable columns="3" value="{!codeCoverageClassList}" var="classCoverageDetails">
+                    
+                    <apex:column width="30%">
+                        <apex:facet name="header">{!$Label.esut__Class_Name}</apex:facet>
+<!--                         <apex:outputLink id="lnkClass" value="https://{!strInstance}.salesforce.com/{!classCoverageDetails.ClassId__c}"> -->
+							<apex:outputLink id="lnkClass" value="{!strInstance}/{!classCoverageDetails.ESUT__ClassId__c}">
+                            {!classCoverageDetails.ESUT__ClassName__c}
+                        </apex:outputLink>
+                        
+                    </apex:column>
+                    <apex:column width="20%" value="{!classCoverageDetails.ESUT__CodeCoverage__c} ">
+                        <apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+                    </apex:column>
+                                    
+                    <apex:column width="20%"> 
+                        
+                        <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Warning}" 
+                                                width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+                        <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+                        <apex:facet name="header">{!$Label.esut__Severity}</apex:facet>                           
+                    </apex:column>
+                    
+                    
+                </apex:pageBlockTable>                                 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection id="secTriggerCoverage"
+                                   columns="1"
+                                   title="{!$Label.esut__Trigger_Coverage_Details}">
+                                   
+                <apex:pageBlockTable columns="3" value="{!codeCoverageTriggerList}" var="triggerCoverageDetails"> 
+                    
+                    <apex:column width="30%">
+                        <apex:facet name="header">{!$Label.esut__Trigger_Name}</apex:facet>
+<!--                        <apex:outputLink id="lnkClass" value="https://{!strInstance}.salesforce.com/{!triggerCoverageDetails.ClassId__c}"> -->
+							<apex:outputLink id="lnkClass" value="{!strInstance}/{!triggerCoverageDetails.ESUT__ClassId__c}">
+                            {!triggerCoverageDetails.ESUT__ClassName__c}
+                        </apex:outputLink>
+                    </apex:column>
+                    
+                    <apex:column width="20%" value="{!triggerCoverageDetails.ESUT__CodeCoverage__c} "> 
+                        <apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+                    </apex:column>
+                    
+                    <apex:column width="20%">
+                        <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Warning}" 
+                                                width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+                        <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+                    <apex:facet name="header">{!$Label.esut__Severity}</apex:facet>   
+                    </apex:column>
+                    
+                </apex:pageBlockTable>                                 
+            </apex:pageBlockSection>
+            
+            <apex:pageBlockSection title="{!$Label.esut__Testcoveragewarnings}"
+                                   columns="1" 
+                                   rendered="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c < 75}"> 
+             
+<!--                <apex:image title="{!$Label.WarningMessage}"  -->
+<!--                            url="{!URLFOR($Resource.TestCodeExect_resource, 'img/Warning.png')}" width="15" height="15" />               -->
+                <apex:outputlabel style="color:red" value=" Average test coverage across all Apex Classes and Triggers is 
+                                    {!objTstCodeSummary.ESUT__AverageCodeCoverage__c}% ,
+                                    at least 75% test coverage is required. ">
+                </apex:outputlabel>                       
+            </apex:pageBlockSection>
+                
+        </apex:pageBlock>
+        </div>
+        </div>  
+        </apex:outputPanel>
+        
+        <apex:outputPanel id="isEmailReport" rendered="{!blnCheckId1}">
+            <div style="float:right; margin-right:50px;"> 
+                    <div>
+                        <button id="rerun1" style="width:0px; height:0px;"></button>
+                        <button id="select">{!$Label.Export_Summary_Details}</button>
+                    </div>
+                    <ul>
+                        <li><apex:commandlink action="{!exportToPdf}" target="_blank" title="{!$Label.esut__Export_To_Pdf}"> 
+                                <apex:image value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'img/pdf_icon.png')}"  width="30" height="25">
+                                </apex:image> 
+                            </apex:commandlink> </li>
+                        <li><apex:commandlink action="{!exportToExcel}" target="_blank" title="{!$Label.esut__Export_To_Excel}"> 
+                                <apex:image value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'img/excel_icon1.png')}" width="25" height="25">
+                                </apex:image> 
+                            </apex:commandlink></li>
+                    </ul>
+                </div>
+                <br/>
+                <br/>
+            <apex:pageBlock id="blkSummary1" title="{!$Label.esut__Summary}" rendered="{!blnCheckId1}">
+                
+                <apex:pageBlockSection id="secSummary"
+                                       columns="1"
+                                       showHeader="false">
+                    
+                    <apex:outputField label="{!$Label.esut__Test_Executed_On}" value="{!objTstCodeSummary.ESUT__ExecutionDateTime__c}"/> 
+                    <apex:outputField label="{!$Label.esut__Tests_Run}" value="{!objTstCodeSummary.ESUT__NumberOfTestRuns__c}"/>
+                    <apex:outputField label="{!$Label.esut__Test_Successes}" value="{!objTstCodeSummary.ESUT__NumberOfTestSucceeded__c}"/>
+                    <apex:outputField label="{!$Label.esut__Test_Failures}" value="{!objTstCodeSummary.ESUT__NumberOfTestFailed__c}"/>
+                    <apex:outputField label="{!$Label.esut__Average_Code_Coverage}" value="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c}"/>
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+    
+            <apex:pageBlock id="blkTestSuccessTemp1" title="{!$Label.esut__Test_Method_Execution_Details}" rendered="{!blnCheckId1}">
+                
+                <apex:repeat value="{!testClassResultList}" var="TestMethodDetail">
+                    
+                    <apex:pageBlockSection id="secMethodDetails"
+                                           columns="1"
+                                           title="{!TestMethodDetail.strClassName}">                    
+                    
+                        <apex:pageBlockTable columns="5" value="{!TestMethodDetail.successFailureList}" var="methodDetail" width="100%">
+                        
+                                <apex:column width="30%">
+                                    <apex:facet name="header">{!$Label.esut__Test_Method_Name}</apex:facet>
+                                    <apex:outputText value="{!methodDetail.ESUT__TestMethod_Name__c}"/>
+                                </apex:column>
+                                
+                                <apex:column width="15%">
+                                    <apex:facet name="header">{!$Label.esut__Status}</apex:facet>
+                                    
+                                    <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Fail}" 
+                                                width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Fail'}"/>
+                                    <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Pass'}"/>
+                                </apex:column>
+                                
+                                <apex:column width="15%">
+                                    <apex:facet name="header">{!$Label.esut__Message}</apex:facet>
+                                    <apex:outputText value="{!methodDetail.ESUT__FailureMessage__c}"/>
+                                </apex:column>
+                                
+                                <apex:column width="40%">
+                                    <apex:facet name="header">{!$Label.esut__Stack_Trace}</apex:facet>
+                                    <apex:outputText value="{!methodDetail.ESUT__StackTrace__c}"/>
+                                </apex:column>                                                              
+                                    
+                        </apex:pageBlockTable>
+                    </apex:pageBlockSection>
+                </apex:repeat>
+            </apex:pageBlock>           
+            
+            <apex:pageBlock id="blkCoverage1" title="{!$Label.esut__Code_Coverage}" rendered="{!blnCheckId1}">
+                
+                <apex:pageBlockSection id="secClassCoverage"
+                                       columns="1"
+                                       title="{!$Label.esut__Class_Coverage_Details}">
+                                       
+                    <apex:pageBlockTable columns="3" value="{!codeCoverageClassList}" var="classCoverageDetails">
+                        
+                        <apex:column width="30%">
+                            <apex:facet name="header">{!$Label.esut__Class_Name}</apex:facet>
+<!--                             <apex:outputLink id="lnkClass" value="https://{!strInstance}.salesforce.com/{!classCoverageDetails.ClassId__c}"> -->
+								<apex:outputLink id="lnkClass" value="{!strInstance}/{!classCoverageDetails.ESUT__ClassId__c}">
+                                {!classCoverageDetails.ESUT__ClassName__c}
+                            </apex:outputLink>
+                            
+                        </apex:column>
+                        <apex:column width="20%" value="{!classCoverageDetails.ESUT__CodeCoverage__c} ">
+                            <apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+                        </apex:column>
+                                        
+                        <apex:column width="20%"> 
+                            <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Warning}" 
+                                                width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+                            <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+                            <apex:facet name="header">{!$Label.esut__Severity}</apex:facet>                           
+                        </apex:column>
+                        
+                        
+                    </apex:pageBlockTable>                                 
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection id="secTriggerCoverage"
+                                       columns="1"
+                                       title="{!$Label.esut__Trigger_Coverage_Details}">
+                                       
+                    <apex:pageBlockTable columns="3" value="{!codeCoverageTriggerList}" var="triggerCoverageDetails"> 
+                        
+                        <apex:column width="30%">
+                            <apex:facet name="header">{!$Label.esut__Trigger_Name}</apex:facet>
+<!--                             <apex:outputLink id="lnkClass" value="https://{!strInstance}.salesforce.com/{!triggerCoverageDetails.ClassId__c}"> -->
+								<apex:outputLink id="lnkClass" value="{!strInstance}/{!triggerCoverageDetails.ESUT__ClassId__c}">
+                                {!triggerCoverageDetails.ESUT__ClassName__c}
+                            </apex:outputLink>
+                        </apex:column>
+                        
+                        <apex:column width="20%" value="{!triggerCoverageDetails.ESUT__CodeCoverage__c} "> 
+                            <apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+                        </apex:column>
+                        
+                        <apex:column width="20%">
+                            <apex:image title="{!$Label.esut__StatusFail}"
+                                                url="{!$Resource.ESUT__Warning}" 
+                                                width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+                            <apex:image title="{!$Label.esut__StatusPass}"
+                                                url="{!$Resource.ESUT__Pass}" 
+                                                width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+                            <apex:facet name="header">{!$Label.esut__Severity}</apex:facet>   
+                        </apex:column>
+                        
+                    </apex:pageBlockTable>                                 
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="{!$Label.esut__Testcoveragewarnings}"
+                                       columns="1" 
+                                       rendered="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c < 75}"> 
+                 
+                    <apex:outputlabel style="color:red" value=" Average test coverage across all Apex Classes and Triggers is 
+                                        {!objTstCodeSummary.ESUT__AverageCodeCoverage__c}% ,
+                                        at least 75% test coverage is required. ">
+                    </apex:outputlabel>                       
+                </apex:pageBlockSection>
+                    
+            </apex:pageBlock>
+        </apex:outputPanel> 
+               
+    </apex:form>
+</apex:page>

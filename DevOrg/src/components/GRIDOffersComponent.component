@@ -1,0 +1,159 @@
+<apex:component controller="GRIDOffersController" allowDML="true">
+    <apex:form id="Offersform" styleClass="records">
+        <apex:outputPanel id="offrtable" title="Offer">
+        <apex:pageBlock mode="inlineEdit">
+            
+            <apex:pageBlockButtons location="top">
+                <input type="button" onclick="runNewOffer()" class="btn" value="New Offer" status="loadingPanel"/>
+                <apex:CommandButton action="{!editAllOffers}" value="Edit All" rerender="offrtable" status="loadingPanel"/>
+                <input type="button" onclick="runSaveOffers()" class="btn" value="Save" status="loadingPanel" />
+                <apex:CommandButton action="{!refreshOffers}" value="Refresh" rerender="offrtable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshOffers}" value="Cancel" rerender="offrtable" status="loadingPanel" immediate="true" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageMessages id="offrgMsgId" escape="false" />
+                
+                <table  class="list" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!offrFieldsetList}" var="offrField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!offrField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(offrField.type != 'textarea', offrField.type != 'picklist', offrField.type != 'multipicklist')}"> 
+                                        <img src="{!IF(offrSortExpression==offrField.fieldPath,IF(offrSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name ="{!offrField.fieldPath}" class="sorting" onclick="sortCallOffers('{!offrField.type}');" />
+                                    </apex:OutputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!offrWrapperLst}" var="offrWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!offrWraper.offrIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!offrWraper.offr.Id}" target="blank" rendered="{!NOT(ISBLANK(offrWraper.offr.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(offrWraper.offr.Id))}"/>
+                                <apex:commandLink action="{!deleteOffer}" value="Del" rerender="offrtable" rendered="{!NOT(ISBLANK(offrWraper.offr.Id))}" status="loadingPanel">
+                                    <apex:param name="offrIndexToRemove" value="{!offrWraper.offrIndex}" assignTo="{!offrIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteOffer}" value="Remove" rerender="offrtable" rendered="{!(ISBLANK(offrWraper.offr.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="offrIndexToRemove" value="{!offrWraper.offrIndex}" assignTo="{!offrIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!offrFieldsetList}" var="offrfield">
+                                <td>
+                                    <apex:outputField value="{!offrWraper.offr[offrfield]}" rendered="{!AND(IF(offrWraper.offrEdit = false, true, false),NOT(ISBLANK(offrWraper.offr.Id)))}" />
+                                    <apex:inputField value="{!offrWraper.offr[offrfield]}" rendered="{!OR(IF(offrWraper.offrEdit = true, true, false),ISBLANK(offrWraper.offr.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    
+                    <tfoot>
+                        <tr class = "headerRow">
+                            <td><b>Max</b>
+                            <br />
+                            <b>Min</b></td>
+                            <td></td>
+                            <apex:repeat value="{!offrFieldsetList}" var="offrfield">
+                                <td>
+                                    <apex:outputText value="{!offrFieldToMaxMap[offrfield.fieldPath]}" rendered="{!offrFieldToMaxMap[offrfield.fieldPath] != -999.999}" />
+                                    <br />
+                                    <apex:outputText value="{!offrFieldToMinMap[offrfield.fieldPath]}" rendered="{!offrFieldToMinMap[offrfield.fieldPath] != -999.999}" />
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                showing records {!IF((offrOffsetsize + 1) > offrRecordCount, IF(offrRecordCount - offrBlockSize <= 0, 0, offrRecordCount - offrBlockSize), offrOffsetsize + 1)} - {!IF(offrBlockSize + offrOffsetsize <= offrRecordCount, offrBlockSize + offrOffsetsize, offrRecordCount)} Of {!offrRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="offrtable" action="{!beginningOffers}" status="loadingPanel" disabled="{!IF(offrOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="offrtable" action="{!previousOffers}"  status="loadingPanel" disabled="{!IF(offrOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="offrtable" action="{!nextOffers}" status="loadingPanel" disabled ="{!IF(offrBlockSize + offrOffsetsize >= offrRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="offrtable" action="{!endOffers}" status="loadingPanel" disabled ="{!IF(offrBlockSize + offrOffsetsize >= offrRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+        </apex:pageBlock>
+        </apex:outputPanel>
+        
+        <apex:actionFunction action="{!newOffer}" name="newOffer" rerender="offrtable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveOffers}" name="saveOffers" rerender="offrtable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortOffers}" name="sortAllOffers" rerender="offrtable" status="loadingPanel" >
+            <apex:param name="offrTypeParam" value="" /> 
+        </apex:actionFunction>
+        
+        <apex:inputHidden value="{!offrSortExpression}" id="offrSortHiddencriterian"/>
+        <apex:inputHidden value="{!offrSortDirection}" id="offrSortHiddenOrder"/>
+        
+    </apex:form>
+        <script>
+        function runNewOffer() 
+        {
+            setTimeout(function() 
+            {               
+                newOffer();
+            }, 200);
+        }
+        
+        function runSaveOffers() 
+        {
+            setTimeout(function() 
+            {               
+                saveOffers();
+            }, 200);
+        }
+        
+        function sortCallOffers(offrFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                
+                 var offrElement= event.target;
+                 
+                 var newoffrSortCol = t$(offrElement).attr("Name"); // new sort field
+                 var oldoffrSortCol = t$("input[id$='offrSortHiddencriterian']").val();
+                 console.log(oldoffrSortCol);
+                 
+               if(String(newoffrSortCol) == String(oldoffrSortCol))
+                {
+                    
+                    if(String(t$("input[id$='offrSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='offrSortHiddenOrder']").val("DESC");
+                      t$(offrElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='offrSortHiddenOrder']").val("ASC");
+                      t$(offrElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='offrSortHiddencriterian']").val(newoffrSortCol);
+                   
+                    sortAllOffers(offrFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='offrSortHiddencriterian']").val(newoffrSortCol);
+                    t$("input[id$='offrSortHiddenOrder']").val("ASC");
+                    t$(offrElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllOffers(offrFieldDataType);
+                }
+        }
+        
+        </script>
+</apex:component>

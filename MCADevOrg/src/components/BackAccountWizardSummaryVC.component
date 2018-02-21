@@ -1,0 +1,630 @@
+<apex:component controller="BankAccountWizardSummaryController" id="theBankAccComp" allowDML="true" access="global">
+    
+    <apex:includeScript value="{!URLFOR($Resource.Jquary, 'js/jquery-1.6.2.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.Jquary, 'js/jquery-ui-1.8.15.custom.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.Jquary, 'css/jquery-ui-1.8.15.custom.css')}" />
+    <style>
+        .bPageBlock{
+            margin-top:20px !important;
+        }
+        .monthcls th{
+            font-size:11px;
+        }
+        .monthcls td{
+            font-size:11px;
+        }
+        .totalcls td{
+            border:solid 1px #CCC;
+            border-left:none;
+            border-right:none;
+        }
+        table.totalcls{
+            border-collapse:collapse;
+        }
+        
+        .grey_overlay {
+            // display: none;
+             position: absolute;
+             top: 0%;
+             left: 0%;
+             width: 100%;
+             height: 100%;
+             background-color: black;
+             z-index:2;
+             -moz-opacity: 0.4;
+             opacity:.40;
+             filter: alpha(opacity=40);
+            }
+    </style>
+    <apex:sectionHeader title="{!accObj.name}" subtitle="Bank And Credit Card Summary Page"/>
+ <apex:pageBlock id="thePb">   
+ <apex:pagemessages id="pMsg" />
+  <apex:actionfunction name="filterByBankAccountNo" action="{!filterByBankAccountNo}" reRender="outPnl,scriptPnl,totSummar,pMsg" status="loading"/>
+  <apex:actionfunction name="filterByCCMIDNo" action="{!filterByCCMIDNo}" reRender="outPnl2,scriptPnl,totSummar2,pMsg" status="loading" />
+   <apex:actionfunction name="updateBankAcc" action="{!updateBankAccRecord}" reRender="outPnl,scriptPnl,totSummar,pMsg" status="loading" />
+   <apex:actionfunction name="updateCreditCard" action="{!updateCCRecord}" reRender="outPnl2,scriptPnl,totSummar2,pMsg" status="loading" />
+   <apex:inputHidden value="{!recordId}" id="recId" />
+    <apex:outputpanel style="width:100%;"  id="AccountDetailPan" >
+        <table style="margin-bottom: 20px;">
+            <tr>
+                <td>
+                    <apex:outputtext > Account Name:</apex:outputtext>
+                </td>
+                <td style="padding:0 10px;font-weight: bold;">
+                    <apex:outputtext >{!accObj.name} </apex:outputtext>
+                </td>
+<!--                 <td> -->
+<!--                     <apex:outputtext >Application Status:</apex:outputtext> -->
+<!--                 </td> -->
+<!--                 <td style="padding:0 10px;font-weight: bold; "> -->
+<!--                     <apex:outputtext > {!accObj.Application_Status__c}</apex:outputtext> -->
+<!--                 </td> -->
+<!--                 <td> -->
+<!--                     <apex:outputtext > Avg Gross Sales:</apex:outputtext> -->
+<!--                 </td> -->
+<!--                 <td style="padding:0 10px;font-weight: bold; "> -->
+<!--                     <apex:outputtext >{!accObj.Avg_Gross_Sales_Used__c} </apex:outputtext> -->
+<!--                 </td> -->
+<!--                <td> -->
+<!--                     <apex:outputtext > Avg CC Sales:</apex:outputtext> -->
+<!--                 </td> -->
+<!--                 <td style="padding:0 10px;font-weight: bold;"> -->
+<!--                     <apex:outputtext >{!accObj.of_Avg_CC_Used__c} </apex:outputtext> -->
+<!--                 </td> -->
+            </tr>
+        </table>
+        
+        <table style="padding-left:25%;">
+            <tr>
+                <td>
+                    <input type="button" class="btn" onclick="gotoPage('BankWizard');" value="Bank Stmts Entry Wizard" />
+                </td>
+                <td>
+                    <input type="button" class="btn" value="CC Sales Entry Wizard" onclick="gotoPage('CCWizard')"/>
+                </td>
+                <td>
+                    <input type="button" class="btn" value="Refresh" onClick="refreshPage();"/>
+                </td>
+                <td>
+                    <input type="button" value="Save" class="btn" onClick="refreshPage();"/>
+                </td>
+                <td>
+                    <input type="button" class="btn" value="Account Page" onclick="gotoAccPage();"/>
+                </td>
+                <td>
+                    <apex:commandButton value="Conga PDF" />
+                </td>
+            </tr>
+        </table>
+    </apex:outputpanel>
+    
+        
+        <table id="accSummary monthcls">
+         
+            <tr>
+              <td>
+               <apex:outputpanel id="outPnl">
+                <div style="border-bottom:solid 1px #CCC; float:left; width:103%; margin-bottom:10px;"> 
+                    <h1 style="font-size:18px; color:#666;font-weight: normal;padding-left: 190px;">Bank Account Summary</h1> 
+                </div>
+                <div style="floalt:left;width:100%;">
+                  <table width="100%" style="float:left;">
+                   <tr>
+                       <td style="vertical-align:middle;width:35%;">  
+                          <apex:outputlabel style="font-weight:bold;">FILTER BY Account#:</apex:outputlabel> &nbsp;&nbsp;
+                          <apex:selectList multiselect="false" size="1" value="{!bankAccountNo}" onchange="filterByBankAccountNo()">  
+                          <apex:selectoptions value="{!lstBankAccNos}" />
+                          </apex:selectList>
+                        </td> 
+                        <td>
+                            <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}"  title="Expand" style="display:none;float:left;cursor:pointer;margin-top:3px;width:20px;" onclick="expandOrCollapseBankAcc();this.style.display='none';document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:colpsImg').style.display='block';" id="expndImg"/>
+                            <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}" style="margin-top:7px;float:left;cursor:pointer;width:25px;"  title="Collapse" onclick="expandOrCollapseBankAcc();this.style.display='none';document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:expndImg').style.display='block';" id="colpsImg" />
+                        </td>
+                        <td style="float:right;">
+                            <apex:commandButton Value="Pending Items" action="{!redirectPendingItems}" />
+                        </td>
+                     </tr>
+                   </table>
+                 </div>
+               
+                <table style="width:738px;float:left;" class="monthcls">
+                    <tr>
+                        <th style="width:27px; vertical-align:bottom;">&nbsp;</th>
+                        <th style="width:60px; vertical-align:bottom;"> Month </th>
+                        <th style="width:40px; padding-left:15px; vertical-align:bottom;"> Year </th>
+                        <th style="width:90px; vertical-align:bottom; text-align:left;"> Account# </th>
+                        <th style="width:85px; vertical-align:bottom; text-align:left;"> Total Net Deposits </th>
+                        <th style="width:100px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Average Daily Balance</div> </th>
+                        <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Number Of Negative Days</div> </th>
+                        <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Number Of NSFs</div> </th>
+                        <th style="width:55px; vertical-align:bottom; text-align:center;"> <div style="width:55px;word-wrap: break-word;white-space: normal !important;">Omit From Summary</div> </th>
+                    </tr>
+                </table>
+            <div style="height:500px; width:755px; overflow:auto; overflow-x: hidden; border-bottom:1px solid #CCC; float:left;">
+                <apex:repeat value="{!MonthlyListedBankActs}" var="objWrap" id="mainRepeat">
+                    <table cellpadding="2" cellspacing="0" style="border:1px solid #CCC; border-bottom:none; width:738px;" id="accSummary" class="monthcls"> 
+                            <tr>
+                                <td style="padding: 4px; width:15px; padding-right: 2px;">
+                                    <apex:image id="plus" style="display:none;cursor:pointer;" value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}" onclick="accountsDisplayDivOpen('{!objWrap.index}',this.id);return false;"  />
+                                    <apex:image id="minus" style="cursor:pointer;" value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}" onclick="accountsDisplayDivClose('{!objWrap.index}',this.id);return false;"  />
+                                </td>
+                                <td style="font-weight:bold; width:62px;">
+                                    <apex:outputtext value="{!objWrap.selectedMonth}"></apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold; width:30px; text-align:left;">
+                                    <apex:outputtext value="{!objWrap.selectedYear}"></apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold;text-align:left; width:34px;">
+                                     <apex:outputtext > Total</apex:outputtext> 
+                                </td>
+                                <td style="font-weight:bold; width:75px; text-align:right;">
+                                    <apex:outputtext id="totDeposit" value="${0, number, ###,###,###,##0.00}" >
+                                        <apex:param value="{!objWrap.totDeposit}"/>
+                                    
+                                    </apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold;width:80px;text-align:right;">
+                                    <apex:outputtext id="totAvgDailyBalance" value="${0, number, ###,###,###,##0.00}"  >
+                                        <apex:param value="{!objWrap.totAvgDailyBalance}"></apex:param>
+                                    </apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold;width:75px;text-align:right;">
+                                    <apex:outputtext >{!objWrap.totNoOfNegativeDays}</apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold;width:70px;text-align:right;">
+                                    <apex:outputtext >{!objWrap.totNoOfNFSs}</apex:outputtext>
+                                </td>
+                                <td style="font-weight:bold;width:63px;text-align:center;">
+                                    <apex:outputtext >  </apex:outputtext>
+                                </td>
+                            </tr>
+                            </table>
+                        <apex:outputPanel layout="block" id="accDisplayDiv" >
+                            <div id="accDisplayDiv_{!objWrap.index}" style="border:1px solid #CCC; border-top:none; border-bottom:none; width:736px; padding:2px 0px;">  
+                            <table cellpadding="2" cellspacing="0" class="monthcls">
+                            <apex:repeat value="{!objWrap.currentMonthAccounts}" var="obj" id="subRepeat">
+                                
+                                    <tr>
+                                        <td style="width:20px;">&nbsp;</td>
+                                        <td style="padding-left:10px;width:72px;">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Month__c}"></apex:outputfield>
+                                        </td>
+                                        <td style="width:45px; padding-left:15px;">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Year__c}"></apex:outputfield>
+                                        </td>
+                                        <td style="width:70px;">
+                                            <div style="word-wrap:break-work; width:70px;">
+                                                <a href="/{!obj.id}" target="_blank"><apex:outputfield style="width: 80px;" value="{!obj.Bank_Account_Number__c}"></apex:outputfield></a>
+                                            </div>
+                                        </td>
+                                        <td style="width:80px; text-align:right;{!IF(TEXT(obj.Deposits_Minus_Transfers__c) != '','','background-color:#F4FA58;cursor:pointer;')}" onclick="openRecord('{!obj.Deposits_Minus_Transfers__c}','{!obj.id}')">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Deposits_Minus_Transfers__c}"></apex:outputfield>
+                                        </td>
+                                        <td style="width:112px; text-align:right;{!IF(TEXT(obj.Average_Daily_Balance__c) != '','','background-color:#F4FA58;cursor:pointer;')}" onclick="openRecord('{!obj.Average_Daily_Balance__c}','{!obj.id}')">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Average_Daily_Balance__c}"></apex:outputfield>
+                                        </td>
+                                        <td style="width:106px; text-align:right;{!IF(TEXT(obj.Number_of_Negative_Days__c) != '','','background-color:#F4FA58;cursor:pointer;')}" onclick="openRecord('{!obj.Number_of_Negative_Days__c}','{!obj.id}')">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Number_of_Negative_Days__c}"></apex:outputfield>  
+                                        </td>
+                                        <td style="width:97px; text-align:right;{!IF(TEXT(obj.Number_of_NSFs__c) != '','','background-color:#F4FA58;cursor:pointer;')}" onclick="openRecord('{!obj.Number_of_NSFs__c}','{!obj.id}')">
+                                            <apex:outputfield style="width: 80px;" value="{!obj.Number_of_NSFs__c}"></apex:outputfield>
+                                        </td>
+                                        <td style="width:90px; text-align:center;">
+                                            <apex:inputfield style="width: 80px;" value="{!obj.Omit_From_Summary__c}" onclick="updateCheckedRec('{!obj.id}','BankAccount')"/>
+                                        </td>
+                                    </tr>
+                        </apex:repeat>
+                        </table>
+                        </div>
+                    </apex:outputPanel>
+            </apex:repeat>  
+        </div>
+        </apex:outputpanel>
+        </td>
+        <td style="width:100px; padding:20px;"><div style="border-right:1px solid #CCC; height:580px; margin-top:3px;"> </div></td>
+        <td>
+        <apex:outputpanel id="outPnl2" >
+            <div>
+                <div style="border-bottom: solid 1px #CCC; margin-bottom:10px; float:left; width:103%; margin-left:-25px;">
+                    <h1 style="font-size:18px; color:#666;font-weight: normal;padding-left: 260px;">Credit Card Summary</h1>
+                </div>
+                <div>
+                  <table width="100%" style="float:left;">
+                    <tr>
+                      <td style="vertical-align:middle;width:35%;">
+                        <apex:outputlabel style="font-weight:bold;">FILTER BY MID#:</apex:outputlabel> &nbsp;&nbsp;
+                         <apex:selectList multiselect="false" size="1" onchange="filterByCCMIDNo()" value="{!ccMIDNo}"> 
+                         <apex:selectoptions value="{!lstCCMIDNos}" />
+                         </apex:selectList>   
+                       </td>
+                    <td>
+                        <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}" title="Expand" style="display:none;float:left;cursor:pointer;margin-top:3px;width:20px;" onclick="expandOrCollapseCC();this.style.display='none';document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:colpsImg2').style.display='block';" id="expndImg2"/>
+                        <apex:image value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}" title="Collapse" style="float:left;cursor:pointer;margin-top:7px;width:25px;" onclick="expandOrCollapseCC();this.style.display='none';document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:expndImg2').style.display='block';" id="colpsImg2" />
+                   </td>
+                   <td style="float:right;">
+                            <apex:commandButton Value="Pending Items" action="{!redirectPendingItems}" />
+                    </td>
+                   </tr>
+                  </table>
+                  </div>
+                            
+                    <table style="width:740px;float:left;" class="monthcls">
+                        <tr>
+                            <th style="width:27px; vertical-align:bottom;">&nbsp;</th>
+                            <th style="width:60px; vertical-align:bottom;"> Month </th>
+                            <th style="width:45px; padding-left:6px; vertical-align:bottom;"> Year </th>
+                            <th style="width:90px; vertical-align:bottom; text-align:left;"> MID Account# </th>
+                            <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px; word-wrap: break-word;white-space:normal !important;">Total Net Processed-ALL </div></th>
+                            <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Number Of Transactions-All</div> </th>
+                            <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Total Net Processed-AMEX only </div> </th>
+                            <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Number Of Transaction-AMEX only</div> </th>
+                             <th style="width:85px; vertical-align:bottom; text-align:center;"> <div style="width:85px;word-wrap: break-word;white-space: normal !important;">Average Tickets</div> </th>
+                            <th style="width:55px; vertical-align:bottom; text-align:center;"> <div style="width:55px;word-wrap: break-word;white-space: normal !important;">Omit From Summary</div> </th>
+                        </tr>
+                    </table>
+                    <!-- Credit Card Summary -->
+                   <div style="height:500px; width:755px; overflow:auto; overflow-x: hidden; border-bottom:1px solid #CCC;float:left;">
+                        <apex:repeat value="{!MonthlyListedCreditCard}" var="objWrap" id="CreditMainRepeat">
+                            <table cellpadding="2" cellspacing="0" style="border:1px solid #CCC; border-bottom:none; width:738px;" class="monthcls"> 
+                                    <tr>
+                                        <td style="padding: 4px; width:15px; padding-right: 2px;">
+                                            <apex:image id="CreditPlus" style="display:none;cursor:pointer;" value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/plus.png')}" onclick="creditDisplayDivOpen('{!objWrap.index}',this.id);return false;"  />
+                                            <apex:image id="CreditMinus" style="cursor:pointer;" value="{!URLFOR($Resource.ImagePlusMinus,'plusminusicons/minus.png')}" onclick="creditDisplayDivClose('{!objWrap.index}',this.id);return false;"  />
+                                        </td>
+                                        <td style="font-weight:bold; width:62px;">
+                                            <apex:outputtext value="{!objWrap.selectedMonth}"></apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold; width:40px; text-align:left;">
+                                            <apex:outputtext value="{!objWrap.selectedYear}"></apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;text-align:left; width:50px;">
+                                            <apex:outputtext > Total</apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold; width:85px; text-align:right;">
+                                            <apex:outputtext value="${0,number,###,###,###,##0.00}"> <apex:param value="{!objWrap.totNetProcess}"/></apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;width:70px;text-align:right;">
+                                            <apex:outputtext >{!objWrap.totNoOfTransactions}</apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;width:70px;text-align:right;">
+                                            <apex:outputtext value="${0,number,###,###,###,##0.00}"> <apex:param value="{!objWrap.totProcessedAMEX}"/></apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;width:72px;text-align:right;">
+                                            <apex:outputtext >{!objWrap.totNoOfTransationsAMEX}</apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;width:72px;text-align:right;">
+                                            <apex:outputtext value="${0,number,###,###,###,##0.00}"> <apex:param value="{!objWrap.totAvgTicket}"/></apex:outputtext>
+                                        </td>
+                                        <td style="font-weight:bold;width:80px;text-align:center;">
+                                            <apex:outputtext ></apex:outputtext>
+                                        </td>
+                                    </tr>
+                                    </table>
+                                <apex:outputPanel layout="block" id="accDisplayDiv" >
+                                    <div id="CreditDisplayDiv_{!objWrap.index}" style="border:1px solid #CCC; border-top:none; border-bottom:none; width:736px; padding:2px 0px;">  
+                                    <table cellpadding="2" cellspacing="0" class="monthcls">
+                                    <apex:repeat value="{!objWrap.currentMonthCredits}" var="obj" id="CreditSubRepeat">
+                                        
+                                            <tr>
+                                                <td style="width:20px;">&nbsp;</td>
+                                                <td style="padding-left:10px;width:70px;">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Month__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:53px; padding-left:6px;">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Year__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:75px;">
+                                                    <div style="width:75px; word-wrap:break-word;">
+                                                        <a href="/{!obj.id}" target="_blank"><apex:outputfield style="width: 80px;cursor:pointer" value="{!obj.MID_Account_Number__c}"></apex:outputfield></a>
+                                                    </div>
+                                                </td> 
+                                                <td style="width:75px; text-align:right;{!IF(TEXT(obj.Total_Net_Processed_All__c) != '','','cursor:pointer;background-color:#F4FA58;')}" onclick="openRecord('{!obj.Total_Net_Processed_All__c}','{!obj.id}')">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Total_Net_Processed_All__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:85px; text-align:right;{!IF(TEXT(obj.Number_of_Transactions_All__c) != '','','cursor:pointer;background-color:#F4FA58;')}" onclick="openRecord('{!obj.Number_of_Transactions_All__c}','{!obj.id}')">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Number_of_Transactions_All__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:90px; text-align:right;{!IF(TEXT(obj.Total_Net_Processed_AMEX_only__c) != '','cursor:pointer;','cursor:pointer;background-color:#F4FA58;')}" onclick="openRecord('{!obj.Total_Net_Processed_AMEX_only__c}','{!obj.id}')">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Total_Net_Processed_AMEX_only__c}"></apex:outputfield>  
+                                                </td>
+                                                <td style="width:90px; text-align:right;{!IF(TEXT(obj.Number_of_Transactions_AMEX_only__c) != '','','cursor:pointer;background-color:#F4FA58;')}" onclick="openRecord('{!obj.Number_of_Transactions_AMEX_only__c}','{!obj.id}')">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Number_of_Transactions_AMEX_only__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:90px; text-align:right;{!IF(TEXT(obj.Average_Ticket__c) != '','','cursor:pointer;background-color:#F4FA58;')}" onclick="openRecord('{!obj.Average_Ticket__c}','{!obj.id}')">
+                                                    <apex:outputfield style="width: 80px;" value="{!obj.Average_Ticket__c}"></apex:outputfield>
+                                                </td>
+                                                <td style="width:80px; text-align:right;">
+                                                    <apex:inputfield style="width: 80px;" value="{!obj.Omit_From_Summary__c}" onclick="updateCheckedRec('{!obj.id}','CreditCard')"/>
+                                                </td>
+                                            </tr>
+                                </apex:repeat>
+                                </table>
+                                </div>
+                            </apex:outputPanel>
+                    </apex:repeat> 
+                    </div> 
+                  </div>
+               </apex:outputpanel>
+        </td>
+        </tr>
+        <tr>
+            <td> 
+             <apex:outputpanel id="totSummar">
+                <table width="98%;" class="monthcls totalcls" cellpadding="2" cellspacing="0" >
+                    <tr>
+                        <td style="width:100px;border-left:solid 1px #CCC;font-weight:bold;">TOTALS</td>   
+                        <td style="width:40px;">&nbsp;</td>
+                        <td style="width:100px;">&nbsp;</td>      
+                        <td style="width:125px;font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param value="{!objBankAccFinalSum.totalDeposites}"/>
+                            </apex:outputText> 
+                        </td>
+                        <td style="width:135px;font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param value="{!objBankAccFinalSum.totalAvgDailyBal}"/>
+                            </apex:outputText> 
+                        </td>
+                        <td style="width:100px;font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.totalNoOfNegativeDays}" /> </td>
+                        <td style="border-right:solid 1px #CCC;font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.totalNoOfNFS}" /> </td>
+                       
+                    </tr>
+                    <tr>
+                        <td style="border-left:solid 1px #CCC;font-weight:bold;">AVERAGES</td>   
+                        <td></td>
+                         <td></td>      
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param value="{!objBankAccFinalSum.avgTotalDeposites}"/>
+                            </apex:outputText> 
+                        </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param value="{!objBankAccFinalSum.avgTotalAvgDailyBal}"/>
+                            </apex:outputText>
+                         </td>
+                        <td style="font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.avgTotalNoOfNegativeDays}" /> </td>
+                        <td style="border-right:solid 1px #CCC;font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.avgTotalNoOfNFS}" /> </td>
+                    </tr>
+                    <tr>
+                        <td style="border-left:solid 1px #CCC;font-weight:bold;">LAST TWO MONTHS AVG</td>   
+                        <td></td>
+                         <td></td>      
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param value="{!objBankAccFinalSum.lastTwoMonthsAvgTD}"/>
+                            </apex:outputText> 
+                        </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}    " >
+                                <apex:param value="{!objBankAccFinalSum.lastTwoMonthsAvgTVDB}"/>
+                            </apex:outputText> 
+                        </td>
+                        <td style="font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.lastTwoMonthsAvgTND}" /> </td>
+                        <td style="border-right:solid 1px #CCC;font-weight:bold;"><apex:outputText Value="{!objBankAccFinalSum.lastTwoMonthsAvgTNFS}" /> </td>
+                    </tr>
+                    <tr>
+                        <td style="border-left:solid 1px #CCC;font-weight:bold;">TREND</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td><b>{!objBankAccFinalSum.trendTD}</b> </td>
+                        <td> <b> {!objBankAccFinalSum.trendTVDB}</b></td>
+                        <td> <b> {!objBankAccFinalSum.trendTND}</b> </td>
+                        <td style="border-right:solid 1px #CCC;">  <b> {!objBankAccFinalSum.trendTNFS}</b> </td>
+                    </tr>
+                </table>
+            </apex:outputpanel>
+            </td>
+            <td style="width:100px;"></td>
+            <td>
+            <apex:outputpanel id="totSummar2">
+                <table width="98%" cellpadding="2" cellspacing="0" class="monthcls totalcls" >
+                    <tr>
+                        <td style="width:100px; border-left:solid 1px #CCC;font-weight:bold;">TOTALS</td>   
+                        <td style="width:40px;">&nbsp;</td>
+                        <td style="width:55px;">&nbsp;</td>      
+                        <td style="width:60px;font-weight:bold;">
+                        <apex:outputText value="${0, number, ###,###,###,##0.00}" > 
+                            <apex:param Value="{!objCCFinalSum.totalDeposites}" / >
+                        </apex:outputText>  
+                        </td>
+                        <td style="width:75px;font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                            <apex:param Value="{!objCCFinalSum.totalAvgDailyBal}" / >
+                            </apex:outputText>
+                         </td>
+                        <td style="width:80px;font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.totalNoOfNegativeDays}" />
+                            </apex:outputText> 
+                        </td>
+                        <td style="width:50px;border-right:solid 0px #CCC;font-weight:bold;"><apex:outputText Value="{!objCCFinalSum.totalNoOfNFS}" /> </td>
+                         <td style="width:100px;font-weight:bold;border-right:solid 1px #CCC" id="tickets">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.totAvgTickets}" />
+                            </apex:outputText> 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="border-left:solid 1px #CCC;font-weight:bold;">AVERAGES</td>   
+                        <td></td>
+                        <td></td>      
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.avgTotalDeposites}" / >
+                            </apex:outputText> 
+                        </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.avgTotalAvgDailyBal}" />
+                            </apex:outputText>
+                         </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="{0, number, $###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.avgTotalNoOfNegativeDays}" />
+                            </apex:outputText>
+                         </td>
+                        <td style="border-right:solid 0px #CCC;font-weight:bold;"><apex:outputText Value="{!objCCFinalSum.avgTotalNoOfNFS}" /> </td>
+                        <td style="border-right:solid 1px #CCC;"></td>
+                    </tr>
+                    <tr>
+                        <td style="border-left:solid 1px #CCC;font-weight:bold;">LAST TWO MONTHS AVG</td>   
+                        <td></td>
+                         <td></td>      
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.lastTwoMonthsAvgTD}" />
+                            </apex:outputText>
+                         </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.lastTwoMonthsAvgTVDB}" />
+                            </apex:outputText>
+                        </td>
+                        <td style="font-weight:bold;">
+                            <apex:outputText Value="${0, number, ###,###,###,##0.00}" >
+                                <apex:param Value="{!objCCFinalSum.lastTwoMonthsAvgTND}" />
+                            </apex:outputText>
+                         </td>
+                        <td style="border-right:solid 0px #CCC;font-weight:bold;"><apex:outputText Value="{!objCCFinalSum.lastTwoMonthsAvgTNFS}" /> </td>
+                        <td style="border-right:solid 1px #CCC;"></td>
+                    </tr>
+                     <tr>
+                        <td  style="border-left:solid 1px #CCC;font-weight:bold;">TREND</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td> <b> {!objCCFinalSum.trendTD} </b> </td>
+                        <td> <b> {!objCCFinalSum.trendTVDB} </b> </td>
+                        <td> <b> {!objCCFinalSum.trendTND} </b> </td>
+                        <td  style="border-right:solid 0px #CCC;"> <b> {!objCCFinalSum.trendTNFS} </b></td>
+                        <td style="border-right:solid 1px #CCC;"></td>
+                    </tr>
+                </table>
+                </apex:outputpanel>
+            </td>
+        </tr>
+        </table>
+       
+    </apex:pageBlock>
+    <apex:outputpanel id="scriptPnl">
+         <!-- Action status -->
+          <apex:actionStatus startText="Loading..." id="loading">
+            <apex:facet name="start">
+             <div id="overlayOC" class="grey_overlay" style="z-index:100;"> 
+                <!-- <img  src="{!URLFOR($Resource.ImagePlusMinus,'loader.gif')}" style="margin-left:20%;margin-top:20%;"/>-->
+             </div>
+            </apex:facet> 
+         </apex:actionStatus>
+    
+    <script>
+    
+       var j$ = jQuery.noConflict();
+        //j$(document).ready(function(){
+        
+            //alert('*****');
+        
+        //});
+        var BankAccmode='expand';
+        var ccMode='expand';
+        function accountsDisplayDivClose(divIndex,imgId){
+          j$("#accDisplayDiv_"+divIndex).slideUp();
+          document.getElementById(imgId).style.display = 'none';
+          document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:mainRepeat:'+divIndex+':plus').style.display = 'block';
+                
+        }
+        
+        function accountsDisplayDivOpen(divIndex,imgId){
+            j$("#accDisplayDiv_"+divIndex).slideDown();
+            document.getElementById(imgId).style.display = 'none';
+            document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:mainRepeat:'+divIndex+':minus').style.display = 'block';
+        }
+        function creditDisplayDivClose(divIndex,imgId){
+          j$("#CreditDisplayDiv_"+divIndex).slideUp();
+          document.getElementById(imgId).style.display = 'none';
+          document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:CreditMainRepeat:'+divIndex+':CreditPlus').style.display = 'block';
+                
+        }
+        
+        function creditDisplayDivOpen(divIndex,imgId){
+            j$("#CreditDisplayDiv_"+divIndex).slideDown();
+            document.getElementById(imgId).style.display = 'none';
+            document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:CreditMainRepeat:'+divIndex+':CreditMinus').style.display = 'block';
+        }
+        
+        //collapse all or expand all
+        function expandOrCollapseBankAcc(){
+            
+            if(BankAccmode == 'expand'){
+                 <apex:repeat value="{!MonthlyListedBankActs}" var="objWrap" >
+                    var imgId='thePg:theFm:theComp:theBankAccComp:thePb:mainRepeat:'+'{!objWrap.index}'+':minus';
+                    accountsDisplayDivClose('{!objWrap.index}',imgId);
+                  </apex:repeat> 
+                   BankAccmode='collapse';
+            }
+            else if(BankAccmode == 'collapse'){
+                <apex:repeat value="{!MonthlyListedBankActs}" var="objWrap" >
+                    var imgId='thePg:theFm:theComp:theBankAccComp:thePb:mainRepeat:'+'{!objWrap.index}'+':plus';
+                    accountsDisplayDivOpen('{!objWrap.index}',imgId);
+                </apex:repeat>
+                   
+                   BankAccmode='expand';
+            }
+        }
+            
+         function expandOrCollapseCC(){
+            if(ccMode == 'expand'){
+                <apex:repeat value="{!MonthlyListedCreditCard}" var="objWrap" >
+                        var imId='thePg:theFm:theComp:theBankAccComp:thePb:CreditMainRepeat:'+'{!objWrap.index}'+':CreditMinus';
+                        creditDisplayDivClose('{!objWrap.index}',imId);
+                   </apex:repeat>
+                   ccMode='collapse';
+            }
+            else if(ccMode == 'collapse'){
+                <apex:repeat value="{!MonthlyListedCreditCard}" var="objWrap" >
+                        var imId='thePg:theFm:theComp:theBankAccComp:thePb:CreditMainRepeat:'+'{!objWrap.index}'+':CreditPlus';
+                        creditDisplayDivOpen('{!objWrap.index}',imId);
+                   </apex:repeat>
+                   ccMode='expand';
+            }
+         }  
+    //function to open record if values are null(yellow columns)
+    function openRecord(val,id){
+        if(!val){
+            var pagePrefix= "{!$Page.BankAccountWizardVF}";
+            //alert(abc+'?id=001V000000E1DNb');
+            window.open(pagePrefix +'?id=001V000000E1DNb');
+        }
+    }
+    //function to update checked record
+    function updateCheckedRec(rId,recType){
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:recId').value = rId;
+        if(recType == 'BankAccount'){
+            updateBankAcc();
+        }
+        else if(recType == 'CreditCard'){
+            updateCreditCard();
+        }
+    }
+    //redirecting to selected page
+    function gotoPage(pageName){
+        if('{!$CurrentPage.parameters.id}'){
+            var pagePrefix= "{!$Page.BankAccountWizardVF}";
+            window.open(pagePrefix +'?id={!$CurrentPage.parameters.id}&key='+pageName');
+            //window.location.href='/apex/BankAccountWizardVF?id={!$CurrentPage.parameters.id}&key='+pageName;
+        }
+     }
+    function gotoAccPage(){
+        if('{!$CurrentPage.parameters.id}'){
+            window.location.href='/{!$CurrentPage.parameters.id}';
+        }
+    }
+     function refreshPage(){
+        if('{!$CurrentPage.parameters.id}'){
+            var pagePrefix= "{!$Page.BankAccountWizardSummaryVF}";
+            window.open(pagePrefix +'?id={!$CurrentPage.parameters.id}');
+        }
+     }
+
+    </script>
+    </apex:outputpanel>
+</apex:component>

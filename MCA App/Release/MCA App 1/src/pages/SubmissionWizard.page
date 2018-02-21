@@ -1,0 +1,252 @@
+<apex:page Controller="SubmissionWizardController" sidebar="false"> 
+<!-- wizard="true"> -->
+	
+	 <style type="text/css">
+        .custPopup{
+            background-color: white;
+            border-width: 2px;
+            border-style: solid;
+            z-index: 9999;
+            left: 50%;
+            padding:10px;
+            position: absolute;
+            /* These are the 3 css properties you will need to change so the popup
+            displays in the center of the screen. First set the width. Then set
+            margin-left to negative half of what the width is. You can add
+            the height property for a fixed size pop up if you want.*/
+            width: 500px; 
+            margin-left: -250px;
+            top:100px;
+        }
+        .popupBackground{
+            background-color:black;
+            opacity: 0.20;
+            filter: alpha(opacity = 20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 9998;
+        }
+
+    </style>
+	
+	<!-- script to check all the checkboxes -->
+    <script type="text/javascript">
+        function checkAll(cb,cbid)
+        {
+            var inputElem = document.getElementsByTagName("input");                    
+            for(var i=0; i<inputElem.length; i++)
+            {            
+                 if(inputElem[i].id.indexOf(cbid)!=-1){                                       
+                    inputElem[i].checked = cb.checked;
+                }
+            }
+        }
+    </script>
+	<apex:form id="form">
+		
+		<apex:pageMessages id="pageMessageId" />
+		
+		 <apex:actionStatus id="loadingStatus" stopText="">
+			<apex:facet name="start">
+        	<apex:outputPanel >
+            	<apex:image url="/img/loading.gif" />
+				<apex:outputLabel value="Loading..."/>         
+			</apex:outputPanel>                 
+			</apex:facet>
+		</apex:actionStatus>
+		
+		<apex:actionFunction name="resetAtt" action="{!resetAttachments}"  
+											 rerender="pgmTable,pageMessageId,attachmentTable" 
+											 status="loadingAttachment"/>
+		
+		<!-- Code for the popup -->
+		 <apex:outputPanel id="tstpopup">
+			<apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}"/>
+            	<apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displayPopUp}">
+	                <apex:pageBlock title="Required Documents" >
+		                <apex:repeat value="{!prgmDocMap}" var="pgm">
+							<!--       <apex:variable value="{!1}" var="rowNum"/> -->
+		                	<b><apex:outputText value="{!pgm}"/></b><br/>
+		                	<apex:dataList value="{!prgmDocMap[pgm]}" var="doc">
+		                		
+<!-- 		                		<apex:outputText value="{!FLOOR(rowNum)}"/> - -->
+		                		 <apex:outputText value="{!doc}"/>
+<!-- 		                		<apex:variable var="rowNum" value="{!rowNum + 1}"/><br/> -->
+		                	</apex:dataList>
+		                </apex:repeat>
+		                <apex:outputText Value="There are no Required Documents for the selected Programs" rendered="{!MapSize}"/> 
+		             </apex:pageBlock>
+		             <div align="center"> 
+	                	<apex:commandButton value="Close" action="{!closePopup}" rerender="tstpopup" status="loadingStatus"/>
+	                </div>
+	            </apex:outputPanel>
+        	</apex:outputPanel>
+		<!--	End of Popup -->
+										
+		<apex:pageBlock title="Submission Wizard" rendered="{!NOT(showThankYouPage)}">
+			<apex:pageBlockSection title="Summary Info" columns="3">
+				<apex:outputField value="{!Opp.Account.Name}" />
+				<apex:outputField value="{!Opp.Account.Industry}" />
+				<apex:outputField value="{!Opp.Credit_Score__c}" />
+				<apex:outputField value="{!Opp.Account.Years_in_Business__c}" />
+				<apex:outputField value="{!Opp.Account.Gross_monthly_Sales__c}" />
+			</apex:pageBlockSection>
+			
+			<apex:pageBlockSection title="Programs" columns="5">
+				<apex:inputField value="{!program.Credit_Score__c}" />
+				<apex:inputField value="{!program.Years_in_Business__c}" />
+				<apex:inputField value="{!program.Min_Monthly_Deposits__c}" />
+				<apex:inputField value="{!program.Industry__c}" />
+				<apex:commandButton value="Filter" action="{!getPrograms}" rerender="pgmTable,pageMessageId,attachmentTable" status="loadingStatus"/>
+			</apex:pageBlockSection>
+<!-- 			<div align="center"> -->
+<!-- 				<apex:commandButton value="Filter" action="{!getPrograms}" rerender="pgmTable,pageMessageId,attachmentTable" status="loadingStatus"/> -->
+<!-- 			</div> -->
+			<br/>
+			 <apex:outputPanel id="pgmTable">
+				 <apex:pageBlockTable value="{!programWrapperList}" var="pgmWrapper" >
+				 	 <apex:column >
+						<apex:facet name="header"> 
+	                       	<apex:inputCheckbox onclick="checkAll(this,'checkBox');resetAtt()">
+	                       		
+	                       	</apex:inputCheckbox>
+	                        </apex:facet>
+						<apex:inputCheckbox value="{!pgmWrapper.isSelected}" id="checkBox">
+							<apex:actionSupport event="onclick" action="{!resetAttachments}"  
+												rerender="pgmTable,pageMessageId,attachmentTable" 
+												status="loadingAttachment"/>
+						</apex:inputCheckbox>
+					</apex:column>
+					 <apex:column value="{!pgmWrapper.prgm['Bank__c']}">
+					 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Bank"/>
+				 	 	</apex:facet> 		
+					 </apex:column> 
+				 	 <apex:column > 
+				 	 	<a href="/{!pgmWrapper.prgm['Id']}" id="{!pgmWrapper.prgm['Id']}"
+				 	 				onmouseover="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}', '/{!pgmWrapper.prgm['Id']}/m?retURL={!pgmWrapper.prgm['Id']}&isAjaxRequest=1').show();"
+                    onmouseout="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}').hide();"
+                    onfocus="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}', '/{!pgmWrapper.prgm['Id']}/m?retURL={!pgmWrapper.prgm['Id']}&isAjaxRequest=1').show();"
+                    onblur="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}').hide();" > 
+				 	 		{!pgmWrapper.prgm['Name']}
+				 	 	</a>
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Program Name"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Credit_Score__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Credit Score"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Years_in_Business__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Years in Business"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 	
+				 	 <apex:column value="{!pgmWrapper.prgm['Min_Monthly_Deposits__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Min. Monthly Deposits"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Max_No_NSFs__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Max# NSFs"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Max_Amount__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Max. Amount"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Commission_Percentage__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Commission %"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Bank__r.Main_Contact__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Main Contact"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 	 <apex:column value="{!pgmWrapper.prgm['Industry__c']}">
+				 	 	<apex:facet name="header" >
+				 	 		<apex:outputText value="Industry"/>
+				 	 	</apex:facet> 	
+				 	 </apex:column> 
+				 </apex:pageBlockTable>
+				 <apex:outputText value="No Programs for this criteria" rendered="{!programWrapperList.size == 0}"/>
+			</apex:outputPanel>
+			 
+			<div align="center"> 
+				<apex:commandButton value="Check Required Document" action="{!checkReqdDocument}"
+								    rerender="tstpopup" status="loadingStatus"/>
+			</div>
+		</apex:pageBlock>
+		
+		 <apex:actionStatus id="loadingAttachment" stopText="">
+			<apex:facet name="start">
+        	<apex:outputPanel >
+            	<apex:image url="/img/loading.gif" />
+				<apex:outputLabel value="Loading..."/>         
+			</apex:outputPanel>                 
+			</apex:facet>
+		</apex:actionStatus>
+		
+		<apex:pageBlock title="Available Attachments" rendered="{!NOT(showThankYouPage)}">
+			<apex:outputPanel id="attachmentTable">
+				<apex:pageBlockTable value="{!AttachmentWrapperList}" var="attachmentWrapper">
+					 <apex:column value="{!attachmentWrapper.cnt}"/> 	
+					 
+					 <apex:column value="{!attachmentWrapper.attachment['name']}">
+					 	<apex:facet name="header" >
+					 	 	<apex:outputText value="Name"/>
+					 	 </apex:facet> 	
+					 </apex:column> 	
+					 
+					 <apex:column value="{!attachmentWrapper.attachment['Description']}">
+					 	<apex:facet name="header" >
+					 	 	<apex:outputText value="Description"/>
+					 	 </apex:facet> 
+					 </apex:column> 	
+					 
+					 <apex:column >
+					 	 <apex:facet name="header" >
+					 	 	<apex:outputText value="Programs"/>
+					 	 </apex:facet> 
+						 <apex:selectList value="{!attachmentWrapper.selectedPrograms}" multiselect="true">
+		             		<apex:selectOptions value="{!attachmentWrapper.options}"/>
+		                 </apex:selectList>
+		             </apex:column>
+					 <apex:column >
+						<apex:facet name="header"> 
+	                       	<apex:outputText value="Required"/>
+	                     </apex:facet>
+						<apex:inputCheckbox value="{!attachmentWrapper.isRequired}" />
+					</apex:column>
+					
+				 </apex:pageBlockTable>
+				 <apex:outputText value="No Attachments were found" rendered="{!AttachmentWrapperList.size == 0}"/>
+			 </apex:outputPanel>
+			 
+			 <div align="center"> 
+				 <apex:commandButton value="Send All Attachments" action="{!sendAllAttachments}" />
+				 <apex:commandButton value="Send Selected" action="{!sendSelectedAttachments}" />
+				 <apex:commandButton value="Cancel" action="{!cancel}"/>
+			 </div>
+		</apex:pageBlock>
+		
+		<apex:pageBlock rendered="{!showThankYouPage}">
+			 Your application has been submitted to the following Programs.
+			 <apex:pageBlockTable value="{!applicationSentToPgm}" var="pgms">
+			 	<apex:column value="{!pgms.Name}"/>
+			 	<apex:column value="{!pgms.Bank__c}"/>
+			 </apex:pageBlockTable>
+			 <br/>
+			 <apex:outputLink value="/{!oppId}"> <apex:outputText value="<< Back to Opportunity"/> </apex:outputLink>
+		</apex:pageBlock>
+	</apex:form>
+</apex:page>

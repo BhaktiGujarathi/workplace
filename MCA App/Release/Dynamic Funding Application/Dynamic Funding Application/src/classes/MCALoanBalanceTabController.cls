@@ -1,0 +1,273 @@
+public with sharing class MCALoanBalanceTabController {
+    //Constant Variable
+    private static final String ERROR_MSG = 'Please complete required fields and click on quick save before creating loan balance and sales history records.';
+
+    public McaApp__Loan_Balance__c[] loanBalances;
+    public Container[] containers;
+    public McaApp__Loan_Balance__c[] newLoanBalances {get; set;}
+    public Boolean editAll {get;set;}
+    public Boolean isFirst;
+    public Id recordToDelete {get;set;}
+    public Integer indexToRemove {get;set;}
+    private Id opportunityId;
+    public Decimal balanceTotal {get; set;}
+    public Decimal paymentTotal {get; set;}
+    public List<Account> banklist {get; Set;}
+    //public Integer bankSize {get; set;}
+    public boolean funderPicklist{get; set;}
+    public boolean isDisable     {get;set;}
+    public Boolean isUpdated;
+    public Map<Id, McaApp__Loan_Balance__c> mapIDANDloanBalance;
+    public List<McaApp__Loan_Balance__c> listToUpdate;
+    public Set<Integer> setInvalidRow;
+    public Boolean isValidation;
+    Map<Integer, Integer> mapOfIndex;
+    
+    private static final String NEWAPP_PARAM = 'newApplication';
+    private String isNewApplication;
+    
+    //constructor
+    public MCALoanBalanceTabController() {
+        isFirst=true;
+        isValidation = false;
+        isDisable = false;
+        containers = new Container[] {};
+        mapIDANDloanBalance = new Map<Id, McaApp__Loan_Balance__c>();
+        setInvalidRow = new Set<Integer>();
+        mapOfIndex = new Map<Integer, Integer>();
+        system.debug('Inside controller---->');
+        isNewApplication = Apexpages.currentPage().getParameters().get(NEWAPP_PARAM);
+        if(!isNewApplication.contains('true')) {
+            opportunityId = Apexpages.currentPage().getParameters().get('oppId');
+        } else {
+            ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info, ERROR_MSG));
+            isDisable = true;
+        }
+        
+        // inlineEdit = 'false';
+        funderPicklist = false;
+        refresh();
+    }
+
+    public Container[] getContainers() {
+        System.debug('---Into get containers---->');
+        balanceTotal = 0;
+        paymentTotal = 0;
+        loanBalances = new McaApp__Loan_Balance__c[] {};
+        loanBalances.addAll(newLoanBalances);
+        System.debug('---Into get setInvalidRow---->'+setInvalidRow);
+        if(isFirst && !editAll && !isValidation && setInvalidRow.size() <= 0) {
+            System.debug('---Into get setInvalidRow222---->'+setInvalidRow);
+            System.debug('---opportunityId--->'+opportunityId);
+            isFirst=false;
+            for (McaApp__Loan_Balance__c lb :[SELECT
+                                        Id,
+                                        McaApp__Active__c,
+                                        McaApp__Balance__c,
+                                        McaApp__Daily_Payment__c,
+                                        McaApp__Funder__c,
+                                        McaApp__Maturity_Date__c,
+                                        Name,
+                                        McaApp__Notes__c 
+                                    FROM McaApp__Loan_Balance__c
+                                    WHERE McaApp__Opportunity__c = :opportunityId]) {
+            	System.debug('List111111----------'+lb);
+                loanBalances.add(lb);
+                balanceTotal += lb.McaApp__Balance__c != null ? lb.McaApp__Balance__c : 0;
+                paymentTotal += lb.McaApp__Daily_Payment__c != null ? lb.McaApp__Daily_Payment__c : 0;
+                system.debug('****Inside query***'+loanBalances);
+            }//end for
+        }else{
+            for (Container containerVal: containers) {
+                if (recordToDelete!=null){
+                    if(containerVal.loanBalance.id<> recordToDelete ){
+                        loanBalances.add(containerVal.loanBalance);
+                    }
+                }else if(containerVal.index!=indexToRemove ) {
+                   loanBalances.add(containerVal.loanBalance);
+                }//end else-if
+            
+            }//end for
+            //reinitializing for delete and remove
+            recordToDelete=null;
+            indexToRemove=-99;
+        }//end else if
+        containers = new Container[] {};
+        for (Integer i = 0; i < loanBalances.size(); i++) {
+            if(setInvalidRow.contains(i - newLoanBalances.size()))
+                containers.add(new Container(loanBalances[i], i, true));
+            else
+                containers.add(new Container(loanBalances[i], i, false));
+        }
+        newLoanBalances=new List<McaApp__Loan_Balance__c>();
+        getBankNames();
+            
+        return containers;
+    }//end getContainers
+    
+  
+    public void newLoanBalance() {
+        saveMessage();
+        newLoanBalances.add(new McaApp__Loan_Balance__c(McaApp__Opportunity__c = opportunityId));
+    }//end newLoanBalance
+  
+    public void saveMessage(){
+        isUpdated = false;
+        checkoldAndNewVal();
+        if(editAll !=true && isUpdated == true){
+            ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,'All changes have been saved.'));
+            updateInlineEditedValue();
+        }//end if
+    }//end saveMessage
+  
+    public void loanBalanceList(){
+        mapIDANDloanBalance.clear();
+        mapIDANDloanBalance = new Map<Id, McaApp__Loan_Balance__c>([SELECT
+                                                            Id,
+                                                            McaApp__Active__c,
+                                                            McaApp__Balance__c,
+                                                            McaApp__Daily_Payment__c,
+                                                            McaApp__Funder__c,
+                                                            McaApp__Maturity_Date__c,
+                                                            Name,
+                                                            McaApp__Notes__c 
+                                                        FROM McaApp__Loan_Balance__c
+                                                        WHERE McaApp__Opportunity__c = :opportunityId]);
+    }//end loanBalanceList
+    
+    public void updateInlineEditedValue() {
+        String msgStr = '';
+        setInvalidRow.clear();
+        try{
+            //update listToUpdate;
+            List<Database.saveResult> results = Database.update(listToUpdate, false);
+            for (Integer i = 0; i< results.size(); i++) {
+                if (!results[i].isSuccess()){
+                    for (Database.Error err : results[i].getErrors()){
+                        msgStr = msgStr + 'Error: ' + err.getMessage()+ ' For record with serial number : ' +(mapOfIndex.get(i) +1) + '<br />';
+                        setInvalidRow.add(mapOfIndex.get(i));
+                    }//end for
+                }//end if
+            }//end for
+            if(!msgStr.contains('Argument 2 cannot be null') && String.isNotBlank(msgStr)) 
+                ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,msgStr));
+        }
+        catch(Exception e){
+            system.debug('***Enter In Exception****');
+            ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,e.getMessage()));
+        }//end try-catch
+    }//end updateInlineEditedValue
+    
+    public void checkoldAndNewVal() {
+        listToUpdate = new List<McaApp__Loan_Balance__c>();
+        McaApp__Loan_Balance__c  LoanBalenceValue = new McaApp__Loan_Balance__c ();
+        mapOfIndex.clear();
+        loanBalanceList();
+        for (Container containerVal: containers) {
+            if(containerVal.loanBalance.id != null){
+                LoanBalenceValue = mapIDANDloanBalance.get(containerVal.loanBalance.id);
+                if(LoanBalenceValue!= null) {       
+                    if(containerVal.loanBalance.McaApp__Active__c != LoanBalenceValue.McaApp__Active__c
+                    || containerVal.loanBalance.McaApp__Balance__c != LoanBalenceValue.McaApp__Balance__c
+                    || containerVal.loanBalance.McaApp__Daily_Payment__c != LoanBalenceValue.McaApp__Daily_Payment__c
+                    || containerVal.loanBalance.McaApp__Funder__c != LoanBalenceValue.McaApp__Funder__c
+                    || containerVal.loanBalance.McaApp__Maturity_Date__c != LoanBalenceValue.McaApp__Maturity_Date__c
+                    || containerVal.loanBalance.Name != LoanBalenceValue.Name
+                    || containerVal.loanBalance.McaApp__Notes__c  != LoanBalenceValue.McaApp__Notes__c) {
+                        listToUpdate.add(containerVal.loanBalance);
+                        mapOfIndex.put(listToUpdate.size() - 1, containerVal.index);
+                        isUpdated = true;
+                    }//end if
+                }//end if
+            }//end if
+        }//end for
+    }//end checkoldAndNewVal
+    
+    public void afterSave() {
+        balanceTotal = 0;
+        paymentTotal = 0;   
+        isFirst=true;
+        editAll = false;
+        recordToDelete = null;
+        newLoanBalances = new McaApp__Loan_Balance__c[] {};
+    }//end afterSave
+    public void refresh() {
+        afterSave();
+        setInvalidRow.clear();
+    }//end refresh
+  
+    public List<SelectOption> getBankNames() {
+        List<SelectOption> options = new List<SelectOption>();
+        List<RecordType> bankRecordTypeId = [Select r.Name, r.Id From RecordType r where r.Name = 'Bank'];
+        banklist = new List<Account>();
+        if(bankRecordTypeId.size() > 0)
+            banklist = [Select Id, Name, RecordTypeId FROM Account where RecordTypeId =: bankRecordTypeId[0].Id  order by Name];
+        //bankSize = banklist.size();
+        //options.add(new SelectOption('','--None--'));
+        for (Integer j=0;j<banklist.size();j++) {
+          String bankName = banklist[j].Name;
+          options.add(new SelectOption(banklist[j].Id,bankName));
+        }//end for
+        system.debug('*****options getBankNames****'+options);
+        return options;
+    }//end getBankNames
+  
+    public void editAll() {
+        editAll = true;
+    }//end editAll
+
+    public void save(){}
+    
+    public void saveAllLoans() {
+        String msgStr = '';
+        isValidation = false;
+        setInvalidRow.clear();
+        try{
+            //upsert loanBalances;
+            List<Database.upsertResult> results = Database.upsert(loanBalances, false);
+                for (Integer i = 0; i< results.size(); i++) {
+                    if (!results[i].isSuccess()){
+                        for (Database.Error err : results[i].getErrors()){
+                            msgStr = msgStr + 'Error: ' + err.getMessage() + ' For record with serial number : ' +(containers[i].index +1) + '<br />';
+                            setInvalidRow.add(i);
+                        }
+                    }
+                }
+            if(!msgStr.contains('Argument 2 cannot be null') && String.isNotBlank(msgStr)) 
+                ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,msgStr));
+        } catch(Exception e){
+            isValidation = true;
+            ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,e.getMessage()));
+        }//end try -catch
+        afterSave();
+    }//end saveAllLoans
+
+    public void deleteLoanBalance() {
+        saveMessage();
+        if (recordToDelete != null) {
+            McaApp__Loan_Balance__c record = [SELECT Id FROM McaApp__Loan_Balance__c WHERE Id = :recordToDelete];
+            try {
+                delete record;
+            } catch(Exception ex) {
+                indexToRemove = -99;
+                //ApexPages.addMessage(new Apexpages.Message(ApexPages.Severity.Info,MCAExceptionHandlerUtility.getErrorMessage(ex)));
+            }//end try-catch
+        }//end if
+    }//end deleteLoanBalance
+
+    public void removeLoanBalance() {
+        saveMessage();
+    }//end removeLoanBalance
+
+    public class Container {
+
+        public McaApp__Loan_Balance__c loanBalance {get;set;}
+        public Integer index {get;set;}
+        public Boolean isedited {get;set;}
+        public Container(McaApp__Loan_Balance__c instance, Integer index,Boolean isedited) {
+            loanBalance = instance;
+            this.index = index;
+            this.isedited = isedited;
+        }
+    }//end inner class
+}//end main class

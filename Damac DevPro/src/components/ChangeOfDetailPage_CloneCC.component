@@ -1,0 +1,1802 @@
+<apex:component id="cocdcomponent" controller="ChangeOfDetailController_CloneCC" allowDML="true">
+    <apex:attribute name="accountId" description="This is the customer's(account) Id" type="String" required="true" assignTo="{!selectedAcc}"/>
+    <apex:attribute name="requestType" description="Record Type for the Change of details request" type="String" assignTo="{!recType}"/>
+
+    <style type="text/css">
+        #block-screen {
+          position: fixed;
+          top: 0%;
+          left: 0%;
+          width: 100%;
+          height: 100%;
+          background-color: #ffffff;
+          z-index: 10;
+          opacity: 0.6;
+          filter: alpha(opacity=50);
+        }
+    </style>
+
+    <apex:outputPanel id="scriptPanel">
+        <!-- script>
+                function showhideCOCDPanel(){
+                    console.log( 'cocde fee ' + '{!cocdFee}' );
+                    if( "{!cocdFee}" != '' ){
+                        $('#oqood_fee_section').show();
+                    } else{
+                        $('#oqood_fee_section').hide();
+                    }
+                }
+        </script -->
+    </apex:outputPanel>
+
+    <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" >
+      <apex:facet name="start" >
+        <div id="block-screen"></div>
+        <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" />
+      </apex:facet>
+    </apex:actionStatus>
+
+    <div id="UnitSection" style="{!IF(requestType=='Change of Details','display: none;','')}">
+        <apex:inputHidden value="{!crfAttachmentBody}" id="CRFAttachBodyCOCD"/>
+        <apex:inputHidden value="{!crfAttachmentName}" id="CRFAttachNameCOCD"/>
+        <apex:inputHidden value="{!poaAttachmentBody}" id="POAAttachBodyCOCD"/>
+        <apex:inputHidden value="{!poaAttachmentName}" id="POAAttachNameCOCD"/>
+        <apex:inputHidden value="{!lodAttachmentBody}" id="LODAttachBodyCOCD"/>
+        <apex:inputHidden value="{!lodAttachmentName}" id="LODAttachNameCOCD"/>
+        <apex:inputHidden value="{!passportAttachmentBody}" id="PASSAttachBodyCOCD"/>
+        <apex:inputHidden value="{!passportAttachmentName}" id="PASSAttachNameCOCD"/>
+        <div class="well">
+            <h4>
+                Change of Details
+            </h4>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <apex:outputPanel id="COCDSRInitiationMessagePanel"> <apex:outputText style="color: #a94442; background-color: #f2dede; border-color: #ebccd1;" value="{!COCDSRInitiationMessage}"/> </apex:outputPanel>
+                </div>
+                <div class="col-lg-6">
+                    <label>Select Unit</label>
+                    <apex:outputPanel id="cocdUnitPanel">
+                        <select class="form-control" onchange="displayUnitDetails(this);">
+                            <option value="none">--Select Unit--</option>
+                            <apex:repeat value="{!bookingUnitList}" var="unit">
+                                <option value="{!unit.Id}">{!unit.Unit_Details__c}</option>
+                            </apex:repeat>
+                        </select>
+                    </apex:outputPanel>
+                </div>
+            </div>
+            <div class="row" id="unitDetailDisplayPanel" style="display:none;">
+                <apex:outputPanel id="unitDetailPanel">
+                    <div class="col-lg-12">
+                        <div class="tab-content">
+                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                            <col width="40%"/>
+                                            <col width="60%"/>
+                                            <thead class="thead-inverse">
+                                                <tr>
+                                                    <th>
+                                                        <apex:selectList value="{!strSelectedCategory}"
+                                                        multiselect="false" size="1" required="true"
+                                                        styleClass="form-control category" id="cocdcategories"
+                                                        onchange="hideCOCDUnitDetails();"
+                                                        style="height: 30px; !important">
+                                                            <apex:selectOptions value="{!lstCategories}" />
+                                                        </apex:selectList>
+                                                    </th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                                <tbody id="cocdunitDetails">
+                                                <tr>
+                                                    <td><b>Project</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory__r.Property__r.Name}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Project City</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory__r.Property_City__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Bedroom Type</b></td>
+                                                    <td>{!bookingUnitDetails.Bedroom_Type__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                    <td>{!bookingUnitDetails.Unit_Type__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Permitted Use</b></td>
+                                                    <td>{!bookingUnitDetails.Permitted_Use__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Ready/ Off plan</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory__r.Property_Status__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Price</b></td>
+                                                    <td>{!bookingUnitDetails.Unit_Selling_Price__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Area</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory_Area__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Promotion/Scheme/Option/Campaign</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Invoices raised</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strInvoicesRaised}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Amount paid</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strAmountPaid}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Penalties</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strPenalties}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Overdue</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strOverdue}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Deal Team</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Booking Type</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Built Up Price</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strBuiltUpPrice}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Plot Price</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Payment Plan</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Booking Date</b></td>
+                                                    <td>{!bookingUnitDetails.Booking__r.CreatedDate}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Agreement Date</b></td>
+                                                    <td>{!bookingUnitDetails.Agreement_Date__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Unit Plan</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory__r.Unit_Plan__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Floor Plan</b></td>
+                                                    <td>{!bookingUnitDetails.Inventory__r.Floor_Plan__c}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>JOPD Area</b></td>
+                                                    <td>{!bookingUnitDetails.JOPD_Area__c}</td>
+                                                </tr>
+                                                </tbody>
+                                                <tbody id="cocdflags">
+                                                    <tr>
+                                                        <td><b>Dispute</b></td>
+                                                        <td>{!bookingUnitDetailsFromIPMS.strDispute}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>Enforcement</b></td>
+                                                        <td>{!bookingUnitDetailsFromIPMS.strEnforcement}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>Litigation</b></td>
+                                                        <td>{!bookingUnitDetailsFromIPMS.strLitigation}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>Mortgage</b></td>
+                                                        <td>{!IF(bookingUnitDetails.Mortgage__c = TRUE, 'Yes', 'No')}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>Counter Case</b></td>
+                                                        <td>{!bookingUnitDetailsFromIPMS.strCounterCase}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>DP OK</b></td>
+                                                        <td>No</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><b>DOC OK</b></td>
+                                                        <td>No</td>
+                                                    </tr>
+                                                </tbody>
+                                                <tbody id="cocdunitStatus">
+                                                <tr>
+                                                    <td><b>OQOOD Registered</b></td>
+                                                    <td>{!IF(bookingUnitDetails.OQOOD_Reg_Flag__c = TRUE, 'Yes', 'No')}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Registration Fee Paid</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strRegistrationFeePaid}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>PRC Status</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strPRCStatus}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Agreement Status</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strAgreementStatus}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Under Termination</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strUnderTermination}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>FTL sent</b></td>
+                                                    <td>{!bookingUnitDetailsFromIPMS.strFTLSent}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>EHO flag</b></td>
+                                                    <td>{!IF(bookingUnitDetails.Early_Handover__c = TRUE, 'Yes', 'No')}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>HO flag</b></td>
+                                                    <td>{!IF(bookingUnitDetails.Handover_Complete__c = TRUE, 'Yes', 'No')}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>PCC</b></td>
+                                                    <td>{!IF(bookingUnitDetails.PCC_Release__c = TRUE, 'Yes', 'No')}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Rental Pool</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Title Deed Status</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Under Assignment</b></td>
+                                                    <td></td>
+                                                </tr>
+                                                </tbody>
+                                                <tbody id="cocdsr">
+                                                    <apex:variable var="cnt" value="{!1}" />
+                                                    <apex:repeat value="{!lstExistingCase}" var="case">
+                                                    <tr>
+                                                        <td><b>SR {!cnt}</b></td>
+                                                        <td><a href="">{!case.CaseNumber}</a></td>
+                                                    </tr>
+                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                    </apex:repeat>
+                                                </tbody>
+                                        </table>
+                                    </div>
+                                    <!--div class="details col-lg-5 col-md-12 col-sm-12">
+                                        <div class="row detailHeading">
+                                            <div class="col-lg-6 col-md-12">
+                                                <h6>Unit Price (AED)</h6>
+                                                <h4>{!bookingUnitDetails.Unit_Selling_Price_AED__c}</h4>
+                                            </div>
+                                            <div class="col-lg-6 col-md-12">
+                                                <h6>% Received</h6>
+                                                <h4>24%</h4>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                <div class="infoBoxes">
+                                                    <h6>Overdue</h6>
+                                                    <h5>{!bookingUnitDetails.DP_Overdue__c}</h5>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                <div class="infoBoxes">
+                                                    <h6>Under Assignment?</h6>
+                                                    <h5>500000</h5>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                <div class="infoBoxes">
+                                                    <h6>Default?</h6>
+                                                    <h5>Yes</h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div-->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </apex:outputPanel>
+            </div>
+        </div>
+    </div>
+    <section id="">
+        <div class="well">
+            <h4>
+                {!requestType}<span class="pull-right">
+                </span>
+            </h4>
+            <!--div class="row">
+                <div class="col-lg-6">
+<div class="form-group">
+<label>Select Customer</label>
+<select class="form-control" id="selectprimaryCustomer" onchange="return updateCustomerInfo(this);">
+<option value="">--Select Customer--</option>
+<apex:repeat value="{!accountsList}" var="a">
+<option value="{!a.Id}">{!a.Name}</option>
+</apex:repeat>
+</select>
+</div>
+</div>
+
+
+
+            </div-->
+            <apex:outputPanel id="oqood_fee_section_panel">
+                <!--div class="row" id="oqood_fee_section" style="display: none;"-->
+                <div styleClass="row" id="oqood_fee_section" style="{!IF(requestType=='Change of Details','','display: none;')}">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Applicable Charges</label>
+                            <input type="text" disabled="disabled" class="form-control" id="cocdFeeValue" value="{!cocdFee}" style="display: inline-block;" />
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Mode of Payment</label>
+                            <apex:inputField value="{!cocdSR.OQOOD_Fee_Payment_Mode__c}" id="cocdPaymentMode" onchange="validateForm();" styleClass="form-control" style="display: inline-block;"/>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <!-- <ul class="nav nav-pills"> -->
+                <div role="presentation" style="{!IF(requestType=='Change of Details','','display: none;')}">
+                    <a href="#c1" data-toggle="tab" data-original-title="c1" aria-expanded="true" 
+                            style="{!IF(requestType=='Change of Details','','display: none;')}" 
+                            onclick="return changeRecType('Change of Details');">
+                        Primary Contact
+                    </a>
+                </div>
+                <div role="presentation" style="{!IF(requestType=='Change of Joint Buyer','','display: none;')}">
+                    <a href="#c2" data-toggle="tab" data-original-title="c2" aria-expanded="true" 
+                            style="{!IF(requestType=='Change of Joint Buyer','','display: none;')}"
+                            onclick="return changeRecType('Change of Joint Buyer');">
+                        Additional Contact
+                    </a>
+                </div>
+                <div role="presentation" style="{!IF(requestType=='Name Nationality Change','','display: none;')}">
+                    <a href="#c3" data-toggle="tab" data-original-title="c3" aria-expanded="true" 
+                            onclick="return changeRecType('Name Nationality Change');"
+                            style="{!IF(requestType=='Name Nationality Change','','display: none;')}">
+                        Name/Nationality
+                    </a>
+                </div>
+                <div role="presentation" style="{!IF(requestType=='Passport Detail Update','','display: none;')}">
+                    <a href="#c4" data-toggle="tab" data-original-title="c4" aria-expanded="true" 
+                            onclick="return changeRecType('Passport Detail Update');"
+                            style="{!IF(requestType=='Passport Detail Update','','display: none;')}">
+                        Passport Details
+                    </a>
+                </div>
+            <!-- </ul> -->
+
+
+
+            <!-- <div class="tab-content"> -->
+                <!-- <div class="tab-pane fade active in" role="tabpanel" id="c1"> -->
+                    <apex:outputPanel id="cocdPrimaryPanel" rendered="{!requestType=='Change of Details'}">
+                        <input type='hidden' value="{!cocdSR.Id}" id="CaseId"/>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <h5>Enter Details <small>(in english)</small></h5>
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <apex:inputField value="{!accountDetails.Country__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group addressField">
+                                    <label>Address 1</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_1__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group addressField" style="display:none;">
+                                    <label>Address 2</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_2__c}"  styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressField" style="display:none;">
+                                    <label>Address 3</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_3__c}"  styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressField" style="display:none;">
+                                    <label>Address 4</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_4__c}" styleClass="form-control"/>
+                                </div>
+                                <span class="form-group">
+                                    <button class="btn btn-xs btn-info" onclick="addNewRow(event);"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </span>
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <apex:inputField value="{!accountDetails.City__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group">
+                                    <label>State</label>
+                                    <apex:inputField value="{!accountDetails.State__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Postal Code</label>
+                                    <apex:inputField value="{!accountDetails.Zip_Postal_Code__c}" onchange="validateNotEmpty(this);ValidatePostalCode(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <apex:inputField value="{!accountDetails.Email__c}" onchange="validateNotEmpty(this);ValidateEmail(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+
+
+
+                                <div class="form-group">
+                                    <label>Mobile No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!accountDetails.Mobile_Country_Code__c}" onchange="ValidateCountryCode(this);validateForm();" styleClass="form-control COCDInputfield" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!accountDetails.Mobile__c}" styleClass="form-control COCDInputfield" onchange="validateNotEmpty(this);ValidatePhoneNo(this);validateForm();" style="width: 70%;display: inline-block;"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="form-group">
+                                    <label>Home No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!accountDetails.Home_Phone_Country_Code__c}" styleClass="form-control" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!accountDetails.Home_Phone__c}" onchange="ValidatePhoneNo(this)" styleClass="form-control" style="width: 70%;display: inline-block;"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div class="form-group">
+                                    <label>Work No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!accountDetails.Work_Phone_Country_Code__c}" styleClass="form-control" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!accountDetails.Work_Phone__c}" onchange="ValidatePhoneNo(this)" styleClass="form-control" style="width: 70%;display: inline-block;"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+
+                            <div class="col-lg-6">
+                                <h5>Enter Details <small>(in arabic)</small></h5>
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <apex:inputField value="{!accountDetails.Country_Arabic__c}" styleClass="form-control COCDInputfield" onchange="validateNotEmpty(this);validateForm();"/>
+                                </div>
+                                <div class="form-group addressFieldArabic">
+                                    <label>Address 1</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_1_Arabic__c}" onchange="validateAddress(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group addressFieldArabic" style="display:none;">
+                                    <label>Address 2</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_2_Arabic__c}" styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressFieldArabic" style="display:none;">
+                                    <label>Address 3</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_3_Arabic__c}"  styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressFieldArabic" style="display:none;">
+                                    <label>Address 4</label>
+                                    <apex:inputField value="{!accountDetails.Address_Line_4_Arabic__c}" styleClass="form-control"/>
+                                </div>
+                                <span class="form-group">
+                                    <button class="btn btn-xs btn-info" onclick="addNewRow(event);"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </span>
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <apex:inputField value="{!accountDetails.City_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                                <div class="form-group">
+                                    <label>State</label>
+                                    <apex:inputField value="{!accountDetails.State_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Postal Code</label>
+                                    <apex:inputField value="{!accountDetails.Postal_Code_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COCDInputfield"/>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputpanel>
+                <!-- </div> -->
+                <!-- <div class="tab-pane fade in" role="tabpanel" id="c2"> -->
+                    <apex:outputPanel layout="block" rendered="{!requestType=='Change of Joint Buyer'}">
+                    <apex:outputPanel id="JointBuyerPanel">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Select Buyer</label>
+                                    <select class="form-control COJBInputfield" id="jointBuyerDropdown" onchange="return updateBuyerInfo(this);">
+                                        <option value="none">--Select Buyer--</option>
+                                        <apex:repeat value="{!buyersList}" var="bl">
+                                            <option value="{!bl.Account__c}" data-primary="{!bl.Primary_Buyer__c}">{!bl.Account__r.Name}</option>
+                                        </apex:repeat>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:outputPanel>
+                    <apex:outputPanel id="cocdSecondaryPanel">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Country</label>
+                                    <apex:inputField value="{!buyerDetails.Country__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Address 1</label>
+                                    <apex:inputField value="{!buyerDetails.Address_Line_1__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                                <div class="form-group addressFieldSecondary" style="display:none;">
+                                    <label>Address 2</label>
+                                    <apex:inputField value="{!buyerDetails.Address_Line_2__c}" styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressFieldSecondary" style="display:none;">
+                                    <label>Address 3</label>
+                                    <apex:inputField value="{!buyerDetails.Address_Line_3__c}" styleClass="form-control"/>
+                                </div>
+                                <div class="form-group addressFieldSecondary" style="display:none;">
+                                    <label>Address 4</label>
+                                    <apex:inputField value="{!buyerDetails.Address_Line_4__c}" styleClass="form-control"/>
+                                </div>
+                                <span class="form-group">
+                                    <button class="btn btn-xs btn-info" onclick="addNewRowSecBuyer(event);"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>City</label>
+                                    <apex:inputField value="{!buyerDetails.City__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>State</label>
+                                    <apex:inputField value="{!buyerDetails.State__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Postal Code</label>
+                                    <apex:inputField value="{!buyerDetails.Zip_Postal_Code__c}" onchange="validateNotEmpty(this);ValidatePostalCode(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+
+                                <div class="form-group">
+                                    <label>Email</label>
+                                    <apex:inputField value="{!buyerDetails.Email__c}" onchange="validateNotEmpty(this);ValidateEmail(this);validateForm();" styleClass="form-control COJBInputfield"/>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Mobile No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!buyerDetails.Mobile_Country_Code__c}" onchange="ValidateCountryCode();" styleClass="form-control COJBInputfield" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!buyerDetails.Mobile__c}" onchange="validateNotEmpty(this);ValidatePhoneNo(this);validateForm();" styleClass="form-control COJBInputfield" style="width: 70%;display: inline-block;"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Home No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!buyerDetails.Home_Phone_Country_Code__c}" styleClass="form-control" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!buyerDetails.Home_Phone__c}" onchange="ValidatePhoneNo(this)" styleClass="form-control" style="width: 70%;display: inline-block;"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="form-group">
+                                    <label>Work No.</label>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <apex:inputField value="{!buyerDetails.Work_Phone_Country_Code__c}" styleClass="form-control" style="width: 30%;display: inline-block;" />
+                                            <apex:inputField value="{!buyerDetails.Work_Phone__c}" onchange="ValidatePhoneNo(this)" styleClass="form-control" style="width: 70%;display: inline-block;"/>
+
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </apex:outputPanel>
+                    </apex:outputPanel>
+                <!-- </div> -->
+                <!-- <div class="tab-pane fade in" role="tabpanel" id="c3"> -->
+                    <apex:outputPanel layout="block" rendered="{!requestType=='Name Nationality Change'}">
+                        <apex:outputPanel id="cocdNationalitySelect">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select Buyer</label>
+                                        <select class="form-control NNCInputfield" id="buyerNationality" onchange="return updateNNCBuyerInfo(this);">
+                                            <option value="none">--Select Buyer--</option>
+                                            <option value="{!selectedAcc}" data-primary="true">{!accountDetails.Name}</option>
+                                            <apex:repeat value="{!buyersList}" var="bl">
+                                                <option value="{!bl.Account__c}" data-primary="{!bl.Primary_Buyer__c}">{!bl.Account__r.Name}</option>
+                                            </apex:repeat>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                        <div class="row">
+
+                            <div class="col-lg-4 col-md-6 col-xs-12 text-center" id="nationalityPrimaryBuyer">
+                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                    <span class="btn btn-primary btn-file">
+                                        <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="passportNNC" class="NNCInputfield" onchange="attachPassportFile(this);validateForm();"/>
+                                    </span>
+                                    <div>
+                                        <span class="fileupload-preview"></span>
+                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                    </div>
+                                </div>
+                                <label>New Passport of Primary/ Joint Buyer (Self Attested)</label>
+                            </div>
+                        </div>
+                        <apex:outputPanel id="cocdNationalityPanel">
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h5>Existing Details</h5>
+                                    <div class="form-group">
+                                        <label>Passport No.</label>
+                                        <!--apex:inputField value="{!accountDetails.Passport_Number__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control form-control-static" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Number__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Number__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Date</label>
+                                        <!--apex:inputText value="{!passportIssueDate}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" disabled="true"/>
+                                        <apex:inputText value="{!passportIssueDate}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" disabled="true"/-->
+                                        <apex:inputText value="{!passportIssueDate}" styleClass="form-control" disabled="true"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Place</label>
+                                        <!--apex:inputField value="{!accountDetails.Passport_Issue_Place__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nationality</label>
+                                        <!--apex:inputField value="{!accountDetails.Nationality__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Nationality__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Nationality__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Title</label>
+                                        <!--apex:inputField value="{!accountDetails.Title__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Title__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Title__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <!--apex:inputField value="{!accountDetails.First_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.First_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.First_Name__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Middle Name</label>
+                                        <!--apex:inputField value="{!accountDetails.Middle_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Middle_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Middle_Name__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <!--apex:inputField value="{!accountDetails.Last_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Last_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Last_Name__c}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <h5>New Details</h5>
+                                    <div class="form-group">
+                                        <label>Passport No.</label>
+                                        <!--apex:inputField value="{!accountDetails.Passport_Number__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);ValidatePassportNo(this);validateForm();" styleClass="form-control NNCPrimaryInputfield"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Number__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);ValidatePassportNo(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Number__c}" onchange="validateNotEmpty(this);ValidatePassportNo(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Date</label>
+                                        <!--apex:inputField value="{!accountDetails.Passport_Issue_Date__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateForm();" styleClass="form-control datepicker NNCPrimaryInputfield"/>
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Date__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateForm();" styleClass="form-control datepicker NNCSecondaryInputfield"/-->
+                                        <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Date__c}" onchange="validateForm();" styleClass="form-control datepicker NNCSecondaryInputfield"/>
+                                    </div>
+                                    <div class="form-group">
+
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Passport Issue Place <small> (in english)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Passport_Issue_Place__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+
+                                            <div class="col-lg-6">
+                                                <label>Passport Issue Place <small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Passport_Issue_Place_Arabic__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place_Arabic__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Passport_Issue_Place_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Nationality</label>
+                                                <!--apex:inputField value="{!accountDetails.Nationality__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Nationality__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Nationality__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Nationality <small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Nationality_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Nationality_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Nationality_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Title<small> (in english)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Title__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Title__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Title__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Title<small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Title_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Title_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Title_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>First Name <small> (in english)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.First_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.First_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.First_Name__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>First Name <small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.First_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.First_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.First_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Middle Name <small> (in english)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Middle_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateOnlyText(this)" styleClass="form-control"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Middle_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateOnlyText(this)" styleClass="form-control"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Middle_Name__c}" onchange="validateOnlyText(this)" styleClass="form-control"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Middle Name <small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Middle_Name_Arabic__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Middle_Name_Arabic__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Middle_Name_Arabic__c}" styleClass="form-control"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Last Name <small> (in english)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Last_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Last_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Last_Name__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Last Name <small> (in arabic)</small></label>
+                                                <!--apex:inputField value="{!accountDetails.Last_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control NNCPrimaryInputfield"/>
+                                                <apex:inputField value="{!nncBuyerDetails.Last_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control NNCSecondaryInputfield"/-->
+                                                <apex:inputField value="{!nncBuyerDetails.Last_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control NNCSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                <!-- </div> -->
+                <!-- <div class="tab-pane fade in" role="tabpanel" id="c4"> -->
+                    <apex:outputPanel layout="block" rendered="{!requestType=='Passport Detail Update'}">
+                        <apex:outputPanel id="cocdPassportChangeSelect">
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select Buyer</label>
+                                        <select class="form-control PUInputfield" id="buyerPassport" onchange="return updatePPUBuyerInfo(this);">
+                                            <option value="none">--Select Buyer--</option>
+                                            <option value="{!selectedAcc}" data-primary="true">{!accountDetails.Name}</option>
+                                            <apex:repeat value="{!buyersList}" var="bl">
+                                                <option value="{!bl.Account__c}" data-primary="{!bl.Primary_Buyer__c}">{!bl.Account__r.Name}</option>
+                                            </apex:repeat>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+
+                        <div class="row">
+
+                            <div class="col-lg-4 col-md-6 col-xs-12 text-center" id="nationalityPrimaryBuyer">
+                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                    <span class="btn btn-primary btn-file">
+                                        <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="passportChangeFile" class="PUInputfield" onchange="attachPassportFile(this);validateForm();"/>
+                                    </span>
+                                    <div>
+                                        <span class="fileupload-preview"></span>
+                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                    </div>
+                                </div>
+                                <label>New Passport of Primary/ Joint Buyer (Self Attested)</label>
+                            </div>
+                        </div>
+                        <apex:outputPanel id="cocdPassportChangePanel">
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <h5>Existing Details</h5>
+                                    <div class="form-group">
+                                        <label>Passport No.</label>
+                                        <apex:inputField value="{!accountDetails.Passport_Number__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control form-control-static" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Passport_Number__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Date</label>
+                                        <apex:inputText value="{!passportIssueDate}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" disabled="true"/>
+                                        <apex:inputText value="{!passportIssueDate}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" disabled="true"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Place</label>
+                                        <apex:inputField value="{!accountDetails.Passport_Issue_Place__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Passport_Issue_Place__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Nationality</label>
+                                        <apex:inputField value="{!accountDetails.Nationality__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Nationality__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Title</label>
+                                        <apex:inputField value="{!accountDetails.Title__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Title__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <apex:inputField value="{!accountDetails.First_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.First_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Middle Name</label>
+                                        <apex:inputField value="{!accountDetails.Middle_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Middle_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <apex:inputField value="{!accountDetails.Last_Name__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control" html-disabled="disabled"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Last_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control" html-disabled="disabled"/>
+                                    </div>
+                                </div>
+
+                                <div class="col-lg-6">
+                                    <h5>New Details</h5>
+                                    <div class="form-group">
+                                        <label>Passport No.</label>
+                                        <apex:inputField value="{!accountDetails.Passport_Number__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);ValidatePassportNo(this);validateForm();" styleClass="form-control PUPrimaryInputfield"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Passport_Number__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);ValidatePassportNo(this);validateForm();" styleClass="form-control PUSecondaryInputfield"/>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Passport Issue Date</label>
+                                        <apex:inputField value="{!accountDetails.Passport_Issue_Date__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateForm();" styleClass="form-control datepicker PUPrimaryInputfield"/>
+                                        <apex:inputField value="{!ppBuyerDetails.Passport_Issue_Date__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateForm();" styleClass="form-control datepicker PUSecondaryInputfield"/>
+                                    </div>
+                                    <div class="form-group">
+
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Passport Issue Place <small> (in english)</small></label>
+                                                <apex:inputField value="{!accountDetails.Passport_Issue_Place__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Passport_Issue_Place__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+
+                                            <div class="col-lg-6">
+                                                <label>Passport Issue Place <small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.Passport_Issue_Place_Arabic__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Passport_Issue_Place_Arabic__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateForm();" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+
+
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Nationality</label>
+                                                <apex:inputField value="{!accountDetails.Nationality__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Nationality__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Nationality <small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.Nationality_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Nationality_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Title<small> (in english)</small></label>
+                                                <apex:inputField value="{!accountDetails.Title__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Title__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Title<small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.Title_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Title_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>First Name <small> (in english)</small></label>
+                                                <apex:inputField value="{!accountDetails.First_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.First_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>First Name <small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.First_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.First_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Middle Name <small> (in english)</small></label>
+                                                <apex:inputField value="{!accountDetails.Middle_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateOnlyText(this)" styleClass="form-control"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Middle_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateOnlyText(this)" styleClass="form-control"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Middle Name <small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.Middle_Name_Arabic__c}" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Middle_Name_Arabic__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <div class="row">
+                                            <div class="col-lg-6">
+                                                <label>Last Name <small> (in english)</small></label>
+                                                <apex:inputField value="{!accountDetails.Last_Name__c}" rendered="{!isPrimaryBuyerSelected}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Last_Name__c}" rendered="{!NOT(isPrimaryBuyerSelected)}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                            <div class="col-lg-6">
+                                                <label>Last Name <small> (in arabic)</small></label>
+                                                <apex:inputField value="{!accountDetails.Last_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!isPrimaryBuyerSelected}" styleClass="form-control PUPrimaryInputfield"/>
+                                                <apex:inputField value="{!ppBuyerDetails.Last_Name_Arabic__c}" onchange="validateNotEmpty(this);validateForm();" rendered="{!NOT(isPrimaryBuyerSelected)}" styleClass="form-control PUSecondaryInputfield"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                <!-- </div> -->
+            <!-- </div> -->
+        </div>
+    </section>
+
+
+    <section id="">
+        <div class="well">
+            <h4>
+                Power of Attorney
+            </h4>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Select Power of Attorney</label>
+                        <apex:inputField value="{!cocdSR.IsPOA__c}" id="isPOACheckbox" onchange="displayPOAForm(this);" style="margin-left: 10px;vertical-align: middle;"/>
+                    </div>
+                </div>
+            </div>
+            <div id="POAForm" style="display:none;">
+                <h5>Power of Attorney Details</h5>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Name of Attorney</label>
+                            <apex:inputField value="{!cocdSR.POA_Name__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control poaInputfield"/>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Purpose of POA</label>
+                            <apex:inputField value="{!cocdSR.Purpose_of_POA__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control poaInputfield"/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Date of Issue</label>
+                            <apex:inputField value="{!cocdSR.POA_Expiry_Date__c}" onchange="validateForm();" styleClass="form-control datepicker poaInputfield"/>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="form-group">
+                            <label>Issued by (Authority)</label>
+                            <apex:inputField value="{!cocdSR.POA_Issued_By__c}" onchange="validateNotEmpty(this);validateOnlyText(this);validateForm();" styleClass="form-control poaInputfield"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                            <span class="btn btn-primary btn-file">
+                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o poaInputfield" aria-hidden="true"></i><br/>Change</span><input id="poaFile" onchange="attachPOAFile();" type="file"/>
+                            </span>
+                            <div>
+                                <span class="fileupload-preview"></span>
+                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                            </div>
+                        </div>
+                        <label>Upload Power of Attorney</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+
+    <section id="">
+        <div class="well">
+            <h4>
+                Upload Documents
+                <span class="btn-group">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fa fa-download"></i> Documents
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li style="cursor:pointer;"><a onclick="return viewDownloadCOD(event);">View COD</a></li>
+                        <li style="cursor:pointer;"><a onclick="return viewDownloadCOD(event);">Download COD</a></li>
+                        <li role="separator" class="divider"></li>
+                        <li style="cursor:pointer;"><a onclick="return viewDownloadSOA(event);">Download SOA</a></li>
+                        <li id="lodauLink" style="cursor:pointer;display:none;"><a onclick="return viewDownloadLOD(event);">Download LOD</a></li>
+                    </ul>
+                </span>
+
+            </h4>
+            <div class="row">
+                <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                        <span class="btn btn-primary btn-file">
+                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="cocdsignedcod" onchange="COCDAttachCRFFile();" class="codFiles"/>
+                        </span>
+                        <div>
+                            <span class="fileupload-preview"></span>
+                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                        </div>
+                    </div>
+                    <label>Upload Signed COD</label>
+                </div>
+
+                <div class="col-lg-4 col-md-6 col-xs-12 text-center" id="signedlodauSection" style="display: none;">
+                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                        <span class="btn btn-primary btn-file">
+                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="signedlodau" onchange="attachLODFile();" class="codFiles"/>
+                        </span>
+                        <div>
+                            <span class="fileupload-preview"></span>
+                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                        </div>
+                    </div>
+                    <label>Upload Signed letter of declaration and undertaking </label>
+                </div>
+                <div class="form-group">
+                    <label>Manually Verified</label>
+                    <apex:inputField value="{!cocdSR.OCR_verified__c}" id="manuallyChecked" onchange="validateForm();" style="margin-left: 10px;vertical-align: middle;"/>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-12">
+                    <span class="pull-right">
+                        <!--button class="btn btn-sm btn-success" id="cocdSubmitSRButton" onclick="return submitCODSR(event);" disabled="disabled">Submit SR</button-->
+                        <button class="btn btn-sm btn-success" id="cocdSubmitSRButton" onclick="return submitCODSR(event);" >Submit SR</button>
+                    </span>
+                    <span class="pull-right">
+                        <button class="btn btn-sm btn-success saveDraftButton" onclick="return saveAsDraft(event);">Save Draft</button>
+                    </span>
+                </div>
+            </div>
+            <input type="hidden" id="COCDRecType" value="Change of Details"/>
+            <apex:outputPanel id="cocdFormPanel">
+                <input type="hidden" id="cocdFormURL" value="{!cocdFormURL}"/>
+            </apex:outputPanel>
+            <apex:outputPanel id="soaFormPanel">
+                <input type="hidden" id="soaFormURLs" value="{!soaFormURLs}"/>
+            </apex:outputPanel>
+            <apex:outputPanel id="lodauFormPanel">
+                <input type="hidden" id="lodauFormURL" value="{!lodauFormURL}"/>
+            </apex:outputPanel>
+
+        </div>
+    </section>
+
+    <apex:actionFunction action="{!saveAsDraft}" name="savedraft" status="blockUI" oncomplete="datepickerReload()" reRender="cocdPrimaryPanel,cocdSecondaryPanel,cocdNationalityPanel,cocdPassportChangePanel">
+        <apex:param name="recTypeSelected" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction action="{!submitSR}" name="submitSR" status="blockUI" oncomplete="datepickerReload()" reRender="cocdPrimaryPanel,cocdSecondaryPanel,cocdNationalityPanel,cocdPassportChangePanel">
+        <apex:param name="recTypeSelected" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction action="{!getUpdatedUnitDetails}" status="blockUI" name="getUpdatedUnitDetails" oncomplete="datepickerReload();hideCOCDUnitDetails();" reRender="unitDetailPanel,COCDSRInitiationMessagePanel">
+        <apex:param name="bookingUnitId" value="" />
+    </apex:actionFunction>
+    <apex:actionFunction action="{!getUpdatedCustomerInfo}" status="blockUI" name="getUpdatedCustomerInfo"
+                         oncomplete="datepickerReload();"
+                         reRender="cocdPrimaryPanel,cocdSecondaryPanel,cocdNationalityPanel,JointBuyerPanel,cocdUnitPanel,cocdNationalitySelect,cocdPassportChangeSelect,scriptPanel,oqood_fee_section_panel">
+        <!--apex:param name="selectedAcc" value="" assignTo="{!selectedAcc}"/-->
+    </apex:actionFunction>
+
+   <!--apex:actionFunction action="{!getCustomerCOCDFee}"
+                         name="getCustomerCOCDFee" oncomplete="endProcess();showhideCOCDPanel();"
+                         reRender="scriptPanel,oqood_fee_section_panel"/-->
+
+    <apex:actionFunction action="{!getUpdatedBuyerInfo}" name="getUpdatedBuyerInfo"
+                         status="blockUI" oncomplete="datepickerReload();validateForm();"
+                         reRender="cocdSecondaryPanel,cocdNationalityPanel,cocdPassportChangePanel">
+        <apex:param name="selectedBuyer" value="" assignTo="{!selectedBuyer}"/>
+        <apex:param name="isPrimaryBuyerSelected" value="" assignTo="{!isPrimaryBuyerSelected}"/>
+    </apex:actionFunction>
+
+    <apex:actionFunction action="{!getUpdatedNNCBuyerInfo}" name="getUpdatedNNCBuyerInfo" status="blockUI" oncomplete="datepickerReload();validateForm();" reRender="cocdSecondaryPanel,cocdNationalityPanel,cocdPassportChangePanel">
+        <apex:param name="selectedNNCBuyer" value="" assignTo="{!selectedNNCBuyer}"/>
+        <apex:param name="isPrimaryBuyerSelected" value="" assignTo="{!isPrimaryBuyerSelected}"/>
+    </apex:actionFunction>
+
+    <apex:actionFunction action="{!getUpdatedPPBuyerInfo}" name="getUpdatedPPBuyerInfo" status="blockUI" oncomplete="datepickerReload();validateForm();" reRender="cocdSecondaryPanel,cocdNationalityPanel,cocdPassportChangePanel">
+        <apex:param name="selectedPPBuyer" value="" assignTo="{!selectedPPBuyer}"/>
+        <apex:param name="isPrimaryBuyerSelected" value="" assignTo="{!isPrimaryBuyerSelected}"/>
+    </apex:actionFunction>
+
+    <apex:actionFunction action="{!getCODURL}" status="blockUI" name="getCODURL" oncomplete="OpenCODForm();" reRender="cocdFormPanel" >
+        <apex:param name="recTypeSelected" value="" />
+    </apex:actionFunction>
+
+    <apex:actionFunction action="{!getSOAURL}" status="blockUI" name="getSOAURL" oncomplete="OpenSOAForm();" reRender="soaFormPanel" >
+        <apex:param name="recTypeSelected" value="" />
+    </apex:actionFunction>
+
+    <apex:actionFunction action="{!getLODAUURL}" status="blockUI" name="getLODAUURL" oncomplete="OpenLODAUForm();" reRender="lodauFormPanel" >
+        <apex:param name="recTypeSelected" value="" />
+    </apex:actionFunction>
+
+    <script>
+    $('.well input.datepicker').datepicker({
+        format: 'dd/mm/yyyy',
+        autoclose: true
+    });
+
+    $("document").ready(function() {
+        hideCOCDUnitDetails();
+        console.log('document ready called .....');
+        updateCustomerInfo();
+    });
+
+    function validateNotEmpty(e){
+        //console.log(e);
+        if( e.value == '' ){
+            alert("Field cannot be blank");
+        }
+    }
+
+    $('.dropdown-menu span').click(function(){
+        $('#selected').text($(this).text());
+        preventDefault();
+    });
+
+    function hideCOCDUnitDetails(){
+        var selCategory = $('select[id$=cocdcategories]').val();
+        if(selCategory == 'Unit Details'){
+            $('#cocdunitDetails').show();
+            $('#cocdflags').hide();
+            $('#cocdunitStatus').hide();
+            $('#cocdsr').hide();
+        }
+        if(selCategory == 'Flags'){
+            $('#cocdunitDetails').hide();
+            $('#cocdflags').show();
+            $('#cocdunitStatus').hide();
+            $('#cocdsr').hide();
+        }
+        if(selCategory == 'Unit Status'){
+            $('#cocdunitDetails').hide();
+            $('#cocdflags').hide();
+            $('#cocdunitStatus').show();
+            $('#cocdsr').hide();
+        }
+        if(selCategory == 'Open SRs'){
+            $('#cocdunitDetails').hide();
+            $('#cocdflags').hide();
+            $('#cocdunitStatus').hide();
+            $('#cocdsr').show();
+        }
+    }
+
+    /*isCODFormComplete(){
+
+    }*/
+
+    function submitCODSR(event){
+        event.preventDefault();
+        //if(validateForm()){
+            submitSR($('#COCDRecType').val());
+        //}
+    }
+
+    function saveAsDraft(event){
+        event.preventDefault();
+        //if(validateForm()){
+            savedraft($('#COCDRecType').val());
+        //}
+    }
+
+    function validateForm(){
+        var formComplete = true;
+        if($('#COCDRecType').val() == 'Passport Detail Update'){
+            /*if( $("#buyerPassport").val() == 'none' ){
+                alert("Please select a buyer to change details");
+                return false;
+            }
+            if($("#passportChangeFile").val() == ''){
+                alert("Please upload passport copy");
+                return false;
+            }*/
+            $('.PUInputfield').each(function(n, obj){
+                console.log(obj.type, obj.value);
+                //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                if( obj.value == '' ){
+                    formComplete = false;
+                }
+            });
+
+             if ( $('#buyerPassport').val() != 'none' ){
+
+                if( $('#buyerPassport').find(':selected').data('primary') == true ){
+                    $('.PUPrimaryInputfield').each(function(n, obj){
+                        console.log(obj.type, obj.value);
+                        //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                        if( obj.value == '' ){
+                            formComplete = false;
+                        }
+                    });
+                } else {
+                    $('.PUSecondaryInputfield').each(function(n, obj){
+                        console.log(obj.type, obj.value);
+                        //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                        if( obj.value == '' ){
+                            formComplete = false;
+                        }
+                    });
+
+                }
+             }
+
+
+        } else if( $('#COCDRecType').val() == 'Change of Details' ){
+
+            $('.COCDInputfield').each(function(n, obj){
+                //console.log(obj.type, obj.value);
+                //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                if( obj.value == '' ){
+                    formComplete = false;
+                }
+            });
+
+            if( $("#cocdFeeValue").val() != '' && $("#cocdFeeValue").val() != '0' &&  $("[id$=cocdPaymentMode]").val() == '' && $("#cocdFeeValue").val() != '0.00'){
+                formComplete = false;
+            }
+            //return false;
+        } else if ( $('#COCDRecType').val() == 'Change of Joint Buyer' ){
+
+            $('.COJBInputfield').each(function(n, obj){
+                if( obj.value == '' ){
+                    formComplete = false;
+                }
+            });
+        } else if ( $('#COCDRecType').val() == 'Name Nationality Change' ){
+
+            /*$('.NNCInputfield').each(function(n, obj){
+
+                if( obj.value == '' ){
+                    formComplete = false;
+                }
+            });
+
+
+             if ( $('#buyerNationality').val() != 'none' ){
+
+                if( $('#buyerNationality').find(':selected').data('primary') == true ){
+                    $('.NNCPrimaryInputfield').each(function(n, obj){
+                        //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                        if( obj.value == '' ){
+                            formComplete = false;
+                        }
+                    });
+                } else {
+                    $('.NNCSecondaryInputfield').each(function(n, obj){
+                        //if( obj.type == 'select-one' && ( obj.value == '' || obj.value == 'none' || obj.value == '--None--' ) ){
+
+                        if( obj.value == '' ){
+                            formComplete = false;
+                        }
+                    });
+
+                }
+             }*/
+        }
+
+        if( $("[id$=isPOACheckbox]").is(":checked") ){
+            $('.poaInputfield').each(function(n, obj){
+                if( obj.value == '' ){
+                    formComplete = false;
+                }
+            });
+        }
+
+        if( $("[id$=manuallyChecked]").is(":checked") == false ){
+            formComplete = false;
+        }
+
+        if( $("#cocdsignedcod").val() == '' ){
+            formComplete = false;
+        }
+
+        if( formComplete ){
+            $('#cocdSubmitSRButton').removeAttr('disabled');
+        } else {
+            $('#cocdSubmitSRButton').attr('disabled', 'disabled');
+        }
+
+
+
+        //return formComplete;
+    }
+
+    function attachPOAFile(){
+        console.log( document.getElementById("poaFile").files[0] );
+        var filename = document.getElementById("poaFile").value;
+        if( filename != '' ) {
+            $('[id$=POAAttachNameCOCD]').val(filename);
+            var fbody = document.getElementById("poaFile").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachPOAFile');
+                console.log(blobfile);
+                $('[id$=POAAttachBodyCOCD]').val(blobfile);
+            }
+        }
+
+        validateForm();
+    }
+
+    function attachLODFile(){
+        console.log( document.getElementById("signedlodau").files[0] );
+        var filename = document.getElementById("signedlodau").value;
+        if( filename != '' ) {
+            $('[id$=LODAttachNameCOCD]').val(filename);
+            var fbody = document.getElementById("signedlodau").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachLODFile');
+                console.log(blobfile);
+                $('[id$=LODAttachBodyCOCD]').val(blobfile);
+            }
+        }
+    }
+
+    /*function submitPOA(event){
+      event.preventDefault();
+
+      console.log($('#CaseId').val());
+      /*if($('#CaseId').val() == ''){
+        savedraft($('#COCDRecType').val());
+        setTimeout(function(){
+          uploadPOADoc();
+        }, 5000);
+
+      } else {* /
+        savedraft($('#COCDRecType').val());
+        //uploadPOADoc();
+        setTimeout(function(){
+          uploadPOADoc();
+        }, 6000);
+      //}
+
+    }*/
+
+    function COCDAttachCRFFile() {
+        console.log( document.getElementById("cocdsignedcod").files[0] );
+        var filename = document.getElementById("cocdsignedcod").value;
+        if( filename != '' ) {
+            $('[id$=CRFAttachNameCOCD]').val(filename);
+            var fbody = document.getElementById("cocdsignedcod").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachCRFFile');
+                console.log(blobfile);
+                $('[id$=CRFAttachBodyCOCD]').val(blobfile);
+            }
+        }
+
+        validateForm();
+    }
+
+    function attachPassportFile(e) {
+        var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=PASSAttachNameCOCD]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachPassportFile');
+                console.log(blobfile);
+                $('[id$=PASSAttachBodyCOCD]').val(blobfile);
+            }
+        }
+    }
+
+    function updateCustomerInfo(){
+        console.log('updateCustomerInfo   called');
+        //getUpdatedCustomerInfo(e.value);
+        getUpdatedCustomerInfo();
+        //startProcess();
+        //getCustomerCOCDFee();
+
+        /*if(e.value == '0017E00000aqcZmQAI'){
+          if( $("#COCDRecType").val()  == 'Change of Details')
+            $('#oqood_fee_section').show();
+          else {
+            $('#oqood_fee_section').hide();
+          }
+        } else {
+            $('#oqood_fee_section').hide();
+        }*/
+        //return false;
+    }
+
+
+    function updateBuyerInfo(e){
+        /*if($(e).find(':selected').data('primary') == true){
+          $('#nationalityPrimaryBuyer').show();
+          $('#nationalityJointBuyer').hide();
+        } else {
+          $('#nationalityPrimaryBuyer').hide();
+          $('#nationalityJointBuyer').show();
+        }*/
+
+
+        if( e.value != 'none' )
+            getUpdatedBuyerInfo(e.value, $(e).find(':selected').data('primary'));
+        else
+            validateForm();
+
+        return false;
+    }
+
+    function updateNNCBuyerInfo(e){
+        console.log('value of buyer ',e.value);
+        if( e.value != 'none' )
+            getUpdatedNNCBuyerInfo(e.value, $(e).find(':selected').data('primary'));
+        else
+            validateForm();
+
+        return false;
+    }
+
+    function updatePPUBuyerInfo(e){
+        if( e.value != 'none' )
+            getUpdatedPPBuyerInfo(e.value, $(e).find(':selected').data('primary'));
+        else
+            validateForm();
+
+        return false;
+    }
+
+    function changeRecType(recType){
+        $("#COCDRecType").val(recType);
+
+        if( $("#COCDRecType").val()  == 'Change of Details'){
+            $("#UnitSection").hide();
+            $('#oqood_fee_section').show();
+            /*if( $("#cocdFeeValue").val() != '' )
+                $('#oqood_fee_section').show();
+            else
+                $('#oqood_fee_section').hide();*/
+        } else {
+            $("#UnitSection").show();
+            $('#oqood_fee_section').hide();
+        }
+
+        if( recType == 'Name Nationality Change'){
+            $("#signedlodauSection").show();
+            $('#lodauLink').show();
+        } else {
+            $("#signedlodauSection").hide();
+            $('#lodauLink').hide();
+        }
+    }
+
+    function displayPOAForm(e){
+        $("#POAForm").slideToggle(900);
+
+        validateForm();
+    }
+
+    function displayUnitDetails(e){
+        if(e.value == 'none'){
+            $('#unitDetailDisplayPanel').hide(900);
+        }
+        else{
+            $('#unitDetailDisplayPanel').show(900);
+            getUpdatedUnitDetails(e.value);
+        }
+    }
+    function validateOnlyText(e){
+        if(!/^([a-zA-Z ]){2,30}$/.test(e.value))
+        {
+            alert('Please provide input in proper format');
+        }
+    }
+
+    function ValidatePostalCode(e){
+        if(!/^[0-9]*$/g.test(e.value)){
+            alert('Please input proper postal code');
+        }
+    }
+    function validateAlphanumeric(e){
+        var letters = /^[0-9a-zA-Z]+$/;
+        if(e.value != '' && !e.value.match(letters))
+        {
+            alert('Please input alphanumeric characters only');
+        }
+    }
+
+    function ValidateEmail(e){
+        var emailFormat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+        if (!e.value.match(emailFormat))
+        {
+            alert('Please input proper email only');
+        }
+    }
+
+    function ValidatePhoneNo(e){
+        var phoneFormat = /^[0-9]+$/;
+        if ( ( e.value.length > 0 && !e.value.match(phoneFormat) ) || e.value.length != 10 )
+        {
+            alert('Please input proper numbers only');
+        }
+    }
+
+    function ValidatePassportNo(e){
+        var ppFormat = /^[0-9]+$/;
+        if (e.value.length > 0 && !e.value.match(ppFormat))
+        {
+            alert('Please input proper numbers only');
+        }
+    }
+
+    function ValidateCountryCode(e){
+
+    }
+
+
+
+    /*function validateAddress(e){
+        console.log(e.value);
+        if( e.value == '' ){
+            alert("please enter the address");
+        }
+    }*/
+
+    function addNewRow(event){
+        event.preventDefault();
+        var onlyOnce = false;
+        $(document).find('.addressField').each(function(n, obj){
+            if(! $(obj).is(":visible") && onlyOnce==false){
+                $(obj).show();
+                onlyOnce = true;
+            }
+        });
+
+        var onlyOnceArabic = false;
+        $(document).find('.addressFieldArabic').each(function(n, obj){
+            if(! $(obj).is(":visible") && onlyOnceArabic==false){
+                $(obj).show();
+                onlyOnceArabic = true;
+            }
+        });
+    }
+
+    function addNewRowSecBuyer(event){
+        event.preventDefault();
+        var onlyOnce = false;
+        $(document).find('.addressFieldSecondary').each(function(n, obj){
+            if(! $(obj).is(":visible") && onlyOnce==false){
+                $(obj).show();
+                onlyOnce = true;
+            }
+        });
+    }
+
+    function datepickerReload(){
+        $('.well input.datepicker').datepicker({
+            format: 'dd/mm/yyyy',
+            autoclose: true
+        });
+    }
+
+    function viewDownloadCOD(event){
+        event.preventDefault();
+        console.log($('#cocdFormURL').val());
+
+        if($('#cocdFormURL').val() == '' || $('#cocdFormURL').val().length == 0 ){
+            // getCODURL( $("#COCDRecType").val() );
+            /*if( $("#COCDRecType").val()  == 'Change of Details' ){
+                getCODURL(true);
+            } else if($("#COCDRecType").val()  == 'Change of Joint Buyer'){
+                getCODURL( $('#jointBuyerDropdown').find(':selected').data('primary') );
+            } else if( $("#COCDRecType").val()  == 'Name Nationality Change' ){
+                getCODURL( $('#buyerNationality').find(':selected').data('primary') );
+            } else if( $("#COCDRecType").val()  == 'Change of Joint Buyer' ){
+                getCODURL( $('#buyerPassport').find(':selected').data('primary') );
+            }*/
+        } else {
+            OpenCODForm();
+        }
+        return false;
+    }
+
+    function viewDownloadSOA(event){
+        event.preventDefault();
+        console.log(  'SOA URL : ' +  $('#soaFormURLs').val());
+
+        if($('#soaFormURLs').val() == '' || $('#soaFormURLs').val().length == 0 ){
+             getSOAURL( $("#COCDRecType").val() );
+        } else {
+            OpenSOAForm();
+        }
+
+        //console.log($('#soaFormURLs').val());
+        return false;
+    }
+
+    function viewDownloadLOD(event){
+        event.preventDefault();
+
+        if($('#lodauFormURL').val() == '' || $('#lodauFormURL').val() == null ){
+             getLODAUURL( $("#COCDRecType").val() );
+        } else {
+            OpenLODAUForm();
+        }
+        return false;
+    }
+
+    function OpenCODForm(){
+        if( $('#cocdFormURL').val() != '' && $('#cocdFormURL').val() != null && $('#cocdFormURL').val() != 'No URL found from IPMS')
+            window.open($('#cocdFormURL').val());
+        else
+            alert('There was some error in opening the document. Please try again.');
+    }
+
+    function OpenLODAUForm(){
+        if( $('#lodauFormURL').val() != '' && $('#lodauFormURL').val() != null && $('#lodauFormURL').val() != 'No URL found from IPMS')
+            window.open($('#lodauFormURL').val());
+        else
+            alert('There was some error in opening the document. Please try again.');
+    }
+
+    function OpenSOAForm(){
+        var soaURLList = [];
+        //var response = "[https://www.google.co.in,https://login.yahoo.com/?.src=ym&.intl=us&.done=https%3A%2F%2Fmail.yahoo.com%2F]";
+        var res = $('#soaFormURLs').val().substring(1, $('#soaFormURLs').val().length-1);
+        //var res = response.substring(1, response.length-1);
+
+        //var replaceQuotes = res.substring(1, res.length-1);
+       console.log('res:'+res+':res');
+        if( typeof res != 'undefined' && res.length > 0 ) {
+            soaURLList =  res.split(',');
+            if(typeof soaURLList != 'undefined' && soaURLList.length > 0 ){
+                for( var i = 0; i < soaURLList.length; i++ ){
+                    console.log('<<< soaURLList[i] '+soaURLList[i]);
+                    if ( soaURLList[i] != 'No URL found from IPMS' ) {
+                        var strUrl = soaURLList[i];
+                        window.open(strUrl, '_blank');
+                    }
+                }
+            } else {
+                alert('There was some error in opening the document. Please try again.');
+            }
+        }else{
+            alert('There was some error in opening the document. Please try again.');
+        }
+
+    }
+
+    </script>
+</apex:component>

@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <choices>
+        <name>AMERICAS</name>
+        <choiceText>AMERICAS</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>AMERICAS</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>EMEA</name>
+        <choiceText>EMEA</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>EMEA</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>France_Paris</name>
+        <choiceText>France: Paris</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>FR</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Spain_Madrid</name>
+        <choiceText>Spain: Madrid</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>SP</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>UK_London</name>
+        <choiceText>UK: London</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>UK</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>US_New_York</name>
+        <choiceText>US: New York</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>NY</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>US_San_Francisco</name>
+        <choiceText>US: San Francisco</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>SF</stringValue>
+        </value>
+    </choices>
+    <choices>
+        <name>US_Washington_DC</name>
+        <choiceText>US: Washington DC</choiceText>
+        <dataType>String</dataType>
+        <value>
+            <stringValue>DC</stringValue>
+        </value>
+    </choices>
+    <decisions>
+        <name>Route_based_on_region</name>
+        <label>Route based on region</label>
+        <locationX>367</locationX>
+        <locationY>1</locationY>
+        <defaultConnector>
+            <targetReference>Get_Office_and_Commute_Days_EMEA</targetReference>
+        </defaultConnector>
+        <defaultConnectorLabel>Region: EMEA</defaultConnectorLabel>
+        <rules>
+            <name>region_AMERICAS</name>
+            <conditionLogic>and</conditionLogic>
+            <conditions>
+                <leftValueReference>AMERICAS</leftValueReference>
+                <operator>WasSelected</operator>
+                <rightValue>
+                    <booleanValue>true</booleanValue>
+                </rightValue>
+            </conditions>
+            <connector>
+                <targetReference>Get_Office_and_Comute_Days_AMERICAS</targetReference>
+            </connector>
+            <label>region: AMERICAS</label>
+        </rules>
+    </decisions>
+    <label>Sustainability Survey</label>
+    <processType>Flow</processType>
+    <screens>
+        <name>Enter_Your_Email_for_Raffle</name>
+        <label>Enter Your Email for Raffle</label>
+        <locationX>359</locationX>
+        <locationY>395</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Summary_and_Finish</targetReference>
+        </connector>
+        <fields>
+            <name>EmailHeader</name>
+            <fieldText>Enter your email address for the chance to win a $250 gift card!</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>Email_Address</name>
+            <dataType>String</dataType>
+            <fieldText>Email Address</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+    </screens>
+    <screens>
+        <name>Get_Detailed_Commute_Information</name>
+        <label>Detailed Commute Information</label>
+        <locationX>367</locationX>
+        <locationY>271</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Enter_Your_Email_for_Raffle</targetReference>
+        </connector>
+        <fields>
+            <name>Distance</name>
+            <dataType>String</dataType>
+            <fieldText>How long is your commute, round-trip?</fieldText>
+            <fieldType>InputField</fieldType>
+            <helpText>Enter the distance in miles</helpText>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Time</name>
+            <dataType>String</dataType>
+            <fieldText>How long does your commute take, round-trip?</fieldText>
+            <fieldType>InputField</fieldType>
+            <helpText>Enter the time in hours</helpText>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Cost</name>
+            <dataType>String</dataType>
+            <fieldText>How much do you spend on your commute every month?</fieldText>
+            <fieldType>InputField</fieldType>
+            <helpText>Enter the amount in your local currency</helpText>
+            <isRequired>false</isRequired>
+        </fields>
+    </screens>
+    <screens>
+        <name>Get_Office_and_Commute_Days_EMEA</name>
+        <label>Office and Commute Days</label>
+        <locationX>472</locationX>
+        <locationY>144</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Get_Detailed_Commute_Information</targetReference>
+        </connector>
+        <fields>
+            <name>Office_Location_EMEA</name>
+            <choiceReferences>UK_London</choiceReferences>
+            <choiceReferences>France_Paris</choiceReferences>
+            <choiceReferences>Spain_Madrid</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Office Location</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Number_of_Days_EMEA</name>
+            <dataType>String</dataType>
+            <fieldText>How many days do you commute to work?</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+    </screens>
+    <screens>
+        <name>Get_Office_and_Comute_Days_AMERICAS</name>
+        <label>Office and Comute Days</label>
+        <locationX>246</locationX>
+        <locationY>142</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Get_Detailed_Commute_Information</targetReference>
+        </connector>
+        <fields>
+            <name>Office_Location_AMERICAS</name>
+            <choiceReferences>US_San_Francisco</choiceReferences>
+            <choiceReferences>US_New_York</choiceReferences>
+            <choiceReferences>US_Washington_DC</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>Office Location</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+        <fields>
+            <name>Number_of_days_AMERICAS</name>
+            <dataType>String</dataType>
+            <fieldText>How many days a week do you commute to work?</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+    </screens>
+    <screens>
+        <name>Summary_and_Finish</name>
+        <label>Thank You</label>
+        <locationX>363</locationX>
+        <locationY>537</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>Summary</name>
+            <fieldText>Thank you for participating in the survey!</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+    </screens>
+    <screens>
+        <name>Welcome_to_The_Sustainability_Survey</name>
+        <label>Welcome to The Sustainability Survey</label>
+        <locationX>143</locationX>
+        <locationY>1</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Route_based_on_region</targetReference>
+        </connector>
+        <fields>
+            <name>SurveyIntro</name>
+            <fieldText>Thank you for spending the next seven minutes on this commute survey. Your participation will help us assess out environmental footprint as a c company and help us plan better transportation options as we grow. At the end of the survey enter your email address for the chance to will $250 gift card! One winner will be chosen at random.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+        <fields>
+            <name>In_which_region_fo_you_work</name>
+            <choiceReferences>AMERICAS</choiceReferences>
+            <choiceReferences>EMEA</choiceReferences>
+            <dataType>String</dataType>
+            <fieldText>In which region fo you work?</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>false</isRequired>
+        </fields>
+    </screens>
+    <startElementReference>Welcome_to_The_Sustainability_Survey</startElementReference>
+</Flow>

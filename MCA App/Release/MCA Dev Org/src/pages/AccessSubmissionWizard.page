@@ -1,0 +1,70 @@
+<!-- 
+
+  =================================================================================================
+    Version    Date            Author              Comment
+  =================================================================================================
+    1.0        Nov-16-2015     Yogesh Mahajan      
+    1.1        Nov-21-2015     Yogesh Mahajan      
+ -->
+
+<apex:page controller="AccessSubmissionWizardController" action="{!querySubmission}" id="pg" docType="html-5.0">
+    <apex:includescript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></apex:includescript>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.js"></script>
+    
+    <apex:form id="frm">
+        <!--<apex:sectionHeader title="Access submission Wizard"/> -->
+        <apex:pageBlock id="pgBlkSubmission">
+            <apex:pageBlockSection title="Submission details" id="pgBlkSctnSubmission">
+                
+                <apex:outputField value="{!submission.Opportunity__r.Owner_1__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Owner_2__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.AccountId}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Avg_Monthly_CC_sales__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Gross_monthly_Sales__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.NSFs_avg__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.NDBs_avg__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Amount_Requested__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Bank_Program__c}"/>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:pageBlock id="pgBlkAttach" >
+            <apex:pageBlocksection title="Attachments" id="pgBlkSctnAttach">
+                <BODY>
+                    <input type="button" onclick="create_zip()" value=" Download "></input>
+                </BODY>
+            </apex:pageBlocksection><br/><br/>
+            <apex:pageBlockTable value="{!listWrapperAttachment}" var="lstAttach" id="attachmentLst">
+                <apex:column id="colId">
+                    <apex:facet name="header" > Select All
+                        <apex:inputCheckbox styleClass="ckbCheckAll" >
+                        </apex:inputCheckbox>
+                    </apex:facet>
+                    <apex:inputCheckbox styleclass="checkBoxClass" /> 
+                </apex:column>
+                <apex:column value="{!lstAttach.attachmentInstance.Name}"/>
+                <apex:column value="{!lstAttach.attachmentInstance.Description}"/>
+                <apex:column value="{!lstAttach.attachmentInstance.LastModifiedDate}"/>
+                <apex:column value="{!lstAttach.attachmentInstance.CreatedDate}"/>
+            </apex:pageBlockTable>
+        </apex:pageBlock>
+     </apex:form>
+     <script>
+        $(".ckbCheckAll").click(function () {
+            $(".checkBoxClass").prop('checked', $(this).prop('checked'));
+        });
+        
+        function create_zip() {
+            Visualforce.remoting.Manager.invokeAction(
+                '{!$RemoteAction.AccessSubmissionWizardController.getAttachments}',
+                    function(result, event){
+                         var zip = new JSZip();
+                        zip.file("NBC Application.pdf", result, {base64: true});
+                        //zip.file("hello2.txt", "Hello Second World\n");
+                        content = zip.generate();
+                        location.href="data:application/zip;base64," + content;
+                    }
+            );
+        }
+   </script>
+</apex:page>

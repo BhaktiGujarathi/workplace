@@ -1,0 +1,264 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" controller="Manage_Inventory_PCs_Controller" id="MIPCsPage">
+	<apex:includeLightning />
+	<apex:includeScript value="/lightning/lightning.out.js" />
+	<html
+		xmlns="http://www.w3.org/2000/svg"
+		xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+		<head>
+			<title>Guided Sales Process</title>
+			<meta charset="utf-8" />
+			<meta http-equiv="x-ua-compatible" content="ie=edge" />
+			<meta name="viewport" content="width=device-width, initial-scale=1" />
+			<apex:stylesheet value="{!URLFOR($Resource.SLDS_VF214, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+			<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+			<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
+			<script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-init.min.js')}"></script>
+			<script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-datepicker.min.js')}"></script>
+			<script src="../../soap/ajax/36.0/connection.js"></script>
+			<style type="text/css">
+			    .divItem{
+                    padding : 2px !important;
+                    float:left;
+                    width:32% !important;
+                    min-width : 250px !important;
+                    min-height:50px !important;
+                    padding:10px;
+                }
+                .divWidth{
+                    width:100%;
+                }
+                .searchPadding{
+                    padding-top:20px !important;
+                }
+			</style>
+			<script type="text/javascript">
+			    var j$ = jQuery.noConflict();
+			    
+			    function isSelectedtheUSer(){
+			        
+			    }
+			    
+			    function success(){
+			        var isSucess = '{!errorMessage}';
+			        if(isSucess === ''){
+                        j$('#errorBox').removeClass('slds-theme--error');
+                        j$('#errorBox').addClass('slds-theme--success');
+                        j$('#errorPrefix').text('Users are added successfully.');
+			        }
+                }
+                
+                function checkValidation(){
+                    var cbs = $j("input[id$=oneSelect]");
+                    var isdatesPresent = true;
+                    if(cbs.filter(':checked').length == 0){
+                    	alert('Please select at least one user');
+                        return false;
+                    } 
+                    else{
+                        $j("input[id$=oneSelect]").each(function () {
+                            var id = $(this).attr("id");
+                            alert("Do something for: " + id + ", " + answer);
+                        });
+                        
+                    }
+                }
+                
+                function toggleSelectAll(checkbox){
+                    console.log('toggleSelectAll is calling');
+                    //all checkbox is selected
+                    if(checkbox.checked){
+                        console.log('checking all');
+                        //set all row level checkboxes selected id$=oneSelect
+                        $j( "input[.checkboxClass]" ).prop('checked', true);
+                    }
+                    else{
+                        console.log('un checking all');
+                        //set all row level checkboxes de-selected
+                        $j( "input[.checkboxClass]" ).prop('checked', false);
+                    }
+                }
+                
+                /*
+                * set "all checkbox" based on state of row level checkboxes
+                */
+                function toggleItem(checkbox){
+                    var cbs = $j("input[id$=oneSelect]");
+                    //all row level checkboxes selected
+                    if(cbs.filter(':not(:checked)').length==0){
+                        //set "all checkbox" selected
+                        $j("input[id$=allSelect]").prop('checked', true);
+                    }
+                    else{
+                        //set "all checkboxes" de-selected
+                        $j("input[id$=allSelect]").prop('checked', false);
+                    }
+                }
+			</script>
+		</head>
+		<body>
+			<div class="slds">
+				<apex:actionStatus id="status">
+					<apex:facet name="start">
+						<div>
+							<div class="slds-spinner_container">
+								<div class="slds-spinner slds-spinner--medium" role="alert">
+									<span class="slds-assistive-text">Loading</span>
+									<div class="slds-spinner__dot-a"></div>
+									<div class="slds-spinner__dot-b"></div>
+								</div>
+							</div>
+						</div>
+					</apex:facet>
+				</apex:actionStatus>
+			
+				<!--HEADER-->
+				<div class="slds-page-header" role="banner">
+					<div class="slds-grid">
+						<div class="slds-col slds-has-flexi-truncate">
+							<div class="slds-media slds-no-space slds-grow">
+								<div class="slds-media__body">
+									<h1 class="slds-page-header__title slds-truncate" title="managePCs">Manage Inventory PCs</h1>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--HEADER Complete-->
+				<!--Manage Inventroty PCs Start -->
+				<div class="slds-container">
+					<!--Error Block Start-->
+					<apex:outputPanel layout="block" id="errorBlock">
+						<apex:outputPanel layout="block" styleClass="slds-notify_container" rendered="{!NOT(ISBLANK(errorMessage))}">
+							<div class="slds-notify slds-notify--toast slds-theme--error" role="alert" id="errorBox"
+								xmlns="http://www.w3.org/2000/svg"
+								xmlns:xlink="http://www.w3.org/1999/xlink">
+								<span class="slds-assistive-text">Error</span>
+								<div class="slds-notify__content slds-grid">
+									<svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+										<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+									</svg>
+									<div class="slds-col slds-align-middle">
+										<h2 class="slds-text-heading--small" id="errorPrefix">You&#x27;ve encountered some errors.</h2>
+										<p>{!errorMessage}</p>
+									</div>
+								</div>
+							</div>
+						</apex:outputPanel>
+					</apex:outputPanel>
+					<!--Error Block End-->
+					<!--Manage PCs form Started-->
+					<apex:form id="MIPCForm" styleClass="slds-form--inline">
+						<apex:actionFunction name="selInventory" reRender="scriptTag">
+							<apex:param assignTo="{!selectedUserIds}" name="selectedUserIds" value="" />
+						</apex:actionFunction>
+						<div class="divWidth">
+							<apex:outputPanel layout="block" style="width:100%" styleClass="slds-box slds-theme--shade slds-form-element" id="searchUserBlock">
+								<h3 class="slds-section-title">Filter PCs</h3>
+								<br/>
+								<div class="slds-row">
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="pName">PC Name</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="pName" styleClass="slds-input" value="{!searchUser.Name}"></apex:inputField>
+										</div>
+									</div>
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="hos">HOS</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="hos" styleClass="slds-input" value="{!searchUser.HOS__c}"></apex:inputField>
+										</div>
+									</div>
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="dos">DOS</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="dos" styleClass="slds-input" value="{!searchUser.DOS__c}"></apex:inputField>
+										</div>
+									</div>
+								</div>
+								<div class="slds-row">
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="language">PC Language</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="language" styleClass="slds-input" value="{!searchUser.PC_Languages__c}"></apex:inputField>
+										</div>
+									</div>
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="country">PC Country</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="country" styleClass="slds-input" value="{!searchUser.PC_Nationality__c}"></apex:inputField>
+										</div>
+									</div>
+									<div class="slds-form-element divItem">
+										<label class="slds-form-element__label" for="team">Team</label>
+										<div class="slds-form-element-control">
+											<apex:inputField id="team" styleClass="slds-input" value="{!searchUser.Team__c}"></apex:inputField>
+										</div>
+									</div>
+								</div>
+								<br/>
+								<div class="slds-row">
+									<div class="searchPadding slds-float--right slds-grid slds-grid--align-middle slds-size--3-of-6 slds-text-align--center">
+										<apex:commandButton value="Search" styleClass="slds-button slds-button--brand" action="{!serachforUsersWithFilters}" rerender="userTable,errorBlock" status="status"/>
+									</div>
+								</div>
+								<br/>
+								<apex:outputPanel id="userTable" layout="block" style="width:100%" styleClass="slds-box slds-theme--shade slds-form-element" >
+									<div class="slds-row">
+										<h2 Class="slds-form-element__label slds-text-title--caps titleColor">{!tableHeader}</h2>
+										<table class="slds-table slds-table--bordered slds-max-medium-table--stacked" >
+											<!--slds-table--fixed-layout role="grid"-->
+											<thead>
+												<tr class="slds-line-height--reset">
+													<th scope="col" style="width:3.25rem;" class="slds-text-align--right">
+														<div class="slds-th__action slds-th__action--form">
+															<span class="slds-checkbox">
+																<input type="checkbox" name="options" onclick="toggleSelectAll(this);" id="allSelect" />
+																<label class="slds-checkbox__label" for="allSelect">
+																	<span class="slds-checkbox--faux"></span>
+																	<span class="slds-form-element__label slds-assistive-text">Select All</span>
+																</label>
+															</span>
+														</div>
+													</th>
+													<th scope="col" class="slds-text-align--left">
+														<div class="slds-truncate slds-form-element__label slds-text-title--caps" title="Name">Name</div>
+													</th>
+													<th scope="col">
+														<div class="slds-truncate slds-form-element__label slds-text-title--caps" title="UserName">User Name</div>
+													</th>
+												</tr>
+											</thead>
+											<tbody> 
+												<apex:repeat value="{!lstUsers}" var="userRec">
+													<tr class="slds-hint-parent">
+														<td role="gridcell" class="slds-text-align--center" style="width:3.25rem;">
+                                                            <span class="slds-checkbox">
+                                                              <input type="checkbox" class="checkboxClass" name="options" id="{!userRec.Id}" />
+                                                              <label class="slds-checkbox__label" for="{!userRec.Id}">
+                                                                <span class="slds-checkbox--faux"></span>
+                                                                <span class="slds-form-element__label slds-assistive-text">Select item 1</span>
+                                                              </label>
+                                                            </span>
+                                                        </td>
+														<td data-label="Name">
+															<div class="slds-truncate" title="Name">{!userRec.Name}</div>
+														</td>
+														<td data-label="User Name">
+															<div class="slds-truncate" title="UserName">{!userRec.UserName}</div>
+														</td>
+													</tr>
+												</apex:repeat>
+											</tbody>
+										</table>
+									</div>
+								</apex:outputPanel>
+							</apex:outputPanel>
+						</div>
+					</apex:form>
+					<!--Manage PCs form Ended-->
+				</div>
+				<!--Manage Inventroty PCs End -->
+			</div>
+		</body>
+	</html>
+</apex:page>

@@ -1,0 +1,232 @@
+<apex:page id="myPage" standardController="Campaign__c" extensions="CampaignManageInventoriesControl" docType="html-5.0" standardStylesheets="true" sidebar="true" showHeader="true" tabStyle="Inventory__c">
+   
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <style type="text/css">
+        .fontClass{
+            color: #000; 
+            font-size: .9em; 
+            font-weight: bold;
+        }
+    </style>
+    <apex:form id="myForm">
+        <apex:pageBlock id="PB" title="Inventory Selection">
+            <apex:pageBlockButtons id="PBB" location="top">
+                <apex:actionStatus id="myStatus">
+                    <apex:facet name="start">
+                        <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                            <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                                <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                                <span class="waitingDescription">Please Wait...</span>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <apex:commandButton status="myStatus" onclick="if(!validations()){return false};" action="{!SaveInventories}" value="Save" rerender="myForm,scriptTag"/>
+                <apex:commandButton action="{!doCancel}" value="Cancel" rendered="{!NOT(manageHelper.isSaved)}" immediate="true" />
+                <apex:commandButton action="{!doCancel}" value="Back to Campaign" rendered="{!manageHelper.isSaved}" immediate="true"/>
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection title="Filters" collapsible="false" />
+            <br/>
+            <apex:outputPanel id="seachSection">
+                <Table id="searchTable" width="90%" style="background-color:#F8F8F8;">
+                    <tr>
+                        <td align="right"><apex:outputLabel id="inventory" styleClass="fontClass" value="Inventory"/></td>
+                        <td>
+                            <c:Autocomplete id="invName" required="false" SObject="Inventory__c" labelField="Unit__c" valueField="Id" targetFields="{!searchvalues.searchText}" conString="Status__c=\'Released\'"/>
+                            <!--<apex:inputText value="{!searchvalues.searchText}" id="inventryautocomplete"/>-->
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="rooms" value="No of Bed Rooms"/></td>
+                        <td>
+                            <apex:selectList style="width:100%" value="{!searchvalues.noOfBedRooms}" size="1">
+                                <apex:selectOption itemValue="" itemLabel="--None--"/>
+                                <apex:selectOption itemValue="1" itemLabel="1 BR"/>
+                                <apex:selectOption itemValue="2" itemLabel="2 BR"/>
+                                <apex:selectOption itemValue="3" itemLabel="3 BR"/>
+                                <apex:selectOption itemValue="Studio" itemLabel="STD"/>
+                            </apex:selectList>
+                            <!--<apex:inputText value="{!searchvalues.noOfBedRooms}" id="roomVal"/>-->
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="location" value="Location"/></td>
+                        <td>
+                        	<c:Autocomplete id="locationName" required="false" SObject="Inventory__c" labelField="Building_Location__r.Building_Name__c" valueField="Building_Location__c" targetFields="{!searchvalues.location}" conString="Status__c=\'Released\' AND Building_Location__r.Location_Type__c = \'Building\'"/>
+                            <!-- <c:Autocomplete id="locationName" required="false" SObject="Location__c" labelField="Building_Name__c" valueField="Id" targetFields="{!searchvalues.location}" /> -->
+                            <!--<apex:inputText value="{!searchvalues.location}" id="locationVal"/>-->
+                        </td>
+                        <td align="right"><apex:outputLabel styleClass="fontClass" id="property" value="Property"/></td>   
+                        <td>
+                            <c:Autocomplete id="propertyName" required="false" SObject="Property__c" labelField="Property_Name__c" valueField="Id" targetFields="{!searchvalues.property}" />
+                            <!--<apex:inputText value="{!searchvalues.property}" id="propertyVal"/>-->
+                        </td>
+                    </tr>
+                </Table>
+            </apex:outputPanel>
+            <table border="0" width="70%">
+                <tr>
+                    <td align="center" colspan="2">
+                        <apex:commandButton id="search" value="Search" style="margin-left:15px;" action="{!searchInventory}"  status="myStatus" reRender="myForm,scriptTag"/>
+                    </td>
+                </tr>
+                <tr colspan="2"> 
+                       <br/> 
+                </tr>
+                <tr >
+                    <td>
+                        <apex:outputLabel id="mstart" styleClass="fontClass" Style="margin-right:15px;" value="Marketing Start Date : "/>  
+                        <apex:outputField id="mStartDate" styleClass="fontClass"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_Start_Date__c}" /> + 
+                        &nbsp;<apex:inputText id="incrStartDate" value="{!dMStartDate}" style="width:30px;"></apex:inputText>
+                    </td>
+                    <td>
+                        <apex:outputLabel id="mEnd" styleClass="fontClass" Style="margin-right:15px;" value="Marketing End Date : "/>
+                        <apex:outputField id="mEndDate" styleClass="fontClass"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_End_Date__c}" /> - 
+                        &nbsp;<apex:inputText id="incrEndDate" value="{!dMEndDate}" style="width:30px;"></apex:inputText>
+                    </td>   
+                </tr>
+            </table>
+            <apex:pageBlockSection id="PBS" title="Search Results " columns="1" collapsible="false">
+                <apex:pageMessages id="errorBlock"/>
+                <apex:pageBlockTable id="searchResults" value="{!lstInventories}" var="inv">
+                    <apex:column width="40px" id="selID" headerValue="Select">
+                        <apex:facet name="header">
+                            <apex:inputCheckbox id="allSelect" onchange="toggleSelectAll(this);" />
+                            <!--<input type="checkbox" id="parentCheck" onclick="toggleSelectAll(this);"/>-->
+                        </apex:facet>
+                        <apex:inputCheckbox id="oneSelect" value="{!inv.checked}" onchange="toggleItem();"/>
+                    </apex:column>
+                    <apex:column headerValue="Name">
+                        <apex:outputLink target="_blank" value="/{!inv.obj['Id']}">{!inv.obj['Unit__c']}</apex:outputLink>
+                    </apex:column>
+                    <apex:column headerValue="City" value="{!inv.obj['Address__r']['City__c']}"/>
+                    <apex:column headerValue="Marketing Name">
+                        <apex:outputField value="{!inv.obj['Marketing_Name__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Property Name">
+                        <apex:outputField value="{!inv.obj['Property_Name__c']}"/>
+                    </apex:column>
+                    <!--<apex:column headerValue="Building Name" value="{!inv.obj['Building_Location__r']['Building_Name__c']}"/>
+                    <apex:column headerValue="Master Developer" value="{!inv.obj['Building_Location__r']['Master_developer__c']}"/>-->
+                    <apex:column headerValue="Bedroom Type">
+                        <apex:outputField value="{!inv.obj['Bedroom_Type__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Bedrooms">
+                        <apex:outputField value="{!inv.obj['IPMS_Bedrooms__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Area">
+                        <apex:outputField value="{!inv.obj['Area__c']}"/>
+                    </apex:column>    
+                    <!--<apex:column headerValue="Price">
+                        <apex:outputField value="{!inv.obj['Selling_Price__c']}"/>
+                    </apex:column>-->
+                    <apex:column headerValue="Special Price">
+                        <apex:outputField value="{!inv.obj['Special_Price_2__c']}"/>
+                    </apex:column>
+                    <!--<apex:column headerValue="Currency">
+                        <apex:outputField value="{!inv.obj['CurrencyIsoCode']}"/>
+                    </apex:column>-->
+                    <apex:column headerValue="Release Date">
+                        <apex:outputField value="{!inv.obj['Release_Date__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Status" >
+                        <apex:outputField value="{!inv.obj['Status__c']}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <div align="center">
+                <apex:commandButton value="First" action="{!first}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Previous" action="{!previous}" status="myStatus" disabled="{!NOT(manageHelper.hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Next" action="{!next}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}"  reRender="myForm" immediate="true"/>
+                <apex:commandButton value="Last" action="{!last}" status="myStatus" disabled="{!NOT(manageHelper.hasNext)}" reRender="myForm" immediate="true"/>
+                <apex:outputLabel style="margin-left:15px;" value="Page #" >{!manageHelper.pageNumber}</apex:outputLabel>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel id="scriptTag">
+    <script type="text/javascript">
+    
+        /*
+        * set row level checkboxes based on "all checkbox" state
+        */
+        var $j = jQuery.noConflict();
+        
+        $j(document).ready(function(){
+        
+            var cbselect = $j("input[id$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbselect.filter(':checked').length==0){
+                //set "all checkbox" selected
+                $j("input[id$=allSelect]").prop('checked', false);
+            }
+        });
+    
+        function validations(){
+            
+            var cbs = $j("input[id$=oneSelect]");
+            var isdatesPresent = true;
+            
+            if(cbs.filter(':checked').length == 0){
+                alert('Please select at least one Inventory');
+                return false;
+            }
+            
+            return isdatesPresent;
+            
+        }
+        
+        function toDateVal(dateStr) {
+            var parts = dateStr.split("/");
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        function dateformat(input){
+            if (!(input == '' || input == null || input == 'undefined')){
+                var year = input.slice(-4),
+                month = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(input.substr(4,3))+1,
+                day = input.substr(8,2);
+            
+                var output = year + '-' + (month<10?'0':'') + month + '-' + day;
+                var dateValue = new Date(year, month - 1, day);
+                return dateValue;
+            } else return null;
+        }
+    
+        function toggleSelectAll(checkbox){
+            
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j( "input[id$=oneSelect]" ).prop('checked', true);
+            }
+            else{
+                //set all row level checkboxes de-selected
+                $j( "input[id$=oneSelect]" ).prop('checked', false);
+            }
+        }
+        
+        /*
+        * set "all checkbox" based on state of row level checkboxes
+        */
+        function toggleItem(checkbox){
+            var cbs = $j("input[id$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbs.filter(':not(:checked)').length==0){
+                //set "all checkbox" selected
+                $j("input[id$=allSelect]").prop('checked', true);
+            }
+            else{
+                //set "all checkboxes" de-selected
+                $j("input[id$=allSelect]").prop('checked', false);
+            }
+        }
+        
+        function confirmAction(promptText){
+            var r=confirm(promptText)
+            if (r==true){ return true; }
+            else{ return false; }
+        }
+        
+    </script>
+    </apex:outputPanel>
+</apex:page>

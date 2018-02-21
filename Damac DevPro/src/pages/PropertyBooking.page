@@ -1,0 +1,399 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" controller="PropertyBookingController" id="thisPage" cache="true"> 
+    <apex:remoteObjects jsNamespace="Booking">
+        <apex:remoteObjectModel name="Inquiry__c" fields="Id,Organisation_Name__c,Organisation_Name_Arabic__c,CR_Number__c,CR_Registration_Expiry_Date__c,CR_Registration_Place__c,CR_Registration_Place_Arabic__c,Title__c,Title_Arabic__c,First_Name__c,First_Name_Arabic__c,Last_Name__c,Last_Name_Arabic__c,Nationality__c,Nationality_Arabic__c,Passport_Number__c,Passport_Expiry_Date__c,Passport_Place_of_Issue__c,Passport_Place_of_Issue_Arabic__c,Email__c,Date_of_Birth__c,Address_Line_1__c,Address_Line_1_Arabic__c,Address_Line_2__c,Address_Line_2_Arabic__c,Address_Line_3__c,Address_Line_3_Arabic__c,Address_Line_4__c,Address_Line_4_Arabic__c,Country__c,Country_Arabic__c,City_new__c,City_Arabic__c"/>
+        <apex:remoteObjectModel name="Account" fields="Id,OwnerId,FirstName,LastName,PersonEmail,PersonContactId,Address_Line_1__c,Address_Line_1_Arabic__c,Address_Line_2__c,Address_Line_2_Arabic__c,Address_Line_3__c,Address_Line_3_Arabic__c,Address_Line_4__c,Address_Line_4_Arabic__c,Party_ID__c,isPersonAccount,CR_Number__c,CR_Registration_Expiry_Date__c,CR_Registration_Place__c,CR_Registration_Place_Arabic__c,Name,Name_Arabic__c"/>
+        <apex:remoteObjectModel name="Contact" fields="Id,Title,Title_Arabic__c,FirstName,First_Name_Arabic__c,LastName,Last_Name_Arabic__c,Nationality__c,Nationality_Arabic__c,Passport_Number__c,Passport_Expiry_Date__c,Passport_Issue_Place__c,Passport_Issue_Place_Arabic__c,Date_of_Birth__c,Address_Line_1__c,Address_Line_1_Arabic__c,Address_Line_2__c,Address_Line_2_Arabic__c,Address_Line_3__c,Address_Line_3_Arabic__c,Address_Line_4__c,Address_Line_4_Arabic__c,City__c,City_Arabic__c,Country__c,Country_Arabic__c,Email,AccountId"/>
+    </apex:remoteObjects>
+    <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/>
+    <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <title>Book Property</title>
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />  
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS_VF214, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.Damac_Booking_Resource, '/pagination-booking.css')}" />
+            <script src="../../soap/ajax/36.0/connection.js"></script>
+            <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
+            <script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-init.min.js')}"></script>
+            <script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-datepicker.min.js')}"></script>
+            <script src="{!URLFOR($Resource.Damac_Booking_Resource, '/jquery.twbsPagination.js')}"></script>
+            <script> 
+            (function()
+             {try{var a=navigator.userAgent; 
+                  if((a.indexOf('Salesforce')!=-1)&&(a.indexOf('iPhone')!=-1||a.indexOf('iPad')!=-1)&&(a.indexOf('Safari')==-1)){ 
+                      var s=document.createElement('style'); 
+                      s.innerHTML="html,html body{overflow: auto;-webkit-overflow-scrolling:touch;}body{position:absolute;left:0;right:0;top:0;bottom:0;}"; 
+                      document.getElementsByTagName('head')[0].appendChild(s);
+                  }
+                 }catch(e){}})();
+            </script>
+            <script type="text/javascript">
+                var j$ = jQuery.noConflict();
+                j$( window ).load(function() {
+                    /* Disabling buyer type change. */
+                    disableBuyerTypeChange();
+                    var wizardLevel = '{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}';
+                    if(wizardLevel){
+                        nextScreen(wizardLevel);
+                    }else{
+                        nextScreen('Level 1');  
+                    }
+                });
+                
+                j$( document ).ready(function() {
+                    j$('#availableUnitsCustomStatus').hide(); 
+                    j$('#buyerCustomStatus').hide();
+                    j$('#ppcustomstatus').hide();
+                    j$('#pdcustomstatus').hide();
+                });
+                
+                function disableBuyerTypeChange(){
+                    var isSubmitted = '{!isSubmitted}';
+                    var showScreen2 = '{!showScreen2}';
+                    if(isSubmitted && showScreen2){
+                        j$('[class*=buyertype]').each(function (){
+                            j$(this).attr('disabled', 'true');
+                        });
+                    }
+                }
+                
+                function nextScreen(wizardLevel){ 
+                    if(wizardLevel){
+                        var currentPage = wizardLevel.split('Level ').pop();
+                        var width = 25 * (currentPage - 1);
+                        j$('#step'+currentPage).addClass('slds-is-active');
+                        j$('.slds-wizard__progress-bar').css('width', width+'%');
+                        if(currentPage > 0){
+                            var previousPage = currentPage-1;
+                            while(previousPage >= 1){
+                                j$('.step'+(previousPage)+'0').hide();
+                                j$('.step'+(previousPage)+'1').show();
+                                j$('.step'+(previousPage)+'2').hide();
+                                previousPage--;
+                            }
+                            j$('.step'+(currentPage)+'0').show();
+                            j$('.step'+(currentPage)+'1').hide();
+                            j$('.step'+(currentPage)+'2').hide();
+                            if(currentPage == 5){
+                                j$('.step'+(currentPage)+'1').show();
+                            }   
+                        }
+                    }
+                }
+                
+                function error(errorMessage){
+                    if(errorMessage){
+                        j$('#errorBox').show();
+                    }else{
+                        j$('#errorBox').hide();    
+                    }
+                }
+                
+                function saveBookingAsDraft(bookingWizardLevel){
+                    if(bookingWizardLevel){
+                        if(bookingWizardLevel.toLowerCase() == 'level 1'){
+                        }else if(bookingWizardLevel.toLowerCase() == 'level 2'){ 
+                            validateRequiredFields('draft');
+                        }else if(bookingWizardLevel.toLowerCase() == 'level 3'){
+                            validatePaymentSelected('draft');
+                        }else if(bookingWizardLevel.toLowerCase() == 'level 4'){ 
+                        }else if(bookingWizardLevel.toLowerCase() == 'level 5'){
+                        
+                        }
+                    }
+                }
+             function redirect(dealId){
+                    console.log('redirect');
+                    console.log('{!availableInventoriesList.dealRecord.Id}');
+                    console.log('dealId');
+                    if('{!$User.UIThemeDisplayed}' == 'Theme4t'){
+                        sforce.one.navigateToSObject(dealId);
+                    }else {
+                        window.open('/' + dealId ,'_blank');
+                    }
+                }
+                    
+            </script>
+        </head>
+        <body>
+            <div class="slds">
+                <apex:actionStatus id="status">
+                    <apex:facet name="start">
+                        <div>
+                            <div class="slds-spinner_container" style="position: fixed;">
+                                <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                                    <span class="slds-assistive-text">Loading</span>
+                                    <div class="slds-spinner__dot-a"></div>
+                                    <div class="slds-spinner__dot-b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <!--HEADER-->
+                <div class="slds-page-header" role="banner">
+                    <div class="slds-grid">
+                        <div class="slds-col slds-has-flexi-truncate">
+                            <div class="slds-media slds-no-space slds-grow">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container  slds-icon-standard-product-item" title="New Property">
+                                        <svg aria-hidden="true" class="slds-icon slds-icon--large">
+                                            <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/standard-sprite/svg/symbols.svg#product_item')}"></use>
+                                        </svg>
+                                        <span class="slds-assistive-text">Property Booking</span>
+                                    </span>
+                                </div>
+                                <div class="slds-media__body">
+                                    <span class="slds-page-header__title slds-truncate">New Booking</span>
+                                    <span id="countdownTimer" class="slds-box slds-page-header__title slds-truncate slds-float--right" style="display: none;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="slds-grid">
+                    <div class="slds-size--12-of-12 slds-medium-size--12-of-12 slds-large-size--12-of-12">
+                        <div class="slds-box slds-m-top--xx-small">
+                            <div class="slds-wizard slds-m-top--small" role="navigation">
+                                <ol class="slds-wizard__list">
+                                    <li class="slds-wizard__item slds-is-active" id="step1">
+                                        <a href="javascript:void(0);" class="slds-wizard__link" onclick="{!IF(isSubmitted, '', 'selectUnits();')}">
+                                            <span class="slds-icon_container  slds-icon-action-announcement slds-icon_container--circle step10" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#edit')}"></use>
+                                                </svg>
+                                            </span> 
+                                            <span class="slds-icon_container slds-icon-action-approval slds-icon_container--circle step11" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#approval')}"></use>
+                                                </svg>
+                                            </span> 
+                                        </a>
+                                        <span class="slds-icon_container slds-icon-action-password-unlock slds-icon_container--circle step12">
+                                            <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#lock')}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-wizard__label slds-text-heading--label slds-truncate slds-p-left--small">select a unit</span>
+                                    </li>
+                                    <li class="slds-wizard__item" id="step2">
+                                        <a href="javascript:void(0);" class="slds-wizard__link" onclick="{!IF(isSubmitted, '', 'goTocreatePortfolio();')}">
+                                            <span class="slds-icon_container  slds-icon-action-announcement slds-icon_container--circle step20" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#edit')}"></use>
+                                                </svg>
+                                            </span> 
+                                            <span class="slds-icon_container slds-icon-action-approval slds-icon_container--circle step21" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#approval')}"></use>
+                                                </svg>
+                                            </span>
+                                        </a>
+                                        <span class="slds-icon_container slds-icon-action-password-unlock slds-icon_container--circle step22">
+                                            <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#lock')}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-wizard__label slds-text-heading--label slds-truncate">select buyers</span>
+                                    </li>
+                                    <li class="slds-wizard__item" id="step3">
+                                        <a href="javascript:void(0);" class="slds-wizard__link" onclick="{!IF(isSubmitted, '', 'goToPaymentPlan();')}">
+                                            <span class="slds-icon_container  slds-icon-action-announcement slds-icon_container--circle step30" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#edit')}"></use>
+                                                </svg>
+                                            </span> 
+                                            <span class="slds-icon_container slds-icon-action-approval slds-icon_container--circle step31" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#approval')}"></use>
+                                                </svg>
+                                            </span>
+                                        </a>
+                                        <span class="slds-icon_container slds-icon-action-password-unlock slds-icon_container--circle step32">
+                                            <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#lock')}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-wizard__label slds-text-heading--label slds-truncate">select a payment plan</span>
+                                    </li>
+                                    <li class="slds-wizard__item" id="step4">
+                                        <a href="javascript:void(0);" class="slds-wizard__link" onclick="{!IF(isSubmitted, '', 'goToPaymentMethod();')}" >
+                                            <span class="slds-icon_container  slds-icon-action-announcement slds-icon_container--circle step40" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#edit')}"></use>
+                                                </svg>
+                                            </span> 
+                                            <span class="slds-icon_container slds-icon-action-approval slds-icon_container--circle step41" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#approval')}"></use>
+                                                </svg>
+                                            </span>
+                                        </a>
+                                        <span class="slds-icon_container slds-icon-action-password-unlock slds-icon_container--circle step42">
+                                            <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#lock')}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-wizard__label slds-text-heading--label slds-truncate">select payment method</span>
+                                    </li>
+                                    <li class="slds-wizard__item" id="step5">
+                                        <a href="javascript:void(0);" class="slds-wizard__link" onclick="{!IF(isSubmitted, '', 'goToSubmitBooking();')}">
+                                            <span class="slds-icon_container slds-icon-action-approval slds-icon_container--circle step51" style="display: none;">
+                                                <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                    <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/action-sprite/svg/symbols.svg#approval')}"></use>
+                                                </svg>
+                                            </span>
+                                        </a>
+                                        <span class="slds-icon_container slds-icon-action-password-unlock slds-icon_container--circle step52">
+                                            <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                                <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#lock')}"></use>
+                                            </svg>
+                                        </span>
+                                        <span class="slds-wizard__label slds-text-heading--label slds-truncate slds-p-right--small">details submitted</span>
+                                    </li>
+                                </ol>
+                                <span class="slds-wizard__progress slds-m-top--small">
+                                    <span class="slds-wizard__progress-bar" style="width:0%;"></span>
+                                </span>
+                            </div>        
+                        </div>
+                    </div>
+                </div>
+                    <!-- Show Unit No Start -->
+                <div class="slds-container">        
+                        
+                <apex:outputPanel id="selectedinventoryblock2" layout="block" styleClass="slds-box slds-m-top--xx-small ">      
+                            
+                        <fieldset class="slds-form--compound slds-size--1-of-1">        
+                        <span class="slds-icon--container slds-icon-utility-announcement" title="Selected Inventories">     
+                          <svg class="slds-icon slds-icon-text-warning slds-icon--small"  >     
+                            <use xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="/resource/1496122808000/SLDS_VF214/assets/icons/utility-sprite/svg/symbols.svg#info"></use>     
+                          </svg>        
+                          <span class="slds-assistive-text">Please click on X to clear the selection.</span>        
+                        </span>     
+                            <apex:repeat value="{!availableInventoriesList.ibwList}" var="thisInventory">       
+                                <span class="slds-pill  slds-size--1-of-12">        
+                                    <a href="javascript:void(0);" class="slds-pill__label" title="selected inventory">{!thisInventory.selectedInventory.Unit__c}</a>        
+                                </span>         
+                            </apex:repeat>          
+                         </fieldset>     
+                </apex:outputPanel>     
+                </div>
+                <!-- Show Unit No Start -->
+                <!--HEADER-->
+                 <apex:form id="thisForm"> 
+                    <!-- Custom Error Block : Starts -->
+                    <div class="slds-notify_container {!IF($User.UIThemeDisplayed == 'Theme4t','slds-region_narrow','')}" id="propertyErrorBox" style="display:none;">
+                        <div class="slds-notify slds-notify--toast slds-theme--success" role="alert" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <span class="slds-assistive-text">Error</span>
+                            <a href="javascript:void(0);" class="slds-button slds-notify__close slds-button--icon-inverse" title="Close" onclick="j$('#propertyErrorBox').hide();">
+                                <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                                    <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                </svg>
+                                <span class="slds-assistive-text">Close</span>
+                            </a>
+                            <div class="slds-notify__content slds-media">
+                                <div class="slds-media__figure">
+                                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                                    </svg>
+                                </div>
+                                <div class="slds-media__body">
+                                    <span id="propertyErrorMessage"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div> 
+                    <!-- Custom Error Block : Ends -->
+                    <!-- Error Block : Starts -->
+                    <apex:outputPanel layout="block" id="errorBlock" >
+                        <apex:outputPanel layout="block" styleClass="slds-notify_container {!if('$User.UIThemeDisplayed' == 'Theme4t','slds-region_narrow','')}" rendered="{!isError}">
+                            <div class="slds-notify slds-notify--toast {!IF(isSuccess == true, 'slds-theme--success', 'slds-theme--error')}" role="alert" id="errorBox" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <span class="slds-assistive-text">Error</span>
+                                <a href="javascript:void(0);" class="slds-button slds-notify__close slds-button--icon-inverse" title="Close" onclick="closeErrorBox(); j$('#errorBox').hide();">
+                                    <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                    </svg>
+                                    <span class="slds-assistive-text">Close</span>
+                                </a>
+                                <apex:outputPanel styleclass="slds-notify__content slds-grid" rendered="{!NOT(isSuccess)}" layout="block">
+                                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                    </svg>
+                                    <div class="slds-col slds-align-middle">
+                                        <h2 class="slds-text-heading--small">
+                                            <apex:outputText value="{!$Label.Error_Prefix}" escape="false" />
+                                        </h2>
+                                        <span>
+                                            <apex:outputText value="{!errorMessage}" escape="false"/>
+                                        </span>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:outputPanel styleclass="slds-notify__content slds-grid" rendered="{!isSuccess}" layout="block">
+                                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#success')}"></use>
+                                    </svg>
+                                    <div class="slds-col slds-align-middle">
+                                        <apex:outputText value="{!errorMessage}" escape="false"/>
+                                    </div>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!-- Error Block : Ends -->
+                    <div class="slds-container">
+                        <!--Error Block-->
+                        <!--Page 1 : Starts-->
+                        <c:AvailableUnits rendered="{!showScreen1}" availableInventories="{!availableInventoriesList}" id="screen1"/>
+                        <!--Page 1 : Ends-->
+                        <!--Page 2 : Starts-->
+                        <c:BuyerDetails rendered="{!showScreen2}" availableInventories="{!availableInventoriesList}" id="screen2"/> 
+                        <!--Page 2 : Ends-->
+                        <!--Page 3 : Starts-->
+                        <c:PaymentPlan rendered="{!showScreen3}" promotionsWrapperList="{!finalWrap}" availableInventories="{!availableInventoriesList}" id="screen3"/> 
+                        <!--Page 3 : Ends-->
+                        <!--Page 4 : Starts-->
+                        <c:PaymentDetails rendered="{!showScreen4}" availableInventories="{!availableInventoriesList}" id="screen4"/>   
+                        <!--Page 4 : Ends-->
+                        <!-- Action Functions : Start -->
+                        <apex:actionfunction name="closeErrorBox" action="{!closeErrorBox}" reRender="page1, errorBlock" status="status" />
+                        <apex:actionfunction name="selectUnits" action="{!selectUnits}" reRender="page1, errorBlock" status="status" /><!-- oncomplete="refreshCampaignRelatedInventory();" --> 
+                        <apex:actionfunction name="goTocreatePortfolio" action="{!createPortfolio}" rerender="page2, errorBlock" status="status" />
+                        <apex:actionfunction name="createPortfolio" action="{!createPortfolio}" rerender="page2, errorBlock" status="status" onComplete="nextScreen('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');"/>
+                        <apex:actionfunction name="goToPaymentPlan" action="{!selectPaymentPlan}" reRender="page3, errorBlock" status="status" />
+                        <apex:actionfunction name="selectPaymentPlan" action="{!selectPaymentPlan}" reRender="page3, errorBlock" status="status" onComplete="nextScreen('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');">
+                            <apex:param name="mode" value="" assignTo="{!mode}"/>
+                        </apex:actionfunction>
+                        <apex:actionfunction name="goToPaymentMethod" action="{!selectPaymentMethod}" rerender="page4, errorBlock" status="status" />
+                        <apex:actionfunction name="selectPaymentMethod" action="{!selectPaymentMethod}" rerender="page4, errorBlock" status="status" onComplete="if({!availableInventoriesList.dealRecord.Is_Submitted_For_Approval__c} && '{!$User.UIThemeDisplayed}' == 'Theme4t'){sforce.one.navigateToSObject('{!availableInventoriesList.dealRecord.Id}');} nextScreen('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');">
+                            <apex:param name="mode" value="" assignTo="{!mode}"/>
+                        </apex:actionfunction>
+                        <apex:actionfunction name="goToSubmitBooking" action="{!submitBooking}" rerender="page4, errorBlock" status="status" />
+                        <!-- <apex:actionfunction name="submitBooking" action="{!submitBooking}" rerender="errorBlock" status="status"  onComplete="console.log('{!$User.UIThemeDisplayed}'); console.log(sforce); if('{!$User.UIThemeDisplayed}' == 'Theme4t'){sforce.one.navigateToSObject('{!availableInventoriesList.dealRecord.Id}');}else{window.open('/{!availableInventoriesList.dealRecord.Id}','_self');} nextScreen('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');"/> -->
+                        <apex:actionfunction name="submitBooking" action="{!submitBooking}" rerender="errorBlock" status="status"  onComplete="console.log('{!$User.UIThemeDisplayed}'); console.log(sforce); if({!isSuccess}){if('{!$User.UIThemeDisplayed}' == 'Theme4t'){sforce.one.navigateToSObject('{!availableInventoriesList.dealRecord.Id}');}else{console.log('Test'); window.open('/{!availableInventoriesList.dealRecord.Id}','_self');} nextScreen('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');}"/>
+                        <apex:actionfunction name="saveBuyerDetails" action="{!selectPaymentPlan}" rerender="page3, errorBlock" status="status" onComplete="disableBuyerTypeChange();"/>
+                        <!-- <apex:actionfunction name="saveBooking" action="{!saveBooking}" rerender="page4, errorBlock" status="status" /> -->    
+                        <!-- Action Functions : Ends -->
+                    </div>
+                    <footer class="slds-docked-composer__footer slds-shrink-none"> 
+                        <div class="slds-grid slds-grid--align-end slds-text-align--right" style="margin:0 auto;">
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--neutral" onclick="console.log('{!$User.UIThemeDisplayed}'); console.log(sforce);if('{!$User.UIThemeDisplayed}' == 'Theme4t'){sforce.one.navigateToURL('/home/home.jsp');}else{window.open('/home/home.jsp', '_self');}" >Cancel</apex:outputLink>
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" onclick="validateInventorySelection();" rendered="{!showScreen1 && NOT(isSubmitted)}">Create Portfolio</apex:outputLink>
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" onclick="validateRequiredFields('final');" rendered="{!showScreen2 && NOT(isSubmitted)}">Select Payment Plan</apex:outputLink>
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" onclick="validatePaymentSelected('final');" rendered="{!showScreen3 && NOT(isSubmitted)}">Choose Payment Method</apex:outputLink> 
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" onclick="validateSrSubmit();" rendered="{!showScreen4 && NOT(isSubmitted)}">Submit Booking</apex:outputLink>
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" onclick="validateAndSaveBuyerFields();" rendered="{!showScreen2 && isSubmitted}">Save Details</apex:outputLink>
+                            <apex:outputLink value="javascript:void(0);" styleClass="slds-button slds-button--brand" 
+                                             onclick="saveBookingAsDraft('{!availableInventoriesList.dealRecord.Booking_Wizard_Level__c}');" 
+                                             rendered="{!NOT(ISBLANK(availableInventoriesList.dealRecord.Booking_Wizard_Level__c)) && 
+                                                            (availableInventoriesList.dealRecord.Booking_Wizard_Level__c == 'Level 2') && 
+                                                        NOT(isSubmitted)}">Save as Draft</apex:outputLink>
+                        </div>    
+                    </footer>
+                </apex:form>
+            </div>
+        </body>
+    </html>
+</apex:page>

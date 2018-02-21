@@ -1,0 +1,385 @@
+<apex:page standardController="Contact" extensions="LASERCA.CreditAPIExtension" sidebar="false">
+    <apex:pageBlock rendered="{!contactObj.AccountId == null}" >
+        <h1>Please fill-up the Account Field before generating a credit report.</h1><br/><br/>
+        <button onclick="history.go(-1);">Go back to Contact</button>
+    </apex:pageBlock>
+
+    <style>
+        .center{
+            text-align: center;
+            margin: 5% 0 0 0;
+        }
+    </style>
+
+    <apex:form >
+        <apex:actionFunction name="parseData" action="{!parseData}" reRender="responsePanel" status="progressStatus">
+            <apex:param assignTo="{!credit_api_data}" name="credit_api_data" value=""/>
+        </apex:actionFunction>
+        <apex:actionStatus startText=" " stopText="" id="progressStatus"/>
+
+      <apex:outputpanel id="responsePanel">
+      <div class="center">
+        <img src="{!$Resource.LoadingGif}" alt="" /><br/>
+        <apex:outputText >(Please wait... This process could take from 10 seconds to a minute.)</apex:outputText>
+      </div>
+          <apex:pagemessages ></apex:pagemessages>
+      </apex:outputpanel>
+
+    </apex:form>
+
+    <script src="/soap/ajax/26.0/connection.js" type="text/javascript"></script>
+    <!-- TODO: Avoid using CDN on production -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/json3/3.2.4/json3.min.js"></script>
+    <script type="text/javascript">
+        var checkCounter = 0;
+        var requestData = '{!request}';
+        console.log(requestData);
+
+        function getDataValue(credit_summary, _name) {
+            //retrieves common data values; returns null if no data was retrieved
+            try {
+                return $(credit_summary).find('_DATA_SET[_Name="' + _name + '"]').attr("_Value") || null;
+            } catch (err) {
+                alert(err);
+            }
+        }
+
+        function getFactor(credit_score_tag, index, attribute) {
+            //returns factor[index] _Code or _Text attribute values
+            var factor = $(credit_score_tag).find('_FACTOR')[index];
+
+            if (factor != null)
+                return $(factor).attr(attribute);
+            else
+                return null;
+        }
+
+        var checkCredit = function(request, reissue) {
+            if (reissue != null || reissue != undefined) {
+                request = request.replace('CreditReportIdentifier=""', 'CreditReportIdentifier="' + reissue + '"')
+                    .replace('CreditReportRequestActionType="Submit"', 'CreditReportRequestActionType="Reissue"');
+            }
+
+            sforce.connection.remoteFunction({
+                url: "{!creditAPIEndpoint}",
+                requestData: request,
+                method: "POST", //change to POST
+                onSuccess: function(response) {
+                    //pass JSON formatted data to apex
+                    getCreditApiData(response);
+                },
+                onFailure: function(response) {
+                    alert("Failed communicating with CreditAPI. Check browser console for response error message.");
+                    //console.log(response);
+                }
+            });
+        }
+
+
+        var getCreditApiData = function(response) {
+            console.log(response);
+            //returns object contaning repo type, credit score, pdf base64 data and credit summary values
+            var xmlDoc = $.parseXML(response);
+            var xml = $(xmlDoc);
+            //get file number in the CreditReportIdentifier attribute
+            var reissue = xml.find('CREDIT_RESPONSE').attr('CreditReportIdentifier');
+
+
+            try {
+                var credit_repository = xml.find('CREDIT_REPOSITORY_INCLUDED')[0];
+                var credit_score = xml.find('CREDIT_SCORE');
+                var credit_summary = xml.find('CREDIT_SUMMARY');
+                var public_records = xml.find('CREDIT_PUBLIC_RECORD');
+                var trade_accounts = xml.find('CREDIT_LIABILITY');
+                var credit_inquiries = xml.find('CREDIT_INQUIRY');
+                var regulatory_products = xml.find('REGULATORY_PRODUCT');
+                var employers = xml.find('EMPLOYER');
+                var filename = $(xml.find('EMBEDDED_FILE')).attr('_Name');
+                var documentPDF = xml.find('DOCUMENT').text();
+                var status = xml.find('STATUS');
+                var error_message = xml.find('CREDIT_ERROR_MESSAGE');
+                var repository = '{!bureau}';
+
+                if($(status).attr('_Description') == 'NOTREADY'){
+                    throw('retry me!');
+                }
+
+                var err = '';
+                if($(credit_score).length == 0 && error_message.length != 0){
+                    $(error_message).each(function(){
+                        if($(this).find('_Text').text() != undefined){
+                            err += $(this).find('_Text').text() + '\n';
+                        }
+                    });
+                }
+                if(err != ''){
+                    alert('ERROR String:\n'+err);
+                }
+
+                var filter, dataObj, bureau_string;
+                if (repository != '') {
+                    if (repository.toLowerCase() == 'experian') {
+                        bureau_string = 'Experian';
+                    } else if (repository.toLowerCase() == 'transunion') {
+                        bureau_string = 'TransUnion';
+                    } else if (repository.toLowerCase() == 'equifax') {
+                        bureau_string = 'Equifax';
+                    }
+
+                } else {
+                    throw ('Please enter a valid credit bureau in the custom setting.');
+                }
+
+                // Tri-merge
+                var experian_score = $(credit_score).filter('CREDIT_SCORE[CreditRepositorySourceType="Experian"]').attr("_Value");
+                var transunion_score = $(credit_score).filter('CREDIT_SCORE[CreditRepositorySourceType="TransUnion"]').attr("_Value");
+                var equifax_score = $(credit_score).filter('CREDIT_SCORE[CreditRepositorySourceType="Equifax"]').attr("_Value");
+
+                // var first_score = $(credit_score).filter('CREDIT_SCORE:eq(0)');
+                var other_score = $(credit_score).filter('CREDIT_SCORE:eq(1)');
+
+                filter = $(credit_score).filter('CREDIT_SCORE[_FACTAInquiriesIndicator="N"][CreditRepositorySourceType="' + bureau_string + '"]');
+
+                //check again for _FACTAInquiriesIndicator='Y'
+                if (filter.length == 0) {
+                    filter = $(credit_score).filter('CREDIT_SCORE[_FACTAInquiriesIndicator="Y"][CreditRepositorySourceType="' + bureau_string + '"]');
+                }
+
+
+                if (filter.length == 0) {
+                    filter = $(credit_score).first();
+                }
+
+                //console.log($(filter)[0]);
+                //if none again then throw error
+                if (filter.length == 0) {
+                    filter = $('<div></div>');
+                }
+
+                // Grab Descriptions
+                var credit_score_description = $(filter).attr('_ModelNameTypeOtherDescription');
+                var other_score_description = $(other_score).attr('_ModelNameTypeOtherDescription');
+
+                if(credit_score_description){
+                    credit_score_description = credit_score_description + '(' + $(filter).attr('_Value') + ')';
+                }
+
+                if(other_score_description){
+                    other_score_description = other_score_description + '(' + $(other_score).attr('_Value') + ')';
+                }
+
+
+                //proper null value handling (cannot slice null value) so just return null
+                var percent_slice = getDataValue(credit_summary, 'DebtHighCredit') == null ? null : getDataValue(credit_summary, 'DebtHighCredit').slice(0, -1);
+
+                //Credit Inquiries
+                var ciArray = [];
+                if (credit_inquiries.length > 0) {
+                    for (var i = 0; i < credit_inquiries.length; i++) {
+                        var ci = credit_inquiries[i];
+                        var ciObj = {
+                            _Name: $(ci).attr('_Name'),
+                            _Date: $(ci).attr('_Date'),
+                            CreditBusinessType: $(ci).attr('CreditBusinessType')
+                        };
+                        ciArray.push(ciObj);
+                    }
+                }
+
+                //Employer Data
+                var eArray = [];
+                if(employers.length > 0){
+                    for (var i = 0; i < employers.length; i++) {
+                        var emp = employers[i];
+                        var empObj = {
+                            _Name: $(emp).attr('_Name'),
+                            CurrentEmploymentStartDate: $(emp).attr('CurrentEmploymentStartDate'),
+                            _StreetAddress: $(emp).attr('_StreetAddress'),
+                            EmploymentPositionDescription: $(emp).attr('EmploymentPositionDescription'),
+                            _State: $(emp).attr('_State')
+                        };
+                        eArray.push(empObj);
+                    }
+                }
+
+                //Public Records
+                var prArray = [];
+                if (public_records.length > 0) {
+                    for (var i = 0; i < public_records.length; i++) {
+                        var pr = public_records[i];
+                        var prObj = {
+                            CourtName: $(pr).attr('_CourtName'),
+                            DispositionType: $(pr).attr('_DispositionType'),
+                            FiledDate: $(pr).attr('_FiledDate'),
+                            LegalObligationAmount: $(pr).attr('_LegalObligationAmount'),
+                            DispositionDate: $(pr).attr('_DispositionDate'),
+                            DocketIdentifier: $(pr).attr('_DocketIdentifier'),
+                            Type: $(pr).attr('_Type'),
+                            AccountOwnershipType: $(pr).attr('_AccountOwnershipType'),
+                            BankruptcyAssetsAmount: $(pr).attr('_BankruptcyAssetsAmount'),
+                            BankruptcyLiabilitiesAmount: $(pr).attr('_BankruptcyLiabilitiesAmount'),
+                            BankruptcyType: $(pr).attr('_BankruptcyType'),
+                            PlaintiffName: $(pr).attr('_PlaintiffName')
+                        };
+                        prArray.push(prObj);
+                    }
+                }
+
+                //Trade Accounts
+                var taArray = [];
+                if (trade_accounts.length > 0) {
+                    for (var i = 0; i < trade_accounts.length; i++) {
+                        var ta = trade_accounts[i];
+
+                        var taObj = {
+                            //_PAYMENT_PATTERN
+                            _PAYMENT_PATTERN_Data: $(ta).find('_PAYMENT_PATTERN').attr('_Data'),
+                            _PAYMENT_PATTERN_StartDate: $(ta).find('_PAYMENT_PATTERN').attr('_StartDate'),
+                            //CREDIT_LIABILITY
+                            _AccountOpenedDate: $(ta).attr('_AccountOpenedDate'),
+                            _AccountClosedDate: $(ta).attr('_AccountClosedDate'),
+                            _AccountOwnershipType: $(ta).attr('_AccountOwnershipType'),
+                            _AccountPaidDate: $(ta).attr('_AccountPaidDate'),
+                            _AccountReportedDate: $(ta).attr('_AccountReportedDate'),
+                            _AccountStatusType: $(ta).attr('_AccountStatusType'),
+                            _AccountStatusDate: $(ta).attr('_AccountStatusDate'),
+                            _AccountType: $(ta).attr('_AccountType'),
+                            _HighCreditAmount: $(ta).attr('_HighCreditAmount'),
+                            _LastActivityDate: $(ta).attr('_LastActivityDate'),
+                            _MonthlyPaymentAmount: $(ta).attr('_MonthlyPaymentAmount'),
+                            _MonthsReviewedCount: $(ta).attr('_MonthsReviewedCount'),
+                            _PastDueAmount: $(ta).attr('_PastDueAmount'),
+                            _UnpaidBalanceAmount: $(ta).attr('_UnpaidBalanceAmount'),
+                            _AccountBalanceDate: $(ta).attr('_AccountBalanceDate'),
+                            _TermsMonthsCount: $(ta).attr('_TermsMonthsCount'),
+                            _MonthsRemainingCount: $(ta).attr('_MonthsRemainingCount'),
+                            CreditBusinessType: $(ta).attr('CreditBusinessType'),
+                            CreditLoanType: $(ta).attr('CreditLoanType'),
+                            _CREDITOR_Name: $(ta).find('_CREDITOR').attr('_Name'),
+                            _CURRENT_RATING_Code: $(ta).find('_CURRENT_RATING').attr('_Code'),
+                            _CURRENT_RATING_Type: $(ta).find('_CURRENT_RATING').attr('_Type'),
+                            _CreditLimitAmount: $(ta).attr('_CreditLimitAmount'),
+                            _ChargeOffAmount: $(ta).attr('_ChargeOffAmount'),
+                            _ChargeOffDate: $(ta).attr('_ChargeOffDate'),
+                            _MOST_RECENT_ADVERSE_RATING_Code: $(ta).find('_MOST_RECENT_ADVERSE_RATING').attr('_Code'),
+                            _MOST_RECENT_ADVERSE_RATING_Date: $(ta).find('_MOST_RECENT_ADVERSE_RATING').attr('_Date'),
+                            _MOST_RECENT_ADVERSE_RATING_Type: $(ta).find('_MOST_RECENT_ADVERSE_RATING').attr('_Type'),
+                            _LATE_COUNT_30Days: $(ta).find('_LATE_COUNT').attr('_30Days'),
+                            _LATE_COUNT_60Days: $(ta).find('_LATE_COUNT').attr('_60Days'),
+                            _LATE_COUNT_90Days: $(ta).find('_LATE_COUNT').attr('_90Days'),
+                            //_TEXT: $(ta).find('CREDIT_COMMENT[_SourceType="' + bureau_string + '"]').find('_Text').text()
+                            _TEXT: $(ta).find('CREDIT_COMMENT').find('_Text').text()
+                        };
+                        //console.log($(ta).find('CREDIT_COMMENT[_SourceType="'+bureau_string+'"]').find('_Text').text());
+                        //console.log(taObj._AccountReportedDate+ ' ' + taObj._CREDITOR_Name);
+
+                        taArray.push(taObj);
+                    }
+                }
+
+                //Regulatory Poducts
+                var rpArray = [];
+                if (regulatory_products.length > 0) {
+                    for (var i = 0; i < regulatory_products.length; i++) {
+                        var rp = regulatory_products[i];
+
+                        var rpObj = {
+                            CreditFileID: $(rp).attr('CreditFileID'),
+                            BorrowerID: $(rp).attr('BorrowerID'),
+                            CreditRepositorySourceType: $(rp).attr('CreditRepositorySourceType'),
+                            _SourceType: $(rp).attr('_SourceType'),
+                            _ResultText: $(rp).attr('_ResultText'),
+                            _ResultStatusType: $(rp).attr('_ResultStatusType')
+                        }
+
+                        rpArray.push(rpObj);
+                    }
+                }
+
+                var dataOBj = repository != null ? {
+                    repository: repository,
+                    credit_score: $(filter).attr('_Value'),
+                    credit_score_description: credit_score_description,
+                    experian_score: experian_score,
+                    transunion_score: transunion_score,
+                    equifax_score: equifax_score,
+                    other_score: other_score.attr("_Value"),
+                    other_score_description: other_score_description,
+                    PublicRecordCount: getDataValue(credit_summary, 'PublicRecordCount'),
+                    InstallmentBalance: getDataValue(credit_summary, 'InstallmentBalance'),
+                    MortgageBalance: getDataValue(credit_summary, 'MortgageBalance'),
+                    RevolvingBalance: getDataValue(credit_summary, 'RevolvingBalance'),
+                    InquiryCount: getDataValue(credit_summary, 'InquiryCount'),
+                    MortgagePayment: getDataValue(credit_summary, 'MortgagePayment'),
+                    LiabilityBankruptcyCount: getDataValue(credit_summary, 'LiabilityBankruptcyCount') == 0 ? false : true,
+                    LiabilityCurrentAdverseCount: getDataValue(credit_summary, 'LiabilityCurrentAdverseCount'),
+                    LiabilityPreviousAdverseCount: getDataValue(credit_summary, 'LiabilityPreviousAdverseCount'),
+                    LiabilityOldestDate: getDataValue(credit_summary, 'LiabilityOldestDate'),
+                    Day30: getDataValue(credit_summary, 'Day30'),
+                    Day60: getDataValue(credit_summary, 'Day60'),
+                    Day90: getDataValue(credit_summary, 'Day90'),
+                    TotalUnsecuredLoanBalance: getDataValue(credit_summary, 'TotalUnsecuredLoanBalance'),
+                    LiabilityChargeOffCount: getDataValue(credit_summary, 'LiabilityChargeOffCount'),
+                    DebtHighCredit: percent_slice,
+                    TotalHighCredit: getDataValue(credit_summary, 'TotalHighCredit'),
+                    filename: filename,
+                    DOCUMENT: documentPDF,
+                    Code: getFactor(filter, 0, '_Code'),
+                    Code2: getFactor(filter, 1, '_Code'),
+                    Code3: getFactor(filter, 2, '_Code'),
+                    Code4: getFactor(filter, 3, '_Code'),
+                    Detail: getFactor(filter, 0, '_Text'),
+                    Detail2: getFactor(filter, 1, '_Text'),
+                    Detail3: getFactor(filter, 2, '_Text'),
+                    Detail4: getFactor(filter, 3, '_Text'),
+                    PublicRecords: prArray,
+                    Employers : eArray,
+                    TradeAccounts: taArray,
+                    RegulatoryProducts: rpArray,
+                    CreditInquiries: ciArray,
+                    ResponseXML: response
+                } : null;
+                //forward to apex for processing
+
+                // console.log(dataOBj);
+                //console.log(JSON.stringify(dataOBj.InquiryCount));
+                //console.log(JSON.stringify(dataOBj.PublicRecords));
+                parseData(JSON.stringify(dataOBj));
+
+            } catch (err) {
+                var statusObj = {
+                    code: $(status).attr('_Code'),
+                    desc: $(status).attr('_Description')
+                }
+                if (statusObj.desc != 'NOTREADY') {
+                    if(error_message != undefined || error_message != ''){
+                        alert(err + ' Server Status Description: ' + statusObj.desc + ' Message: ' + error_message);
+                    }else{
+                        alert(err + ' Server Status Description: ' + statusObj.desc);
+                    }
+                } else {
+                    //NOTREADY POLLING
+                    setTimeout(function() {
+                        if (checkCounter < 10) {
+                            checkCounter++;
+                            checkCredit(requestData, reissue);
+
+                        } else {
+                            alert(err + ' Already polled more than 10 times but kept receiving Server Status Description: ' + statusObj.desc);
+                        }
+                    }, 10000);
+                }
+            }
+        }
+
+        $(document).ready(function() {
+            if ({!contactObj.AccountId == null}) {
+                return false;
+            }
+
+            sforce.connection.sessionId = '{!$Api.Session_ID}';
+            checkCredit(requestData);
+        });
+    </script>
+</apex:page>

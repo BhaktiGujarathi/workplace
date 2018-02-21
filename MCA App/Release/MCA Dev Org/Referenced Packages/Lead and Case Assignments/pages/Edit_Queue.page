@@ -1,0 +1,63 @@
+<apex:page action="{!ISvalidLicence}"  standardController="LCA__Queue__c" extensions="LCA.Edit_Queue_extension">
+<apex:actionStatus startText="Updating..." id="myStatus">
+        
+    </apex:actionStatus>
+     
+<apex:sectionHeader title="Queue Edit" subtitle="{!ObjQueue.name}"/> 
+<apex:form > 
+
+
+    
+
+  <apex:actionFunction name="rerenderQueueName"  action="{!UpdateQueueAndMembers}" status="myStatus"  rerender="QueueName,ListMembersList">
+          <apex:param name="objectName" assignTo="{!ObjQueue.LCA__Supported_Object__c}" value="" />
+      </apex:actionFunction>
+      
+      
+  <apex:actionFunction name="rerenderMembers" action="{!UpdateMembers}" status="myStatus"   rerender="ListMembersList" >
+          <apex:param name="queueId" assignTo="{!ObjQueue.LCA__Queue_Id__c}" value="" />
+      </apex:actionFunction>
+      
+      
+      <apex:pageBlock title="Queue Edit" mode="edit"> 
+<br />    
+<h2>Need help contact us at  : support@cumulusforce.com for free support.</h2>
+<br />  
+<apex:pageBlockButtons >
+ <apex:commandButton value="Save" action="{!onSave}"/> 
+<apex:commandButton value="Save & New" action="{!save}" /> <apex:commandButton value="Cancel" action="{!cancel}"/> </apex:pageBlockButtons> 
+
+
+
+
+<apex:pageBlockSection title="Information" columns="2"> 
+ <apex:inputField onChange="rerenderQueueName(this.value)" required="true" value="{!ObjQueue.LCA__Supported_Object__c}" /> 
+
+
+ <apex:selectList onChange="rerenderMembers(this.value)" value="{!ObjQueue.LCA__Queue_Id__c}" id="QueueName" size="1">
+                <apex:selectOptions value="{!AllOptions}"/>
+                </apex:selectList>
+                                        
+                
+ <apex:inputField required="true" value="{!ObjQueue.LCA__Assignment_Type__c}" /> 
+ <apex:inputField value="{!ObjQueue.LCA__Active__c}" /> 
+
+
+  </apex:pageBlockSection>
+  
+  <apex:pageBlockSection columns="1" id="ListMembersList" title="Members"  >
+    <apex:pagemessages ></apex:pagemessages>
+  
+  <apex:pageBlockTable value="{!ListMember}" var="Members" >
+  <apex:column value="{!Members.LCA__Member__c}" />
+  <apex:column headerValue="Assignment Order" >
+  
+
+  <apex:inputField value="{!Members.LCA__Assignment_Order__c}" />
+  </apex:column>
+  <apex:column value="{!Members.LCA__Login_User_New__c}" />
+  </apex:PageblockTable>
+  </apex:pageblockSection>
+  
+  
+ </apex:pageBlock> </apex:form> </apex:page>

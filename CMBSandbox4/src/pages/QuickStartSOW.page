@@ -1,0 +1,468 @@
+<apex:page controller="QuickStartSOWController" showHeader="false" cache="false" applyBodyTag="false" standardStylesheets="false" docType="html-5.0">
+    
+    <head>
+
+        <title>QuickStart Accelerator</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <!-- Bootstrap core CSS -->
+        <apex:stylesheet value="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" />
+
+        <!-- Bootstrap Jasny CSS -->
+        <apex:stylesheet value="https://cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/3.1.3/css/jasny-bootstrap.min.css" />
+
+        <!-- Bootstrap Theme -->
+        <apex:stylesheet value="{!$Resource.yeti_boostrap}" />
+
+        <!-- JQuery -->
+        <apex:includeScript value="https://code.jquery.com/jquery-2.1.3.min.js" />
+
+        <!-- Bootstrap -->
+        <apex:includeScript value="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" />
+
+        <!-- Bootstrap Jasny -->
+        <apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/jasny-bootstrap/3.1.3/js/jasny-bootstrap.min.js" />
+
+        <!-- Bootstrap Multiselect -->
+        <apex:stylesheet value="{!URLFOR($Resource.multiselect_bootstrap, 'bootstrap-multiselect.css')}" />
+        <apex:includeScript value="{!URLFOR($Resource.multiselect_bootstrap, 'bootstrap-multiselect.js')}" />
+
+        <!-- Jquery Mask -->
+        <apex:includeScript value="{!$Resource.jquery_mask}" />
+
+
+        <style>
+
+            .header {
+
+                /*padding-bottom: 2em;*/
+                padding-top: 1em;
+            }
+
+            table input[type="text"] {
+
+                width: 100%;
+            }
+
+            table input.medium[type="text"] {
+
+                width: 60%;
+            }
+
+            table input.small[type="text"] {
+
+                width: 50%;
+            }
+
+            table th, table td {
+
+                text-align: center;
+            }
+
+            table td.initial-td {
+
+                text-align: left;
+            }
+
+            .alert.alert-danger {
+
+                margin-bottom: 0px;
+            }
+
+            .dropdown-menu {
+
+                min-width: 80px;
+
+            }
+
+            .btn-group .multiselect {
+
+                 padding: 0px 3px;
+                 background-color: white;
+            }
+
+
+            .multiselect .multiselect-selected-text {
+                font-size: 0.7em;
+            }
+
+            .table-responsive {
+                overflow: visible;
+            }
+
+            .multiselect-container.dropdown-menu {
+                background-color: white !important;
+                height: 300px !important;
+                overflow: overlay !important;
+            }
+
+            .footer p {
+
+                text-align: center;
+                font-size: 0.8em;
+            }
+
+            .alert {
+
+                margin-bottom: 0px;
+            }
+
+            .panel-body {
+
+                padding-bottom: 0px;
+            }
+
+            .errorMsg {
+
+                color: red;
+                font-size: 14px;
+                position: absolute;
+            }
+
+            .error {
+
+                border-color: red;
+                background-color: rgba(255, 0, 0, 0.06);
+            }
+
+            .numberInput {
+
+                text-align: right;
+            }
+
+            select[multiple], select[size] {
+                height: 39px;
+            }
+
+            .table-addon {
+
+                width: 0px;
+                display: inline-table;
+                border: 1px solid #cccccc;
+            }
+
+            .form-group {
+
+                margin-bottom: 25px;
+            }
+
+        </style>        
+
+        <script>
+            function hideAlerts() {
+
+                setTimeout(
+
+                    function(){
+                        $('.alert').fadeOut();
+                    },
+
+                    3000
+                );
+
+            }
+        </script>
+    
+    </head>
+    <body>
+
+        <apex:form id="form">
+
+
+            <apex:outputPanel styleClass="container" id="container" layout="block" rendered="{!formDetails}">
+
+                <div class="row">
+
+                    <div>
+
+                        <div class="header">
+                            <div class="row">
+                                <div class="col-xs-8">
+                                    <apex:image value="{!$Resource.CloudMyBizLogo}" />
+                                </div>
+
+                                <div class="col-xs-4">
+                                    <blockquote style="font-size: 1.2em;">
+                                        <p>Have questions? <br/>
+                                        Call (877) 703-4488 or <br/>
+                                        <a href="mailto:info@cloudmybiz.com">info@cloudmybiz.com</a></p>
+                                    </blockquote>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-12">
+                        <div>
+                            <div class="panel-body">
+                                <apex:outputPanel styleClass="alert alert-danger" layout="block" html-role="alert" rendered="{!hasErrorMessages}">
+                                    <apex:messages ></apex:messages>
+                                    <script>
+                                        $(function(){
+                                            hideAlerts();
+                                        })
+                                    </script>
+                                </apex:outputPanel>
+                            </div>
+                        </div>
+                    </div>
+                </div>              
+
+                <div class="row">
+                    <div class="col-xs-12" style=" text-align: center;">
+                        <h3>QuickStart Accelerator</h3>
+                        <h4>Generate a customized SOW in just 30 seconds!</h4>
+                    </div>
+                </div>
+
+                <br />
+
+                <div class="row">
+
+                    <div class="col-xs-12">
+
+                        <div class="panel panel-primary">
+
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Customer Information</h3>
+                            </div>
+
+                            <div class="panel-body">
+
+                                <div class="row">
+
+                                    <div class="col-xs-6">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="CompanyName" value="Company Name"/>
+                                            <apex:inputField value="{!objLead.Company}" id="CompanyName" styleClass="form-control" html-placeholder="Company Name" />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="AddressLine1" value="Address Line 1"/>
+                                            <apex:inputText value="{!address1}" id="AddressLine1" styleClass="form-control phone" html-placeholder="Address Line 1" />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="AddressLine2" value="Address Line 2"/>
+                                            <apex:inputText value="{!address2}" id="AddressLine2" styleClass="form-control" html-placeholder="Address Line 2" />
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-xs-6">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="City" value="City"/>
+                                            <apex:inputText value="{!objLead.City}" id="City" styleClass="form-control" html-placeholder="City" />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="State" value="State"/>
+                                            <apex:inputField value="{!objLead.State}" id="State" styleClass="form-control" html-placeholder="State" />
+                                        </div>
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="Zip" value="Zip Code"/>
+                                            <apex:inputField value="{!objLead.PostalCode}" id="Zip" styleClass="form-control" html-placeholder="Zip Code" />
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-xs-12">
+
+                        <div class="panel panel-primary">
+
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Program Information</h3>
+                            </div>
+
+                            <div class="panel-body">
+
+                                <div class="row">
+
+                                    <div class="col-xs-6">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="ProgramType" value="Program Type"/>
+                                            <apex:inputField value="{!objLead.Program_Type__c}" id="ProgramType" styleClass="form-control" html-placeholder="Program Type" />
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-xs-6">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="EstimatedTravelCost" value="Estimated Travel Cost"/>
+                                            <apex:inputField value="{!objLead.Estimated_Travel_Cost__c}" id="EstimatedTravelCost" styleClass="form-control" html-placeholder="Estimated Travel Cost" />
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+
+                    <div class="col-xs-12">
+
+                        <div class="panel panel-primary">
+
+                            <div class="panel-heading">
+                                <h3 class="panel-title">Account Executive Information</h3>
+                            </div>
+
+                            <div class="panel-body">
+
+                                <div class="row">
+
+                                    <div class="col-xs-6">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="AccountExecutiveName" value="Account Executive Name"/>
+                                            <apex:inputField value="{!objLead.Account_Executive_Name__c}" id="AccountExecutiveName" styleClass="form-control" html-placeholder="Account Executive Name" />
+                                        </div>
+
+                                    </div>
+
+                                    <div class="col-xs-6">
+
+                                       <div class="form-group">
+                                            <apex:outputLabel for="AccountExecutiveEmail" value="Account Executive Email"/>
+                                            <apex:inputField value="{!objLead.Account_Executive_Email__c}" id="AccountExecutiveEmail" styleClass="form-control" html-placeholder="Account Executive Email" required="true"/>
+                                        </div>
+                                        
+                                    </div>
+
+                                </div>
+
+                                <div class="row">
+
+                                    <div class="col-xs-12">
+
+                                        <div class="form-group">
+                                            <apex:outputLabel for="Notes" value="Notes"/>
+                                            <apex:inputTextarea value="{!objLead.Description}" id="Notes" styleClass="form-control" />
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>      
+
+
+                <div class="row">
+
+                    <div class="col-xs-12">
+
+                        <div class="panel panel-primary">
+
+                            <div class="panel-footer">
+                                <div class="row">
+
+                                    <div class="col-xs-10">
+                                       <!-- <apex:outputLink value="/servlet/servlet.FileDownload?file={!$Label.QuickStart_Sample32pdf}" style="float: left; margin-top: 8px;"> Sample: QuickStart32 PDF </apex:outputLink>-->
+                                    </div>
+
+                                    <div class="col-xs-2">
+                                        <apex:commandButton action="{!formSubmit}" value="Generate SOW" styleClass="btn btn-block btn-primary" style="float:right;" rerender="thankYouPanel,FormDetails,form" />
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>           
+
+            </apex:outputPanel>
+
+            <apex:outputPanel styleClass="container" id="thankYouPanel" layout="block"  rendered="{!thankYouPopup}">
+            
+                <div class="row">
+
+                    <div>
+
+                        <div class="header">
+                            <div class="row">
+                                <div class="col-xs-8">
+                                    <apex:image value="{!$Resource.CloudMyBizLogo}" />
+                                </div>
+
+                                <div class="col-xs-4">
+                                    <blockquote style="font-size: 1.2em;">
+                                        <p>Have questions? <br/>
+                                        Call (877) 703-4488 or <br/>
+                                        <a href="mailto:info@cloudmybiz.com">info@cloudmybiz.com</a></p>
+                                    </blockquote>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="col-xs-12" style=" text-align: center;">
+                        <h3>QuickStart Accelerator</h3>
+                    </div>
+                </div>
+
+                <br />              
+
+                <div class="row">
+                    <div class="col-xs-offset-2 col-xs-8" style="text-align: center;">
+                        <div class="panel-body submitted" style=" border-radius: 4px;border: 1px solid #dddddd;padding: 15px;">                
+                            <h3 style="color: #525354;">Thank You for submitting your information!</h3>
+                            <p>A customized Statement of Work (SOW) has been emailed to you!</p>
+                            <p>(Powered by Salesforce and Conga)</p>                                    
+                            
+                            <br />
+
+                            <apex:outputlink value="{!$Page.QuickStartSOW}" style="float: left;">
+                                <apex:outputText value="<< Back To SOW Form" />
+                            </apex:outputlink>                    
+                        </div>
+                    </div>
+                </div>                  
+
+            </apex:outputPanel>
+
+        </apex:form>
+
+    </body>
+        
+</apex:page>

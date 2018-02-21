@@ -1,0 +1,247 @@
+<apex:page sidebar="false" controller="ezfileloader.ScreenCapture" title="Screen capture" >
+    <apex:form >
+        <apex:includeScript value="{!URLFOR($Resource.ezfileloader__ezFileLoader,'Jquery-1.8.2.js')}" />
+    	<!-- <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+        <apex:includeScript value="{!URLFOR($Resource.ezFileLoader,'jquery.min-1.6.3.js')}" /> -->
+        <apex:outputPanel id="errorPanel">
+            <apex:pageMessages escape="false" />
+        </apex:outputPanel>
+       	<div id='divfirefox' style="border:2px solid;width:100%;height:500px;overflow:auto;" contenteditable='true' onpaste='handlepaste(this, event)'><table width="100%" ><tr><td height="500px"  style="vertical-align:middle"><center><b style="font-size:x-large;">Paste From Clipboard</b></center></td></tr></table></div>
+	    <div id="ChromePaste" style="border:2px solid;width:100%;height:500px;overflow:auto;"><table width="100%" ><tr><td height="500px"  style="vertical-align:middle"><center><b style="font-size:x-large;">Paste From Clipboard</b></center></td></tr></table></div>
+	    <apex:inputHidden id="RichTextBodyId" value="{!RichTextBody}" />
+        
+        <apex:pageBlock id="PageBlockId"> 
+            <apex:pageBlockSection columns="1" id="PageBlockSectionId">
+                <apex:pageBlockSectionitem >
+                    Parent
+                    <apex:outputLink value="/{!ParentId}" >{!ParentName}</apex:outputLink>
+                </apex:pageBlockSectionitem>
+                <apex:pageBlockSectionItem id="PageBlockSectionItemId">
+                    File Name
+                    <apex:inputText id="FileNameId" value="{!AttName}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem id="PageBlockSectionItemDescId">
+                    Description
+                    <apex:inputTextArea id="DescId" rows="1" cols="100" value="{!AttDescription}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save" onclick="return AttachScreenshotFunctionPageReturn();" />
+                <apex:commandButton value="Save & New"  onclick="return AttachScreenshotFunctionPageRemain();" />
+                <apex:commandButton value="Cancel" action="{!CancelAttachment}" />
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+        
+        <!-- <table width="100%" cellpadding="10">
+            <tr>
+                <td>Parent</td>
+                <td><apex:outputLink value="/{!ParentId}" >{!ParentName}</apex:outputLink></td>
+            </tr>
+            <tr>
+                <td>File Name</td>
+                <td><apex:inputText id="FileNameId" value="{!AttName}" /></td>
+            </tr>
+            <tr>
+                <td>Description</td>
+                <td><apex:inputTextArea id="DescriptionId" rows="1" cols="100" value="{!AttDescription}" /></td>
+            </tr>
+        </table>
+        <center >
+            <apex:commandButton value="Save" onclick="return AttachScreenshotFunctionPageReturn();" />
+            <apex:commandButton value="Save & New"  onclick="return AttachScreenshotFunctionPageRemain();" />
+            <apex:commandButton value="Cancel" action="{!CancelAttachment}" />
+        </center> -->
+        <script>
+        	$(window).load(function ()
+        	{
+        		if (jQuery.browser.mozilla)
+                {
+                	$('#divfirefox').show(0);
+                	$('#ChromePaste').hide(0);
+                }
+                else if (jQuery.browser.chrome)
+                {
+                	$('#divfirefox').hide(0);
+                	$('#ChromePaste').show(0);
+                }
+                else
+                {
+                	alert('Browser not Supported');
+                }
+        	});
+            $("#ChromePaste").bind("paste", function(ev) 
+            {
+                var $this = $(this);
+                var original =  ev.originalEvent;
+                var file =  original.clipboardData.items[0].getAsFile();
+                var reader = new FileReader();
+                reader.onload = function (evt) 
+                {
+                    var result = evt.target.result;
+                    var arr = result.split(",");
+                    var data = arr[1]; // raw base64
+                    var contentType = arr[0].split(";")[0].split(":")[1];
+                    $this.html("<img src='" + result + "' />");
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            function handlepaste (elem, e) 
+            {
+                var savedcontent = elem.innerHTML;
+                if (e && e.clipboardData && e.clipboardData.getData) // Webkit - get data from clipboard, put into editdiv, cleanup, then cancel event
+                {
+                    if (/text\/html/.test(e.clipboardData.types)) 
+                    {
+                        elem.innerHTML = e.clipboardData.getData('text/html');
+                    }
+                    else if (/text\/plain/.test(e.clipboardData.types)) 
+                    {
+                        elem.innerHTML = e.clipboardData.getData('text/plain');
+                    }
+                    else 
+                    {
+                        elem.innerHTML = "";
+                    }
+                    waitforpastedata(elem, savedcontent);
+                    if (e.preventDefault) 
+                    {
+                            e.stopPropagation();
+                            e.preventDefault();
+                    }
+                    return false;
+                }
+                else // Everything else - empty editdiv and allow browser to paste content into it, then cleanup
+                {
+                    elem.innerHTML = "";
+                    waitforpastedata(elem, savedcontent);
+                    return true;
+                }
+            }
+            
+            function waitforpastedata (elem, savedcontent) 
+            {
+                if (elem.childNodes && elem.childNodes.length > 0) 
+                {
+                    processpaste(elem, savedcontent);
+                }
+                else 
+                {
+                    that = 
+                    {
+                        e: elem,
+                        s: savedcontent
+                    }
+                    that.callself = function () 
+                    {
+                        waitforpastedata(that.e, that.s)
+                    }
+                    setTimeout(that.callself,20);
+                }
+            }
+            
+            function processpaste (elem, savedcontent) 
+            {
+                pasteddata = elem.innerHTML;
+                //^^Alternatively loop through dom (elem.childNodes or elem.getElementsByTagName) here
+                elem.innerHTML = savedcontent;
+                // Do whatever with gathered data;
+                document.getElementById('{!$Component.RichTextBodyId}').value = pasteddata;
+                $("#divfirefox").html(pasteddata);
+            }
+            function AttachScreenshotFunctionPageReturn()
+            {
+                AttachScreenshotFunction(true);
+                return false;
+            }
+            function AttachScreenshotFunctionPageRemain()
+            {
+                AttachScreenshotFunction(false);
+                return false;
+            }
+            
+            function AttachScreenshotFunction(ReturnType)
+            {
+                var pFileName = document.getElementById('{!$Component.PageBlockId.PageBlockSectionId.PageBlockSectionItemId.FileNameId}').value;
+                var pDescription = document.getElementById('{!$Component.PageBlockId.PageBlockSectionId.PageBlockSectionItemDescId.DescId}').value;;
+                
+                var pastedata;
+                if (jQuery.browser.mozilla)
+                {
+                	pasteddata = $("#divfirefox").html();
+                }
+                else if (jQuery.browser.chrome)
+                {
+                	pasteddata = $("#ChromePaste").html();
+                }
+                if (pFileName != null && pFileName != "")
+                {
+                    //if (pFileName.toLowerCase().indexOf('.png') == -1)
+                    //{
+                    //    pFileName = pFileName + '.png';
+                    //}
+                    //if (pasteddata.indexOf(';base64,') != -1)
+                    //{
+                        //pasteddata = pasteddata.substring(pasteddata.indexOf(';base64,') + 8, pasteddata.length);
+                        //if (pasteddata.indexOf('"') != -1)
+                        //{
+                            //pasteddata = pasteddata.substring(0, pasteddata.indexOf('"'));
+                                    
+                            $.post("/apex/ezFileLoaderAJAXResource", 
+                                { 
+                                    Name: pFileName, 
+                                    ParentId: "{!ParentId}", 
+                                    Description: pDescription,
+                                    Image: true,
+                                    Body: pasteddata  
+                                },
+                                function(JSONResponse) 
+                                {
+                                    try
+                                    {
+                                        if (JSONResponse.Success == true)
+                                        {
+                                            if (ReturnType)
+                                            {
+                                                window.location = "/{!ParentId}";
+                                            }
+                                            else
+                                            {
+                                                window.location.reload();
+                                            }   
+                                        }
+                                        else
+                                        {
+                                            alert('Error - ' + JSONResponse.Error);
+                                        }
+                                    }
+                                    catch(ex)
+                                    {
+                                        alert('Error - ' + ex.message);
+                                    }
+                                }
+                            );
+            
+                            
+                        //}
+                        //else
+                        //{
+                        //    alert('Unknown Error');
+                        //}
+                    //}
+                    //else
+                    //{
+                    //    alert('Unknown Error');
+                    //}
+                }
+                else
+                {
+                    alert('Please enter the name of the attachment');
+                }
+                return false;
+            }
+            
+        </script>
+        
+    </apex:form>
+</apex:page>

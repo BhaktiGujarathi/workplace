@@ -1,0 +1,153 @@
+<apex:component controller="GRIDReceivablesController" allowDML="true">
+    <apex:form id="Receivablesform" styleClass="records">
+        <apex:outputPanel id="rectable" title="Receivable">
+        <apex:pageBlock mode="inlineEdit">
+
+            <apex:pageBlockButtons location="top">
+                <input type="button" onclick="runNewReceivable()" class="btn" value="New Receivable" status="loadingPanel"/>
+                <apex:CommandButton action="{!editAllReceivables}" value="Edit All" rerender="rectable" status="loadingPanel"/>
+                <input type="button" onclick="runSaveReceivables()" class="btn" value="Save" status="loadingPanel" />
+                <apex:CommandButton action="{!refreshReceivables}" value="Refresh" rerender="rectable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshReceivables}" value="Cancel" rerender="rectable" status="loadingPanel" immediate="true" />
+            </apex:pageBlockButtons>
+            
+                <apex:pageMessages id="recpgMsgId" escape="false" /> 
+                
+                <table  class="list" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!recFieldsetList}" var="recField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!recField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(recField.type != 'textarea', recField.type != 'picklist', recField.type != 'multipicklist')}"> 
+                                   <img src="{!IF(recSortExpression==recField.fieldPath,IF(recSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name = "{!recField.fieldPath}" class="sorting" onclick="sortCallReceivables('{!recField.type}');" />
+                                  </apex:OutputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!recWrapperLst}" var="recWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!recWraper.recIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!recWraper.rec.Id}" target="blank" rendered="{!NOT(ISBLANK(recWraper.rec.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(recWraper.rec.Id))}"/>
+                                <apex:commandLink action="{!deleteRec}" value="Del" rerender="rectable" rendered="{!NOT(ISBLANK(recWraper.rec.Id))}" status="loadingPanel">
+                                    <apex:param name="recIndexToRemove" value="{!recWraper.recIndex}" assignTo="{!recIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteRec}" value="Remove" rerender="rectable" rendered="{!(ISBLANK(recWraper.rec.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="recIndexToRemove" value="{!recWraper.recIndex}" assignTo="{!recIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                <td>
+                                    <apex:outputField value="{!recWraper.rec[recfield]}" rendered="{!AND(IF(recWraper.recEdit = false, true, false),NOT(ISBLANK(recWraper.rec.Id)))}" />
+                                    <apex:inputField value="{!recWraper.rec[recfield]}" rendered="{!OR(IF(recWraper.recEdit = true, true, false),ISBLANK(recWraper.rec.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr class="headerRow">
+                            <td>Total</td>
+                            <td></td>
+                            <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                <td>
+                                    <apex:outputText value="{!recFieldToSumMap[recfield.fieldPath]}" rendered="{!recFieldToSumMap[recfield.fieldPath] != 100}" />
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                showing records {!IF((recOffsetsize + 1) > recRecordCount, IF(recRecordCount - recBlockSize <= 0, 0, recRecordCount - recBlockSize), recOffsetsize + 1)} - {!IF(recBlockSize + recOffsetsize <= recRecordCount, recBlockSize + recOffsetsize, recRecordCount)} Of {!recRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="rectable" action="{!beginningReceivable}" status="loadingPanel" disabled="{!IF(recOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="rectable" action="{!previousReceivable}"  status="loadingPanel" disabled="{!IF(recOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="rectable" action="{!nextReceivable}" status="loadingPanel" disabled ="{!IF(recBlockSize + recOffsetsize >= recRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="rectable" action="{!endReceivable}" status="loadingPanel" disabled ="{!IF(recBlockSize + recOffsetsize >= recRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newRec}" name="newRec" rerender="rectable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveReceivables}" name="saveReceivables" rerender="rectable" status="loadingPanel" />
+        <apex:actionFunction action="{!sortReceivables}" name="sortAllReceivables" rerender="rectable" status="loadingPanel" >
+            <apex:param name="recTypeParam" value="" /> 
+        </apex:actionFunction>
+        
+        <apex:inputHidden value="{!recSortExpression}" id="recSortHiddencriterian"/>
+        <apex:inputHidden value="{!recSortDirection}" id="recSortHiddenOrder"/>
+        
+    </apex:form>
+    <script>
+        function runNewReceivable() 
+        {
+            setTimeout(function() 
+            {               
+                newRec();
+            }, 200);
+        }
+        
+        function runSaveReceivables() 
+        {
+            setTimeout(function() 
+            {               
+                saveReceivables();
+            }, 200);
+        }
+        
+        function sortCallReceivables(recFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             
+                 var recElement= event.target;
+                 var newrecSortCol = t$(recElement).attr("Name"); // new sort field
+                 var oldrecSortCol = t$("input[id$='recSortHiddencriterian']").val();
+               
+               if(String(newrecSortCol) == String(oldrecSortCol))
+                {
+                    
+                    if(String(t$("input[id$='recSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='recSortHiddenOrder']").val("DESC");
+                      t$(recElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='recSortHiddenOrder']").val("ASC");
+                      t$(recElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='recSHiddencriterian']").val(newrecSortCol);
+                   
+                    sortAllReceivables(recFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='recSortHiddencriterian']").val(newrecSortCol);
+                    t$("input[id$='recSortHiddenOrder']").val("ASC");
+                    t$(recElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllReceivables(recFieldDataType);
+                
+                }
+                
+        }
+    </script>
+</apex:component>

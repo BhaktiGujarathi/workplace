@@ -1,0 +1,646 @@
+<!-- 
+    Author : Deepthi
+    Create On: 18th Jun 2013
+    Component Name: BankAccountWizardVC
+    Description : Used for BankAccountWizardVF page
+    Modified By : Vasu Takasi || 19th Jun 2013
+     
+ -->
+
+<apex:component controller="BankAccountWizard" id="theBankAccComp" allowDML="true" access="global">
+    <apex:stylesheet value="{!URLFOR($Resource.BankAssets_Resources, 'css/master.css')}"/>
+     <apex:stylesheet value="{!URLFOR($Resource.AutoCompleteResources, '/autocompletecss.css')}" /> 
+     
+     <apex:includeScript value="{!URLFOR($Resource.AutoCompleteResources, '/jquery19.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.AutoCompleteResources, '/jqueryUI.js')}" />
+<style>
+    .lookupInput a
+    {
+         display:none; 
+    }
+    .ui-autocomplete {
+            background:url({!$Resource.AutoCompleteResources}/autocmpltBGImg2.png) left top repeat !important;
+            border-radius:0px !important;
+        }
+        
+    .dataCol:HOVER {
+    background-color:#E8F8FF;   
+        
+    } 
+    .autoCompleteBoxScrolling{
+          display:none !important;
+        }
+    .bankacc{
+        float: left;
+        width:100%;
+        
+    }
+    .bankacc td{
+        
+        height:27px;
+        vertical-align: middle;
+        border-bottom:1px solid #ddd !important;    
+           
+    }
+     .bankacc td{
+        text-align:right ;
+        padding-right:15px;
+     }
+    .bankacc tr{
+        
+        border-bottom:1px solid #ddd !important;
+        /*background-color:#E8F8FF; */
+    }
+    .banlaccLbl{
+        text-align:right;
+        padding-right:15px;
+        font-size: 91%;
+        font-weight: bold;
+    }
+    .accDetail td
+    {
+        border-bottom:1px solid #ddd !important;
+        height:27px;
+        vertical-align: middle;
+    }
+    .outTxt:hover{
+        background-color:#E8F8FF;
+    }
+    .hvr:hover{
+        /*background-color:#E8F8FF;*/
+    }
+    .data2Col:hover{
+        /*background-color:#E8F8FF;*/
+    }
+     .data2Col:hover{
+        background-color:#fff;
+    }
+    .requiredInput{
+        float:left;
+    }
+    .tablist ul li a{
+        line-height:30px;
+    }
+    .bankDetail table{
+        border-collapse:collapse
+    }
+    .bankDetail td{
+        border-top:solid 1px #DDD;
+        border-bottom:solid 1px #DDD;
+    }
+    
+
+    .bankDetail tr:nth-child(even) {background: #FFF}
+   .bankDetail tr:nth-child(odd) {background: #CEE3F6}
+   
+   
+    .bankacc tr:nth-child(even) {background: #FFF}
+   .bankacc tr:nth-child(odd) {background: #CEE3F6}
+  
+  .bankDetail tr:first-child td {
+        border-top: 2px solid #5882FA !important;
+   }
+    .bankDetail tr:last-child td {
+        border-bottom: 2px solid #5882FA !important;
+   }
+   
+    .bankacc tr:first-child th {
+        border-top: 2px solid #5882FA;
+   }
+    .bankacc tr:last-child td {
+        border-bottom: 2px solid #5882FA !important;
+   }
+   .pbSubsection{
+    float:left;
+    width:100%; 
+   }
+</style>
+
+    <div style="position: relative; z-index: 1;" class="tablist">
+    <ul>
+        <li style="display: block" id="BankAccounts" class="selecttabctive" onclick="changeTabs(this.id);">
+            <a href="javascript:void(0)"> 1.Bank Account </a>
+        </li>
+        <li style="display: block" id="creditCard" class="selecttab" onclick="changeTabs(this.id);">
+            <a href="javascript:void(0)"> 2.Credit Card </a>
+        </li>
+        <li style="display: block" id="summary" class="lasttab" onclick="changeTabs(this.id);">
+            <a href="javascript:void(0)"> 3.Summary </a>
+        </li>
+        <!-- <li style="display: block" id="ProductOptions" class="lasttab" onclick="changeTabs(this.id);">
+            <a href="javascript:void(0)"> 4.Product Options </a>
+        </li>
+        -->
+    </ul>
+    </div>
+    <apex:outputpanel style="float:right;padding-right:20px;">
+        <apex:outputlink value="/apex/BankAccountwizardsummaryVF?id={!$CurrentPage.parameters.id}" >Summary Report</apex:outputlink>&nbsp;&nbsp;
+        <apex:outputlink value="/{!$CurrentPage.parameters.id}" >Account Page</apex:outputlink>
+    </apex:outputpanel>
+    <apex:actionfunction name="SaveandNext" action="{!saveBankAccountRec}" reRender="theFm" />
+    <apex:actionfunction name="saveandNew" action="{!saveAndNewBankAccount}" reRender="theFm"/>
+    <apex:actionfunction name="changeWizard" action="{!changeWizard}" reRender="theFm" immediate="true" >
+        <apex:param name="wizardType" assignto="{!wizardType}" id="wizardType" value="{!wizardType}"/>
+    </apex:actionfunction>
+    
+    <apex:inputhidden id="wzType" value="{!wizardType}" />
+        <apex:pageBlock id="thePb" mode="maindetail" > 
+        <apex:pageMessages />
+           <apex:outputpanel id="AccAddress" style="padding:10px;float:left;width:100%;" rendered="{!accView}">
+             <apex:pageblockSection title="Account Details" collapsible="false" columns="1" >
+                <apex:outputtext value="{!accName}" id="Accname" label="Account Name" />
+                <apex:outputtext value="{!BizAddress}" id="BizAdd" label="Biz Address" />
+                <apex:outputtext value="{!HomeAddress}" id="HomeAdd" label="Home Address" />
+                 <apex:outputtext value="{!ownerInfo}"  label="Owner Information" />
+                  <apex:outputtext value="{!objAccount.Legal_Name__c}"  label="Legal Name" />
+            </apex:pageblockSection>
+         </apex:outputpanel>        
+                                
+                <apex:outputpanel rendered="{!accInfoView}" id="BAnkAccWizard" styleClass="panelClass">
+                <apex:pageBlockSection id="theBankAccPBS" title="Bank Information" collapsible="false"  columns="1"> 
+                    <apex:outputpanel >
+                    <table class="bankDetail" cellspacing="0" width="100%">
+                        <tr>
+                            <td class="labelCol"> Bank Name </td>
+                            <td>
+                                 <apex:inputField value="{!objBankAccount.Bank_Name__c}" id="BankName" required="true"  taborderhint="1"/> 
+                                    <input type="button" value="New" tabindex="-1" class="btn" onclick="accountLookup();" />
+                              </td>
+                              <td class="labelCol"> Number of NSFs </td>
+                                <td> 
+                                    <apex:inputField value="{!objBankAccount.Number_of_NSFs__c}" id="NoofNsfs"  taborderhint="7" /> 
+                                     <apex:inputField value="{!objBankAccount.Number_of_NSFs_N_A__c}" id="NoofNsfsNA"  style="width: 12px;"   /> 
+                                     <label style="font-weight: bold;font-size:90%;">N/A</label>
+                                 </td>
+                                 
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Bank Account Number </td>
+                            <td> <apex:inputField value="{!objBankAccount.Bank_Account_Number__c}" id="BankNum" required="true" taborderhint="2"/>  </td>
+                            <td class="labelCol"> Number of Negative Days </td>
+                                <td> 
+                                    <apex:inputField value="{!objBankAccount.Number_of_Negative_Days__c}" id="negDays"   taborderhint="7"/> 
+                                    <apex:inputField value="{!objBankAccount.Number_of_Negative_Days_N_A__c}"  id="negDaysNA" style="width: 12px;"  />
+                                     <label style="font-weight: bold;font-size:90%;">N/A</label>
+                                </td>
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Month </td>
+                            <td> <apex:inputField value="{!objBankAccount.Month__c}" id="Month" required="true" onChange="populateAccNo();" taborderhint="3"/> </td>
+                            <td class="labelCol"> Average Daily Balance </td>
+                                <td>
+                                     <apex:inputField value="{!objBankAccount.Average_Daily_Balance__c}" id="AvgDailyBal"  taborderhint="8" />
+                                     <apex:inputField value="{!objBankAccount.Average_Daily_Balance_N_A__c}" id="AvgDailyBalNA" style="width: 12px;"  />
+                                      <label style="font-weight: bold;font-size:90%;">N/A</label>
+                                 </td>
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Year </td>
+                            <td> <apex:inputField value="{!objBankAccount.Year__c}" id="Year"   required="true" onChange="populateAccNo();" taborderhint="4"/> </td>
+                            <td class="labelCol"> Business/Owner Name Same as App </td>
+                            <td> <apex:inputField value="{!objBankAccount.Business_Owner_Name_Same_as_App__c}" id="AddChkBox"  taborderhint="9" /> </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Deposits </td>
+                            <td> <apex:inputField value="{!objBankAccount.Deposits__c}" id="Deposits"  onblur="calcNetDeposites()"  onkeypress="return isNumber(event)" taborderhint="5"/> </td>
+                            <td class="labelCol"> Address Same as Biz/Home Address </td>
+                            <td> <apex:inputField value="{!objBankAccount.Address_Same_as_Biz_Home_Address__c}" id="Namechkbox"  taborderhint="10" /> </td>
+                                    
+                                 
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Transfers / Disallowed </td>
+                            <td> <apex:inputField value="{!objBankAccount.Transfers_Disallowed__c}" id="Transfers"  onblur="calcNetDeposites()" onkeypress="return isNumber(event)" taborderhint="6"/> </td>
+                            <td class="labelCol"> Data Request </td>
+                            <td> <apex:inputField value="{!objBankAccount.Data_Request__c}"  style="width:375px;height:45px;" taborderhint="11" /> </td>
+                            
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Net Deposits </td>
+                            <td> <apex:inputText label="Net Deposits" id="netDep" disabled="true" />  </td>
+                            <td class="labelCol"> Notes  </td>
+                            <td> <apex:inputField value="{!objBankAccount.Notes__c}" id="Notes" style="width:375px;height:45px;" taborderhint="12" /> </td>
+                        </tr>
+                    </table>
+                </apex:outputpanel>
+                                
+                </apex:pageBlockSection>
+                <div style="text-align:center;">
+                    <apex:commandButton id="bnkBtn" value="Save" onclick="SaveRec('save'); return false;"  /> &nbsp;&nbsp;
+                    <!-- <apex:commandButton id="bnkNxtBtn" value="Save & Next" action="{!saveAndNextBankAccount}" onclick="SaveRec('');"  reRender="theFm"/> &nbsp;&nbsp; -->
+                    <apex:commandButton id="newBnkBtn" value="Save & New Bank" onclick="SaveRec('saveandNew'); return false;"/>&nbsp;&nbsp;
+                    <input type="button" class="btn" value="Cancel" onclick="window.location.href='/{!$Currentpage.parameters.id}';" id="canclBtn" />
+                </div>
+                    <script>
+                        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName').focus();
+                    </script>
+                </apex:outputpanel>
+                <apex:outputpanel id="cCview" rendered="{!cCView}" styleClass="panelClass">
+                    <apex:pageBlockSection id="theCCPBS" title="Credit Card Statement" collapsible="false" columns="1" >
+                     <apex:outputpanel >
+                     <table class="bankDetail" cellspacing="0" width="100%">
+                        <tr>
+                            <td class="labelCol"> Processor Name </td>
+                            <td> 
+                                <apex:inputField value="{!objCreditCard.Processor_Name__c}" id="procName" required="true" taborderhint="1" />
+                                <input type="button" value="New" tabindex="-1" class="btn" onclick="accountLookup();" />  
+                            </td>
+                            <td class="labelCol"> Total Net Processed-AMEX only </td>
+                            <td> <apex:inputField value="{!objCreditCard.Total_Net_Processed_AMEX_only__c}" taborderhint="7"/> </td>
+                            
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> MID Account Number </td>
+                            <td> <apex:inputField value="{!objCreditCard.MID_Account_Number__c}" required="true" id="mid" taborderhint="2"/> </td>
+                            <td class="labelCol"> Number of Transactions-AMEX only </td>
+                            <td> <apex:inputField value="{!objCreditCard.Number_of_Transactions_AMEX_only__c}" taborderhint="8"/> </td>
+                            
+                            
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Month </td>
+                            <td>    <apex:inputField value="{!objCreditCard.Month__c}" required="true" taborderhint="3"/> </td>
+                            <td class="labelCol"> Name Same as App </td>
+                            <td>        <apex:inputField value="{!objCreditCard.Name_Same_as_App__c}" taborderhint="9"/> </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Year </td>
+                            <td> <apex:inputField value="{!objCreditCard.Year__c}"  required="true" taborderhint="4"/> </td>
+                            <td class="labelCol"> Address Same as App </td>
+                            <td> <apex:inputField value="{!objCreditCard.Address_Same_as_App__c}" taborderhint="10"/> </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Total Net Processed-All </td>
+                            <td> <apex:inputField value="{!objCreditCard.Total_Net_Processed_All__c}" taborderhint="5"/> </td>
+                            <td class="labelCol"> Data Request </td>
+                            <td> <apex:inputField value="{!objCreditCard.Data_Request__c}" style="width:375px;height:45px;" taborderhint="11"/> </td>
+                        </tr>
+                        <tr>
+                            <td class="labelCol"> Number of Transactions-All </td>
+                            <td> <apex:inputField value="{!objCreditCard.Number_of_Transactions_All__c}" taborderhint="6"/> </td>
+                            <td class="labelCol">Notes</td>
+                            <td> <apex:inputField value="{!objCreditCard.Notes__c}" taborderhint="12" style="width:375px;height:45px;"/> </td>
+                        </tr>
+                     </table>
+                    </apex:outputpanel> 
+                                    
+                    </apex:pageBlockSection>
+                    <div style="text-align:center;padding:15px;">
+                        <apex:commandButton id="ccBtn" value="Save" action="{!saveCC}" onclick="disableCC()" reRender="theFm"/> &nbsp; &nbsp;
+                        <apex:commandButton id="newCCBtn" value="Save & New CC" action="{!saveAndNewCC}" onclick="disableCC()" reRender="theFm"  />&nbsp;&nbsp;
+                        <input type="button" class="btn" value="Cancel" onclick="window.location.href='/{!$Currentpage.parameters.id}';" id="caclBtn2" />
+                    </div>
+                    <script>
+                        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName').focus();
+                    </script>
+                 </apex:outputpanel>
+            <apex:outputpanel id="summaryView" rendered="{!summaryView}" style="padding:10px;">
+                
+                <apex:pageBlockSection id="theSummaryPBS" title="Summary" collapsible="false" columns="1">
+                </apex:pageBlockSection>
+            
+                    <apex:outputPanel id="out" >
+                        <table id="theAccSum" class="bankacc" width="100%" cellpading="3" cellspacing="0">
+                            <tr style="height:40px;">
+                                <th style="width:50%; text-align:center; padding:5px 0px;" colspan="2">CALCULATIONS - BANK SALES</th>
+                                <th style="width:50%; text-align:center; padding:5px 0px;" colspan="2">CALCULATIONS - CC SALES</th>
+                            </tr>
+                            <tr>
+                                <td style="width:25%;" class="labelCol"> Bank Name(s) </td>
+                                <td style="width:25%;text-align: left;" class="hvr">
+                                     <apex:outputfield value="{!objAccount.Bank_Names__c}" />
+                                </td>
+                                <td style="width:25%;" class="labelCol"> Processor Name(s) </td>
+                                <td style="width:25%;text-align: left;" class="hvr"> 
+                                    <apex:outputfield value="{!objAccount.Processor_Names__c}" /> 
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="labelCol"> Bank Acct Num(s) </td>
+                                <td style="text-align: left;" class="hvr"> 
+                                    <apex:outputfield value="{!objAccount.Bank_Acct_Nums__c}" />
+                                </td>
+                                <td class="labelCol"> MID(s) </td>
+                                <td style="text-align: left;" class="hvr"> 
+                                    <apex:outputfield value="{!objAccount.MIDs__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="labelCol"> Monthly Bank Deposit Avg - All </td>
+                                <td style="text-align: left;" class="hvr">
+                                    <apex:outputtext rendered="{!IF(TEXT(objAccount.Monthly_Bank_Deposit_Avg_All__c) != '',true,false)}" >$</apex:outputtext> <apex:outputfield value="{!objAccount.Monthly_Bank_Deposit_Avg_All__c}" />
+                                </td>
+                                <td class="labelCol"> Monthly CC Avg - All </td>
+                                <td style="text-align: left;" class="hvr"> 
+                                    <apex:outputtext rendered="{!IF(TEXT(objAccount.Monthly_CC_Avg_All__c) != '',true,false)}" >$</apex:outputtext> <apex:outputfield value="{!objAccount.Monthly_CC_Avg_All__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="labelCol">  Monthly Bank Deposit Avg - Last 2 Month </td>
+                                <td style="text-align: left;" class="hvr">
+                                     <apex:outputtext rendered="{!IF(TEXT(objAccount.Monthly_Bank_Depopsit_Avg_Last_2_Months__c) != '',true,false)}" >$</apex:outputtext><apex:outputfield value="{!objAccount.Monthly_Bank_Depopsit_Avg_Last_2_Months__c}" />
+                                </td>
+                                <td class="labelCol"> Monthly CC Avg - Last 2 Months </td>
+                                <td style="text-align: left;" class="hvr"> 
+                                    <apex:outputtext rendered="{!IF(TEXT(objAccount.Monthly_CC_Avg_Last_2_Months__c) != '',true,false)}" >$</apex:outputtext><apex:outputfield value="{!objAccount.Monthly_CC_Avg_Last_2_Months__c}" />
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="labelCol"> # of Bank Stmts Avail </td>
+                                <td style="text-align: left;" class="hvr">
+                                     <apex:outputfield value="{!objAccount.Number_Bank_Statements_Available__c}" />
+                                </td>
+                                <td class="labelCol"> Monthly CC Avg - Non Amex </td>
+                                <td style="text-align: left;" class="hvr"> 
+                                    <apex:outputtext rendered="{!IF(TEXT(objAccount.Monthly_CC_Avg_Non_Amex__c) != '',true,false)}" >$</apex:outputtext><apex:outputfield value="{!objAccount.Monthly_CC_Avg_Non_Amex__c}" />
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td class="labelCol">Avg Daily Balances (Monthly Avg)</td>
+                                <td style="text-align: left;" class="hvr">
+                                    <apex:outputfield value="{!objAccount.NDBs_Avg__c}" />
+                                </td>
+                                <td class="labelCol"> # of CC Stmts Avail </td>
+                                <td style="text-align: left;" class="hvr">
+                                     <apex:outputfield value="{!objAccount.Number_CC_Statements_Available__c}" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="labelCol">NSFs (Monthly Avg)</td>
+                                <td style="text-align: left;" class="hvr">
+                                    <apex:outputfield value="{!objAccount.NSFs_Avg__c}" />
+                                </td>
+                                <td class="labelCol"> CC transactions (Monthly Avg) </td>
+                                <td style="text-align: left;" class="hvr">
+                                     <apex:outputfield value="{!objAccount.CC_transactions_Monthly_Avg__c}" />
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </apex:outputPanel>                     
+                    
+            </apex:outputpanel>  
+        </apex:pageBlock>
+    
+    <script>
+    var $j = jQuery.noConflict();
+    var Accounts = {};
+    var banks=new Array();
+    
+    function changeTabs(objId){
+        document.getElementById('BankAccounts').className = 'selecttab';
+        document.getElementById('creditCard').className = 'selecttab';
+        document.getElementById('summary').className = 'lasttab';
+                
+        if(objId=='BankAccounts'){
+            document.getElementById('BankAccounts').className = 'selecttabctive';
+            
+        }
+        if(objId=='creditCard'){
+            document.getElementById('creditCard').className = 'selecttabctive';
+            
+        }
+        if(objId=='summary'){ 
+            document.getElementById('summary').className = 'lasttabactive';
+            
+        }       
+        
+        changeWizard(objId);
+    }
+    
+    function SaveRec(type){
+        //document.getElementById('BankAccounts').className = 'selecttab';
+        //document.getElementById('creditCard').className = 'selecttabctive';
+        //document.getElementById('summary').className = 'selecttab';
+        //document.getElementById('ProductOptions').className = 'lasttab';
+        //document.getElementById('BAnkAccWizard').style.display='none';
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:bnkBtn').value="Saving...";
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:bnkBtn').className="btnDisabled";
+        
+        //document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:bnkNxtBtn').value="Saving...";
+        //document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:bnkNxtBtn').className="btnDisabled";
+        
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:newBnkBtn').value="Saving...";
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:newBnkBtn').className="btnDisabled";
+        
+        document.getElementById('canclBtn').value="Saving...";
+        document.getElementById('canclBtn').className="btnDisabled";
+        if(type == 'save')
+            SaveandNext();
+        else if(type == 'saveandNew'){
+            saveandNew();
+        }
+    }
+    //disable cc butttons
+    function disableCC(){
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:ccBtn').value="Saving...";
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:ccBtn').className="btnDisabled";
+        
+        //document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:ccNxtBtn').value="Saving...";
+        //document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:ccNxtBtn').className="btnDisabled";
+        
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:newCCBtn').value="Saving...";
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:newCCBtn').className="btnDisabled";
+        
+        document.getElementById('caclBtn2').value="Saving...";
+        document.getElementById('caclBtn2').className="btnDisabled";
+    }
+    
+    if({!accInfoView})
+    {
+        document.getElementById('BankAccounts').className = 'selecttab';
+        document.getElementById('creditCard').className = 'selecttab';
+        document.getElementById('summary').className = 'lasttab';
+        //changeTabs('BankAccounts');
+        document.getElementById('BankAccounts').className = 'selecttabctive';
+    }
+    if({!cCView})
+    {
+        document.getElementById('BankAccounts').className = 'selecttab';
+        document.getElementById('creditCard').className = 'selecttab';
+        document.getElementById('summary').className = 'lasttab';
+        //changeTabs('BankAccounts');
+        document.getElementById('creditCard').className = 'selecttabctive';
+    }
+    if( {!summaryView} )
+    {
+        document.getElementById('BankAccounts').className = 'selecttab';
+        document.getElementById('creditCard').className = 'selecttab';
+        document.getElementById('summary').className = 'lasttab';
+        //changeTabs('BankAccounts');
+        document.getElementById('summary').className = 'lasttabactive';
+    }
+    
+    // Script for auto complete 
+    $j(function() {
+        
+        <apex:repeat value="{!lstBanks}" var="bank">
+            banks.push('{!JSENCODE(bank.name)}');
+            Accounts['{!JSENCODE(bank.name)}'] = {Id:'{!bank.id}',Name:'{!JSENCODE(bank.name)}'};
+        </apex:repeat>
+         var txt=document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName');
+         $j((txt)).autocomplete({
+            focus: true,
+            open: true,
+            source: banks,
+            select: function (event, ui) { document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName').value=ui.item.value;  assignBank(ui.item.value); }
+          });
+          
+           var txt=document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName');
+         $j((txt)).autocomplete({
+            focus: true,
+            open: true,
+            source: banks,
+            select: function (event, ui) { document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName').value=ui.item.value;  assignProcessor(ui.item.value); }
+          });
+     });
+     
+     function assignBank(val){
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName_lkid').value=Accounts[val].Id;
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName_lkold').value=val;
+     }
+     
+      function assignProcessor(val){
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName_lkid').value=Accounts[val].Id;
+        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName_lkold').value=val;
+     }
+     
+   //retrieve account from AccountLookupVF page
+   function accountLookup()
+   {
+    var popupstyle = "center:yes;resizable:no;dialogHeight:600px;dialogwidth:600px";
+    var  acc = window.showModalDialog("/apex/AccountLookupVF",null,popupstyle);
+    
+    if(acc != null){
+        //alert(acc);
+        var record=acc.split(':#:');
+    if(record.length == 2){
+        Accounts[record[1]] = {Id:record[0],Name:record[1]};
+        var strBankName = record[1];
+        if(strBankName!='' && strBankName!=null && strBankName != 'null')
+            strBankName = strBankName.replace(/[^a-z0-9\s]/gi,'');
+        banks.push(strBankName);
+        banks.sort();
+        
+        if(document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName')){
+            assignBank(record[1]);
+            document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankName').value=record[1];
+            }
+          if(document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName')){
+            assignProcessor(record[1]);
+            document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS:procName').value=record[1];
+          } 
+        }
+     }
+   } 
+   //prevent entering from strings
+   function isNumber(evt) {
+         
+          var charCode = (evt.which) ? evt.which : event.keyCode;
+          if (charCode != 46 && charCode > 31 && (charCode < 48 || charCode > 57))
+             return false;
+
+          return true;
+     
+  
+}
+   //calculate Net Deposite
+   function calcNetDeposites()
+   {
+        var deposites=document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:Deposits').value;
+        var transfers=document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:Transfers').value;
+        var netDeposites=document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:netDep');
+            //console.log(deposites+'==========='+transfers);
+        if(deposites !='' && transfers == '')
+            netDeposites.value=deposites;
+        else if(deposites !='' && transfers != '')
+            netDeposites.value=parseFloat(deposites)-parseFloat(transfers);
+        if(!deposites && transfers){    
+                netDeposites.value=0-parseFloat(transfers);
+            }
+        if(!deposites && !transfers)
+                netDeposites.value='';
+   }
+   
+   calcNetDeposites();
+   //add new button 
+  // addNewButton('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS');
+  // addNewButton('thePg:theFm:theComp:theBankAccComp:thePb:theCCPBS')
+   function addNewButton(id){
+       var ccDiv=document.getElementById(id);
+       if(ccDiv){
+       var ccTbl=ccDiv.getElementsByTagName("table");
+        var button = document.createElement("input");
+        button.type = "button";
+        button.value = "New";
+        button.tabIndex="-1";
+        button.onclick =function(){accountLookup();};
+        button.className='btn';
+        if(ccTbl.length > 0){
+            ccTbl[0].rows[0].cells[1].appendChild(button);
+        } 
+        }
+    }
+    //function to edit summary fields
+    function editSummary(){
+        var spans=document.getElementById('theAccSum').getElementsByTagName('span');
+        for(var i=0;i<spans.length;i++){
+            spans[i].style.display='none';
+        }
+        
+        var inputs=document.getElementById('theAccSum').getElementsByTagName('input');
+        for(var i=0; i< inputs.length; i++){
+            inputs[i].style.display='block';
+        }
+    }
+    
+    //function for autopopulating Account number
+    function populateAccNo(){
+        var accNumber = document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankNum').value;
+       if(!accNumber){
+        var month = document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:Month').value;
+        var year = document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:Year').value;
+        var accId= '{!$CurrentPage.parameters.id}';
+      if(month !='--None--' && year != '--None--' && accId){    
+        Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.BankAccountWizard.previousMonthAccNo}',month,year,accId,
+            function(result, event){
+                if (event.status) {
+                  if(result){
+                        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankNum').value=result;
+                     }    
+                     else{
+                        document.getElementById('thePg:theFm:theComp:theBankAccComp:thePb:theBankAccPBS:BankNum').value='';
+                     }
+                } else if (event.type === 'exception') {
+                    
+                } else {                 
+                }
+            }, 
+            {escape: true} );
+       }
+     
+     }
+   }
+   //profile permissions
+   window.onLoad=setPermissions();
+   function setPermissions(){
+  // alert('{!$Profile.Name}');
+     if('{!$Profile.Name}' =='ICF Internal Sales (2012)')   {
+        var form = document.getElementById("thePg:theFm");
+        var elements = form.elements;
+        for (var i = 0;i < elements.length;  ++i) {
+            elements[i].disabled = true;
+        }
+     }  
+   }
+     </script>
+    
+    
+</apex:component>

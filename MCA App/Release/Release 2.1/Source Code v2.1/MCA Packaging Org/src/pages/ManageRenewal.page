@@ -1,0 +1,915 @@
+<apex:page docType="html-5.0" Controller="MovingRenewalController" sidebar="false"
+    action="{!Init}" showHeader="true">
+<apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" />
+   
+        <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" / >
+        <apex:includescript value="//cdn.datatables.net/1.10.4/js/jquery.dataTables.min.js" />
+        <apex:stylesheet value="//cdn.datatables.net/1.10.4/css/jquery.dataTables.css" />
+        <apex:stylesheet value="//cdn.datatables.net/responsive/1.0.6/css/dataTables.responsive.css" />
+        <apex:includescript value="//cdn.datatables.net/responsive/1.0.5/js/dataTables.responsive.js" />
+        <apex:includescript value="//cdn.datatables.net/responsive/1.0.5/js/dataTables.responsive.js" />
+        
+         
+       
+    <style type="text/css">
+.custPopup {
+    background-color: white;
+    border-width: 2px;
+    border-style: solid;
+    z-index: 9999;
+    left: 50%;
+    padding: 10px;
+    position: fixed; 
+    /* These are the 3 css properties you will need to change so the popup
+                    displays in the center of the screen. First set the width. Then set
+                    margin-left to negative half of what the width is. You can add
+                    the height property for a fixed size pop up if you want.*/
+    width: 500px;
+    margin-left: -250px;
+    /*             top:100px; */
+    top: 50%;
+}
+
+.popupBackground {
+    background-color: black;
+    opacity: 0.20;
+    filter: alpha(opacity =   20);
+    position: ;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 9998;
+}
+
+.p2 {
+  display: hidden;
+}
+ .empty{display:none !important}
+ body .bPageBlock .pbBody .red .pbSubheader{
+                //background-color:#ffffff;
+            }
+             body .bPageBlock .pbBody .red .pbSubheader h3{
+                color:black;
+            }
+  body .bPageBlock .pbBody .pbSubheader {
+    border-style : solid;
+    border-color:  #1797C0;
+}
+           
+</style>
+    <script type="text/javascript">
+    
+    //Variable Declaration
+    var ckeckedOppIdsArray = [];
+    var oppDeserializeId = [];
+    var tableData = [];
+    var value = '';
+    var tdBankNameId = '';
+    var OppId = '';
+    var allOppTableData = [];
+    var isTrueBal = false;
+    var isTrueDate = false;
+    
+    //Function to set Focus on Page Load    
+    window.onload = setFocus
+    function setFocus() {
+        //document.getElementById("checkBox").focus();
+    }
+    
+    
+    //Function to push elements in array on click of Checkbox
+    $(document).ready(function()  {  
+        bindEvents();
+    });//End Document.Ready 
+    
+    
+    //Function to rerender whole form using action function
+    function CloseWindow(){
+        ShowPageOnCloseWindow();
+    }
+    
+    //Function to push data in array onClick of Header checkbox of table
+    function checkAll(cb, cbid) {
+        var inputElem = document.getElementsByTagName("input");
+        console.log('***inputElem****'+inputElem);
+        var getcheckedValues = '';
+        for ( var i = 0; i < inputElem.length; i++) {
+            if (inputElem[i].id.indexOf(cbid) != -1) {
+                inputElem[i].checked = cb.checked;
+            }//End If
+        }//End For
+        
+        //To clear existing data in array
+        for ( var i = 0; i < tableData.length; i++) {
+            tableData.splice(i,1); 
+        }//End For
+        
+        //Store data of each checkbox checked
+        $(".iptCheckbox").each(function(){
+            if($(this).is(":checked") == true){
+            
+                OppId = $(this).attr("data-oppId");
+                var $td= $(this).closest('tr').children('td');  
+                var $tdBal= $(this).closest('tr').children().eq(9).children();  
+                var $tdBalDate= $(this).closest('tr').children('td').eq(10).find("input");
+                
+                var balance = $tdBal.val();  
+                var balanceDate = $tdBalDate.val();  
+                
+                //Parse balance Date to convert into "yyyy-mm-dd"
+                var thisDate = new Date(balanceDate);
+                var year = thisDate.getFullYear();
+                var month = thisDate.getMonth() + 1;
+                var date = thisDate.getDate();
+                var parsedDate = year + '-' + month + '-' + date;
+                console.log('*****parsedDate****'+parsedDate);  
+                
+                //Parse balance  to remove ","
+                var parsedbalance = parseFloat(balance.replace(',','')).toFixed(2);
+                
+                //Check if Balance date is null
+                if(parsedDate == "NaN-NaN-NaN"){
+                    parsedDate = null;
+                }//EndIf
+                //Check if Balance is null
+                if(parsedbalance == "NaN"){
+                    parsedbalance = null;
+                }//End If
+                
+                //Push Data into array
+                tableData.push(
+                    {
+                        Id : OppId,
+                        McaApp__Balance__c : parsedbalance,
+                        McaApp__Current_Balance_Date__c : parsedDate
+                    }
+                );//End TableData
+           }//End If
+           
+           else if($(this).is(":checked") == false){
+                for ( var i = 0; i < tableData.length; i++) {
+                    tableData.splice(i,1);
+                    break;
+                }//End For
+           }//End else if
+           console.log("Checkbox is unchecked in ForEach."+tableData);
+        });//End for each loop
+    }//End checkAll function
+     
+    //Function to focus on checkbox
+    function focusOn(val)
+    {
+         var checkboxId = val; 
+         console.log('***checkboxId****'+checkboxId);
+         //alert(document.getElementById(checkboxId));
+         //document.getElementById(checkboxId).focus();
+         bindEvents();
+    } 
+    
+    function bindEvents() {
+        console.log('-----bind events-----');
+        $('input[type="checkbox"]').click(function(){
+           if($(this).hasClass("iptCheckbox")){
+                if($(this).prop("checked") == true){
+                    
+                    console.log("Checkbox is checked.");
+                    
+                    //Opportunity Id using HTML 5 attribute
+                    value = $(this).attr("data-oppId");
+                    tdBankNameId = $(this).attr("data-nextoppId");
+                    
+                    //Fetch values of table elements 
+                    var $td= $(this).closest('tr').children('td');  
+                    var $tdBal= $(this).closest('tr').children().eq(9).children();  
+                    var $tdBalDate= $(this).closest('tr').children('td').eq(10).find("input");
+                     
+                    var balance = $tdBal.val();  
+                    var balanceDate = $tdBalDate.val();  
+                    
+                    //Parse balance Date to convert into "yyyy-mm-dd"
+                    var thisDate = new Date(balanceDate);
+                    var year = thisDate.getFullYear();
+                    var month = thisDate.getMonth() + 1;
+                    var date = thisDate.getDate();
+                    var parsedDate = year + '-' + month + '-' + date;
+                    
+                    //Parse balance  to remove ","
+                    var parsedbalance = parseFloat(balance.replace(',','')).toFixed(2);
+                    
+                    //Check if Balance date is null
+                    if(parsedDate == "NaN-NaN-NaN"){
+                        parsedDate = null;
+                    } 
+                    //Check if Balance  is null
+                    if(parsedbalance == "NaN"){
+                        parsedbalance = null;
+                    } 
+                    
+                    //Push Data into array
+                    tableData.push(
+                        {
+                            Id : value,
+                            McaApp__Balance__c : parsedbalance,
+                            McaApp__Current_Balance_Date__c : parsedDate
+                        }
+                    );//EndtableData
+                }//End If
+                else if($(this).prop("checked") == false){
+                console.log('****CheckBox is Unchecked****'); 
+                    value1 = $(this).attr("data-oppId");
+                    for ( var i = 0; i < tableData.length; i++) {
+                         if(tableData[i].Id == value1){
+                             tableData.splice(i, 1); 
+                             break; 
+                        }//End If
+                    }//End For
+                    console.log("Checkbox is unchecked."+tableData);
+                }//End Else If
+              }//End Main IF
+          });//End of Input Click function
+    }
+    
+    //Function to rerender form    
+    function CloseWindow(){
+        ShowPageOnCloseWindow();
+    }//End CloseWindow
+    
+    //Function to be called on click of Custom button
+    function passdataToController() {
+        ShowP(JSON.stringify(tableData));
+        return false;
+    }
+    
+    //Function to be called on click of Custom button Delay Eligibility
+    function delayEligibilityController() {
+        delayEligibility(JSON.stringify(tableData));
+        return false;
+    }
+    
+    //Function to be called on click of Custom button Create Followup Task
+    function createFollowupTaskController() {
+        delayFollowUpTask(JSON.stringify(tableData));
+        return false;
+    }
+    
+    //Function to be called on click of Custom button Save
+    function saveDataController() {
+        SaveAllOppData(JSON.stringify(allOppTableData));
+        return false;
+    }
+    
+    //Function to be called on click of Custom button Mass Email
+    function sendMailController() {
+        
+            sendMassMail(JSON.stringify(tableData));
+            //return false;
+       
+        return false;
+    }
+    
+    //Function to push data in array on Change of Balance if checkbox in table row is checked
+    function onChangeBalance(id, value){
+        //Parse Balance to remove ","
+        var parsedbalance = parseFloat(value.replace(',','')).toFixed(2);
+        
+        if(parsedbalance == "NaN"){
+         parsedbalance = null;
+        }//End If  
+        
+        //Update Array          
+        for ( var i = 0; i < tableData.length; i++) {
+             if(tableData[i].Id == id){
+              tableData[i].McaApp__Balance__c = parsedbalance;
+             }
+        }//End For
+    }//End onChangeBalance
+    
+    //Function to push Data in array on change of Balance Date if checkbox in table row is checked
+    function onChangeBalanceDate(id, value){
+     
+        //Parse Date to convert it into format "yyyy-mm-dd"
+        var thisDate = new Date(value);
+        var year = thisDate.getFullYear();
+        var month = thisDate.getMonth() + 1;
+        var date = thisDate.getDate();
+        var parsedDate = year + '-' + month + '-' + date;
+        
+        //Check if Date is Null
+        if(parsedDate == "NaN-NaN-NaN"){
+          parsedDate = null;
+        }//EndIf
+     
+        for ( var i = 0; i < tableData.length; i++) {
+             if(tableData[i].Id == id){
+                tableData[i].McaApp__Current_Balance_Date__c = parsedDate;
+             }//End If
+        }//End For
+        console.log("***tableData after****"+tableData);
+    }
+    
+    //Function to push Data in array on change of Balance Date
+    function onChangeBalanceForAllOpp(id, value, balanceDate){
+        
+        //Parse Balance to remove comma
+        var parsedbalance = parseFloat(value.replace(',','')).toFixed(2);
+        
+        //Check if balance is null
+        if(parsedbalance == "NaN"){
+            parsedbalance = null;
+        }//End If  
+        
+        //Parse Date
+        var thisDate = new Date(balanceDate);
+        var year = thisDate.getFullYear();
+        var month = thisDate.getMonth() + 1;
+        var date = thisDate.getDate();
+        var parsedDate = year + '-' + month + '-' + date;
+        console.log('*****parsedDate****'+parsedDate);
+        
+        //Check if Date is Null
+        if(parsedDate == "NaN-NaN-NaN"){
+           parsedDate = null;
+        }//EndIf
+        
+        //Check if there is already data in array
+        if(allOppTableData.length > 0){
+            for ( var i = 0; i < allOppTableData.length; i++) {
+                    if(allOppTableData[i].Id == id){
+                        allOppTableData[i].McaApp__Balance__c = parsedbalance;
+                        isTrueBal = true;
+                    }//End If
+            }//End For
+            
+            if (isTrueBal == false) { 
+                        
+                        allOppTableData.push(
+                            {
+                                Id : id,
+                                McaApp__Balance__c : parsedbalance,
+                                McaApp__Current_Balance_Date__c : parsedDate
+                            }
+                        );//End allOppTableData
+            }//End If
+            console.log("***tableData after****"+allOppTableData);
+        } //End if 
+        if(allOppTableData.length <= 0){    
+            allOppTableData.push(
+                            {
+                                Id : id,
+                                McaApp__Balance__c : parsedbalance,
+                                McaApp__Current_Balance_Date__c : parsedDate
+                            }
+            );//End allOppTableData
+       }// End else if
+       console.log("***tableData final****"+allOppTableData);
+    }//End onChangeBalanceForAllOpp function
+    
+    //Function to push data in array on change of Balance Date
+    function onChangeBalanceDateForAllOpp(id, value, balance){
+        
+        //Parse Balance to remove ","
+        var parsedbalance = parseFloat(balance.replace(',','')).toFixed(2);
+        
+        if(parsedbalance == "NaN"){
+            parsedbalance = null;
+        }//End If  
+        
+        //Parse Date to convert it into format "yyyy-mm-dd"
+        var thisDate = new Date(value);
+        var year = thisDate.getFullYear();
+        var month = thisDate.getMonth() + 1;
+        var date = thisDate.getDate();
+        var parsedDate = year + '-' + month + '-' + date;
+        
+        //Check if Date is Null
+        if(parsedDate == "NaN-NaN-NaN"){
+           parsedDate = null;
+        }//EndIf
+        
+        if(allOppTableData.length > 0){
+            for ( var i = 0; i < allOppTableData.length; i++) {
+                    if(allOppTableData[i].Id == id){
+                        allOppTableData[i].McaApp__Current_Balance_Date__c = parsedDate;
+                        isTrueDate = true;
+                        
+                    }
+                    
+            }//End For
+            
+            if (isTrueDate == false){
+                    allOppTableData.push(
+                     {
+                         Id : id,
+                         McaApp__Balance__c : parsedbalance,
+                         McaApp__Current_Balance_Date__c : parsedDate
+                     }
+                    );
+            }//End If
+        } //End if 
+        if(allOppTableData.length <= 0){    
+            allOppTableData.push(
+                            {
+                                Id : id,
+                                McaApp__Balance__c : parsedbalance,
+                                McaApp__Current_Balance_Date__c : parsedDate
+                            }
+            );// End allOppTableData
+       }// End else if
+       console.log("***tableData final****"+allOppTableData);
+       
+    }//End onChangeBalanceDateForAllOpp function    
+    
+    
+     
+    </script>
+    
+    <apex:sectionHeader title="Manage Renewals" />
+    <apex:form Id="formId">
+    <apex:actionFunction name="ShowP" action="{!passValueOfSelectedOpps}" rerender="" oncomplete="callcreateOp();" status="loadingAttachment">
+            <apex:param name="oppDataJson" assignto="{!oppDataJson}" value="" /> 
+    </apex:actionFunction>
+    <apex:actionFunction name="SaveOppData" action="{!passValueOfSelectedOpps}" rerender="" oncomplete="callSaveOpportunities();">
+            <apex:param name="oppDataJson" assignto="{!oppDataJson}" value="" /> 
+    </apex:actionFunction>
+    
+    <apex:actionFunction name="SaveAllOppData" action="{!passValueOfAllOpps}" rerender="" oncomplete="callSaveOpportunities();">
+            <apex:param name="allOppDataJson" assignto="{!allOppDataJson}" value="" /> 
+    </apex:actionFunction>
+    
+    <apex:actionFunction name="delayEligibility" action="{!passValueOfSelectedOpps}" rerender="" oncomplete="calldelayEligibility();" status="loadingAttachment">
+            <apex:param name="oppDataJson" assignto="{!oppDataJson}" value="" /> 
+    </apex:actionFunction>
+    <apex:actionFunction name="delayFollowUpTask" action="{!passValueOfSelectedOpps}" rerender="" oncomplete="callDisplayCreateFollTasks();" status="loadingAttachment">
+            <apex:param name="oppDataJson" assignto="{!oppDataJson}" value="" /> 
+    </apex:actionFunction>
+    <apex:actionFunction name="sendMassMail" action="{!passValueOfSelectedOpps}" rerender="pageMessageId,sendEmailPanel" oncomplete="callSendEmails();" status="loadingAttachment">
+            <apex:param name="oppDataJson" assignto="{!oppDataJson}" value="" /> 
+    </apex:actionFunction>
+    <apex:actionFunction name="ShowPageOnCloseWindow" rerender="formId"></apex:actionFunction>
+    
+    <apex:actionFunction name="callcreateOp" action="{!displayCreateOpportunities}" rerender="tstpopupuser,pageMessageId" oncomplete="focusOn('{!$Component.tstpopupuser}');" status="loadingAttachment"/>
+    <apex:actionFunction name="callDisplayCreateFollTasks" action="{!displayCreateFollowupTask}"  rerender="tstpopupusertask,pageMessageId" oncomplete="focusOn('{!$Component.tstpopupusertask}')"/>
+    <apex:actionFunction name="callSaveOpportunities" action="{!save}" reRender="pageMessageId,chart" />
+    <apex:actionFunction name="calldelayEligibility" action="{!displayDelayEligibility}" rerender="tstpopup,pageMessageId" oncomplete="focusOn('{!$Component.tstpopup}')"/>
+    <apex:actionFunction name="callSendEmails" action="{!SendMail}" rerender="sendEmailPanel,pageMessageId,formId,pgmTable" status="loadingAttachment" oncomplete="focusOn('{!$Component.sendEmailPanel}')"/>
+    
+    
+    <apex:outputPanel >
+     <apex:outputPanel rendered="{!NOT(isRendered)}" id="mainPanel"> 
+ 
+            <!-- Code for the popup -->
+            <apex:outputPanel id="tstpopup" >
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayPopUp}">
+                    <apex:pageBlock title="Delay Eligibility">
+                        <apex:selectList id="SelectDelayTime" value="{!DelayTime}"
+                            size="1">
+                            <apex:selectOption itemLabel="--None--" itemValue="0" />
+                            <apex:selectOption itemLabel="1 Week" itemValue="1" />
+                            <apex:selectOption itemLabel="2 Week" itemValue="2" />
+                            <apex:selectOption itemLabel="3 Week" itemValue="3" />
+                            <apex:selectOption itemLabel="4 Week" itemValue="4" />
+                            <apex:selectOption itemLabel="5 Week" itemValue="5" />
+                            <apex:selectOption itemLabel="6 Week" itemValue="6" />
+                            <apex:selectOption itemLabel="7 Week" itemValue="7" />
+                            <apex:selectOption itemLabel="8 Week" itemValue="8" />
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Delay Time" action="{!delayTime}"
+                            rerender="pageMessageId,tstpopup"
+                            status="loadingAttachment" />
+                        <apex:CommandButton value="Cancel" action="{!ClosePopup}" />
+                    </div>
+                </apex:outputPanel>
+            </apex:outputPanel>
+            <!--    End of Popup -->
+            
+            <!-- Code for the popup Of Users -->
+            
+            <apex:outputPanel id="tstpopupuser">
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayUserPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayUserPopUp}">
+                    <apex:actionStatus id="loadingAttachment1" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel> 
+                    </apex:facet>
+                </apex:actionStatus>
+                    <apex:pageBlock title="Assign Opportunity Owner">
+                        <apex:selectList id="SelectUsers" value="{!SelectedUser}"
+                            size="1">
+                            <apex:selectOptions value="{!lstUser}"/>
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Assign & Create" action="{!createOpportunities}"
+                            rerender="tstpopupuser,pgmTable,pageMessageId,showThankyouPage" onComplete="CloseWindow()"
+                            status="loadingAttachment1" /> <!-- onComplete="CloseWindow()" -->
+                        <!-- <apex:CommandButton value="Cancel" action="{!CloseUserPopup}" />  -->
+                        <apex:commandLink action="{!CloseUserPopup}" value="Cancel" status="loadingAttachment1" id="theCommandLinkuser"/>
+                    </div>
+                </apex:outputPanel>
+          </apex:outputPanel>
+            <!--    End of Popup Code For Users-->
+            
+        <!-- Code for the popup For Follow Up Task -->  
+            <apex:outputPanel id="tstpopupusertask" >
+            
+                <apex:outputPanel styleClass="popupBackground" layout="block"
+                    rendered="{!displayUserTaskPopUp}" />
+                <apex:outputPanel styleClass="custPopup" layout="block"
+                    rendered="{!displayUserTaskPopUp}">
+                    <apex:actionStatus id="loadingAttachment2" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>
+                    <apex:pageBlock title="Assign Task Owner">
+                        <apex:selectList id="SelectUserTasks" value="{!SelectedUserTask}"
+                            size="1">
+                            <apex:selectOptions value="{!lstUser}"/>
+                        </apex:selectList>
+                    </apex:pageBlock>
+                    <div align="center">
+                        <apex:commandButton value="Assign & Create" action="{!createFollowupTask}"
+                            rerender="formId"  
+                            status="loadingAttachment2,thankyouPanelTaskId" />
+                        <!-- <apex:CommandButton value="Cancel" action="{!CloseUserTaskPopup}" /> -->
+                        <apex:commandLink action="{!CloseUserTaskPopup}" value="Cancel" id="theCommandLink"/>
+                        
+                    </div>
+                </apex:outputPanel>
+          </apex:outputPanel>
+            <!--    End of Popup Code For Follow Up Task -->
+             <apex:pageBlock mode="maindetail" id="chartpageblock">
+             <apex:pageblockSection collapsible="true" title="Renewal Charts" columns="4">
+            <apex:outputPanel id="chart" rendered="{!NOT(isRendered)}">
+                <table width="100%">
+                    <tr>
+                    
+                        <td width="33%">
+                            <analytics:reportChart cacheResults="false" size="small" 
+                            reportId="{!$Label.ReportChart1}"> </analytics:reportChart>
+                        </td>
+
+                        <td width="33%">
+                            <analytics:reportChart cacheResults="false" size="small" 
+                            reportId="{!$Label.ReportChart2}"> </analytics:reportChart>
+                        </td>
+                        
+                        <td width="33%">
+                            <analytics:reportChart cacheResults="false" size="small" 
+                            reportId="{!$Label.ReportChart3}"> </analytics:reportChart>
+                        </td>
+
+                    </tr>
+                </table>
+            </apex:outputPanel>
+            </apex:pageblockSection>
+            </apex:pageBlock>
+            <!--        </apex:pageBlock> -->
+            <br/>
+            <apex:pageBlock id="PageBlockId">
+            <apex:pageMessages id="pageMessageId" />
+                <apex:actionStatus id="loadingAttachment" stopText="">
+                    <apex:facet name="start">
+                        <apex:outputPanel >
+                            <apex:image url="/img/loading.gif" />
+                            <apex:outputLabel value="Loading..." />
+                        </apex:outputPanel>
+                    </apex:facet>
+                </apex:actionStatus>
+
+                <apex:pageBlockButtons id="ButtonsId" location="both">
+                    <apex:commandButton onclick="saveDataController();"  value="Save"
+                        rerender="pageMessageId,chart,allopps" status="loadingAttachment" />
+                        
+                    <apex:commandButton value="Create Opportunities" onclick="passdataToController();"
+                        action="{!autoPopulate1}" status="loadingAttachment"  rerender="tstpopupuser,pageMessageId" />
+<!--                        oncomplete="focusOn('{!$Component.tstpopupuser}')" -->
+                            
+                    <apex:commandButton onclick="delayEligibilityController();"  action="{!autoPopulate1}"
+                        value="Delay Eligibility" rerender="tstpopup,pageMessageId" 
+                        status="loadingAttachment" />
+                    
+                    <apex:commandButton onclick="createFollowupTaskController();" action="{!autoPopulate1}"
+                        value="Create FollowUp Tasks" rerender="tstpopupusertask,pageMessageId" 
+                        status="loadingAttachment" />
+                    <apex:commandButton value="Mass Email" onclick="return sendMailController();"   
+                        rerender="sendEmailPanel,pageMessageId" status="loadingAttachment"/>
+<!--                                    status="loadingAttachment" oncomplete="MailSent('{!DestURL}');"/> action="{!autoPopulate1}" -->
+                        
+                    <!--  <apex:CommandButton action="{!createFollowupTask}"
+                        value="Create FollowUp Task" /> -->
+                </apex:pageBlockButtons>
+                
+                <apex:outputPanel id="filterPanel">
+<!--                     <br /> -->
+                    <table width="100%">
+                    <tr>
+                        <td width="2%"></td>
+                        <td width="17%"><apex:outputLabel value="Term %" />&nbsp;&nbsp;
+                          <apex:selectList id="SelectRenewalEligibiltyPer" value="{!RenewalEligibilityPer}"
+                                size="1">
+                                <apex:selectOption itemLabel="--None--" itemValue="0" />
+                                <apex:selectOption itemLabel="0-25%" itemValue="1" />
+                                <apex:selectOption itemLabel="26-50%" itemValue="26" />
+                                <apex:selectOption itemLabel="51-75%" itemValue="51" />
+                                <apex:selectOption itemLabel="76-100%" itemValue="76" />
+                           </apex:selectList></td>
+                           <td width="20%"><apex:outputLabel value="Funded" />&nbsp;&nbsp;
+                          <apex:selectList id="SelectRenewalDateFunded" value="{!RenewalDateFunded}"
+                                  size="1">
+                                  <apex:selectOption itemLabel="--None--" itemValue="--None--" />
+                                  <apex:selectOption itemLabel="1-3 Months Ago" itemValue="1-3 Months Ago" />
+                                  <apex:selectOption itemLabel="4-6 Months Ago" itemValue="4-6 Months Ago" />
+                                  <apex:selectOption itemLabel="7-9 Months Ago" itemValue="7-9 Months Ago" />
+                                  <apex:selectOption itemLabel="10-12 Months ago" itemValue="10-12 Months ago" />
+                                  <apex:selectOption itemLabel="12+ Months" itemValue="12+ Months" />
+                          </apex:selectList></td>
+                          <td width="23%"><apex:outputLabel value="Renewal Date"/>&nbsp;&nbsp;
+                          <apex:inputField value="{!cont.Estimated_Renewal_Date__c}" /></td>
+                          <td width="22%"><apex:outputLabel value="Bank" />&nbsp;&nbsp;
+                          <apex:inputField value="{!cont.Bank_Name__c}" /></td>
+                          <td width="15%"> <apex:outputLabel value="My Deals" />&nbsp;&nbsp;
+                          <apex:inputCheckbox value="{!myDealsCheckbox}"/></td>
+                          <input id="hiddenElement" type="hidden" />
+                    </tr>
+                    </table>
+
+                    <table width="100%">
+                        <tr align="Center">
+<!--                             <td></td> -->
+<!--                             <td></td> -->
+                            <td><apex:commandButton value="Filter"
+                                    action="{!getContractsAfterFilter}"
+                                    rerender="" status="loadingAttachment" 
+                                    style="width:90px;"/>
+                            &nbsp;
+                            <apex:commandlink value="Clear Filter"
+                                    action="{!clearFilter}"
+                                    rerender="" status="loadingAttachment" />
+                            </td>
+                        </tr>
+                    </table>
+
+                </apex:outputPanel>
+                <br></br>
+<!--     <body> -->
+    
+                <apex:outputPanel id="pgmTable" rendered="{!NOT(isRendered)}"> 
+                    <table id="allopps" class="display"  name="alloppsTable" style="width:100% border :10px double #990033;  ">  
+<!--                     <apex:pageBlockTable value="{!RenewalWrapperLst}" var="renwWrapper" id="pbtRenewals">-->
+                        <thead>
+                            <tr>
+                                <th>                
+                                    <apex:inputCheckbox onclick="checkAll(this,'checkBox');" id="theChkbx">
+                                    </apex:inputCheckbox>
+                                </th>
+                                <th>Opportunity Name</th>
+                                <th>Renewal Stage</th>
+                                <th>Bank</th>
+                                <th>Date Funded</th>
+                                <th>Funding $</th>
+                                <th>Payback $</th>
+                                <th>Terms</th>
+                                <th>Renewal Date</th>
+                                <th>Balance $</th>
+                                <th>Balance Date</th>
+                                <th >Term % Completed</th>
+                                
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!RenewalWrapperLst}" var="renwWrapper">
+                                <tr>
+
+                                   <td> 
+                                   
+                                    <apex:inputCheckbox value="{!renwWrapper.isSelected}"  styleClass="iptCheckbox"  id="checkBox" html-data-oppId="{!renwWrapper.Contract.Id}">
+                                    <!--                             <apex:actionsupport event="onchange" action="{!autoPopulate1}" rerender="pageMessageId" status="loadingAttachment"/> -->
+                                     </apex:inputCheckbox>
+                                    </td>
+
+                                   <td > 
+                                   <a href="/{!renwWrapper.contract['Id']}"
+                                    id="{!renwWrapper.contract['Id']}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}', '/{!renwWrapper.contract['Id']}/m?retURL=%2F{!renwWrapper.contract['Id']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['Id']}', '/{!renwWrapper.contract['Id']}/m?retURL=%2F{!renwWrapper.contract['Id']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Name']} </a>
+                                   </td>
+                                   <td>
+                                   <a href="/{!renwWrapper.contract['Next_Opportunity__c']}"
+                                    id="{!renwWrapper.contract['Next_Opportunity__c']}" html-data-nextoppId="{!renwWrapper.Contract.Next_Opportunity__c}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}', '/{!renwWrapper.contract['Next_Opportunity__c']}/m?retURL=%2F{!renwWrapper.contract['Next_Opportunity__c']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['Next_Opportunity__c']}', '/{!renwWrapper.contract['Next_Opportunity__c']}/m?retURL=%2F{!renwWrapper.contract['Next_Opportunity__c']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Next_Opportunity__r.stageName']}</a>
+<!--                                     {!renwWrapper.contract['Next_Opportunity__r.stageName']} -->
+                                  </td>
+                                   <td><a href="/{!renwWrapper.contract['AccountId']}"
+                                    id="{!renwWrapper.contract['AccountId']}"
+                                    onblur="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}').hide();"
+                                    onfocus="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}', '/{!renwWrapper.contract['AccountId']}/m?retURL=%2F{!renwWrapper.contract['AccountId']}&isAjaxRequest=1').show();"
+                                    onmouseout="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}').hide();"
+                                    onmouseover="LookupHoverDetail.getHover('{!renwWrapper.contract['AccountId']}', '/{!renwWrapper.contract['AccountId']}/m?retURL=%2F{!renwWrapper.contract['AccountId']}&isAjaxRequest=1').show();">{!renwWrapper.contract['Bank_Name__r.Name']}</a>
+                                   
+<!--                                    {!renwWrapper.contract['Bank_Name__r.Name']} -->
+                                   </td>
+                                   <td> <apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+                                            <apex:param value="{!renwWrapper.contract['Date_Funded__c']}" /> 
+                                        </apex:outputText>
+                                   </td>
+                                   <td>$
+                                   <apex:outputText iD="fundingAmt" value="{0}"> 
+                                            <apex:param value="{!renwWrapper.contract['Funding_Amount__c']}" /> 
+                                        </apex:outputText>
+<!--                                    ${!renwWrapper.contract['Funding_Amount__c']} -->
+                                   </td>
+                                   <td>
+                                   $
+                                   <apex:outputText iD="paybackAmt" value="{0}"> 
+                                            <apex:param value="{!renwWrapper.contract['Payback_Amount__c']}" /> 
+                                        </apex:outputText>
+<!--                                    ${!renwWrapper.contract['Payback_Amount__c']} -->
+                                   </td>
+                                   <td>{!renwWrapper.contract['Term_Months__c']}</td>
+                                   <td><apex:outputText iD="rENEWALdATE" value="{0,date,MM'/'dd'/'yyyy}"> 
+                                            <apex:param value="{!renwWrapper.contract['Estimated_Renewal_Date__c']}" /> 
+                                        </apex:outputText>
+                                   </td>
+                                   <td><apex:inputField styleClass="ratePerDayMarker"  Id="Bal" onchange="onChangeBalance('{!renwWrapper.contract.Id}',this.value);onChangeBalanceForAllOpp('{!renwWrapper.contract.Id}',this.value,'{!renwWrapper.contract.Current_Balance_Date__c}')" value="{!renwWrapper.contract['Balance__c']}"/></td>
+                                   <td>
+                                   
+                                                             
+                                   
+                                   <apex:inputField value="{!renwWrapper.contract['Current_Balance_Date__c']}" onchange="onChangeBalanceDate('{!renwWrapper.contract.Id}',this.value);onChangeBalanceDateForAllOpp('{!renwWrapper.contract.Id}',this.value,'{!renwWrapper.contract.Balance__c}')" styleClass="balance{!renwWrapper.contract.Id}"/>
+                                   
+                                   </td>
+                                   <td style="padding:0">
+                                   <div style="float:left; width:110px">
+                                   <apex:outputField id="theImage" value="{!renwWrapper.contract['PaidImage__c']}" />
+                                   
+                                   </div>
+                                     <div style="float:right">
+                                        {!renwWrapper.contract['Term_Completed__c']}%
+                                    </div>
+                                   </td> 
+                                   
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>    
+                   
+          </apex:outputPanel> 
+
+<!-- </body> -->
+            </apex:pageBlock>
+          <script>
+            
+            
+            table = $('#allopps').DataTable( {
+                "pageLength": 25,
+            } );
+             
+            table.destroy();
+             
+            table = $('#allopps').DataTable( {
+                "pageLength": 25,
+            } );
+        </script>
+        </apex:outputPanel>
+         
+        
+        </apex:outputPanel>
+        <!-- Show Thank you Page Opportunities -->
+        <apex:outputPanel rendered="{!showThankyouPage}" id="thankyouPanelId">
+            <apex:outputPanel rendered="{!newOppLst.size > 0}">
+                <apex:outputlink value="{!$Page.ManageRenewal}" style="float: left;">
+                    <apex:outputText value="<< Back To Manage Renewals" />
+                </apex:outputlink>
+                <br />
+                <br />
+                <apex:outputText value="{!$Label.MovingRenewal_ThankyouMsg}"
+                    style="font-size:14px;font-weight: bold; " />
+                <apex:pageBlock >
+                    <apex:pageBlockTable value="{!newOppLst}" var="opps">
+                        <apex:column headerValue="Opportunity Name" >
+                            <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/Sent.jpg')}"
+                                width="20" height="20" />
+                            <!--                            <img src="/resource/SubmissionWizard/SubmissionWizard/Sent.jpg" height="20" width="20"/>&nbsp;&nbsp; -->
+                            <a href="/{!opps.Id}">{!opps.Name}</a>
+                            
+                        </apex:column>
+                        <apex:column value="{!opps.StageName}"/> 
+                        <apex:column value="{!opps.OwnerId}"/> 
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Show Thank you Page Opportunities  End-->
+
+        <!-- Show Thank you Page Task -->
+        <apex:outputPanel rendered="{!showThankyouPageTask}" id="thankyouPanelTaskId">
+            <apex:outputPanel rendered="{!taskLst.size > 0}">
+                <apex:outputlink value="{!$Page.ManageRenewal}" style="float: left;">
+                    <apex:outputText value="<< Back To Manage Renewals" />
+                </apex:outputlink>
+                <br />
+                <br />
+                <apex:outputText value="{!$Label.MovingRenewal_ThankyouMsgTask}"
+                    style="font-size:14px;font-weight: bold; " />
+                <apex:pageBlock >
+                    <apex:pageBlockTable value="{!taskLst}" var="tasks">
+                        <apex:column headerValue="Task Subject" >
+                            <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/Sent.jpg')}"
+                                width="20" height="20" />
+                            <!--                            <img src="/resource/SubmissionWizard/SubmissionWizard/Sent.jpg" height="20" width="20"/>&nbsp;&nbsp; -->
+                            <a href="/{!tasks.Id}">{!tasks.Subject}</a>
+                            
+                        </apex:column>
+                        <apex:column value="{!tasks.OwnerId}"/> 
+                        <apex:column value="{!tasks.Status}"/> 
+                        <apex:column value="{!tasks.Whatid}"/> 
+                    </apex:pageBlockTable>
+                </apex:pageBlock>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Show Thank you Page Task  End-->
+        <!-- Show Send An Email Page Start-->
+        <apex:outputPanel id="sendEmailPanel" rendered="{!sendAnEmail}" style="height:100%" >
+            <apex:pageblock mode="edit">
+            <B><apex:outputText value="Count of Renewals: {0}" >
+                 <apex:param value="{!cnt}"/>
+            </apex:outputText></B>
+          <apex:pageMessages />
+            <apex:pageblocksection columns="1">
+            
+<!--                <apex:pageblockSectionItem > -->
+<!--                    <apex:outputText value="Additional To:" /> -->
+<!--                    <apex:inputtext id="AdditionalTo" value="{!strAdditionalTo}" style="margin: 2px;width: 400px;height: 20px;"/> -->
+<!--                </apex:pageblockSectionItem> -->
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputText value="BCC:" />
+                    <apex:inputtext id="AdditionalTo" value="{!strBcc}" style="margin: 2px;width: 400px;height: 20px;"/>
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputText value="Subject" />
+                    <apex:inputtext id="Subject" value="{!strSubject}" style="margin: 2px;width: 400px;height: 20px;"/>
+                </apex:pageblockSectionItem>
+                
+                <apex:pageblockSectionItem >
+                    <apex:outputText value="Body"/>
+                    <apex:inputTextArea value="{!strBody}" style="margin: 2px; height: 200px; width: 450px;"/>
+                </apex:pageblockSectionItem>
+            
+            </apex:pageblocksection>
+            <apex:pageblockbuttons >
+                <apex:commandbutton value="Send" action="{!sendAnEmail}" rerender="sendEmailPanel,tstpopupusertask,PageBlockId,pageMessageId,formId" status="loadingAttachment" />
+<!--                <apex:commandbutton value="Select Template" action="{!selectTemplate}"/> -->
+                <apex:commandbutton value="Attach File" action="{!attachFile}"/>
+                <apex:commandbutton value="Cancel" action="{!cancel}" />
+            </apex:pageblockbuttons>
+            
+        </apex:pageblock>
+        
+        <apex:outputpanel rendered="{!blnAttachFile}">
+        <apex:pageBlock title="Upload Attachment" mode="edit">  
+            <apex:inputFile style="width:100%; margin-left: 69px;" id="fileToUpload" value="{!fileBody}" filename="{!fileName}" />
+            <apex:commandButton value="Upload Attachment" action="{!uploadFile}" style="margin-top: 20px; margin-left: 10px;"/>  
+            <apex:commandButton value="Cancel" action="{!cancelTemplate}" style="margin-top: 17px; margin-left: 10px;"/>
+       </apex:pageBlock> 
+       </apex:outputpanel>
+       
+       <apex:outputpanel rendered="{!blnAttachmet}">
+       <apex:pageBlock title="Attachments" mode="edit">  
+       <apex:pageBlockTable value="{!Attachments}" var="item">
+
+            <apex:column value="{!item.name}"/> 
+            <apex:column headerValue="Action">
+                 <apex:commandLink action="{!removeAttachment}" value="Remove">
+                 <apex:param name="AttachmentName" value="{!item.Id}" assignTo="{!attachment_name}"/>
+                 </apex:commandLink>
+            </apex:column> 
+        </apex:pageBlockTable> 
+       </apex:pageBlock> 
+       </apex:outputpanel>
+        </apex:outputPanel>
+        <!-- Show Send An Email Page End-->
+        
+    </apex:form>
+</apex:page>

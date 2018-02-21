@@ -1,0 +1,162 @@
+<apex:page name="MCATabPage" standardController="Opportunity" sidebar="false" showHeader="false" tabstyle="Account">
+
+  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" />
+  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery.tablesorter.min.js')}" />
+
+  <apex:outputPanel id="refreshComponent">
+  <script type="text/javascript">
+
+      t$ = jQuery.noConflict();
+
+      t$(function () {
+      
+          //console.log('-----tab label----'+t$("[id*='submissiontab_lbl']").text());
+
+          t$('.records .tablesorting.tablesorter a').click(function(event) {
+            try {
+                console.log("Table Sorting Field");
+                if (t$(this).attr('id').indexOf('lookup') != -1) {
+                  event.preventDefault();
+                  window.open(t$(this).attr('href'));
+                }
+            }
+            catch(err) {
+              console.warn('Error catched from table sorting');
+            }
+          });
+     });
+   </script>
+   <style>
+   
+    .rich-tab-inactive {
+         background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(1, #C8C8C8));
+         }
+      .rich-tab-active { 
+         background-image:-webkit-gradient(linear, left bottom, left top, color-stop(1, #FFFFFF), color-stop(0, #C8C8C8));
+      }
+    
+    .rich-tabpanel-content {
+        background-color: #ffffff;
+    }
+    
+    body .bPageBlock, body #bodyCell .bResource .secondaryPalette, body .secondaryPalette.bPageBlock, body .individualPalette .secondaryPalette.bPageBlock, body .bodyDiv .genericTable, body .genericPageBlockTable, body .bodyDiv .bSubBlock, body .bComponentBlock .bPageBlock, body .bMyDashboard .bPageBlock, body.rlHoverFrame .bPageBlock, body.subjectSelectionPopup div.choicesBox, body.lookupTab .secondaryPalette.bPageBlock, body.popupTab .secondaryPalette.bPageBlock, body.UserTagStatsPage .secondaryPalette.bPageBlock {
+        background-color: #ffffff;
+    }
+  </style>
+  </apex:outputPanel>
+
+  <style type="text/css">
+    th, td {
+        //border: 1px solid red;
+        height: 25px;
+    }
+    
+    .pbSubheader.brandTertiaryBgr.tertiaryPalette {
+      background-color: transparent !important;
+    }
+
+    .pbSubheader.brandTertiaryBgr.tertiaryPalette, .bPageBlock.brandSecondaryBrd.apexDefaultPageBlock.secondaryPalette {
+      border-color: transparent !important;
+    }
+
+    .pbSubheader.brandTertiaryBgr.first.tertiaryPalette h3, .pbSubheader.brandTertiaryBgr.tertiaryPalette h3 {
+      color: black;
+    }
+
+    .loadingPanel {
+
+      position: absolute;
+      top: 0;
+      background-color: rgba(0, 0, 0, 0.2);
+      height: 100%;
+      width: 100%;
+    }
+    .loadingPanelImage {
+
+       margin-left: 50%;
+       margin-top: 5%;
+    }
+    .records th {
+
+      cursor: pointer;
+    }
+    .records th.headerSortUp {
+        background-image: url(/img/colTitle_uparrow.gif) !important;
+        background-repeat: no-repeat !important;
+        background-position: right center !important;
+    }
+    .records th.headerSortDown {
+       // background-image: url(/img/colTitle_downarrow.gif) !important;
+        background-repeat: no-repeat !important;
+        background-position: right center !important;
+
+    }
+    .records .dataCell {
+      white-space: nowrap;
+    }
+    
+  /*.rich-tab-inactive {
+        background-color: #fff;
+        border-color: darkgrey;
+        background-image: none;
+        border-width: 1px;
+        border-style: solid;
+        background-repeat: repeat-x;
+        background-position: top;
+        border-bottom-width: 0;
+        cursor: default;
+    }
+    
+    .rich-tab-active {
+        background-image: none;
+        background-color: #f1f1f1;
+    }*/
+
+  </style>
+
+<apex:pageBlock >
+
+  <apex:tabPanel switchType="client">
+
+
+    <!--
+    <apex:tab label="New Submissions"> <c:MCANestedSubmissionsTabComponent /> </apex:tab>
+     -->
+
+    <apex:tab id="submissiontab" label="Submissions"> <c:MCASubmissionsTabComponent /> </apex:tab>
+
+    <apex:tab id="offertab" label="Offers"> <c:MCAOffersTabComponent /> </apex:tab>
+
+    <apex:tab label="Stips" id="stipstab"> <c:MCAStipsTabComponent /> </apex:tab>
+
+    <apex:tab label="Loan Balances" id="loanBaltab"> <c:MCALoanBalanceTabComponent /> </apex:tab>
+
+    <apex:tab label="Sales History" id="salesHistorytab"> <c:MCASalesHistoryTabComponent /> </apex:tab>
+
+    <apex:tab label="Commissions" id="commissiontab"> <c:MCACommissionsTabComponent /> </apex:tab>
+
+    <apex:tab label="Syndications" id="syndicationtab"> <c:MCASyndicationTabComponent /> </apex:tab>
+
+    <apex:tab label="Contact Roles" id="contactRoletab"> <c:MCAContactRolesTabComponent /> </apex:tab>
+
+    <apex:tab id="tasktab" label="Tasks"> <c:MCATasksTabComponent /> </apex:tab>
+    
+    <apex:tab id="attachmenttab" label="Attachments"> <c:MCAAttachmentTabComponent /> </apex:tab>
+
+  </apex:tabPanel>
+
+  <apex:actionStatus id="loadingPanel">
+   <apex:facet name="start">
+
+     <apex:outputPanel layout="block" styleClass="loadingPanel">
+
+       <apex:image value="/img/loading32.gif" styleClass="loadingPanelImage"></apex:image>
+
+     </apex:outputPanel>
+
+   </apex:facet>
+ </apex:actionStatus>
+
+</apex:pageBlock>
+
+</apex:page>

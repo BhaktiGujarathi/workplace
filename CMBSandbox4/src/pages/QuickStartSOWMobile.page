@@ -1,0 +1,196 @@
+<apex:page controller="QuickStartSOWController" showHeader="false" cache="false" applyBodyTag="false" standardStylesheets="false" docType="html-5.0">
+    
+    <head>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <!-- JQuery -->
+        <apex:includeScript value="https://code.jquery.com/jquery-2.1.3.min.js" />
+
+        <!-- Bootstrap SF1 -->
+        <script type="text/javascript" src="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+        <!-- Bootstrap Theme -->
+        <apex:stylesheet value="{!URLFOR($Resource.bootstrapsf1, 'css/bootstrap.min.css')}" />
+
+        <style>
+            label {
+                font-family: 'ProximaNovaSoft-Regular';
+                font-weight: normal;
+                font-style: normal;
+                color: #686c70;             
+            }
+
+            .errorMsg {
+                color: red;
+                position: absolute;
+            }
+
+            .error {
+                border-color: red;
+                background-color: rgba(255, 0, 0, 0.06);
+            }   
+
+            .form-control {
+                height: 40px;       
+                border: none;
+            }
+        </style>
+
+    </head>
+
+    <body>
+
+        <apex:form id="form">
+
+            <div id="container" style="overflow: hidden;">
+
+                <apex:outputPanel styleClass="container" id="container" rendered="{!formDetails}" style="margin: 0;padding: 0;">
+
+                    <div class="row">
+
+                        <div class="col-xs-12">
+
+                            <div class="navbar navbar-default" style="background-color: #FFF; border-color: #FFF; margin: 0;  position: fixed; width: 100%; z-index: 1000;">
+                                <div class="navbar-collapse" style="background-color: #FFF; border-color: #FFF;">
+                                    <apex:commandLink action="{!formSubmit}" styleClass="btn btn-primary navbar-btn" style="float: right;">
+                                        Generate SOW
+                                    </apex:commandLink>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row" style="margin-top: 50px;">
+                        <div class="panel" style="margin-top: 5px;">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <div class="panel-footer" style="border: none;">CUSTOMER INFORMATION</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xs-12" style="padding: 0 30px;">
+                            <div class="form-group">
+                                <label>Company Name*</label>
+                                <apex:inputField value="{!objLead.Company}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address Line 1</label>
+                                <apex:inputText value="{!address1}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Address Line 2</label>
+                                <apex:inputText value="{!address2}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>City</label>
+                                <apex:inputField value="{!objLead.City}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>State</label>
+                                <apex:inputText value="{!objLead.State}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Zip Code</label>
+                                <apex:inputText value="{!objLead.PostalCode}" styleClass="form-control" />
+                            </div>                          
+                        </div>
+                    </div>      
+
+                    <div class="row">
+                        <div class="panel">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <div class="panel-footer" style="border: none;">PROGRAM INFORMATION</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>      
+
+                    <div class="row">
+                        <div class="col-xs-12" style="padding: 0 30px;">
+                            <div class="form-group">
+                                <label>Program Type</label>
+                                <apex:inputField value="{!objLead.Program_Type__c}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Estimated Travel Cost</label>
+                                <apex:inputField value="{!objLead.Estimated_Travel_Cost__c}" styleClass="form-control" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="panel">
+                            <div class="col-xs-12">
+                                <div class="form-group">
+                                    <div class="panel-footer" style="border: none;">ACCOUNT EXECUTIVE INFORMATION</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>      
+
+                    <div class="row">
+                        <div class="col-xs-12" style="padding: 0 30px;">
+                            <div class="form-group">
+                                <label>Account Executive Name</label>
+                                <apex:inputField value="{!objLead.Account_Executive_Name__c}" styleClass="form-control" />
+                            </div>
+
+                            <div class="form-group">
+                                <label>Account Executive Email</label>
+                                <apex:inputText value="{!objLead.Account_Executive_Email__c}" styleClass="form-control" required="true"/>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <apex:inputTextarea value="{!objLead.Description}" styleClass="form-control" />
+                            </div>
+                        </div>
+                    </div>                  
+
+                </apex:outputPanel>     
+
+                <apex:outputPanel styleClass="container" id="thankYouPanel" rendered="{!thankYouPopup}" style="margin: 0;padding: 0;">
+
+                    <br /><br /><br /><br />
+
+                    <div class="row">
+
+                        <div class="col-xs-12" style="text-align: center; padding: 0 10px;">
+
+                            <i class="s1icon s1icon-lg s1icon-s-task" />
+
+                            <h3 style="color: #525354;">Thank You for submitting the information!</h3>
+                            <p>A merged copy of the Statement of Work(SOW) has been emailed to you!</p>
+                            <p>(Powered by Salesforce and Conga)</p>                                    
+                            
+                            <br />
+
+                            <apex:outputlink value="{!$Page.QuickStartSOWMobile}" style="float: left; margin-left: 20px;">
+                                <apex:outputText value="<< Back To SOW Form" />
+                            </apex:outputlink> 
+                        </div>
+
+                    </div>
+
+                </apex:outputPanel>                                 
+
+            </div>
+
+        </apex:form>
+
+    </body>
+
+</apex:page>

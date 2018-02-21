@@ -1,0 +1,988 @@
+<apex:component controller="HandoverCREProcess" allowDML="true">
+    <style type="text/css">
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #d74c3b!important;
+        }
+        
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+        
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+        
+        .confirmM3 {
+            border-color: green!important;
+        }
+        
+        .warningM3 {
+            border-color: sandybrown!important;
+        }
+
+        .overlayStatus {
+            position:fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            text-align:center;
+            vertical-align: middle;
+            background-color: #dcdcdc;
+            opacity:0.6;
+            filter:alpha(opacity=60);
+            z-index: 20 ;
+        }
+       
+        .loadIMG {
+            display:block;
+            margin-top:20%;
+            margin-left:auto;
+            margin-right:auto;
+            text-align:center;
+            vertical-align: middle;
+        }
+        
+        .checkBoxContainer {
+            height:auto !important;
+        }
+        
+        .selectUnit {
+            width:auto !important;
+        }
+        
+        #unitDetails > tr > td {
+            word-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        .snagNumCLs {
+            width : 20%;
+        }
+        
+        .snagDescCls {
+            width : 40%;
+        }
+        
+        .snagStatusCls {
+            width : 20%;
+        }
+        
+        .snagDateCls {
+            width : 20%
+        }
+    </style>
+
+    <apex:attribute name="accId" type="Id" description="Id of the customer selected" assignTo="{!accountId}" required="true"/>
+
+    <!---------------------- Main content ------------------------>
+    <section id="">
+        <div class="well">
+            <h4>
+                Handover
+            </h4>
+
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="form-group">
+                        <label>Select Property</label>
+                        <apex:selectList styleClass="form-control" value="{!strSelectBuilding}" multiselect="false" size="1">
+                            <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" onComplete="callDateField();hideUnitDetails();" rerender="UnitsPanel" Status="blockUI"/>
+                            <apex:selectOptions value="{!lstBuildings}"/>
+                        </apex:selectList>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <apex:outputPanel id="UnitsPanel">
+<!--     change - shraddha -->
+        <apex:outputText value="No Building Unit found for selected Property." 
+                               rendered="{!AND(Not(blnDisplayUnits), strSelectBuilding != null)}"/>
+        <apex:outputPanel rendered="{!blnDisplayUnits}">
+            <section class="">
+                <apex:inputHidden value="{!poaAttachmentBody}" id="POAAttachBody"/>
+                <apex:inputHidden value="{!poaAttachmentName}" id="POAAttachName"/>
+                <apex:inputHidden value="{!SOAurl}" id="UrlSOA"/>
+                    <section id="block1">
+                        <div class="well">
+                            <div class="error">
+                                <apex:pageMessages id="pageM"/>
+                            </div>
+                            <h4>
+                                Units Selection
+                            </h4>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                <apex:outputPanel id="UnitList">
+                                    <div class="form-group">
+                                        <label>Select Unit for Handover</label>
+                                        <apex:selectList styleClass="form-control" value="{!strSelectedUnit}" size="1" id="unit">
+                                            <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" rerender="bookingUnitPanel,selectedUnit,UnitList, scheduleSnaggingPanelId, details" onComplete="hideUnitDetails(); callDateField();" Status="blockUI"/>
+                                            <apex:selectOptions value="{!lstUnits}"/>
+                                        </apex:selectList>
+                                    </div>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <apex:outputPanel id="bookingUnitPanel" >
+<!--                                     change-shraddha rendered -->
+                                    <apex:outputPanel id="innerbookingUnitPanel" rendered="{!lstSelectedUnits.size>0}">
+                                        <div class="selectUnit">
+                                            <div class="selectUnitHeading">Selected Booking Units</div>
+                                            <div class="checkBoxContainer">
+                                                <apex:repeat var="bookingUnit" value="{!lstSelectedUnits}">
+                                              <!--  <apex:outputPanel rendered="{!IF(bookingUnit.strMatch == 'Yes',true,false)}">-->
+                                                    <div class="checkbox-primary" style="border-radius:2px;margin:2px;padding:2px;"> 
+                                                        <apex:inputCheckbox value="{!bookingUnit.isSelect}" >
+                                                            <apex:actionSupport event="onclick" action="{!selectedUnits}" rerender="bookingUnitPanel,selectedUnit, details" status="blockUI"/>
+                                                        </apex:inputCheckbox>
+                                                        <label for="checkbox1">
+                                                            {!bookingUnit.bookingUnitDetail}
+                                                        </label>
+                                                    </div>
+                                              <!--  </apex:outputPanel>-->
+                                                </apex:repeat>
+                                                <apex:actionfunction name="callUpdate" action="{!selectedUnits}" rerender="bookingUnitPanel,selectedUnit"/>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                            <br/><br/>
+                            <apex:outputPanel id="selectedUnit">
+<!--                              change-shraddha rendered -->
+                            <apex:outputPanel id="innerselectedUnit" rendered="{!lstSelectedUnits.size>0}">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Display Unit Information for Selected Unit</label>
+                                            <apex:selectList styleClass="form-control" value="{!strUnit}" multiselect="false" size="1" id="selectUnit" >
+                                               <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" status="blockUI" 
+                                                        rerender="details,ipmsInfo,currentPPPanel,NewPPPanel,outputPanelId,srsPanelId"
+                                                        onComplete="hideUnitDetails();"/>
+                                               <apex:selectOptions value="{!lstNewUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                           </apex:outputPanel>
+                           </apex:outputPanel>
+                                <br/><br/>
+                            <!-- Start table -->
+                            <apex:outputPanel id="details">
+                           <apex:outputPanel rendered="{!lstSelectedUnits.size>0}">
+<!--                             <apex:outputPanel > -->
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <thead class="thead-inverse">
+                                                                <tr>
+                                                                    <th>
+                                                                        <apex:selectList value="{!strSelectedCategory}"
+                                                                        multiselect="false" size="1" required="true"
+                                                                        styleClass="form-control category inputDisabled test" id="categories"
+                                                                        onchange="hideUnitDetails();"
+                                                                        style="height: 30px; !important">
+                                                                            <apex:selectOptions value="{!lstCategories}" />
+                                                                        </apex:selectList>
+                                                                    </th>
+                                                                    <th></th>
+                                                                </tr>
+                                                            </thead>
+                                                                <tbody id="unitDetails">
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property__r.Name}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property_City__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Bedroom_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Unit_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!objBookingUnit.Permitted_Use__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/ Off plan</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property_Status__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Price</b></td>
+                                                                    <td>{!objBookingUnit.Unit_Selling_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Area</b></td>
+                                                                    <td>{!objBookingUnit.Inventory_Area__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Promotion/Scheme/Option/Campaign</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Invoices raised</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strInvoicesRaised}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Amount paid</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strAmountPaid}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Penalties</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strPenalties}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Overdue</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strOverdue}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Deal Team</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Type</b></td>
+                                                                    <td>{!objBookingUnit.Booking_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Built Up Price</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strBuiltUpPrice}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Plot Price</b></td>
+                                                                    <td>{!objBookingUnit.Plot_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Payment Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Date</b></td>
+                                                                    <td>
+                                                                        <apex:outputText value="{0, date, dd/MM/YYYY}">
+                                                                            <apex:param value="{!objBookingUnit.Booking__r.CreatedDate}" /> 
+                                                                        </apex:outputText>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Date</b></td>
+                                                                    <td>{!objBookingUnit.Agreement_Date__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Plan</b></td>
+                                                                    <td>
+                                                                        <apex:outputlink value="{!objBookingUnit.Inventory__r.Unit_Plan__c}" target="_blank">{!objBookingUnit.Inventory__r.Unit_Plan__c}</apex:outputlink>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Floor Plan</b></td>
+                                                                    <td>
+                                                                        <apex:outputlink value="{!objBookingUnit.Inventory__r.Floor_Plan__c}" target="_blank">{!objBookingUnit.Inventory__r.Floor_Plan__c}</apex:outputlink>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>JOPD Area</b></td>
+                                                                    <td>{!objBookingUnit.JOPD_Area__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="flags">
+                                                                    <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strDispute}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strEnforcement}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strLitigation}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortgage</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Counter case</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strCounterCase}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DP OK</b></td>
+                                                                    <td>{!objBookingUnit.DP_OK__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DOC OK</b></td>
+                                                                    <td>{!objBookingUnit.Doc_OK__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="unitStatus">
+                                                                <tr>
+                                                                    <td><b>OQOOD Registered</b></td>
+                                                                    <td>{!objBookingUnit.OQOOD_Reg_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Registration Fee Paid</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strRegistrationFeePaid}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PRC Status</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strPRCStatus}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strAgreementStatus}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strUnderTermination}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL sent</b></td>
+                                                                    <td>{!objBookinUnitDetailsWrapper.strFTLSent}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO flag</b></td>
+                                                                    <td>{!objBookingUnit.Early_Handover__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO flag</b></td>
+                                                                    <td>{!objBookingUnit.Handover_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>{!objBookingUnit.PCC_Release__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Title Deed Status</b></td>
+                                                                    <td>{!objBookingUnit.Title_Deed__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Assignment</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="sr">
+                                                                    <apex:variable var="cnt" value="{!1}" />
+                                                                    <apex:repeat value="{!lstOpenCase}" var="OpenCase">
+                                                                    <tr>
+                                                                        <td><b>SR {!cnt}</b></td>
+                                                                        <td><apex:outputLink value="{!$Site.BaseUrl}/{!OpenCase.Id}" id="theLink" target="_blank">{!OpenCase.CaseNumber}</apex:outputLink></td>
+                                                                    </tr>
+                                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                                    </apex:repeat>
+                                                                    </tbody>
+                                                                  <tbody id="closeSR">
+                                                                    <apex:variable var="cnt" value="{!1}" />
+                                                                    <apex:repeat value="{!lstCloseCase}" var="CloseCase">
+                                                                    <tr>
+                                                                        <td><b>SR {!cnt}</b></td>
+                                                                        <td><apex:outputLink value="{!$Site.BaseUrl}/{!CloseCase.Id}" id="theLink" target="_blank">{!CloseCase.CaseNumber}</apex:outputLink></td>
+                                                                    </tr>
+                                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                                    </apex:repeat>
+                                                                </tbody>
+                                                        </table>
+                                                    </div>
+<!--                                                    <div class="col-lg-4"> -->
+                                        <h5>Additional Information</h5>
+                                        <div class="details col-lg-6 col-md-12 col-sm-12">
+                                            <div class="row detailHeading">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4>1500000</h4>
+                                                </div>
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>% Received</h6>
+                                                    <h4>24%</h4>
+                                                </div>
+                                            </div>
+                                         <div class="row">
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current Construction Status%</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strCurrentConstructionStatus}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Individual Villa RERA Construction Status% /Current RERA Construction Status% of building</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strReraConstructionStatus}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Original ACD</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strOriginalACD}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current ACD</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strCurrentACD}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Area Variation (sq. ft.)</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strAreaVariation_sqft}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Type Variation</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strTypeOfVariation}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Other charges (Parking, Furniture etc.)</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strOtherCharges}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Paid %</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strPaidPercent}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>%Overdue</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strPercentOverdue}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>%PDC coverage</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strPercentPDCCoverage}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>No. of times customer defaulted on installments</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strNoOfTimesCustomerDefaultedOnInstalments}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Recovery flag</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strRecoveryFlag}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>AR Partial PCC</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strARPartialPCC}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM PCC</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strFMPCC}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>BCC available</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strBCCAvailable}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>No. of major Snags in Unit</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Snag Closure Stats</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Utilities Available</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Total Outstanding</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strTotalOutstanding}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Default</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strDefault}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>No. of Existing Parking with Unit</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strNoOfExistingParkingWithUnit}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Bay No. of Existing Parking with Unit</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strBayNoOfExistingParkingWithUnit}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Type of Existing Parking with Unit</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strTypeOfExistingParkingWithUnit}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdues/dues towards Service Charges</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strOverdues_DuesTowardsServiceCharges}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties/ Late payment fee on Service Charges</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strPenalties_LatePaymentFeeOnServiceCharges}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>EHO SR status?</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>HO Notice send to customer</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>DEWA Meter No.</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Min % for EHO</h6>
+                                                        <h5>{!objBookinUnitDetailsWrapper.strMinPercentForEHO}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Amount to be paid for EHO</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Amount customer will pay</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+<!--                                     </div> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>    
+                                </div>
+                                </apex:outputPanel>
+                                </apex:outputPanel>
+                                <!-- End Table -->
+                                <br/>
+                            </div> <!--  class="well" -->
+                        </section> <!-- id="block1" -->
+                        
+                        <apex:outputPanel id="scheduleSnaggingPanelId">
+                        <apex:outputPanel rendered="{!lstSelectedUnits.size>0}">
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Schedule Snagging
+                                </h4>
+                                <div class="row">
+                                <!--      <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Call Outcome</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCase.Call_Outcome__c}" />
+                                        </div>
+                                    </div>-->
+
+                                    <apex:outputPanel id="meetingDateMessageId">
+                                        <apex:pageMessage summary="Selected timeslot is available for meeting." severity="info" strength="3" rendered="{!isMeetingSchedule}"/>
+                                        <apex:pageMessage summary="Please select different time slot." severity="error" strength="3" rendered="{!isSlotUnavailableForMeeting}"/>
+                                        <apex:pageMessage summary="Please select future date." severity="error" strength="3" rendered="{!isInvalidDate}"/>
+                                    </apex:outputPanel>
+                                    
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Schedule Snagging Date</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strUnitViewDate}" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Time Slot</label>
+                                            <apex:selectList styleClass="form-control" value="{!strTimeSlot}" multiselect="false" size="1">
+                                                   <apex:selectOptions value="{!lstSlots}"/>
+                                                </apex:selectList>
+                                        </div> 
+                                    </div> 
+
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <span class="pull-right">
+<!--                                             <apex:commandButton styleClass="btn btn-sm btn-success" action="{!confirmDate}" reRender="meetingDateMessageId, snagDetailsPanelId" value="Confirm Date" onComplete="callDateField();" status="blockUI"/> -->
+                                            <apex:commandButton styleClass="btn btn-sm btn-success" action="{!confirmDate}" value="Confirm Date"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        </apex:outputPanel>
+                        </apex:outputPanel>
+
+                        <apex:outputPanel id="snagDetailsPanelId">
+                        <apex:outputPanel rendered="{!isMeetingSchedule}">
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Snag Details
+                                </h4>
+                                <table class="paymentDue" cellpadding="10" width="100%">
+                                    <colgroup><col width="30%"/>
+                                        <col width="20%"/>
+                                    </colgroup><thead>
+                                    <tr>
+                                        <th class="snagNumCLs">Snag Number</th>
+                                        <th class="snagDescCls">Snag Description</th>
+                                        <th class="snagStatusCls">Status</th>
+                                        <th class="snagDateCls">Target Completion Date</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:repeat value="{!lstSNAGs}" var="snag">
+                                        <tr>
+                                            <td class="snagNumCLs">{!snag.Defect_ID__c}</td>
+                                            <td class="snagDescCls">{!snag.SD_Description__c}</td>
+                                            <td class="snagStatusCls">{!snag.Defect_Status__c}</td>
+                                            <td class="snagDateCls">
+                                                <apex:outputText value="{0, date, dd/MM/YYYY}">
+                                                    <apex:param value="{!snag.Due_By__c}" /> 
+                                                </apex:outputText>
+                                            </td>
+                                        </tr>
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                                <br /><br />
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Schedule Handover Date</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strScheduleHandoverDate}" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Power of Attorney Details
+                                </h4>
+                                   <!--   <span class="btn-group">
+                                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fa fa-download"></i> Documents
+                                        </button>
+                                        <apex:actionfunction action="{!SOAtobeGenerated}" name="soaDoc"/>
+                                        <apex:actionfunction action="{!PCCtobeGenerated}" name="pccDoc"/>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="/apex/StatementOfAccountPage" target="_blank" onClick="soaDoc();">Generate Statement of Account</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="/apex/PCCPage" target="_blank" onClick="pccDoc();">Generate PCC - AR</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#">View Offers available to Customer</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#">View HO Pack sent to Customer</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="/apex/PCCPage" target="_blank" onClick="pccDoc();">Generate PCC - FM</a></li>
+                                        </ul>
+                                    </span>-->
+                                
+                             <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <label>POA?</label>
+                                        <apex:inputCheckbox value="{!blnPoAValue}" style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <apex:outputPanel id="POAInfoBlock" style="display:none;">
+                                <div class="row">
+                                    <h5>Power of Attorney Details</h5>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name of Attorney</label>
+                                            <apex:inputText styleClass="form-control" value="{!strPOAName}" html-placeholder="Enter name" id="POANameID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Purpose of POA<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputTextarea styleClass="form-control inputDisabled" id="newDesc" value="{!strPOARelationWithOwner}"/>
+                                            <!-- <apex:selectList styleClass="form-control" value="{!strPOARelationWithOwner}" multiselect="false" size="1">
+                                               <apex:selectOptions value="{!lstRelationShip}"/>
+                                            </apex:selectList> -->
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Issue</label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strPOAExpiryDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued by (Authority)</label>
+                                            <apex:inputText styleClass="form-control" value="{!strPOAIssuedBy}" html-placeholder="Enter name" id="issuedByID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                         <apex:outputPanel layout="block">
+                                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Power of Attorney</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="POAAttach" onchange="attachPOAFile();" />
+                                                    </span>
+                                                    <div>
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>                                    
+                                </div>
+                               </apex:outputPanel> 
+                            </div>
+                        </section>
+                        </apex:outputPanel>
+                        </apex:outputPanel>
+                        
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Generate Documents
+                                    
+                                    <span class="pull-right">                                        
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" action="{!SOAtobeGenerated}" value="Statement of Account" oncomplete="viewSOA();" reRender="UrlSOA" status="blockUI"/>
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="" value="PCC - AR"/>
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="" value="Offers"/>
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="" value="HO Pack"/>
+                                        <apex:commandButton styleclass="btn btn-sm btn-success" style="margin-left: 5px;" onclick="" value="PCC - FM"/>
+                                    </span>
+                                    
+                                </h4>    
+                                    <div class="row">
+                                        <apex:outputPanel >
+                                        <apex:repeat value="{!lstDocs}" var="docs">
+		                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+		                                        <div class="fileupload fileupload-new" data-provides="fileupload">
+    		                                        <input type="hidden"/>
+		                                            <span class="btn btn-primary btn-file">
+		                                                <span class="fileupload-new">
+		                                                      <i class="fa fa-file-pdf-o" aria-hidden="true"></i>
+		                                                      <br/>Select file
+		                                                </span>
+		                                                <span class="fileupload-exists">
+		                                                      <i class="fa fa-file-pdf-o" aria-hidden="true"></i>
+		                                                      <br/>Change
+		                                                </span>
+		                                                <apex:inputFile title="Browse"
+		                                                        value="{!docs.objAttachment.body}"
+		                                                        filename="{!docs.objAttachment.name}" 
+		                                                        styleClass="inputFile{!docs.strRequired}"/>
+<!-- 		                                                        onchange="validateDocumentCompleteness();"/> -->
+		                                            </span>
+		                                            <div>
+		                                                <span class="fileupload-preview"></span>
+		                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none"></a>
+		                                            </div>
+		                                        </div>
+		                                        <apex:outputlabel style="word-wrap: break-word;" rendered="{!docs.strRequired == 'Yes'}"><span style="color:red">*&nbsp;</span>{!docs.strType}</apex:outputlabel>
+		                                        <apex:outputlabel style="word-wrap: break-word;" rendered="{!NOT(docs.strRequired == 'Yes')}"><span style="color:red">&nbsp;&nbsp;</span>{!docs.strType}</apex:outputlabel>
+		                                        <br/><br/>
+		                                    </div>
+                                        </apex:repeat>
+                                        </apex:outputPanel>
+<!--                                         </apex:actionRegion> -->
+                                    </div>
+                                    
+                                
+                            </div>
+                       </section>
+                       
+                        
+                        <section id="">
+                        <div class="well">
+                            <span class="row">
+<!--                                 <apex:commandButton value="Save Draft" styleClass="btn btn-sm" style="margin-left: 197px;" action="{!createHandoverSR}" reRender="pageM" oncomplete="complete();" status="blockUI"/> -->
+                                <apex:commandButton value="Save Draft" styleClass="btn btn-sm" style="margin-left: 197px;" action="{!createHandoverSR}"/>
+<!--                                 <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" style="margin-left: 100px;" action="{!submitCase}" reRender="pageM" onclick="complete();" oncomplete="disableEvents();" status="blockUI"/> -->
+                                <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" style="margin-left: 100px;" action="{!submitCase}"/>
+                                <!--<button class="btn btn-sm" style="margin-left: 197px;" >Save Draft</button><button class="btn btn-sm btn-success" style="margin-left: 100px; ">Submit SR</button> -->
+                 </span>
+                        </div>
+                    </section>
+            </section>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <script>
+            $('.well input.datepicker').datepicker({
+            });
+            $(document).ready(function() {
+                $('#multi-select-demo').multiselect();
+                hideUnitDetails();
+            });
+            window.onload = function(){ 
+             $('[id$=POAInfoBlock]').hide();
+            }
+            
+            function callDateField() {
+                $('.POAExpiryDate').datepicker({ 
+                    format: 'dd/mm/yyyy',
+                    autoclose: true
+                });
+            }
+            /*$('.POAExpiryDate').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })
+            $('.ScheduleHandover').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })
+            $('.UnitView').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })*/
+            
+            function hasAttorney() {
+                console.log('!!!!!hasAttorney');
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+            }
+            function attachPOAFile(){
+                    var filename = document.getElementById("POAAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=POAAttachName]').val(filename);
+                        var fbody = document.getElementById("POAAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=POAAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+            function complete() {
+            window.scrollTo(0, 0);
+           }
+           
+
+        function hideUnitDetails(){
+        console.log('hiii');
+        //$('select[id$=categories]').val();
+            var selCategory = $('.test').val();
+            console.log('11111111'+selCategory);
+            if(selCategory == 'Unit Details'){
+                $('#unitDetails').show();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Flags'){
+                $('#unitDetails').hide();
+                $('#flags').show();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Unit Status'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').show();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Open SRs'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').show();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Close SRs'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').show();
+            }
+        }
+        
+        function viewSOA() {
+            window.open($("[id$=UrlSOA]").val());
+            return false;
+        }
+        
+        
+        </script>
+</apex:component>

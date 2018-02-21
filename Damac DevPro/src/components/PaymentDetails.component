@@ -1,0 +1,454 @@
+<apex:component controller="PaymentDetailsController" allowDML="true">
+    <apex:attribute type="UtilityWrapperManager" name="availableInventories" description="The string to update" assignTo="{!uwmObject}"/>
+    <!-- Status Block : Starts -->
+    <div class="slds-spinner_container" style="position: fixed; display: none;" id="pdcustomstatus">
+        <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        <div class="slds-container--fluid" style="margin-top: 15%">
+            <div class="slds-grid slds-grid--align-center slds-text-heading--small" id="pdcustomstatusmessage"></div>
+        </div>
+    </div>
+    <!-- Status Block : Ends -->
+    <!-- Error Block : Starts -->
+    <div class="slds-notify_container" id="paymentDetailErrorBox" style="display: none;">
+        <div class="slds-notify slds-notify--toast slds-theme--error" role="alert" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <span class="slds-assistive-text">Error</span>
+            <a href="javascript:void(0);" class="slds-button slds-notify__close slds-button--icon-inverse" title="Close" onclick="j$('#paymentDetailErrorBox').hide();">
+                <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                    <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                </svg>
+                <span class="slds-assistive-text">Close</span>
+            </a>
+            <div class="slds-notify__content slds-media">
+                <div class="slds-media__figure">
+                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                    </svg>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-text-heading--small" id="paymentDetailErrorPrefix">
+                        <apex:outputText value="{!$Label.Error_Prefix}" escape="false"/>
+                    </h2>
+                    <span id="paymentDetailErrorMessage"></span>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <!-- Error Block : Ends -->
+    <apex:outputPanel layout="block" id="page4">
+        <apex:outputPanel layout="block" styleClass="slds-grid slds-wrap slds-m-top--xx-small slds-m-bottom--xx-small">
+            <apex:variable var="inventoryCount" value="{!0}" />
+            <apex:repeat value="{!inventoryIdsList}" var="thisKey">
+                <apex:outputPanel styleClass="slds-container--fluid slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--2-of-5 pd_selected_units slds-p-left--xx-small" >
+                    <article class="slds-card">
+                        <div class="slds-card__header slds-grid slds-m-left--small">
+                            <header class="slds-media slds-media--center slds-has-flexi-truncate">
+                                <div class="slds-media__figure" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                    <span class="slds-icon_container slds-icon-custom-custom40" title="if needed">
+                                        <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                            <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/custom-sprite/svg/symbols.svg#custom40')}"></use>    
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="slds-media__body slds-truncate">
+                                    <h2>
+                                        <a href="javascript:void(0);" class="slds-card__header-link">
+                                            <span class="slds-text-heading--small">Payment for - {!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}</span>
+                                        </a>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div class="slds-card__body slds-theme--default">
+                            <div class="slds-card__body--inner slds-size--1-of-1">
+                                <div class="slds-form--horizontal slds-p-top--small slds-p-bottom--small">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label">
+                                            <abbr class="slds-required" title="required">*</abbr>Payment Method
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <div>
+                                                <apex:inputField value="{!inventoryBuyerWrapperMap[thisKey].bookingUnit.Payment_Method__c}" styleClass="slds-select paymentMethod{!inventoryCount}" /> 
+                                                 <!-- onchange="checkParty(this, '{!inventoryCount}');" -->
+                                                <!-- <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].onlinePaymentParty}" size="1" 
+                                                                 styleClass="slds-select slds-m-left--xx-small paymentParty{!inventoryCount}" 
+                                                                 style="display: none; width: 40%;" 
+                                                                 onchange="requireThirdPartyDetails(this, '{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Id}');">
+                                                    <apex:selectOptions value="{!PaymentParty}"/>
+                                                </apex:selectList> -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel styleClass="slds-form-element" layout="block">
+                                        <apex:inputText styleClass="checkSubmitFlag{!inventoryCount}" value="{!inventoryBuyerWrapperMap[thisKey].bookingUnit.Proof_of_Payment_Submitted__c}" style="display: none;" />
+                                        <label class="slds-form-element__label">
+                                            <abbr class="slds-required  popRequired{!inventoryCount}" title="required" style="display: none;">*</abbr>Upload Proof of Payment
+                                        </label>
+                                        <div class="slds-form-element__control" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"> 
+                                            <div class="slds-file-selector slds-file-selector--files">
+                                                <div class="slds-file-selector__dropzone">
+                                                    <label class="slds-file-selector__body">
+                                                        <input type="file" class="slds-file-selector__input slds-assistive-text pop{!inventoryCount}" accept="image/*" onchange="uploadAttachment(this, '{!inventoryCount}', '{!uwmObject.dealRecord.Id}', '{!inventoryBuyerWrapperMap[thisKey].bookingUnit.Unit_Location__c}');"/> <!-- uploadProof(this, '{!inventoryCount}', '{!inventoryBuyerWrapperMap[thisKey].bookingUnit}'); -->  
+                                                        <span class="slds-file-selector__button slds-button {!IF(inventoryBuyerWrapperMap[thisKey].bookingUnit.Proof_of_Payment_Submitted__c, 'slds-button--success', 'slds-button--neutral')} proofButton{!inventoryCount}">
+                                                            <svg class="slds-button__icon slds-button__icon--left" aria-hidden="true">
+                                                                <use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+                                                            </svg>
+                                                            <span class="proofLabel{!inventoryCount}">
+                                                                <apex:outputText value="{!IF(inventoryBuyerWrapperMap[thisKey].bookingUnit.Proof_of_Payment_Submitted__c, 'Document Uploaded', 'Upload Proof')}"/>
+                                                            </span>
+                                                        </span> 
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-card__footer"> 
+                            <apex:outputText value="{!$Label.Message_Pop_Mandatory}" escape="false" style="color: #0070d2;"/>
+                        </div>
+                    </article>      
+                </apex:outputPanel>
+                <apex:variable var="inventoryCount" value="{!inventoryCount+1}" />
+            </apex:repeat>
+        </apex:outputPanel> 
+        <div class="thirdPartyDetailSection" style="display: none;">
+            <div role="dialog" class="slds-modal slds-fade-in-open"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink">
+                <div class="slds-modal__container">
+                    <div class="slds-modal__header">
+                        <a href="javascript:void(0);"
+                            class="slds-button slds-modal__close slds-button--icon-inverse"
+                            title="Close" onClick="j$('.thirdPartyDetailSection').hide();"> <svg
+                                class="slds-button__icon slds-button__icon--large"
+                                aria-hidden="true">
+                                <use
+                                    xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                            </svg> <span class="slds-assistive-text">Close</span>
+                        </a>
+                        <h2 id="thirdPartyDetails" class="slds-text-heading--medium">Third Party Details</h2>
+                    </div>
+                    <div class="slds-modal__content slds-p-around--medium"> 
+                        <div class="slds-form-element slds-lookup slds-is-open" data-select="single">
+                            <apex:inputText style="display: none;" styleClass="thirdPartyInventory"/>
+                            <fieldset class="slds-form--compound slds-size--1-of-1">
+                                <div class="slds-form-element__group">
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>First Name
+                                            </label>
+                                            <apex:inputText styleClass="slds-input thirdParty_firstname reqflds" value="{!thirdParty.First_Name__c}" />
+                                        </div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>Last Name
+                                            </label>
+                                            <apex:inputText styleClass="slds-input thirdParty_lastname reqflds" value="{!thirdParty.Last_Name__c}" />
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>Email
+                                            </label>
+                                            <apex:inputText styleClass="slds-input thirdParty_email reqflds" value="{!thirdParty.Email__c}" />
+                                        </div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>Phone
+                                            </label>
+                                            <apex:inputText styleClass="slds-input thirdParty_phone reqflds" value="{!thirdParty.Phone__c}" />
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>Address Line 1
+                                            </label>
+                                            <apex:inputText value="{!thirdParty.Address_Line_1__c}" styleClass="slds-input thirdParty_address reqflds" maxlength="240"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">Address Line 2</label>
+                                            <apex:inputText value="{!thirdParty.Address_Line_2__c}" styleClass="slds-input thirdParty_address" maxlength="240"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">Address Line 3</label>
+                                            <apex:inputText value="{!thirdParty.Address_Line_3__c}" styleClass="slds-input thirdParty_address" maxlength="240"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">Address Line 4</label>
+                                            <apex:inputText value="{!thirdParty.Address_Line_4__c}" styleClass="slds-input thirdParty_address" maxlength="240"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element__row">
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>City
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:selectList value="{!thirdParty.City__c}" size="1" styleClass="slds-input thirdParty_city reqflds">
+                                                    <apex:selectOptions value="{!cities}"/>
+                                                </apex:selectList>
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element">
+                                            <label class="slds-form-element__label">
+                                                <abbr class="slds-required" title="required">*</abbr>Country
+                                            </label>
+                                            <div class="slds-form-element__control">
+                                                <apex:selectList value="{!thirdParty.Country__c}" size="1" styleClass="slds-input thirdParty_country reqflds">
+                                                    <apex:selectOptions value="{!countries}"/>
+                                                </apex:selectList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                    <div class="slds-modal__footer">
+                        <a href="javascript:void(0);" class="slds-button slds-button--neutral" title="Cancel" 
+                        onClick="j$('.thirdPartyDetailSection').hide();">Cancel</a> 
+                        <a href="javascript:void(0);" class="slds-button slds-button--brand" title="Save" 
+                        onClick="saveAndClose();">Save</a>
+                    </div>
+                </div>
+            </div>
+            <div class="slds-backdrop slds-backdrop--open"></div>
+        </div>
+    </apex:outputPanel>
+    <!-- Action Function : Starts -->
+    <apex:actionFunction name="saveThirdPartyDetails" action="{!saveThirdPartyDetails}" reRender="none" status="status">
+        <apex:param name="selectedInventory" value="" assignTo="{!selectedInventory}" />
+    </apex:actionFunction>
+    <apex:actionFunction name="refreshPage" reRender="page4" status="status"/>
+    <!-- Action Function : Ends -->
+    <script type="text/javascript">
+        j$( document ).ready(function() {
+            j$(window).scrollTop(0);
+            j$('#pdcustomstatus').hide();
+        });
+        
+        function validateSrSubmit(){
+            var validated = true;
+            var numberOfPaymentDetailsSelected = 0;
+            var numberOfUnitSelected = j$(".pd_selected_units").length;
+            console.log('#### numberOfUnitSelected = '+numberOfUnitSelected);
+            for(var i = 0; i < numberOfUnitSelected; i++){
+                if(j$('.paymentMethod'+i).val()){
+                    numberOfPaymentDetailsSelected++;
+                }
+            }
+            if(numberOfPaymentDetailsSelected != numberOfUnitSelected){
+                validated = false;
+                document.getElementById('paymentDetailErrorBox').style.display = "block";
+                document.getElementById('paymentDetailErrorMessage').innerHTML = 'Payment method not selected for one or more units.'+
+                                                                                 '<br/> Please select a payment method for each unit before proceeeding.';  
+            }
+            if(validated){
+                /* If all validation completed, then submit for booking. */
+                submitBooking();
+            }
+        }
+        
+        function uploadAttachment(fileDom, index, srId, bookingUnitId){
+            sforce.connection.sessionId = '{!sessionId}'; 
+            var reader = new FileReader();
+            var attachFile = j$(fileDom)[0].files[0];
+            console.log('#### attachFile = '+attachFile); 
+            console.log('#### attachFile = '+attachFile.name);
+            j$('#pdcustomstatusmessage').innerHTML = 'Uploading file..';
+            j$('#pdcustomstatus').show();
+            if(attachFile == undefined){
+                j$('#pdcustomstatus').hide();   
+                document.getElementById('paymentDetailErrorBox').style.display = "block";
+                document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please upload an attachment.';
+                return;
+            }else if(attachFile.name.split('.')[1].toLowerCase() != 'doc' && 
+                     attachFile.name.split('.')[1].toLowerCase() != 'docx' && 
+                     attachFile.name.split('.')[1].toLowerCase() != 'pdf' && 
+                     attachFile.name.split('.')[1].toLowerCase() != 'png' && 
+                     attachFile.name.split('.')[1].toLowerCase() != 'jpg' &&  
+                     attachFile.name.split('.')[1].toLowerCase() != 'jpeg'){
+                j$('#pdcustomstatus').hide();   
+                document.getElementById('paymentDetailErrorBox').style.display = "block";
+                document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please enter a valid file format. Only DOC, DOCX, PDF, PNG, JPEG, JPG format allowed.';
+                return;
+            }else if(attachFile.size > 5324800){
+                 j$('#pdcustomstatus').hide();   
+                 document.getElementById('paymentDetailErrorBox').style.display = "block";
+                 document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please upload a small file. File size can\'t be greater than 10 MB.';
+                 return;
+            }
+        
+            reader.onload = function(e) {
+                var attachment = new sforce.SObject('Attachment');  
+                attachment.Name = 'Proof of payment - '+bookingUnitId;
+                attachment.IsPrivate = false;  
+                attachment.ContentType = attachFile.type;
+                attachment.Body = (new sforce.Base64Binary(e.target.result)).toString();
+                attachment.Description = 'Proof of payment - '+bookingUnitId;
+                attachment.ParentId = srId;
+                var result = sforce.connection.create([attachment]);  
+                if(result[0].getBoolean("success")){  
+                    j$('#pdcustomstatus').hide();   
+                    j$('.checkSubmitFlag'+index).val('true');
+                    /* refreshing the page. */
+                    refreshPage();
+                }else{
+                    j$('#pdcustomstatus').hide();
+                    document.getElementById('paymentDetailErrorBox').style.display = "block";
+                    document.getElementById('paymentDetailErrorMessage').innerHTML = 'Can\'t upload the file. Please proceed by manually uploading the file.';
+                }
+            };
+            reader.readAsBinaryString(attachFile);
+        }
+        
+        
+        function uploadProof(fileDom, index, bookingUnitId){
+            Visualforce.remoting.timeout = 120000;
+            document.getElementById('pdcustomstatusmessage').innerHTML = 'Uploading file..';
+            j$('#pdcustomstatus').show();
+            var dealId = '{!uwmObject.dealRecord.Id}';
+            var file = j$(fileDom)[0].files[0];
+            if (file) {
+                var fileName = file.name;
+                var filesize = file.size;
+                if(fileName.split('.')[1].toLowerCase() != 'doc' && 
+                   fileName.split('.')[1].toLowerCase() != 'docx' && 
+                   fileName.split('.')[1].toLowerCase() != 'pdf' && 
+                   fileName.split('.')[1].toLowerCase() != 'png' && 
+                   fileName.split('.')[1].toLowerCase() != 'jpg' &&  
+                   fileName.split('.')[1].toLowerCase() != 'jpeg'){
+                    j$('#pdcustomstatus').hide();   
+                    document.getElementById('paymentDetailErrorBox').style.display = "block";
+                    document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please enter a valid file format. Only DOC, DOCX, PDF, PNG, JPEG, JPG format allowed.';
+                }else if(filesize > 5324800){
+                    j$('#pdcustomstatus').hide();   
+                    document.getElementById('paymentDetailErrorBox').style.display = "block";
+                    document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please upload a small file. File size can\'t be greater than 10 MB.';
+                }else{
+                    var reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = function(e) {
+                        Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.PaymentDetailsController.uploadProof}', 
+                                                                        e.target.result, 
+                                                                        dealId,
+                                                                        bookingUnitId, 
+                                                                        file.name,
+                                                                        file.type,
+                            function(result, event){
+                                if (event.status) {
+                                    if(result == 'success'){
+                                        j$('#pdcustomstatus').hide();   
+                                        j$('.proofButton'+index).addClass('slds-button--success');
+                                        j$('.proofLabel'+index).html('Document Uploaded');
+                                        j$('.checkSubmitFlag'+index).val('true');
+                                    }else{
+                                        document.getElementById('paymentDetailErrorBox').style.display = "block";
+                                        document.getElementById('paymentDetailErrorMessage').innerHTML = 'Webservice failed : '+result;
+                                        j$('#pdcustomstatus').hide();
+                                    }
+                                } else if (event.type === 'exception') {
+                                    document.getElementById('paymentDetailErrorBox').style.display = "block";
+                                    document.getElementById('paymentDetailErrorMessage').innerHTML = 'Can\'t upload the file. Please proceed by manually uploading the file.';
+                                    j$('#pdcustomstatus').hide();
+                                } else {
+                                    j$('#pdcustomstatus').hide();
+                                }
+                                j$(fileDom).val('');
+                            }
+                        );
+                    };
+                }
+            }
+        }
+        
+        function checkParty(domId, index){
+            var paymentMethod = j$(domId).val();
+            if(paymentMethod == 'Online_Payment'){
+                j$('.paymentParty'+index).show();
+                j$('.popRequired'+index).hide();
+            }else{
+                j$('.paymentParty'+index).hide();
+                j$('.popRequired'+index).show();
+            }
+        }
+        
+        function requireThirdPartyDetails(domId, selectedInventory){
+            var paymentParty = j$(domId).val(); 
+            if(paymentParty == 'Third Party'){
+                j$('.thirdPartyInventory').val(selectedInventory);
+                j$('.thirdPartyDetailSection').show();
+            }else{
+                j$('.thirdPartyDetailSection').hide();
+            }   
+        }
+        
+        function saveAndClose(){
+            var validated = validateRequiredFields();  
+            if(validated){
+                var selectedInventory = j$('.thirdPartyInventory').val();
+                saveThirdPartyDetails(selectedInventory);
+                j$('.thirdPartyDetailSection').hide();  
+            }
+        }
+        
+        function validateRequiredFields(){
+            var validated = true;
+            j$('[class*=reqflds]').each( function (){
+                if(j$(this).val()){
+                    /* Validating emails. */
+                    if(j$(this).attr('class').match('thirdParty_email')){
+                        if(!validateEmail(j$(this).val())){
+                            validated = false;
+                            document.getElementById('paymentDetailErrorBox').style.display = "block";
+                            document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please enter a valid email address, eg.. sample@damac.com.';  
+                            return validated;
+                        }
+                    }   
+                    /* Validating phone numbers. */
+                    if(j$(this).attr('class').match('thirdParty_phone')){
+                        if(!validatePhone(j$(this).val())){
+                            validated = false;
+                            document.getElementById('paymentDetailErrorBox').style.display = "block";
+                            document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please enter a valid phone number, eg.. 0097155xxxxxxx';  
+                            return validated;
+                        }
+                    } 
+                }else{
+                    validated = false;  
+                    document.getElementById('paymentDetailErrorBox').style.display = "block";
+                    document.getElementById('paymentDetailErrorMessage').innerHTML = 'Please enter all the required fields.';
+                    return validated;
+                }           
+            });
+            return validated;
+        }
+        
+        /* Method to check email. */    
+        function validateEmail(email) {
+            var regexStr = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+            return regexStr.test(email);
+        }   
+        
+        /* Method to check phone. */
+        function validatePhone(phone){
+            var regexStr = /^[0-9-+]+$/;
+            return regexStr.test(phone);
+        }
+        
+    </script>
+</apex:component>

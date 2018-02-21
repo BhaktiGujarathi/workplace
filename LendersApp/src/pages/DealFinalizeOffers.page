@@ -1,0 +1,655 @@
+<apex:page standardController="Opportunity" extensions="DealOfferController" sidebar="false">
+
+    <style type="text/css">
+        .col1 {width:10%; text-align:right;}
+        .col2 {width:10%; text-align:left;}
+        .col3 {width:10%; text-align:right;}
+        .col4 {width:10%; text-align:left;}
+        .col5 {width:10%; text-align:right;}
+        .col6 {width:10%; text-align:left;}
+        .col7 {width:10%; text-align:right;}
+        .col8 {width:10%; text-align:left;}
+        .col9 {width:10%; text-align:right;}
+        .col10{width:10%; text-align:left;}
+        .col11{width:10%; text-align:right;}
+        .col12{width:20%; text-align:left;}
+        .col13{width:10%; text-align:right;}
+        .col14{width:20%; text-align:left;}
+        .col15{width:20%; text-align:right;}
+        .col16{width:20%; text-align:left;}
+    </style>
+
+    <script type="text/javascript">
+
+        j$ = jQuery.noConflict();
+
+        // To get calculated Values on load of page
+        j$(document).ready(function(){
+
+            var monthlyGrossSales = j$('[id$="monthlyGrossSalesID"]').val();
+            var firstmonthlyGrossSales = monthlyGrossSales.replace("$","");
+            var finalmonthlyGrossSales = firstmonthlyGrossSales.replace(",","");
+
+            //get adj gross sales
+            var adjmonthlyGrossSales = j$('[id$="adjMonthlyGrossSalesId"]').val();
+            var adjfirstmonthlyGrossSales = adjmonthlyGrossSales.replace("$","");
+            var adjfinalmonthlyGrossSales = adjfirstmonthlyGrossSales.replace(",","");
+
+
+            //Assign adjfinalmonthlyGrossSales =monthlyGrossSales if adjfinalmonthlyGrossSales =Null
+            if (adjfinalmonthlyGrossSales == null && finalmonthlyGrossSales != null) {
+
+                j$('[id$="adjMonthlyGrossSalesId"]').val(finalmonthlyGrossSales);
+            }
+
+            //get percent gross
+            var maxPercentGross = j$('[id$="maxPercentGrossId"]').val();
+
+            //Calculate monthly pmt
+            var IDmaxmonthlypmtID = j$('[id$="maxmonthlypmtID"]').attr('id');
+            var IDmaxPercentGrossId = j$('[id$="maxPercentGrossId"]').attr('id');
+            var IDadjmonthlyGrossSalesID = j$('[id$="adjMonthlyGrossSalesId"]').attr('id');
+
+            maxPercentGrossOnChange(IDmaxmonthlypmtID,IDmaxPercentGrossId,IDadjmonthlyGrossSalesID,false);
+
+            var maxMonthlyPMT = j$('[id$="maxmonthlypmtID"]').val();
+            var maxMonthlyPMTValue = maxMonthlyPMT.replace("$", ""); <!-- remove $ symbol -->
+            var currentMaxMonthlyPMT = maxMonthlyPMTValue.replace(",",""); <!-- remove coma-->
+
+            var elemsTerm = document.getElementsByClassName('termClass');
+            var elemsPayback = document.getElementsByClassName('paybackClass');
+
+            var elemsRate = document.getElementsByClassName('rateClass'); <!-- to calculate Funded -->
+            var elemsFunded = document.getElementsByClassName('fundedClass'); <!-- to calculate Funded -->
+
+            var elemsMonthlyPBAmount = document.getElementsByClassName('monthlyPBAmountClass'); <!-- to calculate Monthly PB Amt -->
+            var elemsDailyPBAmount = document.getElementsByClassName('dailyPBAmountClass'); <!-- to calculate Daily PB Amt -->
+            var elemsDealLength = document.getElementsByClassName('dealLengthClass'); <!-- to calculate Deal Lenght(Days) -->
+            var elemsFactorPerMonth = document.getElementsByClassName('factorPerMonthClass'); <!-- to calculate Factor Per Month -->
+            var elemsHoldback = document.getElementsByClassName('holdbackClass');
+            var elemsAmtReq = document.getElementsByClassName('amtReqClass');
+            var elemsdealType = document.getElementsByClassName('dealTypeClass');
+            var elemsdealACH = document.getElementsByClassName('dealACHClass');
+
+
+            //Get monthly cc sales
+            var monthlyCCSales = j$('[id$="monthlyCCSalesID"]').val();
+            var firstmonthlyCCSales = monthlyCCSales.replace("$","");
+            var finalmonthlyCCSales = firstmonthlyCCSales.replace(",","");
+
+            //get adj cc sales value
+            var adjmonthlyCCSales = j$('[id$="adjMonthlyCCSalesId"]').val();
+            var adjfirstmonthlyCCSales = adjmonthlyCCSales.replace("$","");
+            var adjfinalmonthlyCCSales = adjfirstmonthlyCCSales.replace(",","");
+
+            //if adjmonthlyCCSales is null then adjmonthlyCCSales =monthlyCCSales
+            if ((adjfinalmonthlyCCSales == null || adjfinalmonthlyCCSales == '' ) && finalmonthlyCCSales != null) {
+
+                j$('[id$="adjMonthlyCCSalesId"]').val(finalmonthlyCCSales);
+            }
+
+            var elemsPercentageofGross = document.getElementsByClassName('percentageofGrossClass'); <!-- to calculate Percentage of Gross-->
+
+            for (var i = 0; i < elemsTerm.length; i++) {
+
+                var currentTerm = elemsTerm[i].defaultValue;
+
+                //To Calculate Funded =MaxMonthlyPMT*Term/Max Factor Rate
+                calculateFunded(elemsFunded[i].id, elemsTerm[i].id, elemsRate[i].id, elemsPayback[i].id, elemsMonthlyPBAmount[i].id, elemsHoldback[i].id, elemsDailyPBAmount[i].id,elemsPercentageofGross[i].id, false, elemsAmtReq[i].checked, elemsdealACH[i].id, elemsdealType[i].id);
+
+                //Calculate deal length
+                calculateDealLength(elemsTerm[i].id, elemsDealLength[i].id, false);
+
+                //Calculate Factor per month
+                calculateFactorPerMonth(elemsFactorPerMonth[i].id, elemsRate[i].id, elemsTerm[i].id, false);
+
+            }
+
+            offerRender();
+        });
+
+
+        function confirmBeforeRefresh() {
+
+            var r = confirm("Below offers will be refreshed. Do you want to continue?");
+
+            if (r == true) {
+
+                return true;
+            }
+            else {
+
+                return false;
+            }
+
+            return false;
+        }
+
+
+        function refreshAfterComplete() {
+
+            offerRender();
+        }
+
+    </script>
+
+    <apex:form >
+
+        <apex:actionFunction name="offerRender" status="loadStatus1" reRender="pbOffer2Id,fmId" />
+        <apex:pageBlock mode="edit" title=" " >
+
+            <apex:pageBlockSection title="Offer - User Input" columns="1">
+
+                <apex:panelGrid columns="6" width="100%" cellpadding="2" cellspacing="4" border="0" columnClasses="col1, col2, col3,col4, col5, col6,col7, col8" >
+
+                    <!-- Deal Rating -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Deal_Rating__c.label}"/>
+                    <apex:inputField value="{!opp.Deal_Rating__c}" />
+
+
+                    <!-- Gross Monthly Sales -->
+                    <apex:outputLabel style="font-weight:bold;" value="Gross Monthly Sales"/>
+                    <apex:outputText value="{0, number, $##,###}">
+                        <apex:param value="{!opp.McaApp__Gross_monthly_Sales__c}"/>
+                    </apex:outputText>
+                    <!-- <apex:outputField value="{!opp.McaApp__Gross_monthly_Sales__c}"/> -->
+
+
+                    <!-- Credit Score -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Credit_Score__c.label}"/>
+                    <apex:inputField value="{!opp.McaApp__Credit_Score__c}"/>
+
+
+                    <!-- Max % Gross -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Max_Gross__c.label}"/>
+                    <apex:inputField id="maxPercentGrossId" styleClass="maxPercentGross" value="{!opp.Max_Gross__c}" onchange="maxPercentGrossOnChange('{!$Component.maxmonthlypmtID}','{!$Component.maxPercentGrossId}','{!$Component.adjMonthlyGrossSalesId}',true)" />
+
+
+                    <!-- Adjusted Monthly Gross Sales -->
+                    <apex:outputLabel style="font-weight:bold;" value="Adjusted Gross Sales"/>
+                    <apex:inputField id="adjMonthlyGrossSalesId" value="{!opp.AdjustedMonthlyGrossSales__c}" onchange="adjMonthlyGrossSaleOnChange('{!$Component.maxmonthlypmtID}','{!$Component.maxPercentGrossId}','{!$Component.adjMonthlyGrossSalesId}') "/>
+
+
+                    <!-- Years in Business -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Account.fields.McaApp__Years_in_Business__c.label}"/>
+                    <apex:inputField value="{!opp.Account.McaApp__Years_in_Business__c}" />
+
+
+                    <!-- Max Monthly Payment -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Max_Monthly_PMT__c.label}"/>
+                    <apex:outputText id="maxmonthlypmtID" value="{0, number, $##,###}" styleClass="max-mon-pmt" >
+                        <apex:actionSupport event="onchange" action="maxMonthlypmtOnchange('{!$Component.maxmonthlypmtID}',true)"/>
+                        <apex:param value="{!opp.Max_Monthly_PMT__c}"/>
+                    </apex:outputText>
+                    <!-- <apex:inputField id="maxmonthlypmtID" value="{!opp.Max_Monthly_PMT__c}" styleClass="max-mon-pmt" onchange="maxMonthlypmtOnchange('{!$Component.maxmonthlypmtID}',true)"/> -->
+
+
+                    <!-- Credit Card Sales -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Credit_Card_Sales__c.label}"/>
+                    <apex:outputText value="{0, number, $##,###}">
+                        <apex:param value="{!opp.McaApp__Credit_Card_Sales__c}"/>
+                    </apex:outputText>
+                    <!-- <apex:outputField value="{!opp.McaApp__Credit_Card_Sales__c}"/> -->
+
+
+                    <!-- Hybrid Daily Payment -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Hybrid_Daily_Pmt__c.label}"/>
+                    <apex:inputField value="{!opp.Hybrid_Daily_Pmt__c}"/>
+
+
+                    <!-- Min Factor Per Month -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Min_Factor_Per_Month__c.label}"/>
+                    <apex:inputField id="minFactorPerMonthID" value="{!opp.Min_Factor_Per_Month__c}" onchange="offerRender()"/>
+
+
+                    <!-- Adjusted Monthly CC Sales -->
+                    <apex:outputLabel style="font-weight:bold;" value="Adjusted CC Sales"/>
+                    <apex:inputField id="adjMonthlyCCSalesId" value="{!opp.AdjustedMonthlyCCSales__c}" onchange="adjMonthlyCCSaleOnChange(this)"/>
+
+
+                    <!-- Holdback % -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Holdback_Percentage__c.label}"/>
+                    <apex:inputField value="{!opp.McaApp__Holdback_Percentage__c}"/>
+
+
+                    <!-- Max Holdback % -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Max_Holdback__c.label}"/>
+                    <apex:inputField value="{!opp.Max_Holdback__c}" styleClass="maxHoldbackAmount" />
+
+
+                    <!-- Amount Requested -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.McaApp__Amount_Requested__c.label}"/>
+                    <apex:inputField value="{!opp.McaApp__Amount_Requested__c}" onchange="amountRequestedOnchange(this)"/>
+
+
+                    <!-- Override Criteria -->
+                    <apex:outputText style="font-weight:bold;" value="Override Criteria"/>
+                    <apex:inputcheckbox value="{!setOverrideFilter}" Label="Override Criteria"/>
+
+                    <!-- Program Type -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.ProgramType__c.label}"/>
+                    <apex:inputField id="type" value="{!opp.ProgramType__c}"/>
+
+
+                    <!-- Terms to Offer -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Terms_To_Offer__c.label}" />
+<!--                                             rendered="{!IF(opp.Terms_To_Offer__c!=null,true,false)}"/> -->
+                    <apex:inputField value="{!opp.Terms_To_Offer__c}" />
+
+                    <!-- Open Position -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Open_Positions__c.label}"/>
+                    <apex:inputField value="{!opp.Open_Positions__c}"/>
+
+                    <!-- Funding Amount Override -->
+                    <apex:outputLabel style="font-weight:bold;" value="{!$ObjectType.Opportunity.fields.Funding_Amount_Override__c.label}"/>
+                    <apex:inputField id="overrideFunded" value="{!opp.Funding_Amount_Override__c}" onchange="calculateFundedOverride()"/>
+
+                </apex:panelGrid>
+
+            </apex:pageBlockSection>
+
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="Back" action="{!backToDefaultPage}" />
+                <apex:commandButton value="Quick Save" action="{!updateDeal}"/>
+                <apex:commandButton value="Update Available Offers" action="{!getOffers}" status="loadStatus1" onclick="if({!showOffer} && {!lstOffer.size>0}){return confirmBeforeRefresh();}else {return true;}"/>
+                <apex:commandButton value="Cancel" action="{!Cancel}"/>
+                <apex:commandButton value="Next" action="{!goToStep2}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+
+        <apex:pageBlock mode="edit" id="pbOffer2Id" >
+            <apex:pageBlockSection title="Available Offers" columns="1">
+                <apex:outputLabel rendered="{!lstOffer.size<=0}"> No Matching Offers Found</apex:outputLabel>
+                <apex:variable var="i" value="{!0}"/>
+                <apex:pageBlockTable width="100%" rendered="{!lstOffer.size>0}" value="{!lstOffer}" var="o">
+<!--                 {!opp.McaApp__Funding_Amount__c}{!IF(AND(opp.McaApp__Funding_Amount__c<>null,o.objOffer.McaApp__Amount__c<>null),IF(o.objOffer.McaApp__Amount__c>=o.objOffer.McaApp__Amount__c,true,false),true)} -->
+                    <apex:column width="2%">
+                        <apex:facet name="header">
+                            <apex:inputCheckbox onclick="checkBoxSelection(this,'offerAvailableClass')"/>
+                        </apex:facet>
+                        <apex:inputCheckbox styleClass="offerAvailableClass" value="{!o.selected}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Name.label}">
+<!--                     <apex:outputField value="{!o.programMasterName}"/> -->
+                        <a id="{!o.programId}" href="/{!o.programId}" target="_blank"
+                            onmouseover="LookupHoverDetail.getHover('{!o['programId']}', '/{!o['programId']}/m?isAjaxRequest=1').show();"
+                            onmouseout="LookupHoverDetail.getHover('{!o['programId']}').hide();"
+                            onfocus="LookupHoverDetail.getHover('{!o['programId']}', '/{!o['programId']}/m?retURL={!o['programId']}&isAjaxRequest=1').show();"
+                            onblur="LookupHoverDetail.getHover('{!o['programId']}').hide();">
+                            <apex:outputText style="width:60px;" value="{!o.programMasterName}"/>
+                        </a>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Deal_Type__c.label}">
+                        <apex:inputField id="dealTypeId" styleClass="dealTypeClass" style="width:70px;" value="{!o.objOffer.McaApp__Deal_Type__c}" onchange="calculateDailyACH('{!$Component.dailyAchId}','{!$Component.monthlyPbId}','{!$Component.holdbackId}','{!$Component.dealTypeId}');offerRender();"  />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Term_Months__c.label}" rendered="{!NOT(showTermDays)}">
+                        <apex:inputField id="termId" styleClass="termClass" style="width:35px;" value="{!o.objOffer.McaApp__Term_Months__c}" onchange="termOnChange(this,'{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/> 
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Term_Days__c.label}" rendered="{!showTermDays}">
+                        <apex:inputField id="termDaysId" styleClass="termClass" style="width:35px;" value="{!o.objOffer.Term_Days__c}" onchange="termOnChange(this,'{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Amount__c.label}">
+                        <apex:inputField style="width:80px;" id="fundedId" styleClass="fundedClass" value="{!o.objOffer.McaApp__Amount__c}" onchange="fundedOnchange('{!$Component.fundedId}','{!$Component.paybackId}','{!$Component.maxFRate}','{!$Component.monthlyPBId}','{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}',true,'{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Rate__c.label}">
+                        <apex:inputField id="maxFRate" styleClass="rateClass" style="width:35px;" value="{!o.objOffer.McaApp__Rate__c}" onchange="rateOnchange('{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.McaApp__Rate__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,o.objOffer.McaApp__Rate__c<opp.Min_Factor_Per_Month__c)}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Payback__c.label}">
+                        <apex:inputField style="display:none;" id="payBackId" styleClass="paybackClass" value="{!o.objOffer.Payback__c}" />
+                        <apex:outputField value="{!o.objOffer.Payback__c}" />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Holdback__c.label}">
+                        <apex:inputField id="holdbackId" styleClass="holdbackClass" style="width:40px;display:none;" value="{!o.objOffer.McaApp__Holdback__c}"/>
+                        <apex:inputField id="holdbackIdNonDec" onchange="holdbackOnchange(this,'{!$Component.holdbackId}','{!$Component.monthlyPbId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}');offerRender();" style="width:40px;display:{!IF(OR(o.programMaster.Master_Type__c = 'MCA', o.programMaster.Master_Type__c = 'Hybrid' ),'block','none')};" value="{!o.objOffer.Holdback_Non_Decimal__c}"/>
+
+                        <!-- <span class="hideRow" style="display: none;">{!IF(OR(AND(OR(AND(OR(o.objOffer.McaApp__Deal_Type__c=='MCA',o.objOffer.McaApp__Deal_Type__c=='Hybrid'), o.objOffer.Holdback_Non_Decimal__c <> NULL), o.objOffer.McaApp__Deal_Type__c=='ACH', ISBLANK(o.programId)),IF(AND(o.progMinAmount <> null, o.objOffer.McaApp__Amount__c <> null), IF(o.objOffer.McaApp__Amount__c >= o.progMinAmount, true, false), true)), AND (o.objOffer.McaApp__Deal_Type__c<>'ACH', o.objOffer.McaApp__Deal_Type__c<>'MCA', CONTAINS(opp.ProgramType__c, o.objOffer.McaApp__Deal_Type__c))), "show", "hide")}</span> -->
+<!--                         ,o.objOffer.McaApp__Amount__c>opp.McaApp__Funding_Amount__c -->
+
+<!-- 
+                        {!o.programId}
+                        {!o.programMaster.Master_Type__c}
+                        {!opp.ProgramType__c}
+                        {!o.objOffer.McaApp__Deal_Type__c}
+                        {!opp.ProgramType__c = null}
+                        {!o.objOffer.McaApp__Deal_Type__c} -->
+                        <span class="hideRow" style="display: none">
+                            {!IF(
+                                AND(
+                                    OR(
+                                        AND(
+
+                                            OR(
+                                                o.programMaster.Master_Type__c = 'MCA',
+                                                o.programMaster.Master_Type__c = 'Hybrid'
+                                            ),
+
+                                            o.objOffer.Holdback_Non_Decimal__c <> NULL
+
+                                        ),
+
+                                        o.programMaster.Master_Type__c = 'ACH',
+                                        ISBLANK(o.programId)
+                                    ),
+
+                                    IF(
+                                        AND(
+                                            o.progMinAmount <> null,
+                                            o.objOffer.McaApp__Amount__c <> null
+                                        ),
+
+                                        IF(
+                                            o.objOffer.McaApp__Amount__c >= o.progMinAmount, true, false
+                                        ),
+
+                                        true
+                                    ),
+
+                                    IF(
+                                        AND(
+                                            opp.ProgramType__c <> null,
+                                            o.programMaster.Master_Type__c <> null,
+                                            CONTAINS(opp.ProgramType__c, o.objOffer.McaApp__Deal_Type__c)
+                                        ),
+
+                                        true,
+
+                                        IF(
+
+                                            o.newOffer,
+
+                                            true,
+
+                                        
+                                            AND (
+
+                                                opp.ProgramType__c = null,
+                                                o.ProgramId = null
+                                            )
+                                        )
+                                    )
+
+                                ),
+
+                                "show", "hide"
+                            )}
+
+                        </span>
+
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_ACH__c.label}">
+                        <apex:inputField id="dailyAchId" styleClass="dealACHClass" style="width:60px;display:none;" value="{!o.objOffer.Daily_ACH__c}"/>
+                        <apex:outputField value="{!o.objOffer.Daily_ACH__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Payment_Amt__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__Payment_Amt__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__PMT_Schedule__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__PMT_Schedule__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_PB_Amount__c.label}">
+                        <apex:inputField style="width:80px;display:none;" id="dailyPBAmtId" styleClass="dailyPBAmountClass" value="{!o.objOffer.Daily_PB_Amount__c}"/>
+                        <apex:outputField style="width:80px;" value="{!o.objOffer.Daily_PB_Amount__c}" rendered="{!OR(o.objOffer.McaApp__Deal_Type__c=='ACH',o.objOffer.McaApp__Deal_Type__c=='Hybrid')}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Monthly_PB_Amount__c.label}">
+                        <apex:inputField style="display:none;" id="monthlyPbId" styleClass="monthlyPBAmountClass" value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                        <apex:outputField value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee_Percentage__c.label}">
+                        <apex:inputField id="origFeePer1" styleClass="origFeePer1" style="width:70px;" onchange="fundedOnchange('{!$Component.fundedId}','{!$Component.paybackId}','{!$Component.maxFRate}','{!$Component.monthlyPBId}','{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}',true,'{!$Component.dailyAchId}','{!$Component.dealTypeId}')" value="{!o.objOffer.Orig_Fee_Percentage__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee__c.label}">
+                        <apex:inputField id="origFee1" styleClass="origFee1" style="width:70px;" value="{!o.objOffer.Orig_Fee__c}" />
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Deal_Length__c.label}">
+                        <apex:inputField style="display:none;" id="dealLenId" styleClass="dealLengthClass" value="{!o.objOffer.Deal_Length__c}"/>
+                        <apex:outputField value="{!o.objOffer.Deal_Length__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Factor_per_Month__c.label}">
+                        <apex:inputField id="facMonth" styleClass="factorPerMonthClass" style="width:35px;" value="{!o.objOffer.Factor_per_Month__c}" onchange="offerRender()"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Factor_per_Month__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,(o.objOffer.Factor_per_Month__c<opp.Min_Factor_Per_Month__c))}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Percentage_of_Gross__c.label}">
+                        <apex:inputField style="display:none" id="perGrossId" styleClass="percentageofGrossClass" value="{!o.objOffer.Percentage_of_Gross__c}" /> <!-- onchange="removeHigherGrossOffers('{!i}')" -->
+                        <apex:outputField value="{!o.objOffer.Percentage_of_Gross__c}" />
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!IF(o.calculateMaxGross , AND(o.calculateMaxGross, o.objOffer.Percentage_of_Gross__c!=NULL,opp.Max_Gross__c!=NULL,(opp.Max_Gross__c<o.objOffer.Percentage_of_Gross__c)), AND(o.objOffer.Percentage_of_Gross__c!=NULL, (o.objOffer.Percentage_of_Gross__c > o.objOffer.Max_Gross__c)))}"/>
+
+                        <apex:inputCheckbox style="display:none;" styleClass="amtReqClass" value="{!o.amtRequested}"/>
+
+                        <apex:inputField style="display:none" id="maxPerGrossId" styleClass="maxPercentageofGrossClass" value="{!o.objOffer.Max_Gross__c}" rendered="{!NOT(o.calculateMaxGross)}" />
+                    </apex:column>
+
+                    <apex:variable id="index" var="i" value="{!i+1}"/>
+                </apex:pageBlockTable>
+
+
+                <script>
+
+
+
+                    j$(".hideRow").each(function() {
+
+                        var showHide = j$(this).html();
+
+                        if (showHide == "hide") {
+
+
+                            j$(j$(this).parent().parent().find(".offerAvailableClass")[0]).removeClass("offerAvailableClass");
+
+                            // console.log('alright');
+
+                            j$(this).parent().parent().hide();
+                        }
+                        else {
+
+                            j$(j$(this).parent().parent().find("input[type='checkbox']")[0]).addClass("offerAvailableClass");
+                            j$(this).parent().parent().show();
+                        }
+                    });
+
+                </script>
+
+            </apex:pageBlockSection>
+
+            <br/>
+
+            <apex:commandButton value="Add New Offer" action="{!addOffer}" reRender="pbOffer2Id" style="margin: 0 15px; margin-left: 20px;">
+                <apex:param name="currentTab" value="step1" assignTo="{!currentTab}"/>
+            </apex:commandButton>
+
+            <apex:commandButton value="Add to Selected Offers" action="{!addToChosenOffers}"/>
+
+            <apex:pageBlockSection title="Selected Offers" columns="1">
+
+                <apex:outputLabel rendered="{!lstSelectedOffer.size<=0}"> No Offers Selected</apex:outputLabel>
+
+                <apex:pageBlockTable width="100%" rendered="{!lstSelectedOffer.size>0}" value="{!lstSelectedOffer}" var="o">
+
+                    <apex:column width="2%" headerValue="Select">
+                        <apex:facet name="header">
+                            <apex:inputCheckbox onclick="checkBoxSelection(this,'chosenOfferClass')"/>
+                        </apex:facet>
+                        <apex:inputCheckbox styleClass="chosenOfferClass" value="{!o.selected}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Name.label}">
+                        <a href="/{!o.programId}" target="_blank">
+                            <apex:outputText style="width:60px;" value="{!o.programMasterName}"/>
+                        </a>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Deal_Type__c.label}">
+                        <apex:inputField id="dealTypeId2" style="width:70px;" value="{!o.objOffer.McaApp__Deal_Type__c}" onchange="offerRender()" />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Term_Months__c.label}">
+                        <apex:inputField id="termId2" style="width:35px;" value="{!o.objOffer.McaApp__Term_Months__c}" onchange="termOnChange(this,'{!$Component.payBackId2}','{!$Component.monthlyPbId2}','{!$Component.facMonth2}','{!$Component.maxFRate2}','{!$Component.fundedId2}','{!$Component.dealLenId2}','{!$Component.holdbackId2}','{!$Component.dailyPBAmtId2}','{!$Component.perGrossId2}','{!$Component.dailyAchId2}','{!$Component.dealTypeId2}')"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Amount__c.label}">
+                        <apex:inputField style="width:80px;" id="fundedId2" value="{!o.objOffer.McaApp__Amount__c}" onchange="fundedOnchange('{!$Component.fundedId2}','{!$Component.paybackId2}','{!$Component.maxFRate2}','{!$Component.monthlyPBId2}','{!$Component.termId2}','{!$Component.holdbackId2}','{!$Component.dailyPBAmtId2}','{!$Component.perGrossId2}',true,'{!$Component.dailyAchId2}','{!$Component.dealTypeId2}')"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Rate__c.label}">
+                        <apex:inputField id="maxFRate2" style="width:35px;" value="{!o.objOffer.McaApp__Rate__c}" onchange="rateOnchange('{!$Component.termId2}','{!$Component.payBackId2}','{!$Component.monthlyPbId2}','{!$Component.facMonth2}','{!$Component.maxFRate2}','{!$Component.fundedId2}','{!$Component.dealLenId2}','{!$Component.holdbackId2}','{!$Component.dailyPBAmtId2}','{!$Component.perGrossId2}','{!$Component.dailyAchId2}','{!$Component.dealTypeId2}')"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.McaApp__Rate__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,o.objOffer.McaApp__Rate__c<opp.Min_Factor_Per_Month__c)}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Payback__c.label}">
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Payback__c!=NULL,o.objOffer.McaApp__Term_Months__c!=NULL,opp.AdjustedMonthlyGrossSales__c!=NULL,o.objOffer.Payback__c>(o.objOffer.McaApp__Term_Months__c*opp.AdjustedMonthlyGrossSales__c))}"/>
+                        <apex:inputField id="payBackId2" style="display:none;" value="{!o.objOffer.Payback__c}" />
+                        <apex:outputField value="{!o.objOffer.Payback__c}" />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Holdback__c.label}">
+                        <apex:inputField id="holdbackId2" style="width:40px;display:none;" value="{!o.objOffer.McaApp__Holdback__c}"/>
+                        <apex:inputField id="holdbackId2NonDec" onchange="holdbackOnchange(this,'{!$Component.holdbackId2}','{!$Component.monthlyPbId2}','{!$Component.dailyAchId2}','{!$Component.dealTypeId2}')" style="width:40px;display:{!IF(OR(o.objOffer.McaApp__Deal_Type__c=='MCA',o.objOffer.McaApp__Deal_Type__c=='Hybrid'),'block','none')};" value="{!o.objOffer.Holdback_Non_Decimal__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_ACH__c.label}">
+                        <apex:inputField id="dailyAchId2" style="width:60px;display:none;" value="{!o.objOffer.Daily_ACH__c}"/>
+                        <apex:outputField value="{!o.objOffer.Daily_ACH__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Payment_Amt__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__Payment_Amt__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__PMT_Schedule__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__PMT_Schedule__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_PB_Amount__c.label}">
+                        <apex:inputField id="dailyPBAmtId2" style="width:80px;display:none;" value="{!o.objOffer.Daily_PB_Amount__c}"/>
+                        <apex:outputField style="width:80px;" value="{!o.objOffer.Daily_PB_Amount__c}" rendered="{!OR(o.objOffer.McaApp__Deal_Type__c=='ACH',o.objOffer.McaApp__Deal_Type__c=='Hybrid')}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Monthly_PB_Amount__c.label}">
+                        <apex:inputField id="monthlyPbId2" style="display:none;" value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                        <apex:outputField value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee_Percentage__c.label}">
+                        <apex:inputField id="origFeePer2" styleClass="origFeePer2" style="width:70px;" value="{!o.objOffer.Orig_Fee_Percentage__c}" onchange="fundedOnchange('{!$Component.fundedId}','{!$Component.paybackId}','{!$Component.maxFRate}','{!$Component.monthlyPBId}','{!$Component.termId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}',true,'{!$Component.dailyAchId}','{!$Component.dealTypeId}')" />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee__c.label}">
+                        <apex:inputField id="origFee2" style="width:70px;" value="{!o.objOffer.Orig_Fee__c}" />
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Deal_Length__c.label}" >
+                        <apex:inputField id="dealLenId2" style="display:none;" value="{!o.objOffer.Deal_Length__c}"/>
+                        <apex:outputField value="{!o.objOffer.Deal_Length__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Factor_per_Month__c.label}">
+                        <apex:inputField id="facMonth2" style="width:35px;" value="{!o.objOffer.Factor_per_Month__c}" onchange="offerRender()"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Factor_per_Month__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,(o.objOffer.Factor_per_Month__c<opp.Min_Factor_Per_Month__c))}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Percentage_of_Gross__c.label}">
+                        <apex:inputField id="perGrossId2" style="display:none;" value="{!o.objOffer.Percentage_of_Gross__c}"/>
+                        <apex:outputField value="{!o.objOffer.Percentage_of_Gross__c}"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Percentage_of_Gross__c!=NULL,opp.Max_Gross__c!=NULL,(opp.Max_Gross__c<o.objOffer.Percentage_of_Gross__c))}"/>
+                    </apex:column>
+
+                </apex:pageBlockTable>
+
+            </apex:pageBlockSection>
+
+            <br/>
+
+            <apex:commandButton value="Remove from Selected Offers" action="{!removeFromChosenOffers}" style="margin: 0 15px; margin-bottom: 15px; margin-left: 20px;" />
+
+        </apex:pageBlock>
+
+        <apex:pageBlock mode="edit">
+
+            <apex:pageBlockSection title="Existing Offers" columns="1">
+
+                <apex:outputLabel rendered="{!lstExistingOffer.size <= 0}"> No Existing Offers Found</apex:outputLabel>
+
+                <apex:pageBlockTable width="100%" rendered="{!lstExistingOffer.size>0}" value="{!lstExistingOffer}" var="o">
+
+                    <apex:column width="5%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Name.label}">
+                        <apex:outputText style="width:35px;" value="{!o.Name}" />
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Deal_Type__c.label}">
+                        <apex:outputField style="width:35px;" value="{!o.McaApp__Deal_Type__c}" />
+                    </apex:column>
+
+                    <apex:column width="5%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Term_Months__c.label}">
+                        <apex:outputField style="width:35px;" value="{!o.McaApp__Term_Months__c}"/>
+                    </apex:column>
+
+                    <apex:column width="18%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Amount__c.label}">
+                        <apex:outputField value="{!o.McaApp__Amount__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Payment_Amt__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.McaApp__Payment_Amt__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__PMT_Schedule__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.McaApp__PMT_Schedule__c}"/>
+                    </apex:column>
+
+                    <apex:column width="13%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Rate__c.label}">
+                        <apex:outputField style="width:35px;" value="{!o.McaApp__Rate__c}"/>
+                    </apex:column>
+
+                    <apex:column width="10%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Payback__c.label}">
+                        <apex:outputField value="{!o.Payback__c}" />
+                    </apex:column>
+
+                    <apex:column width="5%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Holdback__c.label}">
+                        <apex:outputField value="{!o.McaApp__Holdback__c}"/>
+                    </apex:column>
+
+                    <apex:column width="18%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_PB_Amount__c.label}">
+                        <apex:outputField value="{!o.Daily_PB_Amount__c}"/>
+                    </apex:column>
+
+                    <apex:column width="16%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Monthly_PB_Amount__c.label}">
+                        <apex:outputField value="{!o.Monthly_PB_Amount__c}"/>
+                    </apex:column>
+
+                    <apex:column width="5%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Deal_Length__c.label}">
+                        <apex:outputField value="{!o.Deal_Length__c}"/>
+                    </apex:column>
+
+                    <apex:column width="5%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Factor_per_Month__c.label}">
+                        <apex:outputField style="width:35px;" value="{!o.Factor_per_Month__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Percentage_of_Gross__c.label}">
+                        <apex:outputField value="{!o.Percentage_of_Gross__c}"/>
+                    </apex:column>
+
+                </apex:pageBlockTable>
+
+            </apex:pageBlockSection>
+
+        </apex:pageBlock>
+
+    </apex:form>
+</apex:page>

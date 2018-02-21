@@ -1,0 +1,292 @@
+<apex:component controller="MCASalesHistoryTabController" allowDML="true">
+
+    <apex:form id="records" styleClass="records">
+<apex:pageMessages id="pageMessageId" />
+    <c:MCAJQTabComponent />
+
+      <apex:pageBlock id="pageBlockId">
+
+      <script>
+
+        function runSaveSales() {
+
+          setTimeout(function() {
+              saveAllSales();
+          },
+          1000);
+        }
+        
+         function runNewBankStatement() {
+
+          setTimeout(function() {
+              newBankStatement();
+             console.log("----------------------hungama");
+          },
+          1000);
+        }
+        function runNewCredit() {
+
+          setTimeout(function() {
+              newCredit();
+          },
+          1000);
+        }
+        
+         function runEditSales() {
+
+          setTimeout(function() {
+              editAllSales();
+          },
+          1000);
+        }
+        
+        var salesHistoryTabLabelOriginal ;
+        t$(function () {
+            salesHistoryTabLabelOriginal = t$("[id*='salesHistorytab_lbl']").text();
+            console.log('-----tab label component----'+t$("[id*='salesHistorytab_lbl']").text());
+            computeSalesCalculations();
+        });
+        
+        function computeSalesCalculations() {
+                var salesTabLabel = 'Sales History' ; //+ ' (' + {!containersStatements.size} + '/'+{!containersCards.size}+')';
+                t$("[id*='salesHistorytab_lbl']").text(salesTabLabel);
+                if({!bankAccountAccesss} == true && {!creditCardAccesss} == false)
+                    t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersStatements.size} + ')');
+                else if({!bankAccountAccesss} == false && {!creditCardAccesss} == true)
+                    t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersCards.size} + ')');
+                else
+                    t$("[id*='salesHistorytab_lbl']").append( ' (' + {!containersStatements.size} + '/'+{!containersCards.size}+')');
+        }
+
+      </script>
+      
+      <apex:actionFunction action="{!saveAllSales}" name="saveAllSales" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+     
+      <apex:actionFunction action="{!newStatement}" name="newBankStatement" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+      <apex:actionFunction action="{!newCredit}" name="newCredit" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+
+      <apex:actionFunction action="{!editAll}" name="editAllSales" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSalesCalculations()"/>
+
+        <apex:pageBlockButtons >
+        
+          <apex:outputpanel rendered="{!$ObjectType.Bank_Account__c.createable}">
+              <input type="button" onclick="runNewBankStatement()" class="btn" value="New Bank Statement" />
+          </apex:outputPanel>
+           <apex:outputpanel rendered="{!$ObjectType.Credit_Card__c.createable}">
+               <input type="button" onclick="runNewCredit()" class="btn" value="New Credit Card Sales" /> 
+           </apex:outputPanel>
+          <apex:outputpanel rendered="{!OR($ObjectType.Credit_Card__c.updateable,$ObjectType.Credit_Card__c.createable,$ObjectType.Bank_Account__c.updateable,$ObjectType.Bank_Account__c.createable)}">
+               <input type="button" onclick="runSaveSales()" class="btn" value="Save" /> 
+           </apex:outputPanel>
+            <apex:outputpanel rendered="{!OR($ObjectType.Credit_Card__c.updateable,$ObjectType.Bank_Account__c.updateable)}">
+               <input type="button" onclick="runEditSales()" class="btn" value="Edit All" />
+            </apex:outputPanel>
+          <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSalesCalculations()"></apex:CommandButton>
+          <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSalesCalculations()"
+                rendered="{!OR($ObjectType.Credit_Card__c.updateable,$ObjectType.Credit_Card__c.createable,$ObjectType.Bank_Account__c.updateable,$ObjectType.Bank_Account__c.createable)}"></apex:CommandButton>
+        </apex:pageBlockButtons>
+
+        <apex:pageBlockSection columns="1" title="Bank Statements ({!containersStatements.size})" id="bankAccounts" rendered="{!$ObjectType.Bank_Account__c.accessible}">
+              <apex:pageBlockTable value="{!containersStatements}" var="containerStatement" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport />
+
+          <apex:column >
+
+            <apex:outputLink value="/{!containerStatement.statement.Id}" target="blank" rendered="{!NOT(ISBLANK(containerStatement.statement.Id))}"> View </apex:outputLink>
+
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)),$ObjectType.Bank_Account__c.deletable)}"/>
+
+            <apex:commandLink action="{!deleteStatement}" value="Del" rerender="records,refreshComponent,bankAccounts,pageBlockId" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)),$ObjectType.Bank_Account__c.deletable)}" status="loadingPanel" oncomplete="computeSalesCalculations()">
+              <apex:param name="recordToDelete" value="{!containerStatement.statement.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+            <apex:commandLink action="{!removeStatement}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(containerStatement.statement.Id))}" status="loadingPanel">
+              <apex:param name="indexToRemove" value="{!containerStatement.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:facet name="footer">
+                <apex:outputLabel value="Averages " />
+            </apex:facet>
+
+                </apex:column>
+
+              <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Month__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Month__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Month__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}" />
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Year__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Year__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}" />
+                <apex:inputField value="{!containerStatement.statement.Year__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}" />
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Deposits__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Deposits__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Deposits__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}"/>
+                <apex:facet name="footer">
+                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!depositsAverage}" />
+                </apex:outputText>
+            </apex:facet>
+              </apex:column>
+              
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.No_Deposits__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.No_Deposits__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.No_Deposits__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}"/>
+                <apex:facet name="footer">
+                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!noDepositsAverage}" />
+                </apex:outputText>
+            </apex:facet>
+             </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Average_Daily_Balance__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Average_Daily_Balance__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Average_Daily_Balance__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}"/>
+
+            <apex:facet name="footer">
+
+                <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!balanceAverage}" />
+                </apex:outputText>
+
+            </apex:facet>
+
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Number_of_NSFs__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Number_of_NSFs__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Number_of_NSFs__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}"/>
+
+            <apex:facet name="footer">
+
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!nsfAverage}" />
+                </apex:outputText>
+
+            </apex:facet>
+
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Number_of_Negative_Days__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Number_of_Negative_Days__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Number_of_Negative_Days__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}"/>
+
+            <apex:facet name="footer">
+
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!negativeAverage}" />
+                </apex:outputText>
+
+            </apex:facet>
+
+              </apex:column>
+              
+             <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Include_in_average__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Include_in_average__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Include_in_average__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}" />
+              </apex:column>
+              
+            <apex:column headerValue="{!$ObjectType.Bank_Account__c.Fields.Bank_Account_Number__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containerStatement.statement.Bank_Account_Number__c}" rendered="{!AND(NOT(ISBLANK(containerStatement.statement.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containerStatement.statement.Bank_Account_Number__c}" rendered="{!OR((ISBLANK(containerStatement.statement.Id)), editAll)}" />
+            </apex:column>
+              
+              </apex:pageBlockTable>
+
+              </apex:pageBlockSection>
+
+          <apex:pageBlockSection columns="1" title="Credit Cards Sales ({!containersCards.size})" id="creditCards" rendered="{!$ObjectType.Credit_Card__c.accessible}">
+            <apex:pageBlockTable value="{!containersCards}" var="containersCard" styleClass="tablesorting tablesorter" headerClass="header">
+              <apex:inlineEditSupport /> 
+
+          <apex:column >
+
+            <apex:outputLink value="/{!containersCard.card.Id}" target="blank" rendered="{!NOT(ISBLANK(containersCard.card.Id))}"> View </apex:outputLink>
+
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)),$ObjectType.Credit_Card__c.deletable)}"/>
+
+            <apex:commandLink action="{!deleteCredit}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)),$ObjectType.Credit_Card__c.deletable)}" status="loadingPanel">
+              <apex:param name="recordToDelete" value="{!containersCard.card.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeCard}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(containersCard.card.Id))}" status="loadingPanel">
+              <apex:param name="indexToRemove" value="{!containersCard.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:facet name="footer">
+                <apex:outputLabel value="Averages" />
+            </apex:facet>
+
+          </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Month__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Month__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Month__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}" />
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Year__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Year__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Year__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}" />
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Total_Net_Processed_All__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Total_Net_Processed_All__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Total_Net_Processed_All__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}"/>
+
+            <apex:facet name="footer">
+
+                <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!processedAverage}" />
+                </apex:outputText>
+
+            </apex:facet>
+
+              </apex:column>
+
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Number_of_Transactions_All__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Number_of_Transactions_All__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Number_of_Transactions_All__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}"/>
+
+            <apex:facet name="footer">
+
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!transactionAverage}" />
+                </apex:outputText>
+
+            </apex:facet>
+
+              </apex:column>
+              
+           <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Batches__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Batches__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Batches__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}" />
+                <apex:facet name="footer">
+                <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                  <apex:param value="{!batchesAverage}" />
+                </apex:outputText>
+            </apex:facet>
+              </apex:column>
+            
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.MID_Account_Number__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.MID_Account_Number__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.MID_Account_Number__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}" />
+              </apex:column>
+              
+              <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Include_in_average__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Include_in_average__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Include_in_average__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}" />
+              </apex:column>
+              
+            <apex:column headerValue="{!$ObjectType.Credit_Card__c.Fields.Processor_Name__c.Label}" styleClass="wrapperClass">
+                <apex:outputField value="{!containersCard.card.Processor_Name__c}" rendered="{!AND(NOT(ISBLANK(containersCard.card.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!containersCard.card.Processor_Name__c}" rendered="{!OR((ISBLANK(containersCard.card.Id)), editAll)}"/>
+              </apex:column>
+
+            </apex:pageBlockTable>
+          </apex:pageBlockSection>
+
+      </apex:pageBlock>
+
+    </apex:form>
+
+</apex:component>

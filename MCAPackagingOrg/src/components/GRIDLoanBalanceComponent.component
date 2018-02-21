@@ -1,0 +1,210 @@
+<apex:component controller="GRIDLoanBalanceController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!loanBalEditAllFlag}" access="global" />
+    <apex:form id="LoanBalanceform" styleClass="records">
+        <apex:outputLabel rendered="{!loanBalIsRefrenceField}">Please remove '{!loanBalRefrenceFieldLabel}' field from the 'GRIDLoanBalanceFieldSet' field set, as referenced fields are not allowed.</apex:outputLabel>
+<!--
+        <script type="text/javascript">
+            t$(".saveBtn").click(function(){  
+                console.log('dsd');    
+                t$('.saveBtn').prop('disabled', true);
+            }); 
+           
+
+        </script> -->
+        <apex:outputPanel id="loanBalTable" rendered="{!NOT(loanBalIsRefrenceField)}">
+        <script type="text/javascript">
+            
+            t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='loanbalanceTab_lbl']").text( 'Loan Balances'+' ({!loanBalRecordCount})');
+                    
+                    t$('#loanBalanceTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                });
+        </script>
+        <apex:pageBlock mode="inlineEdit">
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Loan_Balance__c.createable}">
+                    <input type="button" onclick="runNewLoanBalance()" class="{!if(isDisable,'btnDisabled disBtn','btn')}" value="New Loan Balance" status="loadingPanel"  />
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!AND($ObjectType.Loan_Balance__c.updateable, NOT(loanBalEditAllFlag))}">
+                    <apex:CommandButton action="{!editAllLoanBalances}" value="Edit All" rerender="loanBalTable" status="loadingPanel" disabled="{!isDisable}"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Loan_Balance__c.updateable,$ObjectType.Loan_Balance__c.createable)}">
+                    <input type="button" onclick="runSaveLoanBalances()" class="{!if(isDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refreshLoanBalances}" value="Refresh" rerender="loanBalTable" status="loadingPanel" immediate="true" disabled="{!isDisable}"/>
+                <apex:CommandButton action="{!refreshLoanBalances}" value="Cancel" rerender="loanBalTable" status="loadingPanel" immediate="true" disabled="{!isDisable}"/>
+            </apex:pageBlockButtons>
+                <apex:pageMessages id="loanBalpgMsgId" escape="false" />
+                <table  class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="loanBalanceTableInner">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!loanBalFieldsetList}" var="loanBalField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!loanBalField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(loanBalField.type != 'textarea', loanBalField.type != 'multipicklist', loanBalField.type != 'phone')}"> 
+                                        <img src="{!IF(loanBalSortExprFieldApi==loanBalField.fieldPath,IF(loanBalSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name="{!loanBalField.fieldPath}" class="sorting" onclick="sortCallLoanBalances('{!loanBalField.type}');" />
+                                    </apex:OutputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!loanBalWrapperLst}" var="loanBalWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!loanBalWraper.loanBalIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!loanBalWraper.LoanBal.Id}" target="blank" rendered="{!NOT(ISBLANK(loanBalWraper.LoanBal.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!AND(NOT(ISBLANK(loanBalWraper.loanBal.Id)), $ObjectType.Loan_Balance__c.deletable)}"/>
+                                <apex:commandLink action="{!deleteLoanBalance}" value="Del" rerender="loanBalTable" rendered="{!AND(NOT(ISBLANK(loanBalWraper.loanBal.Id)), $ObjectType.Loan_Balance__c.deletable)}" status="loadingPanel">
+                                    <apex:param name="loanBalIndexToRemove" value="{!loanBalWraper.loanBalIndex}" assignTo="{!loanBalIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteLoanBalance}" value="Remove" rerender="loanBalTable" rendered="{!(ISBLANK(loanBalWraper.LoanBal.Id))}"  styleClass="removeRow" status="loadingPanel" immediate="true">
+                                <apex:param name="loanBalIndexToRemove" value="{!loanBalWraper.loanBalIndex}" assignTo="{!loanBalIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!loanBalFieldsetList}" var="loanBalfield">
+                                <td>
+                                    <apex:outputField value="{!loanBalWraper.loanBal[loanBalfield]}" rendered="{!AND(IF(loanBalWraper.loanBalEdit = false, true, false),NOT(ISBLANK(loanBalWraper.loanBal.Id)))}" />
+                                    <apex:inputField value="{!loanBalWraper.loanBal[loanBalfield]}" rendered="{!OR(IF(loanBalWraper.loanBalEdit = true, true, false),ISBLANK(loanBalWraper.loanBal.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr class ="headerRow">
+                            <td><b>Total</b></td>
+                            <td></td>
+                            <apex:repeat value="{!loanBalFieldsetList}" var="loanBalfield">
+                                <td>
+                                    <!-- apex:outputText value="{!loanBalFieldToSumMap[loanBalfield.fieldPath]}" rendered="{!loanBalFieldToSumMap[loanBalfield.fieldPath] != -999.999}" / -->
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}" rendered="{!AND(loanBalFieldToSumMap[loanBalfield.fieldPath] != -999.999,loanBalfield.type =='currency')}" >
+                                         <apex:param value="{!loanBalFieldToSumMap[loanBalfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" rendered="{!AND(loanBalFieldToSumMap[loanBalfield.fieldPath] != -999.999,loanBalfield.type !='currency')}" >
+                                         <apex:param value="{!loanBalFieldToSumMap[loanBalfield.fieldPath]}" />
+                                    </apex:outputText>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                {!IF((loanBalOffsetsize + 1) > loanBalRecordCount, IF(loanBalRecordCount - loanBalBlockSize <= 0, 0, loanBalRecordCount - loanBalBlockSize), loanBalOffsetsize + 1)} - {!IF(loanBalWrapperLst != null,loanBalWrapperLst.size + loanBalOffsetsize,0)} of {!loanBalRecordCount}
+                <!-- panel grid for pagination buttons -->
+                    <apex:pageblockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="loanBalTable" action="{!beginningLoanBalances}" status="loadingPanel" rendered="{!IF(loanBalOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="loanBalTable" action="{!previousLoanBalances}"  status="loadingPanel" rendered="{!IF(loanBalOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value= ">" 
+                                            rerender="loanBalTable" action="{!nextLoanBalances}" status="loadingPanel" rendered="{!IF(loanBalWrapperLst != null && loanBalWrapperLst.size + loanBalOffsetsize < loanBalRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value= ">>" 
+                                            rerender="loanBalTable" action="{!endLoanBalances}" status="loadingPanel" rendered="{!IF(loanBalWrapperLst != null && loanBalWrapperLst.size + loanBalOffsetsize < loanBalRecordCount, true, false)}"/>
+                    </apex:pageblockButtons>
+        </apex:pageBlock>
+            <apex:inputHidden value="{!loanBalSortExpression}" id="loanBalSortHiddencriterian"/>
+            <apex:inputHidden value="{!loanBalSortDirection}" id="loanBalSortHiddenOrder"/>
+            <apex:inputHidden value="{!loanBalSortExprFieldApi}" id="loanBalSortFieldApi"/>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newLoanBalance}" name="newLoanBalance" rerender="loanBalTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveLoanBalances}" name="saveLoanBalances" rerender="loanBalTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortLoanBalances}" name="sortAllLoanBalances" rerender="loanBalTable" status="loadingPanel" >
+            <apex:param name="loanBalTypeParam" value="" /> 
+        </apex:actionFunction>
+                
+    </apex:form>
+
+    <script>
+        function runNewLoanBalance() 
+        {
+            setTimeout(function() 
+            {               
+                newLoanBalance();
+            }, 100);
+        }
+        
+        function runSaveLoanBalances() 
+        {
+            setTimeout(function() 
+            {               
+                saveLoanBalances();
+            }, 100);
+        }
+        
+        function sortCallLoanBalances(loanBalFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                
+                 var loanBalElement= event.target;                 
+                 var newloanBalSortCol = t$(loanBalElement).attr("Name"); // new sort field
+                 t$("input[id$='loanBalSortFieldApi']").val(newloanBalSortCol);
+                 var oldloanBalSortCol = t$("input[id$='loanBalSortHiddencriterian']").val();
+                 var indexLoanBal;
+                 var loanBalTempSortExpr;
+                 if(newloanBalSortCol.endsWith('__c')) 
+                 {
+                     indexLoanBal = newloanBalSortCol.indexOf('__');
+                 }
+                 else if(newloanBalSortCol.endsWith('Id'))
+                 {
+                     indexLoanBal = newloanBalSortCol.indexOf('Id');
+                 }
+                if(indexLoanBal != null) {
+                    loanBalTempSortExpr = newloanBalSortCol.substring(0, indexLoanBal);
+                }
+                else 
+                {
+                    loanBalTempSortExpr = newloanBalSortCol;
+                }
+                 
+               //if(String(newloanBalSortCol) == String(oldloanBalSortCol))
+               if(oldloanBalSortCol.indexOf(loanBalTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='loanBalSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='loanBalSortHiddenOrder']").val("DESC");
+                      t$(loanBalElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='loanBalSortHiddenOrder']").val("ASC");
+                      t$(loanBalElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='loanBalSortHiddencriterian']").val(newloanBalSortCol);
+                    sortAllLoanBalances(loanBalFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='loanBalSortHiddencriterian']").val(newloanBalSortCol);
+                    t$("input[id$='loanBalSortHiddenOrder']").val("ASC");
+                    t$(loanBalElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllLoanBalances(loanBalFieldDataType);
+                }
+        }
+        
+    </script>
+</apex:component>

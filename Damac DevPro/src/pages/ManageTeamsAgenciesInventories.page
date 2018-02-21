@@ -1,0 +1,212 @@
+<!-------------------------------------------------------------------------------------------------
+* Name               : Manage Inventories for Team/Agency.                                        *
+* Description        : Page used to manage Inventories for Team/Agencies .                        *
+* Created Date       : NSI - Sivasankar                                                           *
+* Created By         : 30/01/2017                                                                 *
+* ----------------------------------------------------------------------------------------------- *
+* VERSION     AUTHOR                DATE                                                          *
+* 1.0         NSI - Sivasakar      30/01/2017                                                     *
+--------------------------------------------------------------------------------------------------> 
+<apex:page id="MTAIPAge" controller="ManageTeamsAgenciesInventoriesCtrl" title="Manage Team" tabStyle="Manage_Inventories__tab" sidebar="false">
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    
+    <apex:actionstatus id="status">
+        <apex:facet name="start">
+            <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                    <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                    <span class="waitingDescription">Please Wait...</span>
+                </div>
+            </div>
+        </apex:facet> 
+    </apex:actionstatus> 
+    
+    <apex:form id="myForm">
+        <apex:actionFunction name="removeBuilding" action="{!removeRow}" reRender="displayTeamsBuildings,errorBlock" status="status"> 
+            <apex:param assignTo="{!removeBuildingfor}" name="removeBuildingfor" value=""/> 
+            <apex:param assignTo="{!removeBuildingIndex}" name="removeBuildingIndex" value=""/> 
+        </apex:actionFunction>
+        <!--<apex:actionFunction name="editTeamAgency" action="{!viewUsers}" reRender="viewUserTable,errorBlock" status="status"> 
+            <apex:param assignTo="{!removeBuildingfor}" name="removeBuildingfor" value=""/>
+            
+        </apex:actionFunction>-->
+        <!--<apex:actionFunction name="searchTeamsAgencies" action="{!searchTeamsAgencies}" rerender="errorBlock,selTeamAgency"  status="status"/>-->
+
+        <apex:pageMessages id="errorBlock"/>
+        <apex:pageBlock id="PB" title=" Manage Teams / Agencies for Inventories"> 
+            <apex:pageBlockButtons id="PBB" location="top">
+                <apex:commandButton value="Next" onclick="if(!goToNext()){return false};" action="{!goToNextPage}" status="status" rerender="displayTeamsBuildings,errorBlock,PB" rendered="{!firstPage}"/>
+                <apex:commandButton value="Back" action="{!goToHomePage}" status="status" rerender="status,myForm" rendered="{!secondPage}" immediate="true"/>
+                <apex:commandButton value="Save" action="{!saveBuildingAllocation}" rerender="status,myForm" status="status" rendered="{!secondPage}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection id="PBS" columns="1">
+                <apex:outputPanel id="TeamAgency" layout="block" rendered="{!firstPage}">
+                    <apex:pageBlockSection columns="1" title="Select Teams / Agencies" id="teamSection" collapsible="false">
+                        <apex:selectRadio style="background-color:white;" id="selRadio" value="{!selTeamAgency}">
+                            <apex:selectOption title="options" itemValue="Teams" itemLabel="Teams"/>
+                            <apex:selectOption title="options" itemValue="Agencies" itemLabel="Agencies"/>
+                            <apex:actionSupport event="onchange" action="{!displayTeamsAgences}" status="status" rerender="TeamAgency,PBB"/>  
+                        </apex:selectRadio>
+                        <h1>All {!selTeamAgency}</h1>
+                        <apex:pageBlockTable columnsWidth="10%,45%,45%" id="tGroupAgency" value="{!lstGroupsAgency}" var="GrA">
+                            <apex:column id="selAll">
+                                <apex:facet name="header">
+                                    <apex:inputCheckbox id="allSelect" onchange="toggleSelectAll(this);" />
+                                </apex:facet>
+                                <apex:inputCheckbox id="oneSelect" onchange="toggleItem();" value="{!GrA.selected}"/>
+                            </apex:column>
+                            <apex:column id="ganame" headerValue="Name">
+                                <apex:outputText value="{!GrA.nameValue}"/>
+                            </apex:column>
+                            <apex:column id="gaAction" headerValue="Action">
+                                <apex:outputLink value="#" styleClass="labelCol" onClick="window.open('{!windowURL}{!GrA.idValue}');">View</apex:outputLink>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                    </apex:pageBlockSection>
+                    <div align="center">
+                        <apex:commandButton value="First Page" action="{!Firstbtn}" status="status" disabled="{!hasPrevious}" reRender="TeamAgency"/>
+                        <apex:commandButton value="Previous Page" action="{!prvbtn}" status="status" disabled="{!hasPrevious}" reRender="TeamAgency"/>
+                        <apex:commandButton value="Next Page" action="{!Nxtbtn}" status="status" disabled="{!hasNext}"  reRender="TeamAgency"/>
+                        <apex:commandButton value="Last Page" action="{!lstbtn}" status="status" disabled="{!hasNext}" reRender="TeamAgency"/>
+                        <label style="margin-left:50px;">Page {!currPageNumber} of {!totalPageNumber}</label>
+                    </div>
+                    Display records per page <apex:selectList value="{!noOfRecToDisplay}" size="1" >
+                    <apex:selectOption itemLabel="5" itemValue="05" ></apex:selectOption>
+                    <apex:selectOption itemLabel="10" itemValue="10"></apex:selectOption>
+                    <apex:selectOption itemLabel="20" itemValue="20"></apex:selectOption>
+                    <apex:selectOption itemLabel="30" itemValue="30"></apex:selectOption>
+                    <apex:actionSupport event="onchange" status="status" reRender="TeamAgency" action="{!updatePage}"/>
+                    </apex:selectList><br/><br/><br/>
+                    
+                    <!--<apex:outputPanel id="viewUserTable" rendered="{!areUsersPresent}">
+                        <apex:pageBlockSection title=" Users" collapsible="false"/>
+                        <br/>
+                        <apex:pageBlockTable value="{!viesTeamAgencyUsers}" var="AgencyUser">
+                            <apex:column headerValue="Name" value="{!AgencyUser.Name}"/>
+                            <apex:column headerValue="Role" value="{!AgencyUser.UserRole.Name}"/>
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>-->
+                    
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+            <!--Second page Start -->
+            <apex:outputPanel id="displayTeamsBuildings" rendered="{!secondPage}">
+                <!-- Add the Building to the Group Start -->
+                <apex:outputPanel id="addBuildingRec">
+                    
+                    <table  width="100%" cellpadding="1" cellspacing="1">
+                        <tr> 
+                            <th>Project Name</th>
+                            <th>Building Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th></th>
+                        </tr> 
+                        <tr>
+                            <td style="width:25%">
+                                <apex:selectList multiselect="true" size="5" style="width:100%" value="{!selectedProperty}">
+                                    <apex:selectOptions value="{!allPropertyNames}"/>
+                                    <apex:actionSupport event="onchange" action="{!getBuildingNames}" status="status" reRender="addBuildingRec"/>
+                                </apex:selectList>
+                            </td>
+                            <td style="width:25%">
+                                <apex:selectList multiselect="true" style="width:100%;" size="5" value="{!selectedBuildings}">
+                                    <apex:selectOptions value="{!allBuildingNames}"/>
+                                </apex:selectList>
+                            </td>
+                            <td style="width:20%;vertical-align: top;"><apex:inputField value="{!addteambuilding.Start_Date__c}"/></td>
+                            <td style="width:20%;vertical-align: top;"><apex:inputField value="{!addteambuilding.End_Date__c}"/></td>
+                            <td style="width:10%" text-align="center"><apex:commandButton value="Add" action="{!addRow}" status="status" reRender="buildingAllocation,addBuildingRec,errorBlock"/></td>
+                        </tr>
+                    </table>
+                </apex:outputPanel>
+                <!-- Add the Building to the Group End -->
+                <br/><br/>
+                
+                <!-- Displaying the records of the group Start-->
+                <apex:outputPanel id="buildingAllocation">
+                    <apex:repeat value="{!teamAgencyIDNameMap}" var="teamAgency">
+                        <apex:pageBlockSection columns="1" title="{!teamAgencyIDNameMap[teamAgency]}">
+                            <apex:variable var="count" value="{!0}"/>
+                            <apex:pageBlockTable width="100%" columnsWidth="25%,25%,20%,20%,10%" id="buildingTable" value="{!teamBuildings[teamAgency]}" var="building">
+                                <apex:column headerValue="Project">
+                                    <apex:outputText value="{!mapOfProjectNames[building.Project__c]}" rendered="{!IF(CONTAINS(propertiespresent,building.Project__c),true,false)}"/>
+                                </apex:column>
+                                <apex:column headerValue="Building Name">
+                                    <apex:outputText value="{!mapOfbuildingNames[building.Location__c]}" rendered="{!buildingspresent}"/>
+                                </apex:column>
+                                <apex:column headerValue="Start Date" value="{!building.Start_Date__c}" />
+                                <apex:column headerValue="End Date" value="{!building.End_Date__c}" />
+                                <apex:column headerValue="Remove" style="width: 25px;padding-left: 20px;">
+                                    <apex:commandLink onClick="removeBuild('{!teamAgency}',{!count},'{!teamAgencyIDNameMap[teamAgency]}');return false;" >
+                                        <apex:image value="/img/func_icons/remove12_on.gif" alt="Remove"/>
+                                    </apex:commandLink>
+                                    <apex:variable var="count" value="{!count + 1}"/>
+                                </apex:column>
+                            </apex:pageBlockTable> 
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:outputPanel>
+                <!-- Displaying the records of the group End-->
+            </apex:outputPanel>
+            <!--Second page End -->
+        </apex:pageBlock>
+    </apex:form>
+    
+    <script type="text/javascript">
+        var $j = jQuery.noConflict();
+        
+        function toggleSelectAll(checkbox){
+            
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j( "input[id$=oneSelect]" ).prop('checked', true);
+            }
+            else{
+                //set all row level checkboxes de-selected
+                $j( "input[id$=oneSelect]" ).prop('checked', false);
+            }
+        }
+        
+        /*
+        * set "all checkbox" based on state of row level checkboxes
+        */
+        function toggleItem(){
+            var cbs = $j("input[id$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbs.filter(':not(:checked)').length==0){
+                //set "all checkbox" selected
+                $j("input[id$=allSelect]").prop('checked', true);
+            }
+            else{
+                //set "all checkboxes" de-selected
+                $j("input[id$=allSelect]").prop('checked', false);
+            }
+        }
+        
+        
+        function goToNext(){
+            var cbs = $j("input[id$=oneSelect]");
+            
+            var radioValue = $j("input[type='radio']:checked").val();
+            
+            console.log('valradioValue = '+radioValue);
+            if(cbs.filter(':checked').length == 0){
+                alert('Please select at least one '+(radioValue == 'Agencies' ? 'Agency':'Team'));
+                return false;
+            }
+            return true;
+        }
+        
+        function removeBuild(idval,bldIndex,teamName){
+            console.log('idval = '+idval+', bldIndex = '+bldIndex+', teamName = '+teamName);
+            if(confirm('Are you sure want to remove the access for Inventories to '+teamName+' ?')){
+                removeBuilding(idval,bldIndex);
+            }
+        }
+        
+    </script>
+</apex:page>

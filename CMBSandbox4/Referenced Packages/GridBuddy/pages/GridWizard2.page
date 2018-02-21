@@ -1,0 +1,447 @@
+<apex:page controller="GBLite.GridWizardController" showHeader="{!showHeader}" title="{!lang.GW2Title}" action="{!init}" sidebar="false" tabStyle="Grid_Wizard__tab">
+	<!--[if IE 8]>
+        <link rel="stylesheet" type="text/css" href="{!URLFOR($Resource.GBLite__gb_resources, 'ie8-styles.css')}" />
+    <![endif]-->
+	<div class="gbwPage gb{!lang.langCode} gw2 {!if(showHeader, '', 'inGrid')}">
+		<c:EmptyComponent rendered="{!errors.showErrorMessages}">
+			<div class="msgBox warningMsg gbwMsg">
+                <div class="gbIconAlert"></div>
+                
+                <div class="rMessages">
+				    <apex:repeat value="{!errors.errorMessagesFromMap}" var="error">
+                        <div>{!error}</div>
+					</apex:repeat>
+                    <apex:repeat value="{!errors.apexWarningMessages}" var="error">
+	                    <div><apex:outputText value="{!error.summary}" escape="{!error.detail != 'noescape'}" /></div>
+			        </apex:repeat>
+                </div>
+			</div>
+		</c:EmptyComponent>
+		
+		<c:EmptyComponent rendered="{!errors.showInfoMessages}">
+			<div class="msgBox infoMsg gbwMsg">
+                <div class="gbIconCheckmark"></div>
+                
+				<apex:repeat value="{!errors.apexInfoMessages}" var="infoMsg">
+                    <div class="msgDetail"><apex:outputText value="{!infoMsg.summary}" escape="true"/></div>
+				</apex:repeat>
+				
+				<div class="messageTime">{!currentDateTime}</div>
+			</div>
+		</c:EmptyComponent>
+			
+		<div class="msgBox warningMsg boxShadow" id="vldWarning">
+			<div class="closeX">{!lang.CloseWarningBoxLbl}&nbsp;&nbsp;<b>X</b></div>
+			<div class="msgBody"></div>
+		</div>
+
+		<div class="msgBox boxShadow loaderStatus" id="gridStatus">
+			<div class="msgBody">
+				<img src="{!URLFOR($Resource.gb_resources, 'images/orange_loader.gif')}" height="35" width="35" border="0"/>
+				<span class="msgText"></span>
+			</div>
+		</div>
+	
+		<apex:form styleClass="gbwForm" onsubmit="save()" rendered="{!pageIsValid}">
+			<div class="gbwSteps">
+				<span class="gbwOtherStep">{!lang.CreateGridLabel}&nbsp;&nbsp;&gt;&nbsp;</span>
+				<span>{!lang.SelectFieldsLabel}</span>
+				<span class="gbwOtherStep">&nbsp;&gt;&nbsp;&nbsp;{!lang.DefineFiltersLabel}</span>
+			</div>
+			<apex:pageblock title="{!wrapper.gridConfig.SelectFieldsLbl}">
+				
+				<apex:pageBlockButtons >
+					<!-- do not change buttons to be on separate lines - this is done to avoid extra space between the buttons -->
+					<apex:commandButton value="{!lang.SaveBtnLbl}" action="{!saveAndRefreshPage2}" styleClass="saveBtn none"/><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.SaveBtnLbl}" disabled="disabled" />
+					<apex:commandButton value="{!lang.BackBtnLabel}" action="{!saveAndBackPage2}" styleClass="saveBtn none"/><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.BackBtnLabel}" disabled="disabled" />
+					<apex:commandButton value="{!lang.NextBtnLabel}" action="{!saveAndNextPage2}" rendered="{!gridHasValidObjects}" styleClass="saveBtn none"/><c:EmptyComponent rendered="{!gridHasValidObjects}"><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.NextBtnLabel}" disabled="disabled" /></c:EmptyComponent>
+					<apex:commandButton action="{!resetForm}" value="{!lang.RefreshBtnLbl}" immediate="true" styleClass="none"/><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.RefreshBtnLbl}" disabled="disabled" />
+					<apex:commandbutton action="{!goToManageActionsPage}" value="{!lang.ManageActionsLbl}" styleClass="gbBtn none" immediate="true" rendered="{!actionsEnabled}"/><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.ManageActionsLbl}" disabled="disabled" />
+					<c:EmptyComponent rendered="{!hasSelectedFields && gridHasValidObjects}">
+						<a href="{!launchGridURL}" class="launchGridLink" target="_blank" title="{!lang.LaunchGridTitle}">{!lang.LaunchGridLabel}</a>
+					</c:EmptyComponent>
+				</apex:pageBlockButtons>
+	
+				<apex:inputHidden id="selectedObjectDotFields" value="{!wrapper.javascriptSelectedValues}"/>
+	    		<script>var objectDotFieldsHidden = document.getElementById("{!$Component.selectedObjectDotFields}");</script>
+	
+                <c:EmptyComponent rendered="{!showUpgradeMessage}">
+				    <div class="instr">
+						<div class="upgradeMsg">
+							<span class="checkmark">&nbsp;</span>
+							Upgrade to <span class="upgradeApp">GridBuddy Unlimited</span> to manage up to 40 fields per object and grid. 
+							<a href="{!baseRelativeURLForVFManaged}UpgradeGridBuddy" target="_blank">Learn more &raquo;</a>
+						</div><br/>
+				    </div>
+                </c:EmptyComponent>
+	
+				<div class="sectionHeader firstHeader">
+					<h3><span class="ui-icon ui-icon-white ui-icon-triangle-1-s">&nbsp;</span>{!lang.selectFieldsLbl}</h3>
+				</div>
+				<div class="sectionContent selectFieldsOuterContainer">
+					<div class="objectsContainer">
+                        <div class="objectsSectionHeading">
+                            <div class="number">1</div>
+                            <div class="headingText">{!lang.ChooseAnObjectLbl}</div>
+                            <div>{!lang.ChooseAnObjectDescLbl}</div>
+                        </div>
+                        <div id="searchContainer">
+                            <input id="searchBox" placeholder="Enter an object" type="text"/>
+                            <a id="clearSearch" href="#" onclick="return false;" title="Clear search">X</a>
+                            <span class="gbSearch"></span>
+                        </div>
+                        <div class="objectsContent">
+						    <h3 class="objectHeading first">{!lang.ParentOnlyLabel}</h3>
+							<div class="parentObjectName"></div>
+							<h3 class="objectHeading">{!lang.RelatedLabel}<span class="gbInfoIcon tooltip" title="The objects listed in this section are directly related to the parent object of this grid."></span></h3>
+							<div class="relatedChildObjects"></div>
+							<h3 class="objectHeading {!IF(NOT(objectCrossRefEnabled), 'none', '')}">{!lang.UnrelatedLabel}<span class="newText">{!lang.NewExplainationMarkBtnLbl}</span><span class="gbInfoIcon tooltip" title="The objects listed in this section are all objects that you have access to. They could be directly related to the parent object, or not. Selecting an object in this section will allow you to define a custom relationship between the object and the parent object of this grid."></span></h3>
+							<div class="allObjects {!IF(NOT(objectCrossRefEnabled), 'none', '')}"></div>
+							<div class="noSearchResults none">
+							    <div>{!lang.PleaseEnterADifferentNameLabel}</div>
+                                <div>{!lang.NoObjectsWereFoundLabel}</div>
+                                <div class="showMeAllObjects">{!lang.ShowMeAllObjectsLabel}</div>
+							</div>
+						</div>
+					</div>
+					<div class="fieldsContainer">
+                        <div class="fieldsSectionHeading">
+                            <div class="number">2</div>
+                            <div class="headingText">{!lang.ChooseFieldsLbl}</div>
+                            <div>{!lang.ChooseFieldsDescLbl}</div>
+                        </div>
+                        <div class="showFieldAPINameLinkContainer cf">
+                            <a class="showFieldAPINameLink">
+                                <span class="showHideApiLink shown">{!lang.ShowFieldAPINamesLbl}</span>
+                            </a>
+                        </div>
+                        <div class="fieldsContent">
+							<div class="selectedObject"></div>
+							<div class="objectFields"></div>
+						</div>
+					</div>
+					<div class="selectedFieldsContainer">
+                        <div class="selectedFieldsSectionHeading">
+                            <div class="number">3</div>
+                            <div class="headingText">{!lang.SelectedFieldsLbl}</div>
+                            <div>{!lang.SelectedFieldsDescLbl}</div>
+                        </div>
+	                    <div class="showFieldAPINameLinkContainer cf">
+	                        <a class="showFieldAPINameLink">
+	                            <span class="showHideApiLink shown">Show field API names</span>
+	                        </a>
+	                    </div>
+                        <div class="selectedFieldsContent"></div>
+					</div>
+				</div>
+				
+				<c:EmptyComponent rendered="{!chartsEnabled}">
+					<div class="sectionHeader cb">
+						<h3><span class="ui-icon ui-icon-white ui-icon-triangle-1-s">&nbsp;</span>{!lang.ConfigureChartLbl}<span class="newText">{!lang.NewExplainationMarkBtnLbl}</span></h3>
+					</div>
+					<div class="sectionContent chartConfigOptions">
+						<div id="chartErrorMessage" class="msgBox warningMsg">
+			                <div class="gbIconAlert"></div>
+		                    <div class="msgDetail"></div>			                
+			            </div>
+						<div class="instr"><apex:outputText value="{!lang.ChartHelpText}" escape="false" /></div>
+						<div class="chartConfigContainer">
+							
+							<table class="chartConfigSection" border="0" cellpadding="0" cellspacing="0">
+							  <tr class="chartConfigRow">
+							  	<td><label>{!lang.ChartTitleLabel}<span class="star">*</span></label></td>
+							  	<td> <input id="chartTitleInput" type="text" maxlength="100" /></td>
+							  	<td class="chartSpacer"></td>	
+							  	<td>
+							  		<label class="chartConfigDropdowns hideOnDonut">{!lang.ChartXAxisLabel}<span class="star">*</span><span class="gbInfoIcon tooltip" title="A category field whose values will be appear on the horizontal axis."></span></label>
+									<label class="chartConfigDropdowns showOnDonut">{!lang.ChartWedgesLabel}<span class="star">*</span><span class="gbInfoIcon tooltip" title="A category field whose values will be appear as wedges."></span></label>
+								</td>
+								<td>	
+									<select id="chartXWedgeSelect" class="chartConfigDropdowns"></select>
+								</td>
+							  </tr>
+							  <tr class="chartConfigRow">	
+							    <td rowspan="2"><label class="chartTypeLbl">{!lang.ChartTypeLabel}<span class="star">*</span></label></td>
+							    <td rowspan="2">
+							    	<div class="chartTypeCon">
+								    	<span id="line" class="chartButton" title="{!lang.LineChart}"></span>
+										<span id="bar" class="chartButton" title="{!lang.BarChart}"></span>
+										<span id="donut" class="chartButton" title="{!lang.DonutChart}"></span>
+									</div>
+								</td>
+								<td></td>
+							    <td>
+									<label class="chartConfigDropdowns hideOnDonut">{!lang.ChartYAxisLabel}<span class="star">*</span><span class="gbInfoIcon tooltip" title="A numeric field or record count whose values will appear on the vertical axis."></span></label>
+									<label class="chartConfigDropdowns showOnDonut">{!lang.ChartValuesLabel}<span class="star">*</span><span class="gbInfoIcon tooltip" title="A numeric field or record count whose values will appear for the wedges."></span></label>
+								</td>
+								<td>	
+									<select id="chartYValueSelect" class="chartConfigDropdowns"></select>
+								</td> 
+							  </tr>
+							  <tr class="chartConfigRow">
+							  		<td></td>
+							  		<td>
+							  			<label class="hideOnDonut">{!lang.ChartGroupByLabel}<span class="gbInfoIcon tooltip" title="A secondary category field that will group the X-Axis values."></span></label>
+									</td>
+									<td>	
+										<select id="chartGroupBySelect"  class="hideOnDonut"></select>
+									</td>
+							  </tr>
+							  <tr class="chartConfigRow">
+							    <td><label>{!lang.ChartSizeLabel}<span class="star">*</span></label></td> 
+							    <td>
+							    	<select id="chartSizeSelect">
+										<option value="0">--Select--</option>
+										<option value="xs">Extra Small</option>
+										<option value="s">Small</option>
+										<option value="m">Medium</option>
+										<option value="l">Large</option>
+									</select>
+								</td>
+								<td></td>
+							    <td>
+							    	<label class="hideOnDonut">{!lang.ChartShowLabelsLabel}<span class="gbInfoIcon tooltip" title="Display value labels automatically instead of on hover."></span></label>
+							    </td>
+							    <td>
+									<input id="chartShowLabelsInput" class="chk hideOnDonut" type="checkbox" />
+							    </td>
+							  </tr>
+							</table>
+							
+							<div class="cb chartButtons">
+							<!-- do not change buttons to be on separate lines - this is done to avoid extra space between the buttons -->
+								<apex:commandButton value="{!lang.SaveBtnLbl}" action="{!saveAndRefreshPage2}" styleClass="saveBtn none"/><input 
+						type="button" class="gbBtnDisabled none" value="{!lang.SaveBtnLbl}" disabled="disabled" /><input 
+						type="button" value="Embed" class="gbBtn chartEmbedBtn" /><input 
+						type="button" value="Reset" id="resetChartButton" class="gbBtn" />
+							</div>
+						</div>
+					</div>
+				</c:EmptyComponent> <!-- end charts section -->
+				
+				<div class="cb"></div> <!-- clearfix -->
+				
+				<div class="sectionHeader">
+					<h3><span class="ui-icon ui-icon-white ui-icon-triangle-1-s">&nbsp;</span>{!lang.SelectActionsLbl}</h3>
+				</div>
+				<div class="sectionContent">
+					<c:EmptyComponent rendered="{!actionsEnabled==false}">
+						<div class="instr"><apex:outputText value="{!lang.actionsUpgradeText}" escape="false" /></div>
+					</c:EmptyComponent>
+					<c:EmptyComponent rendered="{!actionsEnabled==true}">
+						<div class="instr"><apex:outputText value="{!lang.CreateActionInstr}" escape="false"/></div>
+						
+						<c:EmptyComponent rendered="{!IF(actionWrappers.size == 0, false, true)}">
+							<table border="0" cellpadding="0" cellspacing="0" id="gbActions">
+								<tr class="gradientHeader gbForm">
+									<td>&nbsp;</td>
+				           		<td title="{!lang.objectFieldHelp}">{!lang.objectLbl}<span class="sortasc">&nbsp;</span></td>
+				           		<td title="{!lang.actionNameFieldHelp}">{!lang.actionNameLbl}</td>
+				           		<td title="{!lang.contentSourceFieldHelp}">{!lang.contentSourceLbl}</td>
+				           		<td title="{!lang.execBehaviorFieldHelp}">{!lang.executionBehaviorLbl}</td>
+				           		<td title="{!lang.actionTypeFieldHelp}">{!lang.actionTypeLbl}</td>
+				           		<td title="{!lang.descrFieldHelp}">{!lang.actionDescrLbl}</td>
+								</tr>
+								<apex:repeat value="{!actionWrappers}" var="act">   
+									<tr id="{!act.meta.Id}"> 
+					            	<td><apex:inputCheckBox value="{!act.isSelected}"/></td>
+					           		<td><apex:outputText value="{!act.attrMap['objDisplName']}"/></td>
+					            	<td><apex:outputText value="{!act.attrMap['actionLabel']}"/></td>
+					           		<td><apex:outputText value="{!act.attrMap['contentSource']}"/></td>
+					           		<td><apex:outputText value="{!act.attrMap['displayBehavior']}"/></td>
+					           		<td><apex:outputText value="{!act.attrMap['actionType']}"/></td>
+					           		<td><apex:outputText value="{!act.attrMap['descr']}"/></td>
+									</tr>
+								</apex:repeat>
+							</table>
+						</c:EmptyComponent>
+					</c:EmptyComponent>
+				</div>		
+				
+			</apex:pageblock>
+			
+			<apex:inputHidden value="{!fieldPropsJson}" id="fieldPropsJson"/>
+			
+			<apex:actionFunction action="{!getNativeFieldProperties}" name="getNativeFieldProperties" rerender="nativeFieldPropertiesPanel" immediate="true">
+			    <apex:param name="nativeFieldObjectName" assignTo="{!nativeFieldObjectName}" value="" />
+		        <apex:param name="nativeFieldFieldName" assignTo="{!nativeFieldFieldName}" value="" />
+		        <apex:param name="newLiId" assignTo="{!newLiId}" value="" />
+			</apex:actionFunction>	
+			
+			<apex:outputPanel id="nativeFieldPropertiesPanel">
+				<script type="text/javascript">
+					var nativePropTempMap = [{!nativeFieldPropsJSON}];
+					
+					if (nativePropTempMap.length > 0) {
+						GBFieldProps.addNativeFieldProperties('{!nativeFieldObjectName}', '{!nativeFieldFieldName}', nativePropTempMap[0]);
+						GBFieldProps.showPropsWidget('{!newLiId}', true);
+					}
+				</script>
+			</apex:outputPanel>	
+			
+			<!-- begin field properties widget -->
+			<div class="gbFieldPropPopup msgBox boxShadow" id="gbFieldPropPopup">
+				<div class="header">
+					<span class="title">Field Properties</span>
+				</div>
+				<div id="fpBody">
+					<div id="fpContent">
+						<div id="propFieldLabel"></div>
+						<div class="popupRow">
+							<label class="popupLabel" for="readOnlyChk">Read-only</label>
+							<input id="readOnlyChk" type="checkbox" />
+							<input id="readOnlyRd" type="radio" name="prop" />
+						</div>
+						<div class="popupRow">
+							<label class="popupLabel" for="rqrdChk">Required</label>
+							<input id="rqrdChk" type="checkbox" />
+							<input id="rqrdRd" type="radio" name="prop" />
+						</div>				
+						<div class="popupRow">
+							<label class="popupLabel" for="colWidthInput">Column width</label>
+							<input id="colWidthInput" type="text" size="3" maxlength="3" />
+							<span> pixels</span>
+						</div>
+						<div class="popupRow summaryTypeSelectRow">
+							<label class="popupLabel" for="rqrdChk">Summary Type</label>
+							<select id="summaryTypeSelect">
+								<option value="0">--Select--</option>
+								<option value="SUM">SUM</option>
+								<option value="MIN">MIN</option>
+								<option value="MAX">MAX</option>
+								<option value="AVG">AVG</option>
+							</select>
+						</div>					
+						<div class="fpButtons">
+							<input type="button" value="{!lang.okBtnLbl}" class="okPopupBtn gbBtn" /> 
+							<input type="button" value="{!lang.cancelBtnLbl}" class="cancelPopupBtn gbBtn" />
+						</div>
+					</div>
+				</div>	
+				<input type="hidden" id="liId" value="" />
+			</div>
+			<!-- end field properties widget -->
+			
+			<!-- begin embed chart widget -->
+			<c:EmptyComponent rendered="{!chartsEnabled}">
+				<!-- TODO: langify all this text -->
+				<div id="embedChart" class="embedWidget msgBox boxShadow embedGridBox">
+					<div class="header">
+						<span class="title">Embed this chart</span>
+						<span class="closeX">{!lang.CloseWarningBoxLbl}&nbsp;<b>X</b></span>
+						<br clear="all"/>
+					</div>
+					<div id="embedBody">
+						<apex:outputPanel id="embedMsgBlock">
+							<c:EmptyComponent rendered="{!showEmbedMsg}">
+								<div class="msgBox {!IF(embedError, 'warningMsg', 'infoMsg')}">
+								    <div class="{!IF(embedError, 'gbIconAlert', 'gbIconCheckmark')}"></div>
+								    
+								    <div class="msgBody">
+										<apex:outputText escape="false" value="{!embedMsg}" />
+									</div>
+								</div>	
+							</c:EmptyComponent>
+						</apex:outputPanel>
+						<div>Follow the steps below to create a Visualforce page with this chart that you can add to record detail page layouts.</div>
+						<ol>
+							<li>
+								<span class="embedListSection">Choose a chart type<span class="star">*</span>
+									<br/>
+									<span id="line" class="chartButton" title="{!lang.LineChart}"></span>
+									<span id="bar" class="chartButton" title="{!lang.BarChart}"></span>
+									<span id="donut" class="chartButton" title="{!lang.DonutChart}"></span>
+									<div class="showOnDonut donutMessage">Note: if using the donut chart type for a chart that is not originally configured as that type, the specified Group By field will be disregarded due to the nature of donut charts.</div>
+								</span>
+								<br/>
+							</li>
+							<li>
+								<span class="embedListSection">Choose a chart size<span class="star">*</span>&nbsp;&nbsp;
+									<select id="embedChartSizeSelect">
+										<option value="0">--Default--</option>
+										<option value="xs">Extra Small</option>
+										<option value="s">Small</option>
+										<option value="m">Medium</option>
+										<option value="l">Large</option>
+									</select>
+								</span>
+								<br/><br/>
+							</li>
+							<li>
+							<span class="embedListSection">Click the <b>Create Page</b> button to create the Visualforce page automatically, or copy the code below to create it manually.</span>
+							</li>
+						</ol>
+						<pre>
+							<div id="embedVfText" >
+							</div>
+		                    <apex:inputHidden value="{!pageBodyForEmbedChart}" id="pageBodyForEmbedChart"/>
+						</pre>
+					</div>
+					<div id="embedBtns">
+						<input type="button" class="gbBtn actionBtn embedCreate" value="Create Page" />
+						<input type="button" class="gbBtn actionBtn embedCancel" value="{!lang.CancelBtnLbl}" />
+						<input type="button" class="gbBtnDisabled none" value="Create Page" disabled="disabled" />
+						<input type="button" class="gbBtnDisabled none" value="Cancel" disabled="disabled" />
+						<apex:actionFunction action="{!createChartsVFpage}" name="createChartsVFpageAF" 
+						   reRender="embedMsgBlock" oncomplete="GBEmbedChart.completeEmbedRequest()">
+					    </apex:actionFunction>
+					    <apex:actionFunction action="{!checkEmbedStatusForChart}" name="checkEmbedStatusForChartAF" 
+				    	    reRender="embedMsgBlock" oncomplete="GBEmbedChart.completeEmbedRequest()">
+					    </apex:actionFunction>
+					</div>
+				</div>
+			</c:EmptyComponent>
+			<!-- end embed chart widget -->
+			
+            <apex:inputHidden value="{!chartsJson}" id="chartsJson"/>
+			<apex:inputHidden value="{!gridParentObjectLabel}" id="parentObjectLabel"/>
+			<apex:inputHidden value="{!relationshipsJson}" id="relationships"/>
+			<script>
+				var parentObjectLabelHidden = document.getElementById("{!$Component.parentObjectLabel}");
+			</script>
+		</apex:form>
+		
+		
+	
+		<c:LangJSComponent lang="{!lang}"/>
+		<!-- this must come before the js includes because the js references these vars -->
+		<script type="text/javascript">
+			var maxFieldsPerGrid = {!maxFieldsPerGrid},
+				maxFieldsPerObject = {!maxFieldsPerObject},
+				gridName = '{!loadGridName}',
+	    		nameSpacePrefix = '{!namespacePrefix}',
+	    		metaServiceDisabled = {!metaServiceDisabled},
+	    		hasSelectedFields = {!hasSelectedFields},
+	    		gridHasValidObjects = {!gridHasValidObjects},
+	    		objectCrossRefEnabled = {!objectCrossRefEnabled};
+		</script>
+		<!--  do not use includeScript for the jquery include, as this will add the javascript to the <head> tag and slow down the page load -->
+		<apex:repeat value="{!JSFileNames}" var="fName">
+	    	<script type="text/javascript" src="{!URLFOR($Resource.GBLite__gb_resources, fName)}"></script>
+	    </apex:repeat>
+	    <apex:repeat value="{!CSSFileNames}" var="fName">
+	    	<apex:stylesheet value="{!URLFOR($Resource.GBLite__gb_resources, fName)}"/>
+	    </apex:repeat>
+	    
+		<script type="text/javascript">
+			GBChartsConfig.enabled = {!chartsEnabled};
+			
+			var parentObjectName = '{!gridParentObjectName}',
+				parentObjectLabel = jq(parentObjectLabelHidden).val(),
+				childObjects = {!childObjectsAsFieldObjects},
+				allObjects = {!allObjectsForUnrelatedList},
+				lookupAjaxResponderPageURL = '{!lookupAjaxResponderPageURL}',
+				selectedFieldObjects = {!selectedFieldObjects},
+				objectNameToPathToJunction = {!objectNameToPathToJunction},
+				invalidObjects = {!invalidObjects};
+		</script> 
+		
+		<div class="gbCopyright">{!lang.CopyrightTxt}</div>
+	</div>
+	<div id="gbOverlay">&nbsp;</div>
+</apex:page>

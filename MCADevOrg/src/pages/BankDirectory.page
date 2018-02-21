@@ -1,0 +1,90 @@
+<apex:page controller="BankDirectoryController" action="{!queryBanks}" showHeader="true" sidebar="true" title="Bank Directory">
+		
+	<apex:sectionHeader title="Bank Directory" subtitle="Browse Banks" />
+	
+	<!-- Bootstrap -->
+    <apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.min.js')}" />
+    <link href="{!URLFOR($Resource.bootstrap, 'css/btforce.css')}" rel="stylesheet"></link>
+	
+	<style>
+	   #loader {
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background: #fff url('{!URLFOR($Resource.applicationportal, "img/loader.gif")}') no-repeat scroll center center;
+            z-index: 1000;
+            opacity: 0.6;            
+        }
+	</style>
+	
+	<script>
+	   function queryBanks() {
+	       queryBanksAction();
+	   }
+	</script>
+	
+	<apex:form >
+	
+	    <apex:actionFunction name="reloadEntities" rerender="container" status="myStatus" oncomplete="hideLoader();" />
+        <apex:actionStatus startText="Loading..." id="myStatus" >
+             <apex:facet name="start">
+                <div id="loader"></div>
+             </apex:facet>
+        </apex:actionStatus> 
+        
+	    <apex:actionFunction name="queryBanksAction" action="{!queryBanks}" rerender="banksBlock" />
+	    
+	    <apex:outputPanel rendered="{!processingBanks || bankDirectorySettings.Import_Job_Id__c != null}">
+    	    <div class="bootstrap" style="background-color:white!important; text-align:center">
+	    	    <div class="container">
+		            <div class="panel panel-default">
+		                
+		                <!-- STEP 5 SECTION -->                     
+		                <div class="row"> 
+		                     <div class="col-md-12">                
+		                        <div class="panel-body submitted">                
+		                            <h1>Process Started!</h1>
+		                            <p>Banks are being processed.</p>                                    
+		                        </div>  
+		                    </div>
+		                </div>
+		            </div>
+	            </div>
+	        </div>
+	    </apex:outputPanel>
+	    
+		<apex:pageBlock id="banksBlock" rendered="{!NOT(processingBanks) && bankDirectorySettings.Import_Job_Id__c == null}">
+			<apex:pageBlockButtons id="buttons" location="top">
+				<apex:commandButton value="Refresh Bank List" action="{!queryBanks}" onclick="reloadEntities()"/>
+				<apex:commandButton value="Import/Update as Account" action="{!importBanks}" onclick="reloadEntities()" disabled="{!processingBanks}"/>
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockTable value="{!banks}" var="bw" >
+				<apex:column >
+					<apex:inputCheckbox value="{!bw.selected}" />
+				</apex:column>
+				<apex:column headerValue="Bank Name">
+					{!bw.name}
+				</apex:column>
+				<apex:column headerValue="Email">
+					{!bw.email}
+				</apex:column>
+				<apex:column headerValue="Phone">
+					{!bw.phone}
+				</apex:column>
+
+				<apex:column headerValue="Status" >
+					{!bw.status}
+				</apex:column>
+
+				<apex:column headerValue="Related Account">
+					<a href="{!URLFOR($Action.Account.View,bw.auxOppty.AccountId, null,true)}">{!bw.accountName}</a>
+				</apex:column>
+			</apex:pageBlockTable>
+				
+		</apex:pageBlock>
+		
+	</apex:form>
+</apex:page>

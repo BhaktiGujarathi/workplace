@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workflow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alerts>
+        <fullName>New_Experian_Callout_Error</fullName>
+        <description>New Experian Callout Error</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>amckenzie@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <recipients>
+            <recipient>klee@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <recipients>
+            <recipient>nikhilp@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Sys_Admin_Email_Templates/New_Experian_Callout_Error</template>
+    </alerts>
+    <alerts>
+        <fullName>New_MCC_Callout_Error</fullName>
+        <description>New MCC Callout Error</description>
+        <protected>false</protected>
+        <recipients>
+            <recipient>amckenzie@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <recipients>
+            <recipient>klee@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <recipients>
+            <recipient>nikhilp@bizfi.com</recipient>
+            <type>user</type>
+        </recipients>
+        <senderType>CurrentUser</senderType>
+        <template>Sys_Admin_Email_Templates/New_MCC_Callout_Error</template>
+    </alerts>
+    <rules>
+        <fullName>New Experian Callout Error</fullName>
+        <actions>
+            <name>New_Experian_Callout_Error</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Callout_Error__c.Class__c</field>
+            <operation>equals</operation>
+            <value>ExperianContactCallout</value>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+    <rules>
+        <fullName>New MCC Callout Error</fullName>
+        <actions>
+            <name>New_MCC_Callout_Error</name>
+            <type>Alert</type>
+        </actions>
+        <active>true</active>
+        <criteriaItems>
+            <field>Callout_Error__c.Class__c</field>
+            <operation>contains</operation>
+            <value>Submission</value>
+        </criteriaItems>
+        <triggerType>onCreateOnly</triggerType>
+    </rules>
+</Workflow>

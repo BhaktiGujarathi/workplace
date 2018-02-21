@@ -1,0 +1,200 @@
+<apex:component controller="GRIDCommissionsController" allowDML="true">
+    <apex:form id="commissionform" styleClass="records">
+        <apex:pageBlock mode="inlineEdit">
+
+            <apex:pageBlockButtons location="top">
+                <input type="button" onclick="runNewPayable()" class="btn" value="New Payable" status="loadingPanel"/>
+                <input type="button" onclick="runNewReceivable()" class="btn" value="New Receivable" status="loadingPanel"/>
+                <apex:CommandButton action="{!editAllCommissions}" value="Edit All" rerender="CommissionTable" status="loadingPanel"/>
+                <input type="button" onclick="runSaveCommssion()" class="btn" value="Save" status="loadingPanel" />
+                <apex:CommandButton action="{!refreshCommissions}" value="Refresh" rerender="CommissionTable" status="loadingPanel"/>
+                <apex:CommandButton action="{!refreshCommissions}" value="Cancel" rerender="CommissionTable" status="loadingPanel"/>
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel id="CommissionTable"> 
+            <apex:outputPanel id="paytable" title="Payable">
+                <apex:pageMessages id="paypgMsgId" escape="false" />
+                
+                Showing Records {!IF((payOffsetsize + 1) > payRecordCount, payRecordCount -payBlockSize,payOffsetsize + 1)} - {!IF(payBlockSize + payOffsetsize <= payRecordCount, payBlockSize + payOffsetsize, payRecordCount)} Of {!payRecordCount}
+                <table  class="list" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Index
+                            </th>
+                            <th>Action
+                            </th>
+                            <apex:repeat value="{!payFieldsetList}" var="payField">
+                            <th>
+                                <apex:outputLabel value="{!payField.label}"/>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!payWrapperLst}" var="payWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!payWraper.payIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!payWraper.pay.Id}" target="blank" rendered="{!NOT(ISBLANK(payWraper.pay.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(payWraper.pay.Id))}"/>
+                                <apex:commandLink action="{!deletePay}" value="Del" rerender="paytable" rendered="{!NOT(ISBLANK(payWraper.pay.Id))}" status="loadingPanel">
+                                    <apex:param name="payIndexToRemove" value="{!payWraper.payIndex}" assignTo="{!payIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deletePay}" value="Remove" rerender="paytable" rendered="{!(ISBLANK(payWraper.pay.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="payIndexToRemove" value="{!payWraper.payIndex}" assignTo="{!payIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!payFieldsetList}" var="payfield">
+                                <td>
+                                    <apex:outputField value="{!payWraper.pay[payfield]}" rendered="{!AND(IF(payWraper.payEdit = false, true, false),NOT(ISBLANK(payWraper.pay.Id)))}" />
+                                    <apex:inputField value="{!payWraper.pay[payfield]}" rendered="{!OR(IF(payWraper.payEdit = true, true, false),ISBLANK(payWraper.pay.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <apex:repeat value="{!payFieldsetList}" var="payfield">
+                                <td>
+                                    <apex:outputText value="{!payFieldToSumMap[payfield.fieldPath]}" rendered="{!payFieldToSumMap[payfield.fieldPath] != 100}" />
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <!-- panel grid for pagination buttons -->
+                <apex:panelGrid columns="4">
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:400px;position:relative;" value="<<" 
+                                            rerender="paytable" action="{!beginningPayable}" status="loadingPanel" disabled="{!IF(payOffsetsize == 0, true, false)}"/>
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:450px;position:relative;" value="<" 
+                                            rerender="paytable" action="{!previousPayable}"  status="loadingPanel" disabled="{!IF(payOffsetsize == 0, true, false)}"/>
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:500px;position:relative;" value = ">" 
+                                            rerender="paytable" action="{!nextPayable}" status="loadingPanel" disabled ="{!IF(payBlockSize + payOffsetsize >= payRecordCount, true, false)}" />
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:550px;position:relative;" value = ">>" 
+                                            rerender="paytable" action="{!endPayable}" status="loadingPanel" disabled ="{!IF(payBlockSize + payOffsetsize >= payRecordCount, true, false)}"/>
+                    </apex:panelGroup>
+                </apex:panelGrid>
+
+            </apex:ouTputPanel>
+            <br/>
+            <br/>
+            <apex:outputPanel id="rectable" title="Receivable">
+
+                <apex:pageMessages id="recpgMsgId" escape="false" /> 
+                Showing Records {!IF((recOffsetsize + 1) > recRecordCount, recRecordCount - recBlockSize +1, recOffsetsize + 1)} - {!IF(recBlockSize + recOffsetsize <= recRecordCount, recBlockSize + recOffsetsize, recRecordCount)} Of {!recRecordCount}
+                
+                <table  class="list" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Index
+                            </th>
+                            <th>Action
+                            </th>
+                            <apex:repeat value="{!recFieldsetList}" var="recField">
+                            <th>
+                                <apex:outputLabel value="{!recField.label}"/>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!recWrapperLst}" var="recWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!recWraper.recIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!recWraper.rec.Id}" target="blank" rendered="{!NOT(ISBLANK(recWraper.rec.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(recWraper.rec.Id))}"/>
+                                <apex:commandLink action="{!deleteRec}" value="Del" rerender="rectable" rendered="{!NOT(ISBLANK(recWraper.rec.Id))}" status="loadingPanel">
+                                    <apex:param name="recIndexToRemove" value="{!recWraper.recIndex}" assignTo="{!recIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteRec}" value="Remove" rerender="rectable" rendered="{!(ISBLANK(recWraper.rec.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="recIndexToRemove" value="{!recWraper.recIndex}" assignTo="{!recIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                <td>
+                                    <apex:outputField value="{!recWraper.rec[recfield]}" rendered="{!AND(IF(recWraper.recEdit = false, true, false),NOT(ISBLANK(recWraper.rec.Id)))}" />
+                                    <apex:inputField value="{!recWraper.rec[recfield]}" rendered="{!OR(IF(recWraper.recEdit = true, true, false),ISBLANK(recWraper.rec.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td></td>
+                            <apex:repeat value="{!recFieldsetList}" var="recfield">
+                                <td>
+                                    <apex:outputText value="{!recFieldToSumMap[recfield.fieldPath]}" rendered="{!recFieldToSumMap[recfield.fieldPath] != 100}" />
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                
+                <!-- panel grid for pagination buttons -->
+                <apex:panelGrid columns="4">
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:400px;position:relative;" value="<<" 
+                                            rerender="rectable" action="{!beginningReceivable}" status="loadingPanel" disabled="{!IF(recOffsetsize == 0, true, false)}"/>
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:450px;position:relative;" value="<" 
+                                            rerender="rectable" action="{!previousReceivable}"  status="loadingPanel" disabled="{!IF(recOffsetsize == 0, true, false)}"/>
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:500px;position:relative;" value = ">" 
+                                            rerender="rectable" action="{!nextReceivable}" status="loadingPanel" disabled ="{!IF(recBlockSize + recOffsetsize >= recRecordCount, true, false)}" />
+                    </apex:panelGroup>
+                    <apex:panelGroup >
+                        <apex:commandButton style="left:550px;position:relative;" value = ">>" 
+                                            rerender="rectable" action="{!endReceivable}" status="loadingPanel" disabled ="{!IF(recBlockSize + recOffsetsize >= recRecordCount, true, false)}"/>
+                    </apex:panelGroup>
+                    
+                </apex:panelGrid>
+            </apex:outputPanel>
+            </apex:outputPanel>
+        </apex:pageBlock>
+        
+        <apex:actionFunction action="{!newRec}" name="newRec" rerender="rectable" status="loadingPanel"/>
+        <apex:actionFunction action="{!newPay}" name="newPay" rerender="paytable" status="loadingPanel"/>
+        <apex:actionFunction action="{!savePayables}" name="savePayables" rerender="paytable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveReceivables}" name="saveReceivables" rerender="rectable" status="loadingPanel" />
+    </apex:form>
+    <script>
+        function runNewReceivable() 
+        {
+            setTimeout(function() 
+            {               
+                newRec();
+            }, 200);
+        }
+        
+        function runNewPayable() 
+        {
+            setTimeout(function() 
+            {               
+                newPay();
+            }, 200);
+        }
+        
+        function runSaveCommssion() 
+        {
+            setTimeout(function() 
+            {               
+                savePayables();
+                saveReceivables();
+            }, 200);
+        }
+    </script>
+</apex:component>

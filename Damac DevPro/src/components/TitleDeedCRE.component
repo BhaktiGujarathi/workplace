@@ -1,0 +1,667 @@
+<apex:component controller="TitleDeedCREProcess" allowDML="true">
+ <style type="text/css">
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #d74c3b!important;
+        }
+        
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+        
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+        
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+        
+        .confirmM3 {
+            border-color: green!important;
+        }
+        
+        .warningM3 {
+            border-color: sandybrown!important;
+        }
+        
+         .overlayStatus
+        {
+            position:fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            text-align:center;
+            vertical-align: middle;
+            background-color: #dcdcdc;
+            opacity:0.6;
+            filter:alpha(opacity=60);
+            z-index: 20 ;
+        }
+       
+        .loadIMG
+        {
+            display:block;
+            margin-top:20%;
+            margin-left:auto;
+            margin-right:auto;
+            text-align:center;
+            vertical-align: middle;
+        }
+        </style>
+        <apex:attribute name="accId" type="Id" description="Id of the customer selected" assignTo="{!accountId}" required="true"/>
+        
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+        
+        <apex:inputHidden value="{!poaAttachmentBody}" id="POAAttachBody"/>
+        <apex:inputHidden value="{!poaAttachmentName}" id="POAAttachName"/>
+        <apex:inputHidden value="{!crfAttachmentBody}" id="CRFAttachBody"/>
+        <apex:inputHidden value="{!crfAttachmentName}" id="CRFAttachName"/> 
+           
+                        <apex:outputPanel id="step1" rendered="{!blnStep1}">
+                        
+                        <section id="">
+                            <div class="well">
+                                <div class="error">
+                                    <apex:pageMessages id="pageM" escape="false"/>
+                                </div>
+                                <h4>
+                                    Title Deed
+                                    <span class="pull-right">
+                                        <!--  <apex:commandButton styleClass="btn btn-sm btn-success" action="{!createTitleDeedSR}" value="Next" id="nextButton"/> -->
+                                    </span>
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Select Unit for Title Deed</label>
+                                            <apex:selectList styleClass="form-control inputDisabled" value="{!strSelectedUnit}" multiselect="false" size="1" id="selectUnit">
+                                               <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" oncomplete="complete(); hideUnitDetails();" status="blockUI" rerender="details,pageM"/>
+                                               <apex:selectOptions value="{!lstUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+<!--                                     <div class="col-lg-6"> -->
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Mode of Request</label> -->
+<!--                                             <select class="form-control"> -->
+<!--                                                 <option>--None--</option> -->
+<!--                                                 <option>Walk In</option> -->
+<!--                                             </select> -->
+<!--                                         </div> -->
+<!--                                     </div> -->
+                                </div>
+                                <br/>
+                                <apex:outputPanel id="details">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-6 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <thead class="thead-inverse">
+                                                                <tr>
+                                                                    <th>
+                                                                        <apex:selectList value="{!strSelectedCategory}"
+                                                                        multiselect="false" size="1" required="true"
+                                                                        styleClass="form-control category inputDisabled" id="categories"
+                                                                        onchange="hideUnitDetails();"
+                                                                        style="height: 30px; !important">
+                                                                            <apex:selectOptions value="{!lstCategories}" />
+                                                                        </apex:selectList>
+                                                                    </th>
+                                                                    <th></th>
+                                                                </tr>
+                                                            </thead>
+                                                                <tbody id="unitDetails">
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property_Name_2__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property_City__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Bedroom_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Unit_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!objBookingUnit.Permitted_Use__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/ Off plan</b></td>
+                                                                    <td>{!objBookingUnit.Inventory__r.Property_Status__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool__c}</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="flags">
+                                                                    <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortgage</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Counter case</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="unitStatus">
+                                                                <tr>
+                                                                    <td><b>OQOOD Registered</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td>In Progress</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td>NA</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL sent</b></td>
+                                                                    <td>NA</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO flag</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO flag</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>No</td>
+                                                                </tr>
+                                                                </tbody>
+                                                                <tbody id="sr">
+<!--                                                                 <tr> -->
+<!--                                                                     <td><b>SR1</b></td> -->
+<!--                                                                     <td><a href="">View SR</a></td> -->
+<!--                                                                 </tr> -->
+<!--                                                                 <tr> -->
+<!--                                                                     <td><b>SR2</b></td> -->
+<!--                                                                     <td><a href="">View SR</a></td> -->
+<!--                                                                 </tr> -->
+<!--                                                                 <tr> -->
+<!--                                                                     <td><b>SR3</b></td> -->
+<!--                                                                     <td><a href="">View SR</a></td> -->
+<!--                                                                 </tr> -->
+                                                                    <apex:variable var="cnt" value="{!1}" />
+                                                                    <apex:repeat value="{!lstOpenCase}" var="OpenCase">
+                                                                    <tr>
+                                                                        <td><b>SR {!cnt}</b></td>
+                                                                        <td><apex:outputLink value="{!$Site.BaseUrl}/{!OpenCase.Id}" id="theLink" target="_blank">{!OpenCase.CaseNumber}</apex:outputLink></td>
+                                                                    </tr>
+                                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                                    </apex:repeat>
+                                                                    </tbody>
+                                                                  <tbody id="closeSR">
+                                                                    <apex:variable var="cnt" value="{!1}" />
+                                                                    <apex:repeat value="{!lstCloseCase}" var="CloseCase">
+                                                                    <tr>
+                                                                        <td><b>SR {!cnt}</b></td>
+                                                                        <td><apex:outputLink value="{!$Site.BaseUrl}/{!CloseCase.Id}" id="theLink" target="_blank">{!CloseCase.CaseNumber}</apex:outputLink></td>
+                                                                    </tr>
+                                                                    <apex:variable var="cnt" value="{!cnt+1}" />
+                                                                    </apex:repeat>
+                                                                </tbody>
+                                                        </table>
+                                                    </div>
+<!--                                                    <div class="col-lg-4"> -->
+                                        <h5>Additional Information</h5>
+                                        <div class="details col-lg-6 col-md-12 col-sm-12">
+                                            <div class="row detailHeading">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4>1500000</h4>
+                                                </div>
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>% Received</h6>
+                                                    <h4>24%</h4>
+                                                </div>
+                                            </div>
+                                         <div class="row">
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Under Assignment?</h6>
+                                                        <h5>500000</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>AR PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>BCC available</h6>
+                                                        <h5>Yes</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties</h6>
+                                                        <h5>100</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Outstanding</h6>
+                                                        <h5>200</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdue</h6>
+                                                        <h5>30</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Default?</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdues/dues towards Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties/ Late payment fee on Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+<!--                                     </div> -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>    
+                                </div>
+                                </apex:outputPanel>
+                                <div >
+                                </div>
+                        </section>
+               </apex:outputPanel>
+
+               <apex:outputPanel id="step2" rendered="{!blnStep2}">
+                        <section id="">
+                            <div class="well">
+                                <h4>Enter Details
+                                <span class="pull-right">
+                                    
+                                    <apex:commandButton styleclass="btn btn-sm btn-success inputDisabled" oncomplete="viewSOA();" action="{!SOAtobeGenerated}" value="Generate Statement of Account"/>
+                                </span></h4>
+<!--                                 <div class="row"> -->
+<!--                                     <div class="col-lg-6"> -->
+<!--                                         <div class="form-group"> -->
+<!--                                             <label>Mode of collection</label> -->
+<!--                                             <apex:selectList styleClass="form-control" value="{!strSelectedMode}" multiselect="false" size="1"> -->
+<!--                                                <apex:selectOptions value="{!lstModes}"/> -->
+<!--                                             </apex:selectList> -->
+<!--                                         </div> -->
+
+<!--                                     </div> -->
+
+<!--                                 </div> -->
+                                <apex:outputPanel id="paymentInfo">
+                                <div class="row">
+
+                                    <div class="col-lg-12">
+                                        <table class="paymentDue inputDisabled" width="100%" cellpadding="10">
+                                            <thead>
+                                                <tr>
+                                                    <th>Payment Type</th>
+                                                    <th>Amount Due</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Overdues/dues towards Service Charges</td>
+                                                    <td>{!strOverdues}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Penalties/ Late payment fee on Service Charges</td>
+                                                    <td>{!strPenaltiesOnServiceCharges}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Penalties</td>
+                                                    <td>{!strPenalties}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Admin Fee for Title Deed</td>
+                                                    <td>{!strAdminFee}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Other dues</td>
+                                                    <td>{!strOtherDues}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Total Amount to be paid</td>
+                                                    <td>{!strTotalAmt}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                </apex:outputPanel>
+                            </div>
+                        </section>
+
+                        <section id="">
+
+                            <div class="well">
+                                <h4>
+                                    Enter POA Details
+                                </h4>
+                                <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <label>POA?</label>
+                                        <apex:inputCheckbox value="{!blnPoAValue}" style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()" styleClass="inputDisabled"/>
+                                    </div>
+                                </div>
+                            </div>
+                            <apex:outputPanel id="POAInfoBlock" style="display:none;">
+                                <div class="row">
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name of Attorney<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control inputDisabled" value="{!strPOAName}" html-placeholder="Enter name" id="POANameID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Purpose of POA<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputTextarea styleClass="form-control inputDisabled" id="newDesc" value="{!strPOARelationWithOwner}"/>
+<!--                                             <apex:selectList styleClass="form-control" value="{!strPOARelationWithOwner}" multiselect="false" size="1"> -->
+<!--                                                <apex:selectOptions value="{!lstRelationShip}"/> -->
+<!--                                             </apex:selectList> -->
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Issue<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate inputDisabled" html-placeholder="01/01/1999" value="{!strPOAExpiryDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued by (Authority)<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control inputDisabled" value="{!strPOAIssuedBy}" html-placeholder="Enter name" id="issuedByID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                         <apex:outputPanel layout="block">
+                                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Power of Attorney</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="POAAttach" onchange="attachPOAFile();" class="inputDisabled"/>
+                                                    </span>
+                                                    <div>
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>
+                                    
+                                </div>
+
+                               </apex:outputPanel>
+                            </div>
+                        </section>
+                            </div>
+                        </section>
+               </apex:outputPanel>
+
+                <apex:outputPanel id="step3" rendered="{!blnStep3}">
+<!--                         <section id=""> -->
+<!--                             <div class="well"> -->
+<!--                                 <h4> -->
+<!--                                     Customer Request Form -->
+<!--                                     <span class="pull-right"> -->
+<!--                                         <button class="btn btn-sm btn-success" onclick="return downloadCRF();"><i class="fa fa-download" aria-hidden="true"></i> View CRF</button> -->
+<!--                                     </span> -->
+<!--                                 </h4> -->
+
+
+<!--                                 <div class="row"> -->
+<!--                                     <div class="col-lg-12 col-md-6 col-xs-12 text-center"> -->
+<!--                                     <apex:outputPanel layout="block" id="CRFAttachmentBlock"> -->
+<!--                                         <apex:outputPanel layout="block" rendered="{!objCRFAttach != null}"> -->
+<!--                                             <table class="paymentDue" cellpadding="10" width="100%"> -->
+<!--                                                 <col width="20%"/> -->
+<!--                                                 <col width="20%"/> -->
+<!--                                                 <col width="20%"/> -->
+<!--                                                 <col width="20%"/> -->
+<!--                                                 <thead> -->
+<!--                                                     <tr> -->
+<!--                                                         <th style="text-align: center;">Action</th> -->
+<!--                                                         <th style="text-align: center;">Document Name</th> -->
+<!--                                                         <th style="text-align: center;">Type</th> -->
+<!--                                                         <th style="text-align: center;">Verified</th> -->
+<!--                                                         <th style="text-align: center;">View</th> -->
+<!--                                                     </tr> -->
+<!--                                                 </thead> -->
+<!--                                                 <tbody> -->
+<!--                                                     <tr> -->
+<!--                                                         <td> -->
+<!--                                                             <apex:commandLink action="{!deleteAttachment}" onclick="if(!confirm('Are you sure?')) return false;" reRender="tempBlock,CRFAttachmentBlock" onComplete="validateSubmission();notificationFunction();" status="blockUI"> Del -->
+<!--                                                                 <apex:param value="{!objCRFAttach.Id}" name="recToDel2" assignTo="{!deleteAttRecId}"/> -->
+<!--                                                             </apex:commandLink> -->
+<!--                                                         </td> -->
+<!--                                                         <td><apex:outputField value="{!objCRFAttach.Name}"/></td> -->
+<!--                                                         <td><apex:outputField value="{!objCRFAttach.Type__c}"/></td> -->
+<!--                                                         <td><apex:outputField id="CRFValid" value="{!objCRFAttach.isValid__c}"/></td> -->
+<!--                                                         <td><apex:outputField value="{!objCRFAttach.View__c}"/></td> -->
+<!--                                                     </tr> -->
+<!--                                                 </tbody> -->
+<!--                                             </table> -->
+<!--                                         </apex:outputPanel> -->
+                                    
+<!--                                         <apex:outputPanel layout="block" rendered="{!objCRFAttach == null}"> -->
+<!--                                             <div class="fileupload fileupload-new" data-provides="fileupload"> -->
+<!--                                                 <span class="btn btn-primary btn-file"> -->
+<!--                                                     <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Signed CRF</span> -->
+<!--                                                     <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span> -->
+<!--                                                     <input type="file" id="CRFAttach" onchange="attachCRFFile();"/> -->
+<!--                                                 </span> -->
+<!--                                                 <div> -->
+<!--                                                     <span class="fileupload-preview"></span> -->
+<!--                                                     <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a> -->
+<!--                                                 </div> -->
+<!--                                             </div> -->
+<!--                                             <label>Upload Signed CRF</label> -->
+<!--                                         </apex:outputPanel> -->
+<!--                                     </apex:outputPanel> -->
+<!--                                 </div> -->
+<!--                                 </div> -->
+<!--                             </div> -->
+<!--                         </section> -->
+                        
+                     <section id="">
+                        <div class="well">
+                            <span class="row">
+                                <apex:commandButton value="Save Draft" styleClass="btn btn-sm inputDisabled" style="margin-left: 197px;" action="{!createTitleDeedSR}" reRender="pageM" oncomplete="complete();" status="blockUI"/>
+                                <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success inputDisabled" style="margin-left: 100px; " action="{!submitCase}" reRender="pageM,scriptID" oncomplete="complete(); onSubmitComplete();" status="blockUI"/>
+                                <!--<button class="btn btn-sm" style="margin-left: 197px;" >Save Draft</button><button class="btn btn-sm btn-success" style="margin-left: 100px; ">Submit SR</button> -->
+                            </span>
+                        </div>
+                     </section>
+
+                    </apex:outputPanel>
+   
+        </section>
+       <apex:outputPanel id="scriptID">
+        <script>
+         var isError = {!blnIsError}
+            $('.well input.datepicker').datepicker({
+            });
+            $(document).ready(function() {
+                //$('#multi-select-demo').multiselect();
+            });
+            
+            $(document).ready(function(){
+            hideUnitDetails();
+        });
+
+        function hideUnitDetails(){
+            var selCategory = $('select[id$=categories]').val();
+            if(selCategory == 'Unit Details'){
+                $('#unitDetails').show();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Flags'){
+                $('#unitDetails').hide();
+                $('#flags').show();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Unit Status'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').show();
+                $('#sr').hide();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Open SRs'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').show();
+                $('#closeSR').hide();
+            }
+            if(selCategory == 'Close SRs'){
+                $('#unitDetails').hide();
+                $('#flags').hide();
+                $('#unitStatus').hide();
+                $('#sr').hide();
+                $('#closeSR').show();
+            }
+        }
+            
+            window.onload = function(){
+             window.scrollTo(0, 0); 
+             $('[id$=POAInfoBlock]').hide();
+            }
+            
+            $('.POAExpiryDate').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            });
+            function attachPOAFile(){
+                    var filename = document.getElementById("POAAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=POAAttachName]').val(filename);
+                        var fbody = document.getElementById("POAAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=POAAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+                
+            /*function disableEvents(){
+                $("input").prop('disabled', true);
+                $('[id$=selectUnit]').prop('disabled', true);
+            }*/
+            
+            function hasAttorney() {
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+            }
+            function downloadCRF() {
+                    window.open("/apex/PenaltyWaiverCRF");
+                    return false;
+            }
+            function viewSOA() {
+                    window.open("/apex/StatementOfAccountPage");
+                    return false;
+            }
+            function attachCRFFile() {
+                    console.log( document.getElementById("CRFAttach").files[0] );
+                    var filename = document.getElementById("CRFAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=CRFAttachName]').val(filename);
+                        var fbody = document.getElementById("CRFAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=CRFAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+                
+           function complete() {
+            window.scrollTo(0, 0);
+            /*if($.trim($('[id$=pageM]').html())!='') {
+                 $("html, body").animate({ scrollTop: 0 }, "slow");
+            }*/
+           }
+           
+           function onSubmitComplete() {
+            console.log('--isError',isError);
+            if(isError != true) {
+            $(".inputDisabled").prop('disabled', true);
+            }
+           }
+        </script>
+        </apex:outputPanel>
+</apex:component>

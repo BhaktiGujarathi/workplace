@@ -1,0 +1,755 @@
+<apex:component controller="cg.HtmlUploadComponentController" allowDML="true" access="global">
+<apex:attribute name="objectId" description="Id of the parent object for the files. For example this will be the ID of the account object if this component is going to display that account's attachment." access="global"
+                type="String" required="required" assignTo="{!objectIdAT}"/>
+<apex:attribute name="currentFolderId" description="Id of the parent folder for the files. It is null by default." access="global"
+                type="String" required="optional" assignTo="{!currentFolderIdAT}" />
+<apex:attribute name="customObjectFileName" description="API Name of the custom object that will represent the file. This custom file object is required to include fields indicated in the installation guide of S-Drive. For example: 'MyFile__c'" access="global"
+                type="String" required="required" assignTo="{!customObjectFileNameAT}"/>
+<apex:attribute name="fileNamespacePrefix" description="Namespace prefix for the file object. This attribute is required if the object has a namespace. For example: 'cg__'" access="global"
+                type="String" required="optional" assignTo="{!fileNamespacePrefixAT}" default=""/>
+<apex:attribute name="relationshipName" description="Master-detail relation used for selected standard/custom object. For example: 'Parent__r'" access="global"
+                type="String" required="optional" assignTo="{!relationshipNameAT}" default="Parent__r" />
+<apex:attribute name="privateEnabled" description="Set this attribute to true if you want to enable private/public flag. Setting the private flag on a file hides the file from customer portal users. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!privateEnabledAT}" default="false"/> 
+<apex:attribute name="allowedFileExtensions" description="Semicolon seperated list of file extensions that are allowed to upload. This attribute is optional and leaving this empty will allow all kind of files to be uploaded. For example: '*.jpg;*.txt'" access="global"
+                type="String" required="optional" assignTo="{!allowedFileExtensionsAT}" default=""/>
+<apex:attribute name="debug" description="Set this attribute to true to enable logs debugging on the bottom of upload screen. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!debugAT}" default="false" />         
+<apex:attribute name="returnUrl" description="Set this attribute to a url to be directed this return page after closing upload screen." access="global"
+                type="String" required="optional" assignTo="{!returnUrlAT}" default="" />
+<apex:attribute name="isUsePopup" description="Set this attribute to true if you defined useUploadAsPopup attribute to true on the AttachmentComponent. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!isUsePopupAT}" default="false"/>
+                                                        
+    <apex:outputText value="{!initialize}" />     
+
+
+
+    <apex:stylesheet value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/css/jquery.plupload.queue.css')}"/> 
+    <apex:stylesheet value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/css/cg.plupload.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/jquery-ui/jquery-ui.css')}"/> 
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/plupload.full.min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/moxie.js')}" />
+    <!--apex:includeScript value="{!URLFOR($Resource.HtmlUpload,'js/jquery.plupload.queue/jquery.plupload.queue.js')}" /-->
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/sdrive/sdrive.upload.queue.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/jquery-ui/jquery-ui.js')}" /> 
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/sdrive/SDriveUploadUI.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/sdrive/SDriveRemoteAction.js')}" />
+ 
+    <apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'yahoo/yahoo-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'event/event-min.js')}" />
+    <apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'connection/connection_core-min.js')}" />
+
+    <style>
+    .ui-dialog { font-size: 10px; }
+    </style>
+       
+
+  <div id="dialog-confirm"  style="display: none;">
+    <p><span id="iconSpan"  style="float:left; margin:0 7px 20px 0;"></span><div id="dialogText"></div></p>
+  </div>
+  
+<div id="uploadFiles">
+    <p>Your browser does not have Flash, Silverlight or HTML5 support.</p>
+</div>
+<apex:outputPanel rendered="{!debugAT}">
+<pre id="log" style="height: 300px; overflow: auto"></pre>
+</apex:outputPanel>
+
+
+
+<script type="text/javascript">
+// Convert divs to queue widgets when the DOM is ready
+    var endPoint = '{!JSENCODE(endPoint)}';
+    var bucketName = '{!JSENCODE(bucketName)}';
+    var accessKey = '{!JSENCODE(accessKey)}'; 
+    
+    var objectIdAT = '{!JSENCODE(objectIdAT)}';
+    var currentFolderIdAT = '{!JSENCODE(currentFolderIdAT)}';
+    var fileNamespacePrefixAT = '{!JSENCODE(fileNamespacePrefixAT)}';
+    var customObjectFileNameAT = '{!JSENCODE(customObjectFileNameAT)}';
+    var relationshipNameAT = '{!JSENCODE(relationshipNameAT)}';
+    var allowedFileExtensionsAT = '{!JSENCODE(allowedFileExtensionsAT)}';
+    var isUsePopupAT = {!isUsePopupAT};
+    var debugAT = {!debugAT};
+    var returnUrlAT = '{!JSENCODE(returnUrlAT)}';
+        
+    var columnsToDisplayListString = '{!JSENCODE(columnsToDisplayListString)}';
+    
+    var shareEnabled = {!shareEnabled}; 
+    var insideSdriveIframe = {!insideSdriveIframe};
+
+    var fieldObject;
+    
+    var maxFileSizeInMB = '{!JSENCODE(maxFileSizeInMB)}';
+    var thresholdSize = parseFloat('{!thresholdSize}');
+    var uploadPartSize = parseFloat('{!uploadPartSize}');
+    
+    var cancelRequested = false;
+    var isCancelled  = true;
+    var overwriteMethod = '';
+    var someFilesFailed = false;
+    var uploadCompleted = false;
+    
+       
+    var clickedFilesListToDelete = new Array();  
+    var uploader; //?
+    var filesWithColumns = new Array();  
+    var deleteItemLimit = 1000;
+    
+    var logoUrl = '{!URLFOR($Resource.cg__HtmlUpload,'js/jquery.plupload.queue/img/logo.png')}';
+    var jsonWsUrl='{!URLFOR($Page.cg__JsonWebService)}';
+    var pingTimer; 
+    YAHOO.namespace("cyangate.com"); 
+
+    var wipFile = '';
+
+    var targetName = 'uploadFiles';
+   $(function() {
+
+    $("#"+targetName).pluploadQueue({
+        // General settings
+        runtimes : 'html5,flash,silverlight,html4',
+        url : 'https://'+endPoint+'/'+bucketName,
+        chunk_size : '5mb', 
+        unique_names : false,
+        send_file_name : false, //required since our policy does not have this param
+        multipart:true,
+        multipart_params: {}, //required so that we can manuplate them later on.
+        max_retries:3,
+        filters : {
+            max_file_size : maxFileSizeInMB,
+            min_file_size : '1', // file can't be zero bytes
+            // Specify what files to browse for based on allowed extensions parameter
+            mime_types: [
+                {title : "Upload files", extensions :allowedFileExtensionsAT}
+            ],
+            prevent_duplicates: true
+        },
+
+        //Flash settings
+        flash_swf_url : '{!URLFOR($Resource.cg__HtmlUpload,'js/Moxie.swf')}',
+
+        // Silverlight settings
+        silverlight_xap_url : '{!URLFOR($Resource.cg__HtmlUpload,'js/Moxie.xap')}',
+        
+        // PreInit events, bound before any internal events
+        preinit : {
+            Init: function(up, info) {  
+                log('[Init]', 'Info:', info, 'Features:', up.features);
+                
+            },
+
+            UploadFile: function(up, file) {
+                log('[UploadFile]', file);
+
+            }
+        },
+
+        // Post init events, bound after the internal events
+        init : {
+                         
+            PostInit: function(up) {
+                // Called after initialization is finished and internal event handlers bound
+                log('[PostInit]');  
+                
+                  SDriveUploadUI.stepsAfterInit();
+
+                  SDriveUploadUI.appendColumn();
+                  
+                  uploader = up;
+                  
+            },
+
+            Browse: function(up) {
+                // Called when file picker is clicked
+                log('[Browse]');
+            },
+
+            Refresh: function(up) {
+                // Called when the position or dimensions of the picker change
+                log('[Refresh]');
+            },
+ 
+            StateChanged: function(up) {
+                // Called when the state of the queue is changed
+                log('[StateChanged]', up.state == plupload.STARTED ? "STARTED" : "STOPPED");
+
+                if(up.state == plupload.STARTED)
+                { 
+                     if(uploadCompleted||cancelRequested)
+                     {                    
+                           plupload.each(up.files, function(file) {
+
+                                if(file.status==plupload.FAILED)
+                                {
+                                    file.loaded = 0;
+                                    file.percent = 0;
+                                    file.status=plupload.QUEUED;
+                                    delete file.hint;
+                                }
+                            
+                            });
+                     }
+                    
+                     SDriveUploadUI.stepsAfterUploadStarts();
+                }
+                
+            },
+ 
+            QueueChanged: function(up) {
+                // Called when queue is changed by adding or removing files
+                log('[QueueChanged]');
+            },
+
+            OptionChanged: function(up, name, value, oldValue) {
+                // Called when one of the configuration options is changed
+                log('[OptionChanged]', 'Option Name: ', name, 'Value: ', value, 'Old Value: ', oldValue);
+            },
+
+            BeforeUpload: function(up, file) {
+                // Called right before the upload for a given file starts, can be used to cancel it if required
+                log('[BeforeUpload]', 'File: ', file);
+                
+                SDriveUploadUI.updateScrollTop(file.id);
+                    
+                if(cancelRequested&&!isCancelled) //?
+                {
+                     SDriveUploadUI.cancelledUpload(up,file);
+                     SDriveUploadUI.stepsAfterCancellation(up);
+                }
+                else
+                {
+                     SDriveRemoteAction.createFileObject(up,file);
+                }  
+                  
+                  
+                return(false); //?
+            },
+ 
+            UploadProgress: function(up, file) {
+                // Called while file is being uploaded
+            
+                //
+                wipFile = file.wipId;
+    
+                 if((file.percent!=100)&&cancelRequested&&!isCancelled)
+                 {
+                    SDriveUploadUI.cancelledUpload(up,file);
+
+                    SDriveUploadUI.stepsAfterCancellation(up);
+                   
+                    var isStart = false;
+                    SDriveRemoteAction.cleanupFailedUpload(up,file,isStart); 
+                    
+                 }
+                 else if(!cancelRequested)
+                 {
+                     log('[UploadProgress]', 'File:', file, "Total:", up.total);
+                 }
+    
+            },
+
+            FileFiltered: function(up, file) {
+                // Called when file successfully files all the 
+                
+                log('[FileFiltered]', 'File:', file);
+            },
+ 
+            FilesAdded: function(up, files) {
+                // Called when files are added to queue
+                log('[FilesAdded]');
+                var isValid = true;
+              
+                var deletedList = new Array();
+              
+                plupload.each(files, function(file) {
+                    
+                    log('  File:', file);
+                    
+                    if(!(file.size&&file.size>0))
+                    {
+                       deletedList.push(file);
+                    }
+                    
+                    if(!isValidFileName(file.name))
+                    {
+                         isValid = false;
+                         
+                          up.trigger( 'Error', {
+                              code : -101,
+                              message : plupload.translate(msg),
+                              file : file
+                            });
+
+                    }
+
+                    
+                });
+                
+                while (deletedList.length>0) 
+                { 
+                      var zeroFile = deletedList.pop();
+                      files.remove(zeroFile);
+                      up.removeFile(zeroFile);
+                }
+                
+                if(!isValid)
+                {
+                   plupload.each(files, function(file) {
+                       up.removeFile(file);
+                     });
+                     
+                   var msg = 'Name cannot start with a space or a dot and cannot contain any of the following characters: \\ / : * ? \" < > | ~';
+                   SDriveUploadUI.messageDialog(msg,'Error','error');
+                     
+                }
+                else
+                {
+                
+                    plupload.each(files, function(file) {
+                          SDriveUploadUI.addColumnContent(file.id);
+                         });
+                             
+                    SDriveUploadUI.deletableFilesClickListener();
+                    SDriveUploadUI.columnsOnChangeListener();
+               }
+                
+            },
+ 
+            FilesRemoved: function(up, files) {
+                // Called when files are removed from queue
+                log('[FilesRemoved]');
+ 
+                plupload.each(files, function(file) {
+                    log('Removed File:', file);
+
+                     var fileId = file.id; 
+                   
+                     var filesWithColumnsRemovedArray = filesWithColumns.filter(function (el) {
+                                                    return el.fileId != fileId;
+                                                 });
+                  
+                     filesWithColumns = filesWithColumnsRemovedArray;
+                     
+                     
+                     if(clickedFilesListToDelete.indexOf(file.id)!=-1)
+                     {
+                         clickedFilesListToDelete.remove(file.id);
+                     }
+                     
+                    
+                });
+
+                SDriveUploadUI.deletableFilesClickListener();
+                SDriveUploadUI.columnsOnChangeListener();
+                
+            },
+ 
+            FileUploaded: function(up, file, info) {
+                // Called when file has finished uploading
+                
+                log('[FileUploaded] File:', file, "Info:", info);
+                
+                up.stop(); //stop the process until we get confirmation
+                
+                if(!file.isChunked)
+                {
+                    SDriveRemoteAction.getHeaders(up,file);
+                }
+                else
+                {
+                    var icon =  SDriveUploadUI.changeFileActionClass(file.id,'plupload_process');
+                    icon.attr('title', 'Processing multi part operations. This may takes long time.');//
+                    SDriveRemoteAction.copyPartMultiPartUpload(up,file);
+                }
+                
+            },
+ 
+            ChunkUploaded: function(up, file, info) {
+                // Called when file chunk has finished uploading
+    
+                log('[ChunkUploaded] File:', file, "Info:", info);
+                
+                if(info.offset!=info.total)
+                {
+                        
+                    file.chunkIndex++;
+                    file.chunkKey = ( file.awsLocation + "." +file.chunkIndex );
+                    up.settings.multipart_params.key = file.chunkKey;
+                    up.settings.multipart_params.Filename = file.chunkKey;
+                    
+                }
+                
+            },
+
+            UploadComplete: function(up, files) {
+                // Called when all files are either uploaded or failed
+                log('[UploadComplete]');
+                
+                SDriveUploadUI.stepsAfterCompletion(up);
+                        
+            },
+
+            Destroy: function(up) {
+                // Called when uploader is destroyed
+                log('[Destroy] ');
+            },
+ 
+            Error: function(up, args) {
+            
+                 // Called when error occurs
+                log('[Error] ', args);
+    
+               if(args.code==plupload.HTTP_ERROR)
+                {
+                      up.stop();
+                        
+                      args.file.hint += args.response;                                      
+                      SDriveUploadUI.handleStatus(args.file);
+                      
+                      SDriveUploadUI.stepsAfterFailure();       
+  
+                      var isStart = true;
+                      SDriveRemoteAction.cleanupFailedUpload(up,args.file,isStart); 
+                                          
+                }
+
+  
+            }
+        }
+    });
+
+    
+ 
+   
+  });
+
+        plupload.addFileFilter('prevent_duplicates', function(value, file, cb) {
+        if (value) {
+            var ii = this.files.length;
+        
+            while (ii--) {
+                // Compare by name and size (size might be 0 or undefined, but still equivalent for both)
+                if (file.name === this.files[ii].name) {  //removed size equal check
+                    this.trigger('Error', {
+                        code : plupload.FILE_DUPLICATE_ERROR,
+                        message : plupload.translate('Duplicate file error.'),
+                        file : file
+                    });
+                    cb(false);
+                    return;
+                    
+                }
+            }
+            
+        }
+        cb(true);
+    });
+     
+    /*
+     plupload.addFileFilter('min_file_size', function(minSize, file, cb) {
+                      var undef;
+                      minSize= plupload.parseSize(minSize);
+                      // Invalid file size
+                      if (file.size !== undef && minSize && file.size < minSize) {
+                        this.trigger('Error', {
+                          code : plupload.FILE_SIZE_ERROR,
+                          message : plupload.translate('File size should be more than zero bytes'),
+                          file : file
+                        });
+                        cb(false);
+                      } else {
+                        cb(true);
+                      }
+                    });
+                    
+         */
+        
+   
+     
+        function log() {
+        if(!debugAT)return;
+        var str = "";
+
+        plupload.each(arguments, function(arg) {
+            var row = "";
+
+            if (typeof(arg) != "string") {
+                plupload.each(arg, function(value, key) {
+                    // Convert items in File objects to human readable form
+                    if ((arg instanceof plupload.File)&&key=='status') {
+                        // Convert status to human readable
+                        switch (value) {
+                            case plupload.QUEUED:
+                                value = 'QUEUED';
+                                break;
+
+                            case plupload.UPLOADING:
+                                value = 'UPLOADING';
+                                break;
+
+                            case plupload.FAILED:
+                                value = 'FAILED';
+                                break;
+
+                            case plupload.DONE:
+                                value = 'DONE';
+                                break;
+                        }
+                    }
+
+                    if (typeof(value) != "function") {
+                        row += (row ? ', ' : '') + key + '=' + value;
+                    }
+                });
+
+                str += row + " ";
+            } else { 
+                str += arg + " ";
+            }
+        });
+        
+        var log = $('#log');
+        log.append(str + "\n");
+        log.scrollTop(log[0].scrollHeight);
+    }
+    
+      function isValidFileName(fname)
+     {
+        var rg1=/^[^\\/:\*\?"<>\|~]+$/; // forbidden characters \ / : * ? " < > | ~
+        var rg2=/^\./; // cannot start with dot (.)
+        var rg4=/^\ /; // cannot start with space ( )
+        var rg3=/^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i; // forbidden file names
+ 
+        return rg1.test(fname)&&!rg2.test(fname)&&!rg3.test(fname)&&!rg4.test(fname);
+
+     }   
+     
+     
+     function pingSalesforce()
+    {
+        if(pingTimer == null)
+        {
+            pingTimer = setTimeout("pingSalesforce()",300000);
+        }
+        else
+        {
+            //ajax call to JSONWS to ping. Response callback defined here
+            var queryString = jsonWsUrl;
+            if (queryString.indexOf('?') >= 0)
+            {
+                queryString += '&';
+            }
+            else
+            {
+                queryString += '?';
+            }
+            queryString += 'core.apexpages.devmode.url=1&className=S3Helper&methodName=salesforceSessionIsValid';
+            
+            var  AjaxObject = 
+            {
+                handleSuccess:function(o)
+                {
+                    if(o.responseText != '"OK"')
+                    {
+                        alert('Error occured: ' + o.responseText);
+                    }
+                    else
+                    {
+                        pingTimer = setTimeout("pingSalesforce()",300000);
+                    }
+                    return;
+                },
+        
+                handleFailure:function(o)
+                {
+                    var msg = 'S-Drive Upload Manager detected that the Salesforce session is not valid anymore. Please keep the Salesforce session open while the upload is in progress!';
+                    SDriveUploadUI.messageDialog(msg,'Error','error');
+                    
+                    return;
+                },
+        
+                startRequest:function() 
+                {
+                   YAHOO.util.Connect.asyncRequest('GET', queryString, callback, null); //?
+                }
+            };
+        
+            var callback =
+            {
+                success:AjaxObject.handleSuccess,
+                failure:AjaxObject.handleFailure,
+                scope: AjaxObject
+            };
+        
+            AjaxObject.startRequest();
+        }
+   }
+   
+    pingSalesforce();
+
+    window.onbeforeunload = function (evt)
+    {
+        if ( SDriveUploadUI.uploadState=='STARTED')
+        {
+            var message = "Upload in Progress!"
+            if (typeof evt == 'undefined') {//IE 
+                evt = window.event; 
+            } 
+            if (evt) { 
+                evt.returnValue = message; 
+            } 
+            message; 
+        }  
+    }
+
+   /*
+    window.onunload = function ()
+    {   
+      
+        if ( SDriveUploadUI.uploadState=='STARTED' && wipFile != '')
+        {
+            // delete WIP file from Salesforce
+            var args = '{"parameters":[{"isArray":true,"name":"ids","value":["' + wipFile+ '"]},' +
+                       '{"isArray":false,"name":"objectId","value":"'+objectIdAT+'"},' +
+                       '{"isArray":false,"name":"customObjectFileName","value":"'+customObjectFileNameAT+'"}]},' +
+                       '{"isArray":false,"name":"namespacePrefix","value":"'+fileNamespacePrefixAT+'"}]}';
+            var queryString = jsonWsUrl;
+            if (queryString.indexOf('?') >= 0)
+            {
+                queryString += '&';
+            }
+            else
+            {
+                queryString += '?';
+            }
+            queryString += 'core.apexpages.devmode.url=1&className=S3Helper&methodName=deleteCustomObjectFiles&args=' + args;
+
+            var  AjaxObject = 
+            {
+                handleSuccess:function(o)
+                {
+                    return;
+                },
+        
+                handleFailure:function(o)
+                {
+                    return;
+                },
+        
+                startRequest:function() 
+                {
+                   YAHOO.util.Connect.asyncRequest('GET', queryString, callback, null);
+                }
+            };
+        
+            var callback =
+            {
+                success:AjaxObject.handleSuccess,
+                failure:AjaxObject.handleFailure,
+                scope: AjaxObject
+            };
+        
+            AjaxObject.startRequest();
+        }
+        else
+        {
+            return;
+        }
+        
+       
+    }
+    */
+
+
+    /*
+    function renewSession()
+    {
+        //ajax call to JSONWS to ping. Response callback defined here
+        var queryString = jsonWsUrl;
+        if (queryString.indexOf('?') >= 0)
+        {
+            queryString += '&';
+        }
+        else
+        {
+            queryString += '?';
+        }
+        queryString += 'core.apexpages.devmode.url=1&className=S3Helper&methodName=renewSession';
+        
+        var  AjaxObject = 
+        {
+            handleSuccess:function(o)
+            {
+                var newSessionId = o.responseText.replace(/\"/g,'');
+               
+                console.log('newSessionId:'+newSessionId);
+                return;
+            },
+
+            handleFailure:function(o)
+            {
+                var msg = 'S-Drive Upload Manager detected that the Salesforce session is not valid anymore. Please keep the Salesforce session open while the upload is in progress!';
+                SDriveUploadUI.messageDialog(msg,'Error','error');
+                return;
+            },
+
+            startRequest:function() 
+            {
+               YAHOO.util.Connect.asyncRequest('GET', queryString, callback, null); //?
+            }
+        };
+
+        var callback =
+        {
+            success:AjaxObject.handleSuccess,
+            failure:AjaxObject.handleFailure,
+            scope: AjaxObject
+        };
+
+        AjaxObject.startRequest();
+    }
+    */
+   /*
+    function hasSessionExpired(event) 
+    {
+      
+        if(event.type == "exception" &&(event.message.indexOf("Logged in?") != -1||(event.statusCode ==402))) //TODO genaral
+        {
+        
+           console.log('[Session Expired]');//TODO remove
+           return true;
+        }
+        else
+        { 
+           return false;
+        }
+    }
+    */
+     /*
+     function handleETagHeader(res)
+     {
+     
+        if (window.DOMParser)
+        {
+            parser=new DOMParser();
+            xmlDoc=parser.parseFromString(res,"text/xml");
+        }
+        else // Internet Explorer
+        {
+            xmlDoc=new ActiveXObject("Microsoft.XMLDOM");
+            xmlDoc.async=false;
+            xmlDoc.loadXML(res);
+        }
+        
+         var eTag = xmlDoc.getElementsByTagName("ETag")[0].childNodes[0].nodeValue;
+         eTag = eTag.split('"').join('');
+         
+         eTagArray.push(eTag);
+ 
+     }
+     */
+ </script>
+
+</apex:component>

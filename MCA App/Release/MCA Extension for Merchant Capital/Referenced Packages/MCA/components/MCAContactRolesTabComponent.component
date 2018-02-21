@@ -1,0 +1,104 @@
+<apex:component controller="McaApp.MCAContactRolesTabController" allowDML="true">
+
+  <apex:form id="records" styleClass="records">
+
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+
+      <script>
+
+        function runSaveAll() {
+
+          setTimeout(function() {
+            saveAll();
+          }, 500);
+        }
+        var contRoleTabLabelOriginal ;
+        t$(function () {
+            contRoleTabLabelOriginal = t$("[id*='contactRoletab_lbl']").text();
+            computecontRoleCalculations();
+        });
+        
+        function computecontRoleCalculations() {
+                var contRoleTabLabel = 'Contact Roles'; // + ' (' + {!containers.size} + ')';
+                t$("[id*='contactRoletab_lbl']").text(contRoleTabLabel);
+               
+                t$("[id*='contactRoletab_lbl']").append(' (' + {!containers.size} + ')');
+        }
+      </script>
+
+      <apex:actionFunction action="{!saveAll}" name="saveAll" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()"/>
+
+      <apex:pageBlockButtons >
+
+        <apex:CommandButton action="{!newContactRole}" value="New Contact Role" rerender="records,refreshComponent" immediate="true" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!save}" onclick="runSaveAll()" value="Save" oncomplete="computecontRoleCalculations()" rerender="records,refreshComponent"></apex:CommandButton>
+<!--         <input type="button" onclick="runSaveAll()" class="btn" value="Save"/> -->
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+
+      </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="1" title="ContactRoles" collapsible="false">
+        <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column >
+            <apex:outputLink value="/{!container.contactRole.Id}" target="blank" rendered="{!NOT(ISBLANK(container.contactRole.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!NOT(ISBLANK(container.contactRole.Id))}"/>
+            <apex:commandLink action="{!deleteContactRole}" value="Del" rerender="records,refreshComponent" rendered="{!NOT(ISBLANK(container.contactRole.Id))}" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()">
+              <apex:param name="recordToDelete" value="{!container.contactRole.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeContactRole}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.contactRole.Id))}" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()">
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$Label.mcaapp__ContactRole_ContactName}">
+            <apex:outputField value="{!container.contactRole.ContactId}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.contactRole.ContactId}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.OpportunityContactRole.Fields.IsPrimary.Label}">
+            <apex:outputField value="{!container.contactRole.IsPrimary}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.contactRole.IsPrimary}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.OpportunityContactRole.Fields.Role.Label}">
+            <apex:outputField value="{!container.contactRole.Role}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.contactRole.Role}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Contact.Fields.Phone.Name}">
+            <apex:outputField value="{!container.contactList.Phone}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)),NOT(editAll))}"/>
+<!--            <apex:inputField value="{!container.contactList.Phone}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>-->
+          </apex:column>
+          
+          <apex:column headerValue="{!$Label.mcaapp__ContactRole_Mobile}">
+            <apex:outputField value="{!container.contactList.MobilePhone}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <!--<apex:inputField value="{!container.contactList.MobilePhone}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>-->
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Contact.Fields.Email.Label}">
+            <apex:outputField value="{!container.contactList.Email}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <!--<apex:inputField value="{!container.contactList.Email}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>-->
+          </apex:column>
+
+     <!-- <apex:column headerValue="{!$ObjectType.OpportunityContactRole.Fields.SystemModstamp.Label}">
+            <apex:outputField value="{!container.contactRole.SystemModstamp}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.contactRole.SystemModstamp}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll)}"/>
+          </apex:column> -->
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+</apex:component>

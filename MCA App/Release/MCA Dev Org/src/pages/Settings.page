@@ -1,0 +1,484 @@
+<apex:page controller="SettingsController" showHeader="true" sidebar="false" tabStyle="Settings__tab">
+	
+	<!-- JQuery -->	
+	<apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/jquery.min.js')}" />
+	
+	
+	<!-- Bootstrap -->
+	<apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/bootstrap.min.js')}" />
+	<link href="{!URLFOR($Resource.bootstrap, 'css/btforce.css')}" rel="stylesheet"></link>
+
+	
+	<!-- Plugins -->
+	<apex:includeScript value="{!URLFOR($Resource.bootstrap, 'js/jasny-bootstrap.min.js')}" />
+	<link href="{!URLFOR($Resource.bootstrap, 'css/jasny-bootstrap.min.css')}" rel="stylesheet"></link>
+	<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet"></link>
+		
+
+	<!-- CSS -->
+	<style>
+		body {
+			font-size: 13px !important;
+		}
+
+		.noSidebarCell {
+			padding: 5px;
+		}
+
+		.navmenu {
+			border-radius: 0; 
+			width: 100%;
+			border: none;
+		}
+
+		.navmenu-nav li {
+			margin: 0;
+		}
+
+		.navmenu li:first-child a {
+			border-top: 1px solid #dce4e7 !important;
+		}
+
+		.last-item {
+			border-bottom: 1px solid #dce4e7 !important;
+		}
+
+		.navmenu-nav li a {
+			margin: 0 !important;
+			margin-bottom: 0px !important;
+			margin-left: 0px !important;
+			padding: 2px !important;
+			background: #f2f5f6;
+			font-weight: normal !important;
+			border: 1px solid #dce4e7 !important;
+			border-top-color: #fff !important;
+			color: #222 !important;
+			line-height: 30px !important;
+			font-size: 13px !important;
+			padding-left: 10px !important;
+
+		}		
+
+		.nav .open>a, .nav .open>a:hover, .nav .open>a:focus {
+			border: 1px solid #dce4e7;
+		}
+
+		.navmenu-nav li.subitem a {
+			background: #eaeef0;
+			border-bottom: 0 !important;
+			border-top: 0 !important;
+			padding-left: 25px !important;
+		}		
+
+		ul li a:hover {
+			background: gray !important;
+			color: white !important;
+		}		
+
+		.dropdown-menu {
+			padding: 0 !important;
+			margin: 0 !important;
+		}
+
+		.navmenu-nav li a .caret {
+			display: inline-block;
+			float: right;
+			margin-top: 14px;
+			margin-right: 8px;
+			color: #222 !important;
+			border-top-color: #222 !important;
+			border-bottom-color: #222 !important;			
+		}
+
+		.navmenu-nav {
+			margin: 0;
+		}
+
+		.section {
+			display: none;
+		}	
+
+		.expand .caret {
+			border-top: none;
+			border-bottom: 4px solid #222;
+		}	
+
+		.pageTitle {
+			padding: 15px 0px;
+			margin-bottom: 30px;		
+			border-bottom: 2px solid #57B1D1;	
+		}
+
+		.pageTitle h2 {
+			margin: 0;
+			font-size: 20px;
+		}
+
+		div.formRow {
+			border-bottom: 1px solid #EEE;
+			padding: 5px 0px;
+		}
+
+		div.formLabel {
+			font-weight: bold;
+			text-align: right;
+		}
+
+		.help-message {
+			margin-bottom: 20px;
+		}
+
+		.tooltip {
+			width: 100%;
+		}
+
+	</style>
+
+	<!-- JS -->
+	<script>
+		$(function() {
+			$('.navmenu .dropdown-menu').on({
+				"click":function(e){
+      				e.stopPropagation();
+    			}
+			});			
+
+			$(".dropdown-open").click(function() {
+				$(".dropdown-menu").hide();
+				$(".dropdown").removeClass("expand");
+				
+				$(this).parent().addClass("expand");
+				$(this).parent().find(".dropdown-menu").show();
+			});
+
+			showSection('home');
+		});
+
+
+		function showSection(sectionId) {
+			if (sectionId == 'home') {
+				$(".dropdown-menu").hide();
+				$(".dropdown").removeClass("expand");			
+			}
+
+			$(".section").hide();
+			$("#" + sectionId).show();
+		}
+	</script>
+
+
+	<!-- Page -->
+	<apex:form >
+		<div class="bootstrap">
+			<div class="col-md-2" style="padding: 0;">
+				<nav class="navmenu navmenu-default">
+					<ul class="nav navmenu-nav">
+						<li>
+							<a href="javascript:;" style="  background: #66bfeb;color: #fff !important;border: none !important;text-shadow: initial !important;font-size: 15px !important;" onclick="showSection('home');">FUNDINGO Settings</a>
+						</li>
+
+						<!-- <li class="dropdown">
+							<a href="javascript:;" class="dropdown-open">Bank Directory <b class="caret"></b></a>
+							<ul class="dropdown-menu navmenu-nav">
+								<li class="subitem">
+									<a href="javascript:;" onclick="showSection('BankDirectoryImportOptions');">Import Options</a>
+								</li>								
+							</ul>
+							
+						</li> -->
+						<li>
+							<a href="javascript:;" onclick="showSection('BankDirectoryImportOptions');">Bank Directory</a>
+						</li>
+						<li>
+							<a href="javascript:;" onclick="showSection('ApplicationOptions');">Application Portal</a>
+						</li>
+					</ul>
+				</nav>
+			</div>			
+
+			<div class="col-md-10" style="min-height: 400px;">
+
+				<!-- Home -->
+				<div id="home" class="section">
+					<div class="panel panel-default">
+		                <div class="panel-heading">
+		                    <h3 class="panel-title">Getting Started</h3>
+		                </div>
+		                <div class="panel-body">
+		                    <div class="col-sm-5">
+		                    </div>
+
+		                    <div class="col-sm-7">
+		                        <h4 class="h5">Salesforce Documentation &amp; Quick Starts</h4>
+		                    </div>
+		                </div>
+		            </div>
+				</div>
+				<!-- Home -->
+
+				<!-- Bank Directory -->
+				<div id="BankDirectoryImportOptions" class="section">
+					
+					<!-- Action Functions -->
+					<apex:actionFunction name="editBankDirectoryImportOptions" action="{!edit}" rerender="BankDirectoryImportOptions">
+						<apex:param name="formId" value="BankDirectoryImportOptions" />
+					</apex:actionFunction>
+
+					<apex:actionFunction name="saveBankDirectoryImportOptions" action="{!saveBankDirectorySettings}" rerender="BankDirectoryImportOptions">
+						<apex:param name="formId" value="BankDirectoryImportOptions" />
+					</apex:actionFunction>
+
+					<apex:actionFunction name="cancelBankDirectoryImportOptions" action="{!cancel}" rerender="BankDirectoryImportOptions">
+						<apex:param name="formId" value="BankDirectoryImportOptions" />
+					</apex:actionFunction>
+					<!-- Action Functions -->				
+
+
+					<div class="pageTitle">
+						<h2><i class="fa fa-wrench" /> Bank Directory Settings</h2>
+					</div>
+
+					<div class="help-message">
+						<p>
+							User this page to configure the Bank Directory module settings.							
+						</p>
+						
+					</div>
+
+					<apex:outputPanel id="BankDirectoryImportOptions">
+						<script>
+							$(function() {
+								$('.tooltip-icon').tooltip( { 'placement' : 'right' } );
+							});
+						</script>
+
+						<apex:outputPanel rendered="{!NOT(formStateEditMode['BankDirectoryImportOptions'])}">
+							<div class="panel panel-default">
+				                <div class="panel-heading" style="text-align: center;">
+				                    <input class="btn btn-primary btn-sm" type="button" value="Edit" onclick="editBankDirectoryImportOptions();" />
+				                </div>
+				                <div class="panel-body">
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Enable Auto-Sync
+				                    		</div>
+				                    		<div class="col-md-4">
+				                    			<apex:inputCheckbox value="{!bankDirectorySettings.Scheduled_Service_Enabled__c}" disabled="true" />
+				                    		</div>
+				                    	</div>					                    	
+				                    	<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Account Record Type
+				                    		</div>
+				                    		<div class="col-md-4">
+				                    			{!bankDirectorySettingsAccountRecordTypeName}
+				                    		</div>
+				                    	</div>	
+				                    	
+				                    	<div class="col-md-12">
+				                            For manual import please go to <a href="{!baseUrlOrg}/apex/BankDirectory">Import Banks</a>
+				                        </div>                    	
+				                    </div>
+				                </div>
+				            </div>					
+			            </apex:outputPanel>
+
+						<apex:outputPanel rendered="{!formStateEditMode['BankDirectoryImportOptions']}">
+							<div class="panel panel-default">
+				                <div class="panel-heading" style="text-align: center;">
+				                    <input class="btn btn-primary btn-sm" type="button" value="Save" onclick="saveBankDirectoryImportOptions();" />
+				                    <input class="btn btn-default btn-sm" type="button" value="Cancel" onclick="cancelBankDirectoryImportOptions();" />
+				                </div>
+				                <div class="panel-body">
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Enable Auto-Sync
+				                    			<i class="fa fa-question-circle tooltip-icon" title="Turn On/Off the auto import service" />
+				                    		</div>
+				                    		<div class="col-md-4">
+				                    			<apex:inputCheckbox value="{!bankDirectorySettings.Scheduled_Service_Enabled__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    	<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Account Record Type 
+				                    			<i class="fa fa-question-circle tooltip-icon" title="Defines the record type used when creating Accounts" />
+				                    		</div>
+				                    		<div class="col-md-4">
+				                    			<apex:selectList value="{!bankDirectorySettings.Account_Record_Type_Id__c}" size="1" multiselect="false" styleClass="form-control">
+				                    				<apex:selectOptions value="{!accountRecordTypes}" />
+				                    			</apex:selectList>
+				                    		</div>
+				                    	</div>		                    	
+				                    </div>
+				                </div>
+				            </div>					
+			            </apex:outputPanel>		            
+					</apex:outputPanel>
+				</div>
+				<!-- Bank Directory -->
+
+				<!-- Application Options -->
+				<div id="ApplicationOptions" class="section">
+
+
+					<!-- Action Functions -->
+					<apex:actionFunction name="editApplicationOptions" action="{!edit}" rerender="ApplicationOptions">
+						<apex:param name="formId" value="ApplicationOptions" />
+					</apex:actionFunction>
+
+					<apex:actionFunction name="saveApplicationOptions" action="{!saveApplicationOptions}" rerender="ApplicationOptions">
+						<apex:param name="formId" value="ApplicationOptions" />
+					</apex:actionFunction>
+
+					<apex:actionFunction name="cancelApplicationOptions" action="{!cancel}" rerender="ApplicationOptions">
+						<apex:param name="formId" value="ApplicationOptions" />
+					</apex:actionFunction>
+					<!-- Action Functions -->					
+
+					<div class="pageTitle">
+						<h2><i class="fa fa-wrench" /> Application Portal Settings</h2>
+					</div>
+
+					<div class="help-message">
+						<p>
+							User this page to configure the online Application Portal settings.							
+						</p>
+					</div>
+
+
+					<apex:outputPanel id="ApplicationOptions">
+
+						<apex:outputPanel rendered="{!NOT(formStateEditMode['ApplicationOptions'])}">
+							<div class="panel panel-default">
+				                <div class="panel-heading" style="text-align: center;">
+				                    <input class="btn btn-primary btn-sm" type="button" value="Edit" onclick="editApplicationOptions();" />
+				                </div>
+				                <div class="panel-body">
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Portal Return URL
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:outputField value="{!portalSettings.Return_URL__c}" />
+				                    		</div>
+				                    	</div>					                    	
+				                    </div>
+
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Business Information Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:outputField value="{!portalSettings.Business_Information_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    	
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Personal Information Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:outputField value="{!portalSettings.Personal_Information_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    	
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Upload Attachment Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:outputField value="{!portalSettings.Upload_Attachments_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    	
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Submit Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:outputField value="{!portalSettings.Submit_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    	
+				                    </div>
+
+				                </div>
+				            </div>					
+			            </apex:outputPanel>
+
+						<apex:outputPanel rendered="{!formStateEditMode['ApplicationOptions']}">
+							<div class="panel panel-default">
+				                <div class="panel-heading" style="text-align: center;">
+				                    <input class="btn btn-primary btn-sm" type="button" value="Save" onclick="saveApplicationOptions();" />
+				                    <input class="btn btn-default btn-sm" type="button" value="Cancel" onclick="cancelApplicationOptions();" />
+				                </div>
+				                <div class="panel-body">
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Portal Return URL
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:inputfield value="{!portalSettings.Return_URL__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Business Information Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:inputfield value="{!portalSettings.Business_Information_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Personal Information Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:inputfield value="{!portalSettings.Personal_Information_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Upload Attachment Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:inputfield value="{!portalSettings.Upload_Attachments_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    </div>
+				                    <div class="col-md-12">
+										<div class="col-md-12 formRow">
+				                    		<div class="col-md-4 formLabel">
+				                    			Submit Help Text
+				                    		</div>
+				                    		<div class="col-md-8">
+				                    			<apex:inputfield value="{!portalSettings.Submit_Help_Text__c}" />
+				                    		</div>
+				                    	</div>					                    
+				                    </div>
+				                </div>
+				            </div>					
+			            </apex:outputPanel>	
+
+		            </apex:outputPanel>
+				</div>
+
+			</div>
+		</div>
+	</apex:form>
+
+</apex:page>

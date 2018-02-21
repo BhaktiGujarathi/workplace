@@ -1,0 +1,80 @@
+public with sharing class MCAAttachmentTabController {
+	
+	 public transient Attachment[] attachments;
+	 public transient Container[] containers;
+	 private transient Id opportunityId;
+	 public transient Opportunity opportunity{get;set;}
+	 public transient Boolean editAll {get;set;}
+	 public Id recordToDelete {get;set;}
+	 
+	 public MCAAttachmentTabController(){
+	 	opportunityId = Apexpages.currentPage().getParameters().get('id');
+	 	opportunity = [select Id, Name from Opportunity where Id =: opportunityId];
+	 	refresh();
+	 }
+	 
+	 public Container[] getContainers() {
+
+    attachments = new Attachment[] {};
+    containers = new Container[] {};
+
+    //tasks.addAll(newTasks);
+
+    attachments.addAll([Select a.ParentId,
+    						 a.Name,
+    						 a.IsPrivate,
+    						 a.Id,
+    						 a.Description,
+    						 a.ContentType,
+    						 a.BodyLength,
+    						 a.Body,
+    						 a.SystemModstamp
+    						 From Attachment a
+                    WHERE a.ParentId = :opportunityId]);
+                    
+    for (Integer i = 0; i < attachments.size(); i++) {
+      containers.add(new Container(attachments[i], i));
+    }
+
+    return containers;
+  }
+  
+  public void deleteAttachment() {
+
+      if (recordToDelete != null) {
+      	Attachment record = [SELECT Id FROM Attachment WHERE Id = :recordToDelete];
+      delete record;
+    }
+  }
+  
+  public void saveAllAttachments() {
+    upsert attachments;
+
+    refresh();
+  }
+  
+  public void refresh() {
+
+    editAll = false;
+    recordToDelete = null;
+    //newTasks = new Task[] {};
+  }
+  
+  public void editAll() {
+
+    editAll = true;
+  }
+
+public class Container {
+
+    public Attachment attachment {get;set;}
+    public Integer index {get;set;}
+
+    public Container(Attachment instance, Integer index) {
+      attachment = instance;
+      this.index = index;
+    }
+
+  } 
+
+}

@@ -1,0 +1,360 @@
+<apex:page controller="DamacSidebarController" standardStylesheets="false" showHeader="false" sidebar="false"  cache="true">
+    <head>
+        <base target="_parent" />
+    </head>
+    <style>
+            .padding-0-20{
+                padding:0px 20px;
+            }
+
+            .item-heading{
+                color: black;
+                font-weight: bold;
+                font-size: 16px !important;
+                padding: 15px;
+                padding-bottom: 10px !important;
+                font-family: Arial,sans-serif;
+            }
+
+            .item-border{
+                border-bottom:2px solid #0D80FC !important;
+                margin:0px 10px;
+            }
+
+            .badge{
+                background: #FF9100 none repeat scroll 0% 0% !important;
+                text-align: center !important;
+                padding:2px 5px;
+                float:right;
+                font-size: 15px !important;
+                border-radius: 50% !important;
+                color: #FFF !important;
+            }
+
+            .add-border{
+                border-left:3px solid #FF9100 !important;
+                position: absolute;
+                left:0px;
+                height:inherit;
+            }
+
+            .text-color-secondary{
+                color:#929292 !important;
+            }
+
+            .border-dark-secondary{
+                border:1px solid #929292 !important;
+            }
+
+            .border-light-secondary{
+                border:1px solid #F6F6F6 !important;
+                margin:0px 10px;
+            }
+
+            .text-color-primary{
+                color: #0D80FC !important;
+            }
+
+            .text-medium{
+                font-size: 13px !important;
+                font-family: Arial,sans-serif;
+            }
+
+
+            .dropdown-menu{
+            border: 1px solid #d8dde6;
+            padding: 4px 0;
+            background: #fff;
+            }
+
+            .dropdown-menu li{
+            padding:10px;
+            /*border-bottom:1px solid #0D80FC !important;*/
+            }
+
+            .dropdown-menu a{
+            color:#0D80FC !important;
+            cursor:pointer;
+            }
+
+
+            .sticky-item{
+            height:auto !important;
+            min-height: 233px!important;
+            width:200px;
+            background:white;
+            z-index: 1;
+            position:relative;
+            border-bottom:7px solid #DEDEDE !important;
+            }
+
+            .announcement-sticky-item{
+                min-height:200px !important;
+            }
+
+
+            .left-margin-200{
+            margin-left:200px !important;
+            }
+
+            .sidebar-widgets{
+            display:none !important;
+            }
+
+
+            .zen .zen-tabMenu {
+            background: #fff;
+            margin: 0;
+            padding-left: 2px;
+            position: relative;
+            z-index: 9; }
+
+            .zen .zen-tabMenu .zen-active {
+            border-radius: 0;
+            box-shadow: none;
+            background-image: none;
+            font-weight: normal; }
+
+            .zen .zen-tabMenu .zen-active a,
+            .zen .zen-tabMenu .zen-active a:hover {
+              color: #FFFFFF !important; }
+            .zen .zen-tabMenu li {
+            height: 33px;
+            padding: 4px 10px !important;
+            margin: 8px !important;
+            color: #FFFFFF !important;
+            list-style:none !important;
+            line-height: 33px;
+            border: 1px solid #F6F6F6;
+           
+             }
+            .zen .zen-tabMenu li a,
+            .zen .zen-tabMenu li a:hover {
+              color: #0D80FC !important;
+              font-weight: bold;
+              text-decoration: none;
+              font-size: 13px; }
+
+            .zen .zen-page {
+            padding: 0 !important; }
+
+            html .brandPrimaryBgr,.zen .zen-tabMenu .zen-active {
+                background:#0D80FC !important;
+            }
+
+
+            #tabBar li a{
+                
+                font-family:Arial,sans-serif !important;
+                font-size:13px !important;
+            }
+            #tabBar li{
+                height:28px !important;
+                padding:0px 10px !important;
+            }
+
+            .more{
+                padding: 0px 10px;
+                position:absolute;
+                right:0px;
+                bottom:0px;
+                font-weight: bold;
+            }
+
+            .more a{
+                padding: 10px 0px !important;
+            }
+
+            .item-content{
+                padding:10px;
+                cursor:pointer;
+            }
+
+            .item-content:hover{
+                background:rgba(240,255,240,0.5)
+            }
+
+            .item-container{
+                position:relative;
+                margin-bottom:5px !important;
+            }
+
+            .border-container{
+                height:100%;
+            }
+
+            .text-small{
+                font-size: 13px !important;
+                font-family:Arial,sans-serif !important;
+            }
+
+            #MoreTabs_Tab{
+                display:none !important;
+            }
+
+            #countdown{
+                padding:5px;
+            }
+
+            .mobile-menu{
+                display: none;
+            }
+
+           .mobile-menu .zen-assistiveText{
+            display:none !important;
+           }
+
+           .align{
+            display:inline !important;
+            font-size: 12px;
+            padding: 12px;
+            font-family: Arial,sans-serif;
+           }
+    </style>
+    <!-- {!latestCampaign.Campaign_Name__c}-->
+    <apex:outputPanel id="sidebar-container">
+     <div class="sidebar-container">
+        <div class="zen mobile-menu">
+            <div class="zen-tabMenu dropdown-menu">
+            </div>
+        </div>
+        <div class="sticky-item">
+           <div class="item-heading">
+                <span class="text-large">Notifications</span>
+                <span class="badge">{!unreadNotificationCount}</span>
+           </div>
+           <div class="item-border"></div>
+
+           <apex:repeat value="{!notificationList}" var="notification" rows="3">
+               <div class="item-container">
+                    <apex:outputPanel styleClass="border-container" rendered="{!notification.Read__c == false}" layout="block">
+                        <div class="add-border"></div>
+                    </apex:outputPanel>
+                    <div class="item-content" onclick="window.parent.location.href='{!URLFOR($Page.Damac_Notifications,null)}?nid={!notification.id}'">
+                        <div class="item-title text-small text-color-primary">
+                           <apex:outputText value="{!notification.Title__c}">
+                           </apex:outputText>
+                        </div>
+                       
+                    </div>
+                    <div class="border-light-secondary"></div>
+               </div>
+           </apex:repeat>
+           <apex:outputPanel rendered="{!notificationListSize==0}">
+                <div class="item-container">
+                    <div class="item-content">
+                        <div class="item-title text-small text-color-secondary" style="padding:10px">
+                           No notifications available :(
+                        </div>
+                    </div>
+                    <div class="border-light-secondary"></div>
+               </div>
+           </apex:outputPanel>
+           
+           <apex:outputPanel rendered="{!notificationListSize>0}">
+               <div class="more">
+                    <a href="{!$Site.Prefix}/Damac_Notifications" class="text-small text-color-primary" style="float:right">View List ></a>
+               </div>
+           </apex:outputPanel>
+        </div>
+        <div class="sticky-item announcement-sticky-item" style="min-height:130px !important;">
+            <div class="item-heading">
+                <span class="text-large">Announcements</span>
+                <apex:outputPanel rendered="{!announcementNo>0}" styleClass="badge">
+                    {!announcementNo}
+                </apex:outputPanel>
+            </div>
+            <div class="item-border"></div>
+            <apex:outputPanel rendered="{!announcementNo>0}"
+                onclick="window.open('{!$Site.Prefix}/Damac_Announcement_Detail?Id={!latestAnnouncement.Id}','_parent');">
+                <div class="item-container">
+                    <div class="item-content">
+                        <div class="item-title text-small text-color-primary">
+                           <apex:outputText value="{!latestAnnouncement.Title__c}">
+                           </apex:outputText>
+                        </div>
+                        
+                    </div>
+                    <div class="border-light-secondary"></div>
+                </div>
+                <div class="more">
+                    <a href="{!$Site.Prefix}/Damac_Announcements" class="text-small text-color-primary" style="float:right">View List ></a>
+                </div>
+           </apex:outputPanel>
+           <apex:outputPanel rendered="{!announcementNo==0}">
+               <div class="item-container">
+                    <div class="item-content">
+                        <div class="item-title text-small text-color-secondary" style="padding:10px">
+                           No announcements available :(
+                        </div>
+                    </div>
+                    <div class="border-light-secondary"></div>
+               </div>
+           </apex:outputPanel>
+          
+        </div>
+        <div class="sticky-item" style="min-height: 200px !important">
+            <div class="item-heading">
+                <span class="text-large">Events</span>
+            </div>
+            <div class="item-border"></div>
+                 <apex:outputPanel rendered="{!campaignstartDate != null}">
+                    <div class="item-container">
+                        <div class="item-content">
+                            <div class="item-title text-small text-color-primary">
+                               {!assignedAgents.campaignName}
+                            </div>
+                           
+                        </div>
+                        <div class="text-small text-color-secondary" style="padding:0px 10px 5px;">
+                            {!campaignStartOrEndString }
+                        </div>
+                        <div id="countdown" style="padding:6px;text-align:center;"></div>
+                        <div class="" style="padding:5px 0px">
+                            <div style="font-size:10px;padding-left:20px;" class="align">W</div>
+                            <div style="font-size:10px;padding:10px" class="align">DD</div>
+                            <div style="font-size:10px;padding:10px" class="align">HH</div>
+                            <div style="padding:10px;font-size:10px" class="align">MM</div>
+                            <div style="padding:10px;font-size:10px" class="align">SS</div>
+                        </div>
+                        <div class="border-light-secondary"></div>
+                    </div>
+                    <div class="more">
+                        <a href="{!$Site.Prefix}/Damac_Events" class="text-small text-color-primary" style="float:right">View List ></a>
+                    </div>
+                </apex:outputPanel>
+
+                 <apex:outputPanel rendered="{!campaignstartDate == null}">
+                   <div class="item-container">
+                        <div class="item-content">
+                            <div class="item-title text-small text-color-secondary" style="padding:10px">
+                               No events available :(
+                            </div>
+                        </div>
+                        <div class="border-light-secondary"></div>
+                   </div>
+               </apex:outputPanel>
+
+        </div>
+    </div>
+     </apex:outputPanel> 
+     
+     <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/jquery.min.js')}"></script>   
+      <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/jquery.countdown.min.js')}"></script>
+      <script>
+      $('#countdown').countdown('{!campaignstartDate}', function(event) {
+
+          if(null != event && (event.type != 'stoped' || event.type != 'finish')){
+              var $this = $(this).html(event.strftime(''
+                + '<div style="background: rgba(0,0,0,0.9);color: white;" class="align">%w</div>'
+                + '<div  style="background: rgba(0,0,0,0.9);color: white;" class="align">%d</div>'
+                + '<div  style="background: rgba(0,0,0,0.9);color: white;" class="align">%H</div>'
+                + '<div style="background: rgba(0,0,0,0.9);color: white;" class="align">%M</div>'
+                + '<div style="background: rgba(0,0,0,0.9);color: white;" class="align">%S</div>'));
+          }
+        });
+        
+       
+      </script>
+      
+</apex:page>

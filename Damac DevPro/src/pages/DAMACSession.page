@@ -1,0 +1,44 @@
+<apex:page contentType="text/javascript" controller="DAMACSessionController" showHeader="false" sideBar="false" standardStylesheets="false">
+
+    var profileName = '{!$Profile.Name}';
+    var accountName = '{!urec.Account.Name}';
+    var firstName = '{!urec.Contact.FirstName}';
+    var lastName = '{!urec.Contact.LastName}';
+    var contactName = '{!urec.Contact.Name}';
+    contactName=firstName+' '+lastName; 
+    if(contactName.length>15){
+        contactName =(lastName.length>15)?
+                     (firstName.length>15 ? firstName.substring(0,12)+'..':firstName+' '+lastName.substring(0,12)+'..'):
+                     (firstName.length>15 ? lastName:firstName+ ' '+lastName ); 
+    }
+
+    var agencyTierStatus = '{!acc.Agency_Tier__c}';
+    var eligibility = '{!acc.Eligible_For_Tier_Program__c}';
+    var inquiryObjectPrefix =  '{!inquiryObjectPrefix}';
+    var caseObjectPrefix = '{!caseObjectPrefix}';
+    var profileObjectPrefix = '{!propertyObjectPrefix}';
+
+    if({!hideTabs}){
+        $('.wt-CIL').hide();
+        $('.wt-Projects').hide();
+        $('.wt-Commission').hide();
+        $('.wt-Chatter').hide();
+        $('.wt-Support').hide();
+        $('.wt-Home').show();
+        $('.wt-Company-Profile').show();
+    }else{
+        $('.wt-CIL').show();
+        $('.wt-Projects').show();
+        $('.wt-Commission').show();
+        $('.wt-Chatter').show();
+        $('.wt-Support').show();
+        $('.wt-Home').show();
+        $('.wt-Company-Profile').show();
+    } 
+
+    Sfdc.onReady(function(){
+        $('.loadingImg').hide();
+        $('#sidebarDiv iframe').contents().find('.dropdown-menu').html($('#tabBar').html());
+        $('#sidebarDiv iframe').contents().find('a').attr('target','_top');
+    });
+</apex:page>

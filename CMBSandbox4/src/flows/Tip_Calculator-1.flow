@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Flow xmlns="http://soap.sforce.com/2006/04/metadata">
+    <choices>
+        <name>Excellent</name>
+        <choiceText>Excellent</choiceText>
+        <dataType>Number</dataType>
+        <value>
+            <numberValue>20.0</numberValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Fair</name>
+        <choiceText>Fair</choiceText>
+        <dataType>Number</dataType>
+        <value>
+            <numberValue>10.0</numberValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Good</name>
+        <choiceText>Good</choiceText>
+        <dataType>Number</dataType>
+        <value>
+            <numberValue>15.0</numberValue>
+        </value>
+    </choices>
+    <choices>
+        <name>Poor</name>
+        <choiceText>Poor</choiceText>
+        <dataType>Number</dataType>
+        <value>
+            <numberValue>0.0</numberValue>
+        </value>
+    </choices>
+    <formulas>
+        <name>TipAmount</name>
+        <dataType>Number</dataType>
+        <expression>{!Bill_Amount}*({!Quality_of_Service}/100)</expression>
+        <scale>2</scale>
+    </formulas>
+    <formulas>
+        <name>TotalBill</name>
+        <dataType>Number</dataType>
+        <expression>{!Bill_Amount}+{!TipAmount}</expression>
+        <scale>2</scale>
+    </formulas>
+    <label>Tip Calculator</label>
+    <processType>Flow</processType>
+    <screens>
+        <description>Capture bill amount and service quality.</description>
+        <name>Bill_Information</name>
+        <label>Bill Information</label>
+        <locationX>81</locationX>
+        <locationY>32</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <connector>
+            <targetReference>Show_Tip_Summary</targetReference>
+        </connector>
+        <fields>
+            <name>Bill_Amount</name>
+            <dataType>Currency</dataType>
+            <fieldText>Bill Amount</fieldText>
+            <fieldType>InputField</fieldType>
+            <isRequired>true</isRequired>
+            <scale>2</scale>
+        </fields>
+        <fields>
+            <name>Quality_of_Service</name>
+            <choiceReferences>Excellent</choiceReferences>
+            <choiceReferences>Good</choiceReferences>
+            <choiceReferences>Fair</choiceReferences>
+            <choiceReferences>Poor</choiceReferences>
+            <dataType>Number</dataType>
+            <fieldText>Quality of Service</fieldText>
+            <fieldType>RadioButtons</fieldType>
+            <isRequired>true</isRequired>
+            <scale>2</scale>
+        </fields>
+    </screens>
+    <screens>
+        <description>Display tip amount</description>
+        <name>Show_Tip_Summary</name>
+        <label>Show Tip Summary</label>
+        <locationX>77</locationX>
+        <locationY>173</locationY>
+        <allowBack>true</allowBack>
+        <allowFinish>true</allowFinish>
+        <allowPause>true</allowPause>
+        <fields>
+            <name>TipSummary</name>
+            <fieldText>You say the quality of service was {!Quality_of_Service}, so you should leave a tip of {!TipAmount} for a total bill of {!TotalBill}.</fieldText>
+            <fieldType>DisplayText</fieldType>
+        </fields>
+    </screens>
+    <startElementReference>Bill_Information</startElementReference>
+</Flow>

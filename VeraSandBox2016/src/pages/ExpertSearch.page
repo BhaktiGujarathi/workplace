@@ -1,0 +1,376 @@
+<!-- 
+/**
+ * VF : Expert Search for position
+ * Author : Ashwini kr singh
+---------------------------------------------------------------------------------------------------
+ * Description: Allow user to search and select eligible experts(Contacts) for:
+ *                                   1.Specified position.
+ *                                   2.Generic eligibility.
+ *              based on dynamic filter criteria with help of profile records and catalog.
+ *              Controller class : For searching and selecting the experts 
+ *              Extension class  : For generation of filter criteria
+---------------------------------------------------------------------------------------------------
+* Deliverable link: https://vera.my.salesforce.com/a041400000YKZlg
+* Version History:  Name                   Dates                                 Comments
+* 1.0               Ashwini kr. Singh      13/apr/2016 to 26/apr/2016            Initial Draft
+*/
+-->
+<apex:page controller="ExpertSearch" title="{!$Label.Expert_Search}" docType="html-5.0"
+            tabstyle="Contact" sidebar="false" action="{!init}">
+    <html>
+        <head>
+            <title>{!$Label.Expert_Search}</title>
+            <style type = "text/css">
+                .displaySelectedExpert {
+                    display: {!IF(position.id != null, 'block', 'none')};
+                }
+            </style>
+            <apex:stylesheet value="{!URLFOR($Resource.LoadingStatusCSS)}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.TableStyling)}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.ExpertSearchStyles)}"/>
+        </head>
+
+        <body>
+            <apex:form >
+                <apex:pageblock title="{!$Label.Expert_Search}">
+
+                    <!-- Action status defined for loading/waiting status. -->
+                    <apex:actionStatus id="loadingPanel" layout="block">
+                        <apex:facet name="start">
+                            <div id="assign-action-spinner-main">
+                                <div id="assign-action-spinner-content">
+                                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif"
+                                         alt="{!$Label.Processing_Message}"
+                                         title="{!$Label.Processing_Message}" />
+                                    <p>{!$Label.Processing_Message}</p>
+                                </div>
+                            </div>
+                        </apex:facet>
+                    </apex:actionStatus>
+
+                    <!-- Filter Generation from position or by users -->
+                    <apex:pageblocksection collapsible="true" title="{!$Label.Filter}" columns="1">
+                        <apex:facet name="header">
+                            <span> {!$Label.Filter} &nbsp; </span>
+                            <input type="button" class="btn" value="Add Filter" onclick="addFilter();"/>
+                            <input type="button" class="btn" value="Search" onclick="callSearch();"/>
+                        </apex:facet>
+                        <div id="responseErrors" class="error-msg" > </div>
+                        <table class="filter-criterian">
+                            <tbody id="filterCriteriaTable"><!--DYNAMIC ROWS FOR FILTER--></tbody>
+                        </table>
+                    </apex:pageblocksection>
+                    <apex:actionFunction action="{!searchContact}"
+                                         name="searchContact"
+                                         status="loadingPanel"
+                                         rerender="expertSearchResults, msgPanel" />
+                    <apex:inputHidden id="prepopulatedFilter" value="{!positionFiltersApplied}"/>
+                    <apex:outputPanel id="msgPanel">
+                        <apex:pageMessages />
+                    </apex:outputPanel>
+
+                    <!-- Searched result for experts on basis of applied filters -->
+                    <apex:outputPanel id="expertSearchResults" >
+                        <apex:pageBlockSection id="searchResultsSection">
+                            <apex:facet name="header">
+                                <span class="sectionHeader">
+                                    {!$Label.Search_Results} ({!searchCriteriaRecordCount})
+                                </span>
+                            </apex:facet>
+                        </apex:pageBlockSection>
+                        <!-- Div takes absolute position over headers to fix the header row (purely on CSS) -->
+                        <apex:outputPanel styleClass="collapsiblePanel">
+                            <div class="main-container" >
+                                <div class="container-new container-filter">
+                                    <table class="result-table">
+                                        <thead class="header">
+                                            <tr>
+                                                <th> {!$Label.Serial_No} 
+                                                    <div>{!$Label.Serial_No}</div>
+                                                </th>
+                                                <th> {!$Label.View_Full_Profile_Image_Title}
+                                                    <div> {!$Label.View_Full_Profile_Image_Title} </div>
+                                                </th>
+                                                <th> {!$Label.Expert_Header}
+                                                    <div> {!$Label.Expert_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Main_Profession_Header}
+                                                    <div> {!$Label.Main_Profession_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Secondary_Profession_Header}
+                                                    <div> {!$Label.Secondary_Profession_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Core_Expertise_1_Header}
+                                                    <div> {!$Label.Core_Expertise_1_Header} </div>
+                                                </th>
+                                                <th>{!$Label.Core_Expertise_2_Header}
+                                                    <div> {!$Label.Core_Expertise_2_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Core_Expertise_3_Header}
+                                                    <div> {!$Label.Core_Expertise_3_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Availability_Info}
+                                                    <div> {!$Label.Availability_Info} </div>
+                                                </th>
+                                                <th> {!$Label.Account_Header}
+                                                    <div> {!$Label.Account_Header} </div>
+                                                </th>
+
+                                                <!-- apply CSS (displaySelectedExpert) class only if position is not there -->
+                                                <th class="{!if(position.id != null,"disp","displaySelectedExpert")}"> 
+                                                    {!$Label.Select_Header}
+                                                    <div class="displaySelectedExpert"> {!$Label.Select_Header} </div>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <apex:variable var="i" value="{!offsetFilteredExpert}"/>
+                                            <apex:repeat value="{!filterResults}" var="filterExpert">
+                                                <apex:variable var="i" value="{!i+1}"/>
+                                                <tr>
+                                                    <td>{!i}</td>
+                                                    <td>
+                                                        <a href="{!$Label.Expert_Search_Full_Profile_Link + filterExpert.expert.Id}" target="_blank">
+                                                            <img src="/img/msg_icons/info16.png"
+                                                                title="{!$Label.View_Full_Profile_Image_Title} {!filterExpert.expert.Name}"
+                                                                alt="{!$Label.View_Full_Profile_Image_Title}" />
+                                                        </a>
+                                                    </td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Name}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Main_Profession__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Secondary_Profession__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Core_Expertise_1__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Core_Expertise_2__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Core_Expertise_3__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.Availability_Info__c}" /></td>
+                                                    <td><apex:outputField value="{!filterExpert.expert.AccountId}" /></td>
+                                                    <td class="displaySelectedExpert"><apex:inputCheckbox value="{!filterExpert.isSelected}" /></td>
+                                                </tr>
+                                            </apex:repeat>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="center-align">
+                                <apex:commandButton action="{!callFirst}"
+                                                    value="{!$Label.First_Page}"
+                                                    rerender="expertSearchResults, msgPanel"
+                                                    disabled="{!filterResults.size == 0 ||
+                                                            offsetFilteredExpert == 0}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Search" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callPrevious}"
+                                                    value="{!$Label.Previous_Page}" 
+                                                    rerender="expertSearchResults, msgPanel"
+                                                    disabled="{!filterResults.size == 0 ||
+                                                            offsetFilteredExpert == 0 }"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Search" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callNext}"
+                                                    value="{!$Label.Next_Page}"
+                                                    rerender="expertSearchResults, msgPanel"
+                                                    disabled="{!filterResults.size == 0 ||
+                                                        searchCriteriaRecordCount <= (offsetFilteredExpert + limitFilteredExpert) ||
+                                                        2000 <=(offsetFilteredExpert + limitFilteredExpert)}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Search" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callLast}"
+                                                    value="{!$Label.Last_Page}"
+                                                    rerender="expertSearchResults, msgPanel"
+                                                    disabled="{!filterResults.size == 0 ||
+                                                        searchCriteriaRecordCount <= (offsetFilteredExpert + limitFilteredExpert) ||
+                                                        2000 <=(offsetFilteredExpert + limitFilteredExpert)}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Search" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <div class="right-float">
+                                    <input type="button" class="btn displaySelectedExpert" value="Confirm" onclick="confirm();" />
+                                    <apex:actionFunction action="{!confirmExperts}"
+                                                         name="confirmExperts"
+                                                         status="loadingPanel"
+                                                         rerender="expertSearchResults, selectedExperts, msgPanel" />
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+
+                    <!-- Selected experts after confirmation from searched results. -->
+                    <apex:outputPanel title="{!$Label.Selected_Experts}" id="selectedExperts" rendered="{!position.id != null}">
+                        <apex:pageBlockSection id="selectedExpertsSection">
+                            <apex:facet name="header">
+                                <span class="sectionHeader">
+                                    {!$Label.Selected_Experts} ({!selectedRecordCount})
+                                </span>
+                            </apex:facet>
+                        </apex:pageBlockSection>
+                        <apex:outputPanel styleClass="collapsiblePanel">
+                            <div class="main-container">
+                                <div class="container-new container-select">
+                                    <table class="result-table">
+                                        <thead class="header">
+                                            <tr>
+                                                <th> {!$Label.Serial_No} 
+                                                    <div>{!$Label.Serial_No}</div>
+                                                </th>
+                                                <th> {!$Label.View_Full_Profile_Image_Title}
+                                                    <div> {!$Label.View_Full_Profile_Image_Title} </div>
+                                                </th>
+                                                <th> {!$Label.Expert_Header}
+                                                    <div> {!$Label.Expert_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Main_Profession_Header}
+                                                    <div> {!$Label.Main_Profession_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Secondary_Profession_Header}
+                                                    <div> {!$Label.Secondary_Profession_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Core_Expertise_1_Header}
+                                                    <div> {!$Label.Core_Expertise_1_Header} </div>
+                                                </th>
+                                                <th>{!$Label.Core_Expertise_2_Header}
+                                                    <div> {!$Label.Core_Expertise_2_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Core_Expertise_3_Header}
+                                                    <div> {!$Label.Core_Expertise_3_Header} </div>
+                                                </th>
+                                                <th> {!$Label.Availability_Info}
+                                                    <div> {!$Label.Availability_Info} </div>
+                                                </th>
+                                                <th> {!$Label.Account_Header}
+                                                    <div> {!$Label.Account_Header} </div>
+                                               </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <apex:variable var="i" value="{!offsetFilteredExpert}"/>
+                                            <apex:repeat value="{!selectedExperts}" var="selectedExpert">
+                                                <apex:variable var="i" value="{!i+1}"/>
+                                                <tr>
+                                                    <td>{!i}</td>
+                                                    <td><a href="{!$Label.Expert_Search_Full_Profile_Link + selectedExpert.expert.Id}" target="_blank">
+                                                        <img src="/img/msg_icons/info16.png"
+                                                             title="{!$Label.View_Full_Profile_Image_Title} {!selectedExpert.expert.Name}"
+                                                             alt="{!$Label.View_Full_Profile_Image_Title}"/>
+                                                        </a>
+                                                    </td>
+                                                    <td><span>
+                                                            <img src="/img/func_icons/remove12_on.gif"
+                                                                 title="{!$Label.Remove_selected_Expert} {!selectedExpert.expert.Name}"
+                                                                 alt="{!$Label.Remove_selected_Expert}"
+                                                                 id="{!selectedExpert.expert.id}" 
+                                                                 onclick='removeExpert(event);'/>
+                                                        </span>
+                                                        <apex:outputField value="{!selectedExpert.expert.Name}" />
+                                                    </td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Main_Profession__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Secondary_Profession__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Core_Expertise_1__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Core_Expertise_2__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Core_Expertise_3__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.Availability_Info__c}" /></td>
+                                                    <td><apex:outputField value="{!selectedExpert.expert.AccountId}" /></td>
+                                                </tr>
+                                            </apex:repeat>
+                                            <!-- action founction to remove the expert -->
+                                            <apex:actionFunction action="{!deleteExpertDeployment}"
+                                                                 name="DeleteExpertDeployment"
+                                                                 status="loadingPanel"
+                                                                 rerender="expertSearchResults, selectedExperts, msgPanel">
+                                                <apex:param id="expertIdtoRemove" name="expertIdtoRemove" value="" />
+                                            </apex:actionFunction>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="center-align">
+                                <apex:commandButton action="{!callFirst}"
+                                                    value="{!$Label.First_Page}"
+                                                    rerender="selectedExperts, msgPanel"
+                                                    disabled="{!selectedExperts.size == 0 ||
+                                                        offsetSelectedExpert == 0}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Selected" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callPrevious}"
+                                                    value="{!$Label.Previous_Page}"
+                                                    rerender="selectedExperts, msgPanel"
+                                                    disabled="{!selectedExperts.size == 0 ||
+                                                        offsetSelectedExpert == 0}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Selected" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callNext}"
+                                                    value="{!$Label.Next_Page}"
+                                                    rerender="selectedExperts, msgPanel"
+                                                    disabled="{!selectedExperts.size == 0 ||
+                                                        searchCriteriaRecordCount <= offsetSelectedExpert + limitSelectedExpert ||
+                                                        2000 <= (offsetSelectedExpert + limitSelectedExpert)}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Selected" assignTo="{!caller}"/>
+                                </apex:commandButton>
+                                <apex:commandButton action="{!callLast}"
+                                                    value="{!$Label.Last_Page}"
+                                                    rerender="selectedExperts, msgPanel"
+                                                    disabled="{!selectedExperts.size == 0 ||
+                                                        searchCriteriaRecordCount <= offsetSelectedExpert + limitSelectedExpert ||
+                                                        2000 <= (offsetSelectedExpert + limitSelectedExpert)}"
+                                                    status="loadingAttachment">
+                                    <apex:param name="caller" value="Selected" assignTo="{!caller}"/>
+                                </apex:commandButton>
+
+                                <div class="right-float">
+                                    <input type="button" class="btn" value="Save" onclick="save();"/>
+                                    <apex:actionFunction action="{!saveSelectedExpertDeployment}"
+                                                         name="saveSelectedExpertDeployment" 
+                                                         status="loadingPanel"
+                                                         rerender="expertSearchResults, selectedExperts, msgPanel" />
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <apex:actionFunction action="{!addAndRemoveContactFiters}"
+                                         name="addRemoveFilters"
+                                         status="loadingPanel"
+                                         rerender="expertSearchResults, selectedExperts, msgPanel">
+                        <apex:param assignTo="{!positionFiltersApplied}" name="positionFiltersApplied" value="" />
+                    </apex:actionFunction>
+                </apex:pageblock>
+            </apex:form>
+        </body>
+        <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" />
+        <apex:includescript value="{!URLFOR($Resource.ExpertSearchPageJs)}" />
+        <script type="text/javascript">
+
+            /**
+            * This method invokes remote method to fetch picklist values
+            */
+            function invokeRemoteMethod(level, value, rowId, isPrepopulatingCall) {
+                var searchFilterName = null;
+                searchFilterName = getSearchFilterName(level, rowId, isPrepopulatingCall);
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.ExpertSearch.getFilterValues}',
+                    level,
+                    value,
+                    searchFilterName,
+                    function(result, event) {
+                        if (event.status) {
+                            savePicklistDataInCache(level, value, result);
+                            renderPicklist(level, rowId, result);
+                            if (isPrepopulatingCall) {
+                                 setFilterPicklistValue(level, rowId);
+                            }
+                        } else if (event.type === 'exception') {
+                            j$("#responseErrors").innerHTML = event.message + "<br/>\n<pre>" + event.where + "</pre>";
+                        } else {
+                            j$("#responseErrors").innerHTML = event.message;
+                        }
+                    },
+                    {escape: true}
+                );
+            }
+        </script>
+    </html>
+</apex:page>

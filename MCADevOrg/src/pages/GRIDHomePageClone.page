@@ -1,0 +1,342 @@
+<apex:page standardController="Opportunity" cache="true" sidebar="false"
+        extensions="GRIDHomePageExtension" > 
+
+    <apex:includeScript value="{!urlfor($Resource.GRIDResource, 'GRIDResource/JS/jquery-1.11.1.min.js')}" />
+    <apex:stylesheet value="{!URLFOR($Resource.SLDS213, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+
+    <style type="text/css">
+        #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+
+        .hoverhighlight {
+            background-color:#BFEFFF;
+        }
+
+        .rich-tabhdr-side-cell {
+            width: 100px;
+            height: 40px;
+        }
+
+        .contentTable td:hover {
+            background-color :#7addff;
+        }
+
+        .opportunityTab .secondaryPalette, .individualPalette .opportunityBlock .secondaryPalette{
+            border-color: transparent;
+        }
+
+        .activeTab {
+            color:black; 
+            background-image: -webkit-gradient(linear, left bottom, left top, 
+                               color-stop(0, #FFFFFF), color-stop(1, #ADCDAD))
+        }
+
+        .inactiveTab {
+            color:black; 
+            background-image:-webkit-gradient(linear, left bottom, left top, 
+                              color-stop(0, #FFFFFF), color-stop(1, #C8C8C8));
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+
+    <div class="cmb">
+        <div class="slds-tabs--scoped">
+            <ul class="slds-tabs--scoped__nav" role="tablist">
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Submissions'].Display_Tab__c, $ObjectType.Submission__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title" 
+                        title="Submissions" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="0" 
+                           aria-selected="true" aria-controls="tab-scoped-1" id="tab-scoped-1__item"
+                           data-tabname="submissions">
+                           Submissions
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Offers'].Display_Tab__c, $ObjectType.Offer__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Offers" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-2" id="tab-scoped-2__item"
+                           data-tabname="offers">
+                           Offers
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Stips'].Display_Tab__c, $ObjectType.Stips__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Stips" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-3" id="tab-scoped-3__item"
+                           data-tabname="stips">
+                           Stips
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Loan_Balances'].Display_Tab__c, $ObjectType.Loan_Balance__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Loan Balances" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-4" id="tab-scoped-4__item"
+                           data-tabname="loanBalances">
+                           Loan Balances
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Bank_Statements'].Display_Tab__c, $ObjectType.Bank_Account__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Bank Statements" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-5" id="tab-scoped-5__item"
+                           data-tabname="bankStatements">
+                           Bank Statements
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Credit_Cards'].Display_Tab__c, $ObjectType.Credit_Card__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Merchant Statements" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-6" id="tab-scoped-6__item"
+                           data-tabname="merchantStatements">
+                           Merchant Statements
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Receivables'].Display_Tab__c, $ObjectType.Receivable__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Receivables" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-7" id="tab-scoped-7__item"
+                           data-tabname="receivables">
+                           Receivables
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Payables'].Display_Tab__c, $ObjectType.Payable__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Payables" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-8" id="tab-scoped-8__item"
+                           data-tabname="payables">
+                           Payables
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!AND(tabToSettingMap['Syndications'].Display_Tab__c, $ObjectType.Syndication__c.accessible)}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Syndications" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-9" id="tab-scoped-9__item"
+                           data-tabname="syndications">
+                           Syndications
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!tabToSettingMap['Contact_Roles'].Display_Tab__c}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Contact Roles" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-10" id="tab-scoped-10__item"
+                           data-tabname="contactRoles">
+                           Contact Roles
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!tabToSettingMap['Tasks'].Display_Tab__c}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Tasks" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-11" id="tab-scoped-11__item"
+                           data-tabname="tasks">
+                           Tasks
+                        </a>
+                    </li>
+                </apex:outputPanel>
+                <apex:outputPanel rendered="{!tabToSettingMap['Attachments'].Display_Tab__c}">
+                    <li class="tabTitle slds-tabs--scoped__item slds-text-title"  
+                        title="Attachments" role="presentation">
+                        <a class="slds-tabs--scoped__link" href="#" role="tab" tabindex="-1" 
+                           aria-selected="false" aria-controls="tab-scoped-12" id="tab-scoped-12__item"
+                           data-tabname="attachments">
+                           Attachments
+                        </a>
+                    </li>
+                </apex:outputPanel>
+            </ul>
+            <!-- Following divs are placeholder divs for each tab
+                Actual components are placed outside SLDS wrapper as it causes conflicts in CSS
+                    for standard table -->
+            <div id="tab-scoped-1" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-1__item">
+            </div>
+            <div id="tab-scoped-2" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-2__item">
+            </div>
+            <div id="tab-scoped-3" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-3__item">
+            </div>
+            <div id="tab-scoped-4" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-4__item">
+            </div>
+            <div id="tab-scoped-5" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-5__item">
+            </div>
+            <div id="tab-scoped-6" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-6__item">
+            </div>
+            <div id="tab-scoped-7" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-7__item">
+            </div>
+            <div id="tab-scoped-8" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-8__item">
+            </div>
+            <div id="tab-scoped-9" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-9__item">
+            </div>
+            <div id="tab-scoped-10" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-10__item">
+            </div>
+            <div id="tab-scoped-11" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-11__item">
+            </div>
+            <div id="tab-scoped-12" class="slds-hide"
+                role="tabpanel" aria-labelledby="tab-scoped-12__item">
+            </div>
+        </div>
+    </div>
+
+    <!-- Following are the actual tab content, each div corresponds to tab title in tab layout above -->
+    <div id="submissions" class="displayblock hidden">
+         <c:GRIDSubmissionComponent />
+    </div>
+    <div id="offers" class="displayblock hidden">
+         <c:GRIDOffersComponent />
+    </div>
+    <div id="stips" class="displayblock hidden">
+         <c:GRIDStipsComponent />
+    </div>
+    <div id="loanBalances" class="displayblock hidden">
+         <c:GRIDLoanBalanceComponent />
+    </div>
+    <div id="bankStatements" class="displayblock hidden">
+         <c:GRIDBankStatementsComponent />
+    </div>
+    <div id="merchantStatements" class="displayblock hidden">
+         <c:GRIDCreditCardsComponent />
+    </div>
+    <div id="receivables" class="displayblock hidden">
+         <c:GRIDReceivablesComponent />
+    </div>
+    <div id="payables" class="displayblock hidden">
+         <c:GRIDPayablesComponent />
+    </div>
+    <div id="syndications" class="displayblock hidden">
+         <c:GRIDSyndicationsComponent />
+    </div>
+    <div id="contactRoles" class="displayblock hidden">
+         <c:GRIDContactRoleComponent />
+    </div>
+    <div id="tasks" class="displayblock hidden">
+         <c:GRIDTaskComponent />
+    </div>
+    <div id="attachments" class="displayblock hidden">
+         <c:GRIDAttachmentComponent />
+    </div>
+       
+    <apex:actionStatus id="loadingPanel" layout="block">
+        <apex:facet name="start">
+            <div id="assign-action-spinner-main">
+                <div id="assign-action-spinner-content">
+                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif" 
+                        alt="Processing..." title="Processing..." /> 
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+
+    <script type="text/javascript">
+        t$ = jQuery.noConflict();
+            
+        /**
+         * Ready listener
+         */
+        t$(function() {
+            displayTabOnLoad();
+            setEventListeners();
+        });
+        
+        /**
+         * Sets first tab to active and show first tab content
+         */
+        function displayTabOnLoad() {
+            var firstTab = t$(t$('.tabTitle')[0]);
+            firstTab.addClass('slds-active');
+            var firstTabBlockId = firstTab.find('a').data('tabname');
+            t$('#'+firstTabBlockId).show();
+        }
+        
+        /**
+         * Sets event listeners
+         */
+        function setEventListeners() {
+            // Event listener for opening links in new tab
+            t$('body').on("click", "a", function() {
+                if(t$(this).attr('href').search("https:") >= 0) {
+                    window.open(t$(this).attr('href'));
+                    return false;
+                }
+            });
+        
+            // Event listener for tab switching
+            t$(".slds-tabs--scoped__nav li a").click(function() {
+                t$('.tabTitle').removeClass('slds-active');
+                t$(this).parent().addClass('slds-active');
+                t$(".displayblock").hide();
+                var newTabBlockId = t$(this).data("tabname");
+                t$('#'+newTabBlockId).show();
+            });
+        }
+    </script> 
+   
+</apex:page>

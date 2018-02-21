@@ -1,0 +1,657 @@
+<apex:component controller="MortgageProcessController" allowDML="true">
+	<apex:attribute name="accountId" description="This is the customer's(account) Id" type="String" required="true" assignTo="{!selectedAcc}"/>
+	<section class="main-content-section">
+		<apex:inputHidden value="{!crfAttachmentBody}" id="MortgageCRFAttachBody"/>
+		<apex:inputHidden value="{!crfAttachmentName}" id="MortgageCRFAttachName"/>
+		<apex:inputHidden value="{!poaAttachmentBody}" id="MortgagePOAAttachBody"/>
+		<apex:inputHidden value="{!poaAttachmentName}" id="MortgagePOAAttachName"/>
+        <!--div class="wrapper"-->
+            <!--div class="row"-->
+                <div class="col-md-12">
+                    <section id="">
+                        <div class="well">
+                            <h4>
+                                Mortgage
+								<span class="pull-right">
+										<button class="btn btn-sm btn-success" onclick="checkMortgageEligibility(event);">Check Eligibility</button>
+								</span>
+								<span class="pull-right">
+										<button class="btn btn-sm btn-success">Mortgage Calculator</button>
+								</span>
+                            </h4>
+
+                            <!--div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <label>Select Customer</label>
+                                        <select class="form-control inputfield" id="selectprimaryCustomer" onchange="return updateUnitList(this);">
+				                            <option value="none">--Select Customer--</option>
+				                            <apex:repeat value="{!accountsList}" var="a">
+				                                <option value="{!a.Id}">{!a.Name}</option>
+				                            </apex:repeat>
+				                        </select>
+                                    </div>
+                                </div>
+                            </div-->
+
+                            <div class="row">
+                                <div class="col-lg-5">
+	                                <apex:outputPanel id="MortgageUnitListSection">
+	                                	<div class="form-group">
+		                                    <label>Select Unit</label>
+		                                    <select class="form-control inputfield" id="mortgageSelectedBookingUnit" onchange="displayUnitDetails(this);">
+						                        			<option value="none">--Select Unit--</option>
+									                        <apex:repeat value="{!bookingUnitList}" var="unit">
+									                            <option value="{!unit.Id}">{!unit.Unit_Details__c}</option>
+									                        </apex:repeat>
+						                    				</select>
+		                                </div>
+	                                </apex:outputPanel>
+                                </div>
+                            </div>
+                            <br/>
+
+
+                            <div class="row" id="MortgageunitDetailDisplayPanel" style="display:none;">
+	                            <apex:outputPanel id="mortgageUnitDetailPanel">
+	                            	<div class="col-lg-8">
+	                                    <ul class="nav nav-pills">
+	                                        <li role="presentation" class="active"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a></li>
+	                                        <li role="presentation"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a></li>
+	                                        <li role="presentation"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a></li>
+	                                        <li role="presentation"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a></li>
+	                                    </ul>
+
+	                                    <div class="tab-content">
+	                                        <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+	                                            <div class="row">
+	                                                <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+	                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+	                                                        <colgroup>
+	                                                        	<col width="40%"/>
+	                                                            <col width="60%"/>
+	                                                        </colgroup>
+	                                                        <tbody>
+		                                                        <tr>
+		                                                            <td><b>Project</b></td>
+		                                                            <td>{!bookingUnitDetails.Inventory__r.Property__r.Name}</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Project City</b></td>
+		                                                            <td>{!bookingUnitDetails.Inventory__r.Property_City__c}</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Bedroom Type</b></td>
+																																<td>{!bookingUnitDetails.Bedroom_Type__c}</td>
+						                                                </tr>
+						                                                <tr>
+						                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+						                                                    <td>{!bookingUnitDetails.Unit_Type__c}</td>
+						                                                </tr>
+						                                                <tr>
+						                                                    <td><b>Permitted Use</b></td>
+						                                                    <td>{!bookingUnitDetails.Permitted_Use__c}</td>
+						                                                </tr>
+						                                                <tr>
+						                                                    <td><b>Ready/Off-plan</b></td>
+						                                                    <td>{!bookingUnitDetails.Unit_s_Current_Status__c}</td>
+						                                                </tr>
+						                                                <tr>
+						                                                    <td><b>Rental Pool</b></td>
+						                                                    <td>{!bookingUnitDetails.Rental_Pool_Status__c}</td>
+		                                                        </tr>
+	                                                        </tbody>
+	                                                    </table>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                        <div class="tab-pane fade in" role="tabpanel" id="plan2">
+	                                            <div class="row">
+	                                                <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+	                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+	                                                        <colgroup>
+	                                                        	<col width="40%"/>
+	                                                            <col width="60%"/>
+	                                                        </colgroup>
+	                                                        <tbody>
+		                                                        <tr>
+		                                                            <td><b>Dispute</b></td>
+		                                                            <td>Yes</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Enforcement</b></td>
+		                                                            <td>Yes</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Litigation</b></td>
+		                                                            <td>No</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Mortgage</b></td>
+		                                                            <td>No</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Court Case</b></td>
+		                                                            <td>No</td>
+		                                                        </tr>
+	                                                        </tbody>
+	                                                    </table>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                        <div class="tab-pane fade in" role="tabpanel" id="plan3">
+	                                            <div class="row">
+	                                                <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+	                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+	                                                        <colgroup>
+	                                                        	<col width="40%"/>
+	                                                            <col width="60%"/>
+	                                                        </colgroup>
+	                                                        <tbody>
+		                                                        <tr>
+		                                                            <td><b>OQOOD Registered</b></td>
+		                                                            <td>{!IF(bookingUnitDetails.OQOOD_Reg_Flag__c = TRUE, 'Yes', 'No')}</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Agreement Status</b></td>
+		                                                            <td>Output Text</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>Under Termination</b></td>
+		                                                            <td>Output Text</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>FTL sent</b></td>
+		                                                            <td>Output Text</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>EHO flag</b></td>
+		                                                            <td>{!IF(bookingUnitDetails.Early_Handover__c = TRUE, 'Yes', 'No')}</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>HO flag</b></td>
+		                                                            <td>{!IF(bookingUnitDetails.Handover_Complete__c = TRUE, 'Yes', 'No')}</td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>PCC</b></td>
+		                                                            <td>Output Text</td>
+		                                                        </tr>
+	                                                        </tbody>
+	                                                    </table>
+	                                                </div>
+
+	                                            </div>
+	                                        </div>
+	                                        <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+	                                            <div class="row">
+	                                                <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+	                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+	                                                        <colgroup>
+	                                                        	<col width="40%"/>
+	                                                            <col width="60%"/>
+	                                                        </colgroup>
+	                                                        <tbody>
+		                                                        <tr>
+		                                                            <td><b>SR1</b></td>
+		                                                            <td><a href="">View SR</a></td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>SR2</b></td>
+		                                                            <td><a href="">View SR</a></td>
+		                                                        </tr>
+		                                                        <tr>
+		                                                            <td><b>SR3</b></td>
+		                                                            <td><a href="">View SR</a></td>
+		                                                        </tr>
+	                                                        </tbody>
+	                                                    </table>
+
+	                                                    <br/>
+	                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+	                                                        <colgroup>
+	                                                        	<col width="40%"/>
+	                                                            <col width="60%"/>
+	                                                        </colgroup>
+	                                                        <thead>
+		                                                        <tr>
+		                                                        	<th colspan="2">Closed SRs</th>
+		                                                        </tr>
+	                                                        </thead>
+	                                                        <tbody>
+	                                                            <tr>
+	                                                                <td><b>SR1</b></td>
+	                                                                <td><a href="">View SR</a></td>
+	                                                            </tr>
+	                                                            <tr>
+	                                                                <td><b>SR2</b></td>
+	                                                                <td><a href="">View SR</a></td>
+	                                                            </tr>
+	                                                            <tr>
+	                                                                <td><b>SR3</b></td>
+	                                                                <td><a href="">View SR</a></td>
+	                                                            </tr>
+	                                                        </tbody>
+	                                                    </table>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+	                                <div class="col-lg-4">
+	                                    <h5>Additional Information</h5>
+	                                    <div class="details">
+	                                        <div class="row detailHeading">
+	                                            <div class="col-lg-6 col-md-12">
+	                                                <h6>Unit Price (AED)</h6>
+	                                                <h4>{!bookingUnitDetails.Unit_Selling_Price_AED__c}</h4>
+	                                            </div>
+	                                            <div class="col-lg-6 col-md-12">
+	                                                <h6>Area</h6>
+	                                                <h4>{!bookingUnitDetails.Area__c}</h4>
+	                                            </div>
+	                                        </div>
+	                                        <div class="row">
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>No. of times customer defaulted on instalments</h6>
+	                                                    <h5>2</h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Original ACD</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>PC/ Agent Name</h6>
+	                                                    <h5>{!bookingUnitDetails.Agent_Name__c}</h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Residency Status</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Age</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Overdues</h6>
+	                                                    <h5>{!bookingUnitDetails.DP_Overdue__c}</h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Current RERA Construction Status%</h6>
+	                                                    <h5>{!bookingUnitDetails.Construction_Status__c}</h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Deal Status</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Current ACD</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>PC/ Agent Phone Number</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                            <div class="col-lg-6 col-sm-6 col-xs-6">
+	                                                <div class="infoBoxes">
+	                                                    <h6>Financial Status</h6>
+	                                                    <h5></h5>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+	                            </apex:outputPanel>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="mortgagePaymentPlanPanel" style="display:none;">
+                        <div class="well">
+                            <h4>Current Payment Plans</h4>
+
+                            <div class="row">
+                                <div class="col-lg-12">
+	                                <apex:outputPanel id="mortgagePaymentPlanList">
+	                                	<table class="paymentDue table2" cellpadding="10" width="100%">
+	                                		<colgroup>
+                                            	<col width="30%"/>
+                                                <col width="10%"/>
+                                                <col width="25%"/>
+                                                <col width="25%"/>
+                                                <col width="10%"/>
+                                            </colgroup>
+	                                        <thead class="thead-inverse">
+	                                            <tr>
+	                                                <th>Description</th><th>%</th><th>Milestone Event</th><th>Milestone Arabic</th><th>Due Date</th> <!--th></th-->
+	                                            </tr>
+	                                        </thead>
+	                                        <tbody>
+	                                        	<apex:repeat var="mpp" value="{!listMortgagePaymentPlans}">
+		                                            <tr>
+		                                                <td><apex:outputText value="{!mpp.Description__c}"/></td>
+		                                                <td><apex:outputText value="{!mpp.Percent_Value__c}"/></td>
+		                                                <td><apex:outputText value="{!mpp.Milestone_Event__c}"/></td>
+		                                                <td><apex:outputText value="{!mpp.Milestone_Event_Arabic__c}"/></td>
+		                                                <td><apex:outputText value="{0,date,dd/MM/yyyy}">
+		                                                		<apex:param value="{!mpp.Expected_Date__c}" />
+		                                                	</apex:outputText>
+		                                                </td>
+		                                                <!--td></td-->
+		                                            </tr>
+	                                            </apex:repeat>
+	                                        </tbody>
+	                                    </table>
+	                                </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section id="">
+                        <div class="well">
+                            <h4>
+                                Power of Attorney Details
+                            </h4>
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Select Power of Attorney</label>
+																				<apex:inputField value="{!mortgageCaseObj.IsPOA__c}" id="mortgageIsPOA" html-data-checked="{!mortgageCaseObj.IsPOA__c}" styleClass="inputfield" onchange="displayPOAForm(this);" style="margin-left: 10px;vertical-align: middle;"/>
+                                    </div>
+                                </div>
+                            </div>
+														<div id="MortgagePOAForm" style="display:none;">
+															<div class="row">
+																<div class="col-lg-6">
+																			<div class="form-group">
+																					<label>Name of Attorney</label>
+																					<apex:inputField value="{!mortgageCaseObj.POA_Name__c}" id="mortgagePOAName" onchange="isFormComplete()" styleClass="form-control inputfield"/>
+																			</div>
+																	</div>
+																	<div class="col-lg-6">
+																			<div class="form-group">
+																					<label>Purpose of POA</label>
+																					<apex:inputField value="{!mortgageCaseObj.POA_Relation_With_Owner__c}" id="mortgagePOARelationship" onchange="isFormComplete()" styleClass="form-control inputfield"/>
+																			</div>
+																	</div>
+															</div>
+															<div class="row">
+																	<div class="col-lg-6">
+																			<div class="form-group">
+																					<label>Date of Issue</label>
+																					<apex:inputField value="{!mortgageCaseObj.POA_Expiry_Date__c}" id="mortgagePOAExpiry" onchange="isFormComplete();" styleClass="form-control datepicker inputfield"/>
+																			</div>
+																	</div>
+																	<div class="col-lg-6">
+																			<div class="form-group">
+																					<label>Issued by (Authority)</label>
+																					<apex:inputField value="{!mortgageCaseObj.POA_Issued_By__c}" id="mortgagePOAIssuedBy" onchange="isFormComplete()" styleClass="form-control inputfield"/>
+																			</div>
+																	</div>
+															</div>
+
+															<div class="row">
+																	<div class="col-lg-4 col-md-6 col-xs-12 text-center">
+																			<div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+																					<span class="btn btn-primary btn-file">
+																							<span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+																							<span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" class="inputfield" id="mortgagePOAFile" onchange="attachMortgagePOAFile(this);"/>
+																					</span>
+																					<div>
+																							<span class="fileupload-preview"></span>
+																							<a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+																					</div>
+																			</div>
+																			<label>Upload Power of Attorney</label>
+																	</div>
+															</div>
+														</div>
+                        </div>
+                    </section>
+                    <section id="">
+
+                        <div class="well">
+                            <h4>
+                                Upload Agreement
+																<span class="btn-group pull-right">
+																		<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="false" aria-expanded="false">
+																				<i class="fa fa-download"></i> Statement of Account
+																		</button>
+																</span>
+																<span class="btn-group pull-right">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-download"></i> Documents
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a>View CRF</a></li>
+                                        <li><a>Download CRF</a></li>
+                                    </ul>
+                                </span>
+                            </h4>
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                        <span class="btn btn-primary btn-file">
+                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" class="inputfield" id="mortgageCRFFile" onchange="attachMortgageCRFFile(this);"/>
+                                        </span>
+                                        <div>
+                                            <span class="fileupload-preview"></span>
+                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                        </div>
+                                    </div>
+                                    <label>Upload Signed CRF</label>
+                                </div>
+                            </div>
+														<apex:outputPanel id="mortgageButtonsPanel">
+																<div class="row">
+					                          <div class="col-lg-12">
+					                            <span class="pull-right">
+					                                <button class="btn btn-sm btn-success" id="submitSRButton" onclick="submitMortgageCase(event);" disabled="disabled">Submit SR</button>
+					                            </span>
+
+					                              <span class="pull-right">
+																						<button class="btn btn-sm btn-success" style="display: {!IF(!custEligibleMortgage, 'inline-block;', 'none;')}" disabled="disabled">Save Draft</button>
+					                                  <button class="btn btn-sm btn-success" style="display: {!IF(custEligibleMortgage, 'inline-block;', 'none;')}" onclick="saveCaseDraft(event);">Save Draft</button>
+					                              </span>
+					                          </div>
+					                      </div>
+														</apex:outputPanel>
+                        </div>
+                    </section>
+                </div>
+            <!--/div-->
+        <!--/div-->
+    </section>
+
+    <apex:actionFunction action="{!getUnitList}" status="blockUI" name="getUnitList" reRender="MortgageUnitListSection">
+        <!--apex:param name="selectedAcc" value="" assignTo="{!selectedAcc}"/-->
+    </apex:actionFunction>
+    <apex:actionFunction action="{!getUpdatedUnitDetails}" status="blockUI" name="getUpdatedUnitDetails" oncomplete="datepickerReload()" reRender="mortgageUnitDetailPanel,mortgagePaymentPlanList">
+        <apex:param name="bookingUnitId" value="" assignTo="{!selectedBookingUnitId}" />
+    </apex:actionFunction>
+	<apex:actionFunction action="{!saveCase}" status="blockUI"  name="saveCase"  reRender="mortgageUnitDetailPanel,mortgagePaymentPlanList"/>
+	<apex:actionFunction action="{!mortgageSubmitCase}" status="blockUI" name="mortgageSubmitCase" reRender="mortgageUnitDetailPanel,mortgagePaymentPlanList"/>
+	<apex:actionFunction action="{!mortgageEligibilityCheck}" status="blockUI" name="mortgageEligibilityCheck" reRender="mortgageButtonsPanel"/>
+
+    <script>
+
+			$('.well input.datepicker').datepicker({
+	        format: 'dd/mm/yyyy',
+	        autoclose: true
+	    });
+
+			$(document).ready(function(){
+				getUnitList();
+			});
+    	/*function updateUnitList(e){
+				getUnitList(accountId);
+				//isFormComplete();
+    	}*/
+
+    	function displayUnitDetails(e){
+  	        if(e.value == 'none'){
+	            $('#MortgageunitDetailDisplayPanel').hide(1000);
+	            $('#mortgagePaymentPlanPanel').hide(1000);
+	        }
+	        else{
+	            $('#MortgageunitDetailDisplayPanel').show(1000);
+	            $('#mortgagePaymentPlanPanel').show(1000);
+	            getUpdatedUnitDetails(e.value);
+	        }
+
+					isFormComplete();
+	    }
+
+			function displayPOAForm(){
+				$("#MortgagePOAForm").slideToggle(900);
+				isFormComplete();
+			}
+
+			function attachMortgagePOAFile(e){
+				var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=MortgagePOAAttachName]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachPOAFile');
+                console.log(blobfile);
+                $('[id$=MortgagePOAAttachBody]').val(blobfile);
+            }
+        }
+
+				isFormComplete();
+			}
+
+			function attachMortgageCRFFile(e){
+				var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=MortgageCRFAttachName]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachCRFFile');
+                console.log(blobfile);
+                $('[id$=MortgageCRFAttachBody]').val(blobfile);
+            }
+        }
+
+				isFormComplete();
+			}
+
+			function checkMortgageEligibility(event){
+				event.preventDefault();
+				mortgageEligibilityCheck();
+			}
+
+			function saveCaseDraft(event){
+				event.preventDefault();
+				if(validateMortgageCase()){
+					saveCase();
+				}
+			}
+
+			function submitMortgageCase(event){
+				event.preventDefault();
+				if(validateMortgageCase()){
+					console.log('validation passed');
+					mortgageSubmitCase();
+				}
+			}
+
+			function validateMortgageCase(){
+
+				/*if($('#selectprimaryCustomer').val() == 'none' || $('#selectprimaryCustomer').val() == ''){
+					alert('Please select a customer');
+					return false;
+				}*/
+
+				if($('#mortgageSelectedBookingUnit').val() == 'none' || $('#mortgageSelectedBookingUnit').val() == ''){
+					alert('Please select a unit');
+					return false;
+				}
+
+				if( $('[id$=mortgageIsPOA]').is(':checked') == true ){
+
+					if( isEmptyOrSpaces( $('[id$=mortgagePOAIssuedBy]').val() ) ||
+						isEmptyOrSpaces( $('[id$=mortgagePOAExpiry]').val() ) ||
+						isEmptyOrSpaces( $('[id$=mortgagePOARelationship]').val() ) ||
+						isEmptyOrSpaces( $('[id$=mortgagePOAName]').val() ) ){
+
+						alert('Please enter all POA details');
+						return false;
+					}
+
+				}
+
+
+				return true;
+			}
+
+			function isFormComplete(){
+					var ispoaChecked = false;
+					var formComplete = true;
+					$('.inputfield').each(function(n, obj){
+
+						if( obj.type == 'select-one' && obj.value == 'none' ){
+							formComplete = false;
+						}
+
+						if( obj.type == 'checkbox' && $(obj).is(':checked') ){
+							ispoaChecked = true;
+						}
+
+						if( obj.type == 'text' && ispoaChecked == true && isEmptyOrSpaces( obj.value ) ){
+							formComplete = false;
+						}
+
+						if( obj.type == 'file' && ispoaChecked == true && obj.id == "mortgagePOAFile" && isEmptyOrSpaces( obj.value ) ){
+							formComplete = false;
+						}
+
+						if( obj.type == 'file' && obj.id == "mortgageCRFFile" && isEmptyOrSpaces( obj.value ) ){
+							formComplete = false;
+						}
+
+					});
+
+					if( formComplete  ){
+						$('#submitSRButton').removeAttr('disabled');
+					} else {
+						$('#submitSRButton').attr('disabled', 'disabled');
+					}
+			}
+
+			function isEmptyOrSpaces(str){
+			    return $.trim( str ) == '' || str === null;
+			}
+    </script>
+</apex:component>

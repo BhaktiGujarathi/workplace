@@ -1,0 +1,740 @@
+<apex:component controller="assignmentProcessController" allowDML="true">
+	<html lang="en">
+<head>
+<title>Dashboard</title>
+<meta charset="utf-8" />
+<meta name="viewport"
+	content="width=device-width, initial-scale=1, user-scalable=no" />
+
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap-chosen.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap-datepicker.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap-multiselect.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/diff-theme.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/fileinput.min.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/multiple-select.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/style.css')}" />
+
+<link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
+<!--<link rel="stylesheet" href="assets/css/style.css"/> -->
+<!--<link rel="stylesheet" href="assets/css/bootstrap-datepicker.min.css"/> -->
+<link rel="stylesheet" type="text/css"
+	href="https://fonts.googleapis.com/css?family=Raleway" />
+<link rel="stylesheet" type="text/css"
+	href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+	rel="stylesheet" />
+<link rel="stylesheet"
+	href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" />
+</head>
+<body>
+
+
+	<!---------------------- Main content ------------------------>
+	<apex:form id="parentPanel">
+	<div class="container-fluid">
+		<section class="main-content-section">
+			<div class="wrapper">
+				<div class="row">
+					<div class="col-md-8">
+						<apex:outputPanel id="step1Panel" styleClass="step1Panel" layout="display:block">
+						<section id="step1">
+							<div class="well">
+								<h6>Step 1</h6>
+								<h4>
+									Enter Details
+									<p class="">Select unit and buyer type below to view and
+										download requirements for Transfer of Ownership:</p>
+								</h4>
+								<div class="row">
+									<div class="col-lg-6">
+										<div class="form-group">
+											<label><span style="color:red">*&nbsp;</span>Unit to be transferred</label>
+											<apex:selectList value="{!strSelectedUnit}"
+												multiselect="false" size="1" required="true"
+												styleClass="form-control units" id="units">
+												<apex:selectOptions value="{!lstUnits}" />
+											</apex:selectList>
+										</div>
+									</div>
+									<div class="col-lg-6"></div>
+								</div>
+								<div class="row">
+									<div class="col-lg-6">
+										<div class="form-group">
+											<label><span style="color:red">*&nbsp;</span>Buyer Type</label>
+											<apex:inputField required="true"
+												value="{!objCase.Buyer_Type__c}" styleClass="form-control buyerType" 
+												onchange="validateStep1Completeness();"/>
+										</div>
+
+									</div>
+
+									<div class="col-lg-6">
+										<div class="form-group">
+											<label><span style="color:red">*&nbsp;</span>Relationship with Seller</label>
+											<apex:inputField required="true"
+												value="{!objCase.Relationship_with_Seller__c}"
+												styleClass="form-control relationship" 
+												onchange="validateStep1Completeness();"/>
+										</div>
+
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-lg-6">
+										<div class="form-group">
+											<label><span style="color:red">*&nbsp;</span>Case Type</label>
+											<apex:inputField required="true"
+												value="{!objCase.Case_Type__c}" styleClass="form-control caseType" 
+												onchange="validateStep1Completeness();"/>
+										</div>
+									</div>
+
+									<div class="col-lg-3">
+										<div class="form-group">
+											<label><span>&nbsp;&nbsp;</span>Seller POA</label>
+											<div>
+<!-- 											     <apex:inputField value="{!objCase.Seller_POA__c}" styleclass="form-group"/> -->
+												<apex:selectRadio value="{!sellerPOA}" styleclass="form-group">
+													<apex:selectOptions value="{!lstPOA}" />
+												</apex:selectRadio>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-3">
+										<div class="form-group">
+											<label><span>&nbsp;&nbsp;</span>Buyer POA</label><br />
+											<div>
+<!-- 											     <apex:inputField value="{!objCase.Buyer_POA__c}" styleclass="form-group"/> -->
+												<apex:selectRadio value="{!buyerPOA}">
+													<apex:selectOptions value="{!lstPOA}" />
+												</apex:selectRadio>
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="pull-right">
+											<apex:commandButton value="View Requirements" 
+											    styleclass="btn btn-sm btn-success viewRequirement" 
+                                                action="{!viewRequirements}">
+                                                </apex:commandButton>
+										</div>
+									</div>
+								</div>
+							</div>
+							<h6 class="yellownoteSection">
+                                <i class="fa fa-info-circle" aria-hidden="true"></i> Complete
+                                all the requirements to move to NEXT <i
+                                    class="fa fa-times pull-right" aria-hidden="true"></i>
+                            </h6>
+						</section>
+						</apex:outputPanel>
+						<apex:outputpanel id="requirementPanelParent" rendered="{!blnReqn}">
+						<apex:outputPanel id="requirementPanel">
+						<section id="requirement">
+							<div class="well requirementWell">
+								<h4>
+									Requirements for Transfer
+									<div class="btn-group">
+										<button type="button" class="btn btn-default dropdown-toggle"
+											data-toggle="dropdown" aria-haspopup="true"
+											aria-expanded="false">
+											<i class="fa fa-download"></i> Download
+										</button>
+									</div>
+								</h4>
+								<ol>
+									<li>To initiate the request for transfering ownership of
+										your property, you are required to clear all the dues.
+										Additionally, there is an admin fee of AED xx for the request.
+										The details of amount you are required to pay is listed below:</li>
+									<table class="paymentDue" cellpadding="10" width="60%">
+										<col width="80%" />
+										<col width="20%" />
+										<tr>
+											<th>Payment Due</th>
+											<th>Amount Due</th>
+										</tr>
+										<apex:repeat value="{!lstPayments}" var="pay">
+											<tr>
+												<td>{!pay.strType}</td>
+												<td>AED {!pay.decAmount}</td>
+											</tr>
+										</apex:repeat>
+									</table>
+									<li>Following documents are required to be uploaded to the
+										System to proceed with Transfer of Ownership:</li>
+									<table class="paymentDue" cellpadding="10" width="60%">
+										<col width="80%" />
+										<col width="20%" />
+										<tr>
+											<th>Documents Required</th>
+											<th>Mandatory</th>
+										</tr>
+										<apex:repeat value="{!lstDocs}" var="doc">
+											<tr>
+												<td>{!doc.strType}</td>
+												<td>{!doc.strRequired}</td>
+											</tr>
+										</apex:repeat>
+									</table>
+									<li>Submit required details in the Portal and Schedule
+										date for signing Letter of Assignment and collecting NOC</li>
+									<li>Visit the DAMAC CRM office on the scheduled date,
+										return original documents, sign Letter of Assignment and
+										collect NOC</li>
+								</ol>
+								<div class="row">
+									<div class="col-md-12">
+<!-- 										<button class="btn btn-sm btn-success pull-right"> -->
+<!-- 											<i class="fa fa-credit-card-alt" aria-hidden="true"></i> -->
+<!-- 											Pay-Dues and Continue -->
+<!-- 										</button> -->
+                                        <apex:commandButton value="Pay-Dues and Continue" 
+	                                        styleClass="btn btn-sm btn-success pull-right" 
+	                                        action="{!insertCase}">
+<!--                                         <i class="fa fa-credit-card-alt" aria-hidden="true"></i> -->
+                                        </apex:commandButton>
+									</div>
+								</div>
+							</div>
+						</section>
+						<div class="clear-fix"></div>
+						</apex:outputPanel>
+						</apex:outputpanel>
+						<apex:outputPanel id="step2Panel" rendered="{!blnStep2}">
+						<section id="step2">
+							<h6 class="greennoteSection">
+								<i class="fa fa-info-circle" aria-hidden="true"></i> Step 1
+								Successfully COMPLETED <i class="fa fa-times pull-right"
+									aria-hidden="true"></i>
+							</h6>
+							<div class="well">
+								<h6>Step 2</h6>
+								<h4>
+									Upload Documents
+
+									<p class="">All the documents are Mandatary. Complete
+										verification process for all the documents to move to Next
+										STEP</p>
+								</h4>
+								<div class="row">
+									<apex:repeat value="{!lstDocs}" var="docs">
+										<div class="col-lg-6">
+											<div class="form-group">
+												<apex:outputlabel rendered="{!docs.strRequired == 'Yes'}">
+												<span style="color:red">*&nbsp;</span>{!docs.strType}
+												</apex:outputlabel>
+												<apex:outputlabel rendered="{!docs.strRequired == 'No'}">{!docs.strType}</apex:outputlabel>
+												<div class="form-control fileupload"
+													data-provides="fileupload">
+													<apex:inputFile title="Browse"
+														value="{!docs.objAttachment.body}"
+														filename="{!docs.objAttachment.name}" 
+														required="{!docs.strRequired == 'Yes'}"
+														styleClass="inputFile"
+														onchange="validateDocumentCompleteness();"/>
+													<span class="fileupload-new">select file</span> <span
+														class="fileupload-preview"></span>
+												</div>
+											</div>
+										</div>
+									</apex:repeat>
+								</div>
+
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="pull-right">
+											<apex:commandbutton styleclass="btn btn-sm docsDraftButton" value="Save Draft" 
+											action="{!saveAsDraft}"/>
+											&nbsp;&nbsp;&nbsp;
+											<apex:commandbutton styleclass="btn btn-sm btn-success docsNextButton"
+											value="Next" action="{!insertAttachment}"/>
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</section>
+						</apex:outputPanel>
+						<apex:outputPanel id="poaPanel" rendered="{!blnPOA}">
+						<section id="POA">
+							<h6 class="yellownoteSection">
+								<i class="fa fa-info-circle" aria-hidden="true"></i> Complete
+								all the requirements to move to NEXT <i
+									class="fa fa-times pull-right" aria-hidden="true"></i>
+							</h6>
+							<div class="well">
+								<h4>Power of Attorney</h4>
+								<div class="row">
+									<div class="col-lg-6">
+										<h5>Seller - PoA(if applicable)</h5>
+										<div class="row">
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Name</label>
+													<apex:inputField styleClass="form-control"
+														value="{!objCase.POA_Name_Seller__c}"
+														required="{!objCase.Seller_POA__c}" />
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Relationship with Seller</label>
+													<apex:inputField styleClass="form-control"
+														required="{!objCase.Seller_POA__c}"
+														value="{!objCase.POA_Relationship_with_Seller__c}" />
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Date of Expiry</label>
+													<apex:inputText styleclass="form-control datepicker" value="{!sellerPoaDate}"/>
+<!-- 													<apex:inputField required="{!objCase.Seller_POA__c}" -->
+<!-- 														value="{!objCase.POA_Expiry_Date_Seller__c}" -->
+<!-- 														id="sellerPoaExpiry" -->
+<!-- 														styleClass="form-control datepicker sellerPoaExpiry" -->
+<!-- 														style="min-width:80px;" /> -->
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Issued By</label>
+													<apex:inputField styleClass="form-control"
+														required="{!objCase.Seller_POA__c}"
+														value="{!objCase.POA_Issued_By_Seller__c}" />
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="col-lg-6">
+										<h5>Buyer - PoA(if applicable)</h5>
+										<div class="row">
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Name</label>
+													<apex:inputField styleClass="form-control"
+														value="{!objCase.POA_Name__c}"
+														required="{!objCase.Buyer_POA__c}" />
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Relationship with Buyer</label>
+													<apex:inputField styleClass="form-control"
+														value="{!objCase.POA_Relationship_with_Buyer__c}"
+														required="{!objCase.Buyer_POA__c}" />
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Date of Expiry</label>
+													<apex:inputText styleclass="form-control datepicker" value="{!buyerPoaDate}"/>
+<!-- 													<apex:inputField value="{!objCase.POA_Expiry_Date__c}" -->
+<!-- 														required="{!objCase.Buyer_POA__c}" -->
+<!-- 														id="buyerPoaExpiry" -->
+<!-- 														styleClass="form-control datepicker buyerPoaExpiry" -->
+<!-- 														style="min-width:80px;" /> -->
+												</div>
+											</div>
+											<div class="col-lg-12">
+												<div class="form-group">
+													<label>Issued By</label>
+													<apex:inputField styleClass="form-control"
+														value="{!objCase.POA_Issued_By__c}"
+														required="{!objCase.Buyer_POA__c}" />
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="pull-right">
+											<apex:commandbutton styleclass="btn btn-sm" value="Save Draft" action="{!saveAsDraft}"/>
+											&nbsp;&nbsp;&nbsp;
+											<apex:commandbutton styleclass="btn btn-sm btn-success" value="Next" action="{!updatePOA}"/>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+						</apex:outputPanel>
+						<apex:outputPanel id="step3Panel" rendered="{!blnStep3}">
+						<section id="step3">
+							<h6 class="greennoteSection">
+								<i class="fa fa-info-circle" aria-hidden="true"></i> Step 2
+								Successfully COMPLETED <i class="fa fa-times pull-right"
+									aria-hidden="true"></i>
+							</h6>
+							<div class="well">
+								<h6>Step 3</h6>
+								<h4>
+									Buyers Details
+									<button class="btn btn-xs btn-default">Add Joint
+										Buyers</button>
+
+									<p class="">Select unit and buyer type below to view and
+										download requirements for Transfer of Ownership:</p>
+								</h4>
+
+								<div class="row">
+									<div class="col-lg-6">
+										<h5>
+											Enter Buyer Details <small>(in english)</small>
+										</h5>
+										<div class="form-group">
+											<label>Title</label>
+											<apex:inputField styleclass="form-control title"
+												value="{!objBuyer.Title__c}" />
+										</div>
+										<div class="form-group">
+											<label>First Name</label>
+											<apex:inputField styleclass="form-control firstName"
+												value="{!objBuyer.First_Name__c}" />
+										</div>
+										<div class="form-group">
+											<label>Last Name</label>
+											<apex:inputField styleclass="form-control lastName"
+												value="{!objBuyer.Last_Name__c}" />
+										</div>
+										<div class="form-group">
+											<label>Nationality</label>
+											<apex:inputField styleclass="form-control nationality"
+												value="{!objBuyer.Nationality__c}" />
+											<!-- <input type="text" class="form-control" placeholder="Enter nationality"/> -->
+										</div>
+										<div class="form-group">
+											<label>Passport No.</label>
+											<apex:inputField styleClass="form-control"
+												value="{!objBuyer.Passport_Number__c}" />
+											<!-- <input type="text" class="form-control" placeholder="Enter passport no."/> -->
+										</div>
+										
+										<div class="form-group">
+											<label>Place of Issue</label>
+											<apex:inputField styleclass="form-control placeOfIssue"
+												value="{!objBuyer.Place_of_Issue__c}" />
+											<!-- <input type="text" class="form-control"  placeholder="Enter place of issue"/> -->
+										</div>
+										<div class="form-group">
+											<label>Address line 1</label>
+											<apex:inputField styleclass="form-control address01"
+												value="{!objBuyer.Address_Line_1__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 2</label>
+											<apex:inputField styleclass="form-control address02"
+												value="{!objBuyer.Address_Line_2__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 3</label>
+											<apex:inputField styleclass="form-control address03"
+												value="{!objBuyer.Address_Line_3__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 4</label>
+											<apex:inputField styleclass="form-control address04"
+												value="{!objBuyer.Address_Line_4__c}" />
+										</div>
+										<div class="form-group">
+											<label>Country</label>
+											<apex:inputField styleclass="form-control country"
+												value="{!objBuyer.Country__c}" />
+										</div>
+										<div class="form-group">
+											<label>City</label>
+											<apex:inputField styleclass="form-control city"
+												value="{!objBuyer.City__c}" />
+										</div>
+									</div>
+									<div class="col-lg-6">
+										<h5>
+											Enter Buyer Details <small>(in arabic)</small>
+										</h5>
+										<div class="form-group">
+											<label>Title</label>
+											<apex:inputField styleclass="form-control arabicTitle"
+												value="{!objBuyer.Title_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>First Name <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicFirstName"
+												value="{!objBuyer.First_Name_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Last Name <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicLastName"
+												value="{!objBuyer.Last_Name_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Nationality <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicNationality"
+												value="{!objBuyer.Nationality_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Passport Expiry Date.</label>
+											<apex:inputText styleclass="form-control datepicker" value="{!objBuyer.Passport_Expiry_Date__c}"/>
+<!-- 											<input type="text" placeholder="01/01/1999" class="form-control datepicker"/> -->
+<!-- 											<apex:inputField styleClass="form-control datepicker" -->
+<!-- 												value="{!objBuyer.Passport_Expiry__c}" /> -->
+											<!-- <input type="text" class="form-control" placeholder="Enter passport no."/> -->
+										</div>
+										<div class="form-group">
+											<label>Place of Issue <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicPlaceOfIssue"
+												value="{!objBuyer.Place_of_Issue_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 1 <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control address01"
+												value="{!objBuyer.Address_Line_1_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 2 <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control address02"
+												value="{!objBuyer.Address_Line_2_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 3 <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control address03"
+												value="{!objBuyer.Address_Line_3_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Address line 4 <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control address04"
+												value="{!objBuyer.Address_Line_4_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>Country <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicCountry"
+												value="{!objBuyer.Country_Arabic__c}" />
+										</div>
+										<div class="form-group">
+											<label>City <small>(in arabic)</small></label>
+											<apex:inputField styleclass="form-control arabicCity"
+												value="{!objBuyer.City_Arabic__c}" />
+										</div>
+									</div>
+									<hr />
+									<div class="col-lg-12">
+										<h5>Contact Details</h5>
+										<div class="form-group">
+											<div class="row">
+												<div class="col-lg-6">
+													<label>Phone Country Code</label>
+													   <apex:inputField styleclass="form-control phonecountry"
+																value="{!objBuyer.Phone_Country_Code__c}" />
+												</div>
+												<div class="col-lg-6">
+													<div class="form-group">
+														<label>Phone No.</label>
+														<apex:inputField styleclass="form-control phone"
+                                                            value="{!objBuyer.Phone__c}" />
+													</div>
+												</div>
+											</div>
+											<div class="row">
+                                                <div class="col-lg-6">
+                                                    <label>Date of Birth</label>
+                                                       <apex:inputTExt styleclass="form-control datepicker dob"
+                                                                value="{!objBuyer.Date_of_Birth__c}" />
+                                                </div>
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label>Email</label>
+                                                        <apex:inputField styleclass="form-control email"
+                                                            value="{!objBuyer.Email__c}" />
+                                                    </div>
+                                                </div>
+                                            </div>
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="pull-right">
+											<apex:commandbutton styleclass="btn btn-sm" value="Save Draft" action="{!upsertBuyer}"/> <!--  -->
+											&nbsp;&nbsp;&nbsp;
+											<apex:commandbutton styleclass="btn btn-sm btn-success" value="Submit" action="{!submit}"/> <!-- oncomplete="datepickerReload();" -->
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+						</apex:outputPanel>
+						<apex:outputPanel id="step4Panel" rendered="{!blnStep4}">
+						<section id="step4">
+							<div class="well">
+								<h6>Step 4</h6>
+								<h4>
+									Schedule Assignment
+									<div class="btn-group">
+										<button type="button" class="btn btn-default dropdown-toggle"
+											data-toggle="dropdown" aria-haspopup="true"
+											aria-expanded="false">
+											<i class="fa fa-download"></i> Documents
+										</button>
+										<ul class="dropdown-menu">
+											<li><a href="#">View Letter of Assignment</a></li>
+											<li><a href="#">Download Letter of Assignment</a></li>
+										</ul>
+									</div>
+
+									<p class="">Select unit and buyer type below to view and
+										download requirements for Transfer of Ownership:</p>
+								</h4>
+
+								<div class="row">
+									<div class="col-lg-6">
+										<div class="form-group">
+											<label class="scheduleDate">Schedule Assignment Date</label>
+											<apex:inputText styleclass="form-control datepicker" value="{!scheduledDate}"/>
+<!-- 											<apex:inputField value="{!objEvent.ActivityDate}" -->
+<!-- 												styleclass="form-control datepicker"/> -->
+										</div>
+									</div>
+								</div>
+
+								<div class="row">
+									<div class="col-lg-12">
+										<div class="pull-right">
+											<apex:commandbutton styleclass="btn btn-sm btn-success" value="Schedule"
+											action="{!scheduleEvent}"/> <!--  -->
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</section>
+						</apex:outputPanel>
+						<apex:outputPanel id="step5Panel" rendered="{!blnStep5}">
+						<section id="step5">
+							<h6 class="greennoteSection">
+								<i class="fa fa-info-circle" aria-hidden="true"></i> Step 4
+								Successfully COMPLETED <i class="fa fa-times pull-right"
+									aria-hidden="true"></i>
+							</h6>
+							<div class="well summaryWell" style="background-color: #173D50 !important;">
+								<h4>Summary</h4>
+								<div class="row">
+									<div class="col-lg-9">
+
+										<h5>Your Request for Transfer of Ownership has been
+											submitted.</h5>
+										<p>
+											The reference number for your Service Request is <a
+												class="ref-no">#{!objCase.CaseNumber}</a>.
+										</p>
+										<p>If any more details are required our Customer Service
+											Executive will contact you.</p>
+										<p>The owner and the buyer shall visit the DAMAC CRM
+											office on the scheduled date to sign the Letter of Assignment
+											and to receive NOC. You are required to carry the following
+											documents when you are coming for signing Letter of
+											Assignment:</p>
+										<ul>
+											<li>Original SPA</li>
+											<li>Original Death Certificate</li>
+											<li>Original Bank NOC / Loan settlement confirmation
+												addressed to seller company</li>
+											<li>Original Rental Pool Agreement</li>
+											<li>Original Title Deed</li>
+										</ul>
+										<br />
+										<p>
+											Thankyou <br /> DAMAC Customer Service Team
+										</p>
+									</div>
+								</div>
+							</div>
+						</section>
+						</apex:outputPanel>
+					</div>
+					<!-------------------------------------------------- Side Bar Fixed ---------------------------------------------------------------------->
+					<div class="col-md-4">
+						<div class="well sideBarFixed">
+							<h6>Process Step list</h6>
+							<h4>
+								Transfer of Ownership<br />
+								<p>We know it's really long, but with all this you'll be
+									bulletproff safe!</p>
+							</h4>
+
+							<ul class="StepProgress">
+								<li class="StepProgress-item"><a class="pageScroll current"
+									href="#step1">Enter Details</a></li>
+								<li class="StepProgress-item"><a class="pageScroll"
+									href="#step2">Upload Documents</a></li>
+								<li class="StepProgress-item "><a class="pageScroll"
+									href="#step3">Buyer's Details</a></li>
+								<li class="StepProgress-item"><a class="pageScroll"
+									href="#step4">Schedule Assignment</a></li>
+								<li class="StepProgress-item"><a class="pageScroll"
+									href="#step5">Summary</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+	</apex:form>
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/jquery.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/main.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap.min.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap-datepicker.min.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap-multiselect.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/chosen.jquery.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/ease.js')}" />
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/fileinput.min.js')}" />
+<!-- 	<apex:includeScript -->
+<!-- 		value="{!URLFOR($Resource.PortalAssets, '/assets/js/steps.js')}" /> -->
+	<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/upload.js')}" />
+
+</body>
+<script>
+    $(document).ready(function(){
+        validateStep1Completeness();
+    });
+    
+    $('.well input.datepicker').datepicker({
+    });
+    
+    function validateStep1Completeness(){
+        var selectedUnit = $('select[id$=units]').val();
+        var selectedBuyerType = $('.buyerType').val();
+        var selectedRelationship = $('.relationship').val();
+        var selectedCaseType = $('.caseType').val();
+        
+        if(selectedUnit != undefined && selectedUnit != ''
+        && selectedBuyerType != undefined && selectedBuyerType != ''
+        && selectedRelationship != undefined && selectedRelationship != ''
+        && selectedCaseType != undefined && selectedCaseType != ''){
+            $('.viewRequirement').removeAttr('disabled');
+        }else{
+            $('.viewRequirement').attr('disabled','disabled');
+        }
+    }
+    
+    function validateDocumentCompleteness(){
+        $('.inputFile').each(function(){
+            if($(this).val().trim() != undefined && $(this).val().trim() != ''){
+                $(this).addClass('success'));
+                $('.docsNextButton').removeAttr('disabled');
+            }else{
+                $('.docsNextButton').attr('disabled','disabled');
+                return false;
+            }
+        });
+    }
+</script>
+</html>
+</apex:component>

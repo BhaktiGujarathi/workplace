@@ -1,0 +1,96 @@
+<apex:component controller="MCASubmissionsTabController" allowDML="true">
+
+  <apex:form id="records" styleClass="records">
+  
+    <c:MCAJQTabComponent />
+    
+    <script>
+    
+     j$ = jQuery.noConflict();
+     
+     j$(function () {    
+    
+      j$(".toggleLink").click(function(){
+        j$(this).closest("tr").next().find(".detail").toggle();
+      });           
+    
+    });
+    
+    </script>
+  
+    <apex:pageblock >
+    
+      <apex:pageBlockButtons >
+      
+        <apex:CommandButton action="{!newSubmission}" value="New Submission" rerender="records" immediate="true"></apex:CommandButton>
+      
+        <apex:CommandButton action="{!saveAll}" value="Save" rerender="records" status="loadingPanel"></apex:CommandButton>
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records" status="loadingPanel"></apex:CommandButton>
+        
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records" status="loadingPanel" immediate="true"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records" status="loadingPanel" immediate="true"></apex:CommandButton>
+        
+      </apex:pageBlockButtons>     
+    
+      <apex:pageBlockSection title="Submissions ({!submissions.size})" columns="1">
+        
+	      <apex:dataTable value="{!submissions}" var="submission" styleClass="list" headerClass="headerRow">
+	      
+	        <apex:inlineEditSupport />
+	                                   
+	        <apex:column headerValue="" styleClass="dataCell">
+	          <apex:outputLink value="javascript:void(0);" styleClass="toggleLink" rendered="{!AND(NOT(ISNULL(submission.Offers__r)), submission.Offers__r.size > 0)}">
+	            <apex:image value="/img/setup_plus.gif" />
+	          </apex:outputLink>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Name.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Name}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Name}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Funder__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Funder__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Funder__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Date_Submitted__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Date_Submitted__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Date_Submitted__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Status__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Status__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status_Date__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Status_Date__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Status_Date__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	          
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Contact__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Contact__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Contact__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>
+	        
+	        <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Program__c.Label}" styleClass="dataCell">
+	          <apex:outputField value="{!submission.Program__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(editAll))}"/>
+	          <apex:inputField value="{!submission.Program__c}" rendered="{!OR((ISBLANK(submission.Id)), editAll)}"/>
+	        </apex:column>         
+	      
+	        <apex:column breakBefore="true" colspan="8" styleClass="detail" style="display:none" >
+	        
+	            <c:MCANestedOffersTabComponent submission="{!submission.Id}" rendered="{!AND(NOT(ISNULL(submission.Offers__r)), submission.Offers__r.size > 0)}"/>
+	        
+	        </apex:column>
+	      
+	      </apex:dataTable>
+      
+      </apex:pageBlockSection>
+    
+    </apex:pageblock>
+    
+  </apex:form>
+
+</apex:component>

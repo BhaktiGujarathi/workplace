@@ -1,0 +1,110 @@
+<apex:page controller="ESUT.TestCodeExecutionSummaryController" wizard="false" 
+	standardStylesheets="false" contentType="application/vnd.ms-excel#{!$Label.ExecutionResult}.xls">
+<apex:stylesheet value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'css/TestExecutor.css')}" />		
+<apex:form id="formSummaryPdf">
+
+		<apex:pageBlock id="blkTestResults" title="{!$Label.esut__Test_Code_Execution_Results}"/>			
+		<apex:pageBlock id="blkSummary" title="{!$Label.esut__Summary}">
+			
+				<apex:pageBlockSection id="secSummary"
+									   columns="1"
+									   showHeader="false">					
+					
+					<apex:outputText label="{!$Label.esut__Test_Executed_On}" value="{!objTstCodeSummary.ESUT__ExecutionDateTime__c}"/>
+					<apex:outputText label="{!$Label.esut__Tests_Run}" value="{!objTstCodeSummary.ESUT__NumberOfTestRuns__c}"/>
+					<apex:outputText label="{!$Label.esut__Test_Successes}" value="{!objTstCodeSummary.ESUT__NumberOfTestSucceeded__c}"/>
+					<apex:outputText label="{!$Label.esut__Test_Failures}" value="{!objTstCodeSummary.ESUT__NumberOfTestFailed__c}"/>
+					<apex:outputText label="{!$Label.esut__Average_Code_Coverage}" value="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c}"/>
+				</apex:pageBlockSection>
+				
+		</apex:pageBlock>		
+		
+		<apex:pageBlock id="blkTestSuccessTemp" title="{!$Label.esut__Test_Method_Execution_Details}">			
+				<apex:repeat value="{!testClassResultList}" var="TestMethodDetail">
+					
+					<apex:pageBlockSection id="secMethodDetails"
+										   columns="1"
+										   title="{!TestMethodDetail.strClassName}" collapsible="false">					
+					
+						<apex:pageBlockTable columns="5" value="{!TestMethodDetail.successFailureList}" var="methodDetail" width="100%">
+						
+								<apex:column width="30%">
+									<apex:facet name="header">{!$Label.esut__Test_Method_Name}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__TestMethod_Name__c}"/>
+								</apex:column>
+								
+								<apex:column width="15%">
+									<apex:facet name="header">{!$Label.esut__Status}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__Status__c}"/>
+								</apex:column>
+								
+								<apex:column width="15%">
+									<apex:facet name="header">{!$Label.esut__Message}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__FailureMessage__c}"/>
+								</apex:column>
+								<apex:column width="40%">
+									<apex:facet name="header">{!$Label.esut__Stack_Trace}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__StackTrace__c}"/>
+								</apex:column>																
+									
+						</apex:pageBlockTable>
+					</apex:pageBlockSection>
+				</apex:repeat>
+			</apex:pageBlock>			
+			
+			<apex:pageBlock id="blkCoverage" title="{!$Label.esut__Code_Coverage}">
+				
+				<apex:pageBlockSection id="secClassCoverage"
+									   columns="1"
+									   title="{!$Label.esut__Class_Coverage_Details}" collapsible="false">
+									   
+					<apex:pageBlockTable columns="3" value="{!codeCoverageClassList}" var="classCoverageDetails">
+						
+						<apex:column width="30%" value="{!classCoverageDetails.ESUT__ClassName__c}">
+							<apex:facet name="header">{!$Label.esut__Class_Name}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%" value="{!classCoverageDetails.ESUT__CodeCoverage__c} ">
+							<apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+						</apex:column>
+										
+					<apex:column width="20%"> 
+							<apex:outputtext value="{!IF(classCoverageDetails.ESUT__CodeCoverage__c>=75,'Pass','Warning! Code coverage is less than 75%')}"/>
+							<apex:facet name="header">{!$Label.esut__Severity}</apex:facet>							
+						</apex:column>
+						
+					</apex:pageBlockTable>								   
+				</apex:pageBlockSection>
+				
+				<apex:pageBlockSection id="secTriggerCoverage"
+									   columns="1"
+									   title="{!$Label.esut__Trigger_Coverage_Details}" collapsible="false">
+									   
+					<apex:pageBlockTable columns="3" value="{!codeCoverageTriggerList}" var="triggerCoverageDetails"> 
+						
+						<apex:column width="30%" value="{!triggerCoverageDetails.ESUT__ClassName__c}">
+							<apex:facet name="header">{!$Label.esut__Trigger_Name}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%" value="{!triggerCoverageDetails.ESUT__CodeCoverage__c} "> 
+							<apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%">
+						<apex:outputtext value="{!IF(triggerCoverageDetails.ESUT__CodeCoverage__c>=75,'Pass','Warning! Code coverage is less than 75%')}"/>
+						<apex:facet name="header">{!$Label.esut__Severity}</apex:facet>	
+						</apex:column>
+						
+					</apex:pageBlockTable>								   
+				</apex:pageBlockSection>
+				
+<!-- 				<apex:pageBlockSection title="Test Coverage Warnings" -->
+<!-- 									   columns="1"  -->
+<!-- 									   rendered="{!objTstCodeSummary.AverageCodeCoverage__c < 75}">					 			 -->
+<!-- 					<apex:outputText value=" Average test coverage across all Apex Classes and Triggers is {!objTstCodeSummary.ESUT__AverageCodeCoverage__c}% ,  -->
+<!--  										at least 75% test coverage is required. ">  -->
+<!-- 					</apex:outputText> -->
+<!-- 				</apex:pageBlockSection>	 -->
+			</apex:pageBlock>	
+</apex:form>			
+</apex:page>

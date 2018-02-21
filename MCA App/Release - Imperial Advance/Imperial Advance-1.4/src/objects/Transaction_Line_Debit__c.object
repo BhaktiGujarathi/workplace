@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Amount__c</fullName>
+        <label>Amount</label>
+        <precision>18</precision>
+        <scale>2</scale>
+        <type>Currency</type>
+    </fields>
+    <fields>
+        <fullName>Date__c</fullName>
+        <label>Date</label>
+        <type>Date</type>
+    </fields>
+    <fields>
+        <fullName>Memo__c</fullName>
+        <label>Memo</label>
+        <length>32768</length>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Payable__c</fullName>
+        <label>Payable</label>
+        <referenceTo>Payable__c</referenceTo>
+        <relationshipLabel>Transaction Line Debit</relationshipLabel>
+        <relationshipName>Transaction_Line_Debit</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+    </fields>
+    <fields>
+        <fullName>Transaction__c</fullName>
+        <label>Transaction</label>
+        <referenceTo>Transaction__c</referenceTo>
+        <relationshipLabel>Transaction Line Debit</relationshipLabel>
+        <relationshipName>Transaction_Line_Debit</relationshipName>
+        <relationshipOrder>1</relationshipOrder>
+        <type>MasterDetail</type>
+    </fields>
+    <label>Transaction Line Debit</label>
+    <nameField>
+        <displayFormat>TL-{0000}</displayFormat>
+        <label>Transaction Line Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Transaction Line Debit</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>BILL_DUE_AMT_LESS_THAN_DEBT_AMT_PAID</fullName>
+        <active>true</active>
+        <description>If Debit Bill Paid amount exceeds to Bill due amount throws error message</description>
+        <errorConditionFormula>AND( Payable__r.Bill_Amount_Due__c &lt; Amount__c , Payable__r.Bill_Amount_Due__c &gt;0,Amount__c &gt; 0)</errorConditionFormula>
+        <errorDisplayField>Amount__c</errorDisplayField>
+        <errorMessage>Bill Paid Amount exceeds Balance Amount</errorMessage>
+    </validationRules>
+    <validationRules>
+        <fullName>DEBIT_TRANS_AMT_MORE_THAN_ZERO</fullName>
+        <active>true</active>
+        <description>Transaction amount should be more than zero</description>
+        <errorConditionFormula>Amount__c &lt;= 0.00</errorConditionFormula>
+        <errorDisplayField>Amount__c</errorDisplayField>
+        <errorMessage>Transaction amount should be more than zero</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,181 @@
+<apex:page title="Ultra Test Dashboard" controller="ESUT.UltraTestDashboardController" sidebar="false">
+<apex:sectionHeader title="UltraTest Dashboard"/>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<apex:includeScript value="{!URLFOR($Resource.ESUT__TestCodeExect_resource,'js/jquery-1.8.3.js')}" />
+<script type="text/javascript">
+    google.load('visualization', '1.0', {'packages' : [ 'annotatedtimeline' ]});
+    google.load('visualization', '1.0', {'packages' : [ 'gauge' ]});
+    google.load('visualization', '1.0', {'packages' : [ 'corechart' ]});
+    
+    $(document).ready(function(){       
+        drawChart();
+    });
+    
+    function drawChart(){   
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(drawTrendReport);
+    
+    function drawTrendReport(){
+        
+         ESUT.UltraTestDashboardController.fetchSummaryRecords(function(result, event){
+            
+            var data = new google.visualization.DataTable();
+            data.addColumn('datetime', 'Execution Datetime');
+            data.addColumn('number', 'Tests Run');
+            data.addColumn('string', 'title1');
+            data.addColumn('string', 'text1');
+            data.addColumn('number', 'Tests Succeeded');
+            data.addColumn('string', 'title2');
+            data.addColumn('string', 'text2');
+            data.addColumn('number', 'Test Failed');
+            data.addColumn('string', 'title3');
+            data.addColumn('string', 'text3');
+            data.addColumn('number', 'Average Code Coverage %');
+            data.addColumn('string', 'title4');
+            data.addColumn('string', 'text4');
+            
+            for(var i = 0; i < result.length; i++) {
+                var r = result[i];
+                data.addRow([new Date(r.intYear, r.intMonth, r.intDay, r.intHour, r.intMinute), 
+                            r.intTestsRun, null, null, 
+                            r.intTestsSucceeded, null, null,
+                            r.intTestsFailed, null, null,
+                            r.intCodeCoverage, 'Code Coverage', r.intCodeCoverage.toString()]);
+            }
+        
+        var annotatedtimeline = new google.visualization.AnnotatedTimeLine(document.getElementById('chart_div1'));
+        annotatedtimeline.draw(data, {displayAnnotations: true, 
+                                      scaleColumns: [0,3], 
+                                      scaleType: 'allfixed', 
+                                      annotationsWidth: 5, 
+                                      colors: ['#0000FF','#008000','#FF0000','#FFA500'],
+                                      thickness: 1,
+                                      displayZoomButtons: false});      
+                    
+        },
+        {
+            escape : true
+        });
+    }
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(drawGaugeChart);
+
+    // Callback that creates and populates a data table,
+    // instantiates the pie chart, passes in the data and
+    // draws it.
+    function drawGaugeChart() {
+
+       ESUT.UltraTestDashboardController.getOverAllTestCodeCoverage(function(result, event) {
+        
+            var overallCoverage = Math.round(result*Math.pow(10,2))/Math.pow(10,2);
+            
+            // Create the data table.
+            var data = google.visualization.arrayToDataTable([
+                    [ 'Label', 'Value' ], [ '', overallCoverage ], ]);
+
+            var options = {
+                width : 250,
+                height : 220,
+                greenFrom : parseInt({!$Label.esut__Recommended_Code_Coverage}),
+                greenTo : 100,
+                redFrom : 0,
+                redTo : parseInt({!$Label.esut__Recommended_Code_Coverage}),
+                minorTicks : 5
+            };
+
+            var chart = new google.visualization.Gauge(document
+                    .getElementById('chart_div2'));
+            chart.draw(data, options);
+        });
+    }
+    // Set a callback to run when the Google Visualization API is loaded.
+    google.setOnLoadCallback(drawBarChart);
+
+    // Callback that creates and populates a data table,
+    // instantiates the pie chart, passes in the data and
+    // draws it.
+    function drawBarChart() {
+       ESUT.UltraTestDashboardController.getClassWiseCodeCoverage(function(result,
+                event) {
+            // Create the data table.
+            var data = new google.visualization.DataTable();
+
+            data.addColumn('string',
+                    'Class Wise Code Coverage');
+            data.addColumn('number', 'Code Coverage %');
+            
+
+            //var v = Math.round(result*Math.pow(10,2))/Math.pow(10,2);
+
+            for ( var i = 0; i < result.length; i++) {
+                var r = result[i];
+                data.addRow([
+                        r.className,
+                        Math.round(r.codeCoverage * Math.pow(10, 2))
+                                / Math.pow(10, 2)                               
+                                ]);
+            }
+
+            // Instantiate and draw our chart, passing in some options.
+            var chart = new google.visualization.ColumnChart(document
+                    .getElementById('chart_div3'));
+            chart.draw(data, {
+                width : 800,
+                height : 250,
+                legend : {
+                    position : 'top',
+                    textStyle : {
+                        color : 'black',
+                        fontSize : 10
+                    }
+                },
+                isStacked : false,
+                vAxis : {
+                    title : 'Code Coverage Percentage',
+                    textStyle : {
+                        fontSize : 10
+                    }
+                },
+                hAxis : {
+                    textStyle : {
+                        fontSize : 9
+                    },
+                    showTextEvery : 1,
+                    slantedText : true
+                }
+            });
+        }, {
+            escape : true
+        });
+    }
+    }
+</script>
+<apex:form id="frm">
+    <apex:outputLabel value="{!dashboardMessage}" style="font-weight:bold" rendered="{!!isChartVisible}"/>  
+    <apex:outputPanel id="dashboardPanel" rendered="{!isChartVisible}">
+    <table align="center">
+        <tr>
+            <td colspan="2">
+                <apex:pageBlock title="{!$Label.esut__Trend_Report}">
+                    <center><div id='chart_div1' style='width: 750px; height: 300px;'></div></center>
+                </apex:pageBlock>
+            </td>  
+        </tr>
+        <tr>
+            <td><apex:pageBlock title="{!$Label.esut__Average_Test_Code_Coverage}">
+                    <center><div id='chart_div2'></div>
+                <apex:outputLabel value="{!messageGaugeChart}" 
+                style="color:Gray;font-style:italic" /></center>
+                </apex:pageBlock>
+            </td>
+            <td><apex:pageBlock title="{!$Label.esut__Class_Wise_Code_Coverage}">
+                    <center><div id='chart_div3'></div>
+                <apex:outputLabel value="{!messageBarChart}" 
+                style="color:Gray;font-style:italic" /></center>
+                </apex:pageBlock>
+            </td>
+        </tr>
+    </table>
+    </apex:outputPanel>
+</apex:form>
+</apex:page>

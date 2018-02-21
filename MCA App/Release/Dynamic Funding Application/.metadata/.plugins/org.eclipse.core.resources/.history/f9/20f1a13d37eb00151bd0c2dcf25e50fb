@@ -1,0 +1,95 @@
+<!-- This is used to set the tab of grid -->
+<apex:page controller="Funding_Application_TabController" sidebar="false" showHeader="false">
+    <apex:includeScript value="{!urlfor($Resource.McaApp__MCATableSorter, 'jquery-1.11.1.min.js')}" />
+ <apex:includeScript value="{!urlfor($Resource.McaApp__MCATableSorter, 'jquery.tablesorter.min.js')}" />
+ <apex:outputPanel id="refreshComponent">
+  <script type="text/javascript">
+
+      t$ = jQuery.noConflict();
+      t$(function () {
+          t$('.records .tablesorting.tablesorter a').click(function(event) {
+            try {
+                console.log("Table Sorting Field");
+                if (t$(this).attr('id').indexOf('lookup') != -1) {
+                  event.preventDefault();
+                  window.open(t$(this).attr('href'));
+                }
+            }
+            catch(err) {
+              console.warn('Error catched from table sorting');
+            }
+          });
+     });
+   </script>
+   </apex:outputPanel>
+    <style type="text/css">
+        .panelCSS{
+            height: 25px;
+        }
+        
+       
+        <!-- for action spinner -->
+        #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        
+    </style>
+    <apex:pageBlock >
+        <apex:tabPanel switchType="client">
+            <apex:tab label="Funding Application" id="fundingApplication" styleClass="panelCSS">
+                <apex:include pageName="FundingApplication"/>
+            </apex:tab>
+            <apex:tab label="Loan Balances" id="loanBaltab" styleClass="panelCSS" 
+                rendered="{!isLonVisible}"> 
+                <c:McaApp__MCALoanBalanceTabComponent/>
+            </apex:tab>
+            <apex:tab label="Sales History" id="salesHistorytab" styleClass="panelCSS" 
+                rendered="{!isSalesVisible}"> 
+                <c:McaApp__MCASalesHistoryTabComponent />
+            </apex:tab>
+        </apex:tabPanel>
+        <apex:actionStatus id="loadingPanel" layout="block">
+            <apex:facet name="start">
+                <div id="assign-action-spinner-main">
+                    <div id="assign-action-spinner-content">
+                        <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                        <p>Processing...</p>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+    </apex:pageBlock>
+</apex:page>

@@ -1,0 +1,234 @@
+<apex:component controller="GRIDTaskController" allowDML="true">
+<script>
+var people, asc1 = 1,
+    asc2 = 1,
+    asc3 = 1;
+
+function sort_table(col, asc) 
+{
+    alert(col);
+    actualData = document.getElementById("actualData");
+    var rows = actualData.rows,
+        rlen = rows.length,
+        arr = new Array(),
+        arrshow= new Array(),
+        i, j, cells, clen;
+    // fill the array with values from the table
+    for (i = 0; i < rlen; i++) 
+    {
+        cells = rows[i].cells;
+        clen = cells.length;
+        arr[i] = new Array();
+        
+        //arrshow[i]= new Array();
+        for (j = 0; j < clen; j++) {
+            if (cells[j].className=="wrapperInput"){
+                
+                arr[i][j]=cells[j].childNodes[0].value;
+                cells[j].childNodes[0].setAttribute('value',arr[i][j]);
+            }else{
+                arr[i][j] = cells[j].innerHTML;
+            }
+            //arr[i][j]=cells[j].innerHTML;
+        }
+        
+        arr[i].showData = rows[i].innerHTML;
+        
+    }
+    // sort the array by the specified column number (col) and order (asc)
+    arr.sort(function (a, b) {
+        return (a[col] == b[col]) ? 0 : ((a[col] > b[col]) ? asc : -1 * asc);
+    });
+    // replace existing rows with new rows created from the sorted array
+   for (i = 0; i < rlen; i++) {
+        //rows[i].innerHTML = "<td>" + arr[i].join("</td><td>") + "</td>";
+        rows[i].innerHTML = arr[i].showData;
+   }
+}
+function assignTableSorter(){
+            asc1 = 1,
+            asc2 = 1,
+            asc3 = 1;
+        }
+
+</script>
+
+    <apex:form id="taskform" styleClass="records">
+    
+    <apex:outputPanel id="taskTable">
+        <apex:pageBlock mode="inlineEdit"> 
+           
+           <apex:pageBlockButtons location="top" >
+               <input type="button" onclick="runNewTasks()" class="btn" value="New Task" />
+               <!--apex:commandButton action="{!newTask}"  value="New Task" rerender="taskTable" /-->
+               <!--apex:commandButton action="{!saveAllTasks}" value="Save" rerender="taskTable"  /-->    
+               <apex:CommandButton action="{!editAllTasks}" value="Edit All" rerender="taskTable" status="loadingPanel" />
+               <input type="button" onclick="runSaveTasks();" class="btn" value="Save" />
+               <apex:CommandButton action="{!refresh}" value="Refresh" rerender="taskTable" immediate="true" status="loadingPanel"/>
+               <apex:CommandButton action="{!refresh}" value="Cancel" rerender="taskTable" immediate="true" status="loadingPanel" />
+           </apex:pageBlockButtons>
+
+       
+        <apex:pageMessages id="pageMessageId" escape="false" /> 
+        
+       <table class="list" border="0" cellpadding="0" cellspacing="0">
+       <thead>
+       <tr class="headerRow">
+                  <th>Record</th>
+                  <th>Action</th>
+<!--                    <apex:variable var="i" value="{!0}"/> -->
+                  <apex:repeat value="{!taskFieldsetList}" var="taskfield">
+<!--                   <apex:variable var="i" value="{!i+1}"/> -->
+<!--                   <th onclick="sort_table( {!i}, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;"> -->
+<!--                       <apex:outputLabel value="{!field.label}" /> -->
+<!--                   </th> -->
+                       <th>
+                       <div>
+                        <apex:outputLabel value="{!taskfield.label}" />
+                        <apex:OutputPanel rendered="{!AND(taskField.type != 'textarea', taskField.type != 'picklist', taskField.type != 'multipicklist')}"> 
+                            <img src="{!IF(taskSortExpression==taskField.fieldPath,IF(taskSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name = "{!taskField.fieldPath}" class="sorting" onclick="sortCalltask('{!taskField.type}');" />
+                        </apex:OutputPanel>
+                        </div>
+                       </th>   
+                  </apex:repeat>
+              
+            </tr>
+       </thead>
+          
+         <tbody id="actualData">
+            <apex:repeat value="{!TaskWrapperLst}" var="taskWraper" >
+                <tr class="dataRow">
+                       <td>
+                           <apex:outputtext value="{!taskWraper.index + 1}"/>
+                       </td>
+                       
+                       <td>
+                            <apex:outputLink value="/{!taskWraper.task.Id}" target="blank" rendered="{!NOT(ISBLANK(taskWraper.task.Id))}"> View </apex:outputLink>
+                            <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(taskWraper.task.Id))}"/>
+                            <apex:commandLink action="{!deleteTask}" value="Del" rerender="taskTable" rendered="{!NOT(ISBLANK(taskWraper.task.Id))}" status="loadingPanel">
+                                <!-- apex:param name="recordToDelete" value="{!taskWraper.task.Id}" assignTo="{!recordToDelete}" ></apex:param> -->
+                                <apex:param name="indexToRemove" value="{!taskWraper.index}" assignTo="{!indexToRemove}"></apex:param>
+                            </apex:commandLink>
+                            <apex:commandLink action="{!deleteTask}" value="Remove" rerender="taskTable" rendered="{!(ISBLANK(taskWraper.task.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="indexToRemove" value="{!taskWraper.index}" assignTo="{!indexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                    <apex:repeat value="{!taskFieldsetList}" var="field">
+                       <td>
+                        <apex:outputField value="{!taskWraper.task[field]}" rendered="{!AND(IF(taskWraper.editIt = false, true, false),NOT(ISBLANK(taskWraper.task.Id)))}">
+                        <!--apex:inlineEditSupport event="ondblclick" / -->
+                        </apex:outputField>
+                        <apex:inputField value="{!taskWraper.task[field]}" rendered="{!OR(IF(taskWraper.editIt = true, true, false),ISBLANK(taskWraper.task.Id))}"/>
+                        <!--apex:outputField value="{!wrpr.task[field]}" rendered="{!IF(wrpr.editIt = false, true, false)}"/>
+                        <apex:inputField value="{!wrpr.task[field]}" rendered="{!IF(wrpr.editIt = true, true, false)}"/-->
+                       </td>
+                    </apex:repeat>
+                   
+                </tr>
+                
+            </apex:repeat>
+          </tbody>
+          <tfoot>
+              <tr class="headerRow">
+              <td><b>Total</b></td>
+              <td></td>
+                 <apex:repeat value="{!taskFieldsetList}" var="taskfield">
+                    <td>
+                 <!--    {!taskFieldToSumMap[field.fieldPath]}  -->
+                        <apex:outputText value="{!taskFieldToSumMap[taskfield.fieldPath]}" rendered="{!taskFieldToSumMap[taskfield.fieldPath] != 100}">
+                        </apex:outputText>
+                    </td>
+                 </apex:repeat>
+              </tr>
+         </tfoot>
+         </table>
+        <br />
+        showing records {!IF((taskOffsetsize + 1) > taskRecordCount, IF(taskRecordCount - taskBlockSize <= 0, 0, taskRecordCount - taskBlockSize), taskOffsetsize + 1)} - {!IF(taskBlockSize + taskOffsetsize <= taskRecordCount, taskBlockSize + taskOffsetsize, taskRecordCount)} Of {!taskRecordCount}
+        
+        <!-- panel grid for pagination buttons -->
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="taskTable" action="{!beginning}" status="loadingPanel" disabled="{!IF(taskOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="taskTable" action="{!previous}"  status="loadingPanel" disabled="{!IF(taskOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="taskTable" action="{!next}" status="loadingPanel" disabled ="{!IF(taskBlockSize + taskOffsetsize >= taskRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="taskTable" action="{!end}" status="loadingPanel" disabled ="{!IF(taskBlockSize + taskOffsetsize >= taskRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+            
+
+          <!-- ....End of fieldset .... -->
+        
+        </apex:pageBlock>
+        </apex:outputPanel>
+         <apex:actionFunction action="{!newTask}" name="newTasks" rerender="taskTable" status="loadingPanel"/>
+         <apex:actionFunction action="{!saveAllTasks}" name="save" rerender="taskTable" status="loadingPanel"/>
+         <apex:actionFunction action="{!sortTask}" name="sortAllTask" rerender="taskTable" status="loadingPanel" >
+            <apex:param name="taskTypeParam" value="" /> 
+        </apex:actionFunction>    
+         
+        <apex:inputHidden value="{!taskSortExpression}" id="taskSortHiddencriterian"/>
+        <apex:inputHidden value="{!taskSortDirection}" id="taskSortHiddenOrder"/>
+         
+    </apex:form>
+    
+     <script>
+      function runNewTasks() 
+      {
+          setTimeout(function() 
+          {               
+              newTasks();
+          }, 200);   
+      }
+      
+      function runSaveTasks() 
+      {
+          setTimeout(function() 
+          {               
+              save();
+          }, 200);   
+      }
+
+    function sortCalltask(taskFieldDataType)
+    {
+    /*
+      event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+      pick up native html id of the selector
+    */
+        console.log(taskElement);
+        var taskElement= event.target;
+        var newtaskSortCol = t$(taskElement).attr("Name"); // new sort field
+        var oldtaskSortCol = t$("input[id$='taskSortHiddencriterian']").val();
+       
+        if(String(newtaskSortCol) == String(oldtaskSortCol))
+        {
+            
+            if(String(t$("input[id$='taskSortHiddenOrder']").val()) == "ASC")
+            {
+                t$("input[id$='taskSortHiddenOrder']").val("DESC");
+                t$(taskElement).removeClass('SortAsc').addClass('SortDesc');
+            }
+            else
+            {
+                t$("input[id$='taskSortHiddenOrder']").val("ASC");
+                t$(taskElement).removeClass('SortDesc').addClass('SortAsc');
+            }
+            
+            t$("input[id$='taskSHiddencriterian']").val(newtaskSortCol);
+           
+            sortAllTask(taskFieldDataType);
+        
+        }
+        else
+        {
+            t$("input[id$='taskSortHiddencriterian']").val(newtaskSortCol);
+            t$("input[id$='taskSortHiddenOrder']").val("ASC");
+            t$(taskElement).removeClass('sorting').addClass('SortAsc');
+            sortAllTask(taskFieldDataType);
+        }
+        
+    }
+
+      </script>
+      </apex:component>

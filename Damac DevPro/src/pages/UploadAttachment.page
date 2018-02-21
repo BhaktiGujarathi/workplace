@@ -1,0 +1,89 @@
+<apex:page standardController="Case" standardStylesheets="false" showHeader="false" sidebar="false"  tabStyle="Case" extensions="UploadAttachmentController" >
+  
+   <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >            
+    
+    <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/style.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap-datepicker.min.css')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, '/assets/css/bootstrap-multiselect.css')}"/>
+    
+    
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway"/>
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800"/>
+    
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+    
+   <apex:form id="frm">
+   <apex:pageMessages ></apex:pageMessages> 
+    
+                       
+     <section id="">
+             <div style="height:20px;"/>
+             
+            <div class="well">
+               
+                <div class="row">
+                    <div class="col-lg-6">
+                    
+                    <div >
+                          <h4>
+                            Attach File
+                        </h4>
+                        </div>
+                        
+                        <div >
+                           
+                            <apex:inputFile id="file_File" value="{!fileBody}" filename="{!fileName}" />
+                                                              
+                        </div>
+                        
+                         <div style="height:20px;"/>
+                         
+                        <div class="form-group">
+                           <label>Type </label>                              
+                           <apex:selectList styleClass="form-control" value="{!selectedType}" size="1" id="type" disabled="true">               
+                            <apex:selectOption itemValue="" itemLabel="--None--"/>
+                            <apex:selectOption itemValue="NOC" itemLabel="NOC"/>
+                            <apex:selectOption itemValue="PowerOfAttorney" itemLabel="Power of Attorney"/>
+                            <apex:selectOption itemValue="CRF" itemLabel="CRF Form"/>
+                        </apex:selectList>
+                        </div>
+                                              
+                        <div class="form-group">
+                            <!-- <button class="btn btn-sm btn-success">Get Additional Information</button>-->                                                    
+                            <apex:outputPanel styleClass="btn btn-sm btn-success" onclick="checkFile('{!$Component.frm.file_File}')" >Attach File</apex:outputPanel>
+                            <apex:actionFunction name="CallProcessUpload" action="{!processUpload}"/>
+                        </div>
+                    </div>
+                </div>    
+            </div>           
+        </section>
+        <center>
+             <apex:commandButton styleClass="btn btn-sm btn-success" action="{!back}" value="Back"/>
+            </center>            
+    
+       </apex:form>
+       
+       <script>
+           function checkFile(val1){
+               //alert('---FileUploadPath --'+document.getElementById(val1).value);  
+               var FileUploadPath = document.getElementById(val1).value;
+               if (FileUploadPath == '') {
+                   alert('Please select file');
+               }
+                else {
+                var Extension = FileUploadPath.substring(FileUploadPath.lastIndexOf('.') + 1).toLowerCase();
+                    //alert('--Extension --'+Extension);
+                    if (Extension == "gif" || Extension == "png" || Extension == "bmp" || Extension == "jpeg" || Extension == "pdf" || Extension == "txt" || Extension == "jpg") {
+                        CallProcessUpload();
+                    }
+                    else{
+                        alert('Please select valid type of file');
+                    }                
+                }
+                            
+           }
+       </script>
+</apex:page>

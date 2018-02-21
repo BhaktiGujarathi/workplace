@@ -1,0 +1,221 @@
+<apex:component controller="OneClickUpdate.AboutOneClickUpdateController" allowDML="true">
+    <html>
+        <head>
+            <title>One Click Update About/Setup Page</title>
+        </head>
+        <style>
+            .overlayDiv {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            filter: alpha(opacity=70);
+            opacity: 0.7;
+            top: 0px;
+            left: 0px;
+            position: fixed;
+            z-index: 500;
+            }
+            .labelSpan {
+            float: left;
+            margin-left: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            }
+        </style>
+        <script type="text/javascript">
+            function ShowPopup(val) {
+                if (val) {
+                    document.getElementById('contentLoading').style.display = 'block';
+                } else {
+                    document.getElementById('contentLoading').style.display = 'none';
+                }
+            }
+            
+            function RedirectToSetup() {
+                window.location = '/apex/setup?core.apexpages.devmode.url=1'
+            }
+        </script>
+        <body>
+            <apex:form id="pgForm">
+                <apex:outputPanel id="CompletePage">
+                    <p>
+                        <span style="color: #ff8c00"><span style="font-size: 24px">About One Click Update</span></span>
+                    </p>
+                    <p>
+                        Thank you again for choosing our wildly popular app "One Click Update"! We really appreciate your business.
+                    </p>
+                    <p>
+                        <span style="font-size: 18px"><span style="color: #ff8c00">Features</span></span>
+                    </p>
+                    <ul>
+                        <li>
+                            Update important data like Sales Stage, Account Rating etc. with just one click
+                        </li>
+                        <li>
+                            Works for any standard or custom objects picklist/drop-down fields to quickly update (for e.g., quickly update case priority from P3 to P1 or opportunity stage from Prospecting to Closed-Won)
+                        </li>
+                        <li>
+                            Efficiently walk through data (ticket or cases or leads or ..) and update records with one click
+                        </li>
+                    </ul>
+                    <p>
+                        &nbsp;
+                    </p>
+                    <p>
+                        <span style="font-size: 18px"><span style="color: #ff8c00">Important Post Install Steps:</span></span>
+                    </p>
+                    <p>
+                        <span style="color: #ff8c00;font-weight:bold">STEP 1:</span> In order to use this tool, you will need to first set/configure fields that you want to enable for one click update.
+                    </p>
+                    <apex:commandButton value="Select field(s)" onclick="ShowPopup(true);" reRender="listOfCustomSettingsOP,addFieldsOP" status="step1LoadingActionStatus"/>
+                    &nbsp;
+                    <apex:actionStatus id="step1LoadingActionStatus">
+                        <apex:facet name="start">
+                            Loading....<img src="/img/loading.gif" />
+                        </apex:facet>
+                    </apex:actionStatus>
+                    <br/>
+                    <apex:outputPanel id="listOfCustomSettingsOP" style="min-height:10px;overflow: scroll;">
+                        <apex:actionStatus id="removeAS">
+                            <apex:facet name="start">
+                                Removing....<img src="/img/loading.gif" />
+                            </apex:facet>
+                        </apex:actionStatus>
+                        <apex:pagemessages id="opSetuppm"/>
+                        <br/>
+                        <apex:outputPanel rendered="{!listOneClickUpdatePicklistConfiguration.size>0}">
+                            <p><span style="color: #ff8c00">Existing Fields (already configured for One Click Update):</span></p>
+                        </apex:outputPanel>
+                        <apex:dataTable rowClasses="odd,even" id="dtCustomSetting" rendered="{!listOneClickUpdatePicklistConfiguration.size>0}" value="{!listOneClickUpdatePicklistConfiguration}" width="100%" var="oneCS" border="1" cellpadding="5">
+                            <apex:column headerValue="Action">
+                                <apex:commandLink id="deleteCL" value="Remove" action="{!DeleteCustomSetting}" reRender="listOfCustomSettingsOP,step2innerOP" status="removeAS">
+                                    <apex:param name="deleteId" value="{!oneCS.Id}" AssignTo="{!DeletedCSId}"/>
+                                </apex:commandLink>
+                            </apex:column>
+                            <apex:column headerValue="Object">
+                                <apex:outputField value="{!oneCS.OneClickUpdate__sObject_API_Name__c}" rendered="{!NOT(ISBLANK(oneCS.id))}" />
+                            </apex:column>
+                            <apex:column headerValue="Field API Name">
+                                <apex:outputField value="{!oneCS.OneClickUpdate__Field_API_Name__c}" rendered="{!NOT(ISBLANK(oneCS.id))}" />
+                            </apex:column>
+                            <apex:column headerValue="Field API Name (without Namespace)">
+                                <apex:outputField value="{!oneCS.OneClickUpdate__Field_API_Name_without_Namespace__c}" rendered="{!NOT(ISBLANK(oneCS.id))}" />
+                            </apex:column>
+                        </apex:dataTable>
+                        <!--**********-->
+                    </apex:outputPanel>
+                    <br/><br/>
+                    <apex:outputPanel id="step2OP">
+                        <apex:pagemessages id="step2msg" />
+                        <apex:outputPanel id="step2innerOP">
+                            <apex:outputPanel rendered="{!SelectOptionForVisualforce1.size>0}">
+                                <p>
+                                    <span style="color: #ff8c00;font-weight:bold">STEP 2:</span> In Step 2, you will need to create visualforce page with following markup(code).
+                                    To create visualforce page go to <a href="/apexpages/setup/listApexPage.apexp" target="_blank">SetUp->App Setup->Pages</a>.<br/><br/> 
+                                    If you need to add this feature on lets say 3 objects, then you will be required to create 3 pages with following markup (code), one for each object.
+                                    If already a page exists (for a particular object), then no need to create another page. 
+                                </p>
+                                <apex:outputLabel for="chooseObject"><b>Select Object</b>:&nbsp;</apex:outputLabel>
+                                <apex:selectList value="{!SelectedObjectForVisualforce}" onchange="refreshFormula()" size="1">
+                                    <apex:selectOptions value="{!SelectOptionForVisualforce1}" />
+                                </apex:selectList>
+                                <apex:actionFunction name="refreshFormula" action="{!CreateVisualforcePage}" reRender="step2msg,opformulaLink2" status="getformulaLoadingActionStatus1" />
+                                <apex:actionStatus id="getformulaLoadingActionStatus1">
+                                    <apex:facet name="start">
+                                        &nbsp;Generating markup(code) ...<img src="/img/loading.gif" />
+                                    </apex:facet>
+                                </apex:actionStatus>
+                                <br/>
+                                <br/>
+                                <apex:outputPanel id="opformulaLink2" >
+                                    <apex:inputtextarea id="formulaLink2" style="font-weight:bold;width:800px;height:100px;" value="{!VisualforcePageCode}" ></apex:inputtextarea>
+                                    <!--disabled="true" readonly="true"-->
+                                </apex:outputPanel>
+                                <br/>
+                            </apex:outputPanel>
+                            <apex:outputText rendered="{!SelectOptionForVisualforce1.size==0}" >
+                                <span style="color: #ff8c00;font-weight:bold">STEP 2:</span> Please complete step1 to be able to complete this step.<br/><br/>
+                            </apex:outputText>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!--**********-->
+                    <br/>
+                    <p>
+                        <span style="color: #ff8c00;font-weight:bold">STEP 3:</span> In Step 3, Once you are done with creating visualforce pages (following above step), add the created visualforce page inline on Page Layouts of required Object. 
+                        e.g. if you need to have this feature for Priority field on case and Visualforce page is already created as per above step, add VF Page on Page Layout of Case. 
+                        <br/><br/>Follow below steps to add Visualforce page inline on page layouts (Lets take example of adding page to Case page layout):
+                    <ol>
+                        <li>Go to Setup->Customize->Cases->Page Layouts</li>
+                        <li>Edit desired pagelayout</li>
+                        <li>Drag empty section to layout (select 1 column layout) and then drag (above created) visualforce page in this new section.</li>
+                        <li>Set height of section to desired height, based on number of fields selected for One Click Update.</li>
+                        <li>Click Save</li>
+                        <li>Repeat above steps for each page layouts if required.</li>
+                    </ol>
+                    <br/> 
+                    </p>
+                    <div id="contentLoading" style="display:none;">
+                        <apex:outputPanel id="addFieldsOP">
+                            <div class="overlayDiv"></div>
+                            <div id="contentLoadingImage" style="top:10%;padding:25px;left:25%;width:45%;position:fixed;background-color:#FFF;border:1px solid #DDD;box-shadow:0 5px 5px #222;z-index:600;">
+                                <apex:sectionHeader title="Select field(s) for One Click Update" />
+                                <apex:pagemessages id="popuppms"/>
+                                <br/>
+                                <apex:outputPanel id="opSelectPanel">
+                                    <apex:outputLabel for="chooseObject"><b>Select Object</b>:&nbsp;</apex:outputLabel>
+                                    <apex:selectList id="chooseObject" value="{!SelectObject}" size="1">
+                                        <apex:actionSupport event="onchange" action="{!dummyCall}" rerender="popuppms,chooseFieldOP,popupbuttonOP" status="addFieldActionStatus"/>
+                                        <apex:selectOptions value="{!Sobjects}" />
+                                    </apex:selectList>
+                                    <apex:actionStatus id="addFieldActionStatus">
+                                        <apex:facet name="start">
+                                            <img src="/img/loading.gif" />
+                                        </apex:facet>
+                                    </apex:actionStatus>
+                                    <br/><br/>
+                                    <apex:outputPanel id="chooseFieldOP">
+                                        <apex:outputPanel rendered="{!SobjectsFields.size>0}">
+                                            <apex:outputLabel for="chooseField"><b>Select Field</b>:&nbsp;&nbsp;&nbsp;&nbsp;</apex:outputLabel>
+                                            <apex:selectList id="chooseField" value="{!SelectField}" size="1">
+                                                <apex:actionSupport event="onchange" action="{!dummyCall}" rerender="popuppms"/>
+                                                <apex:selectOptions value="{!SobjectsFields}" />
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+                                        <apex:outputText rendered="{!SobjectsFields.size==0}" value="{!$Label.oneclickupdate__InfoMsg_NoMoreFieldsAvailable}"/>
+                                    </apex:outputPanel>
+                                    <apex:actionFunction name="refreshBtn" reRender="popupbuttonOP" />
+                                    &nbsp;&nbsp;
+                                    <br/>
+                                    <br/><br/>
+                                </apex:outputPanel>
+                                <apex:outputPanel id="popupbuttonOP">
+                                    <apex:commandButton value="Add" disabled="{!SobjectsFields.size==0}" action="{!UpdateCustomSetting}" reRender="popuppms,chooseFieldOP,popupbuttonOP,listOfCustomSettingsOP,step2innerOP" status="addFieldActionStatus" />
+                                    &nbsp;&nbsp;
+                                    <apex:commandButton value="Close" immediate="true" onclick="ShowPopup(false);" reRender="PopUp,listOfCustomSettingsOP,step2innerOP" status="addFieldActionStatus" />
+                                    <br/><br/>
+                                    <small>*This version doesn't support DEPENDANT and MULTI picklist fields for One Click Update.</small>
+                                </apex:outputPanel>
+                            </div>
+                        </apex:outputPanel>
+                    </div>                    
+                    <p>
+                        <span style="color: #ff8c00"><span style="font-size: 18px">Support</span>&nbsp;</span>
+                    </p>
+                    <p>
+                        If you need any assistance, we are just an email away. Email your queries/assistance-requests/feedback at <a target="_blank" href="mailto:support@satrangtech.com">support@satrangtech.com</a>.
+                    </p>
+                    <p>
+                        &nbsp;
+                    </p>
+                    <p>
+                        <span style="color: #ff8c00"><span style="font-size: 18px">Write a Review</span>&nbsp;</span>
+                    </p>
+                    <p>
+                        We would be delighted if you could take a moment to write a review of our app on the AppExchange. Simply visit <a target="_blank" href="https://appexchange.salesforce.com/listingDetail?listingId=a0N30000009x8GMEAY">https://appexchange.salesforce.com/listingDetail?listingId=a0N30000009x8GMEAY</a> to begin.
+                    </p>
+                </apex:outputPanel>
+            </apex:form>
+        </body>
+    </html>
+</apex:component>

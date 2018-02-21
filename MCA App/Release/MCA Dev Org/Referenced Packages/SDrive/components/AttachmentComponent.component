@@ -1,0 +1,1442 @@
+<apex:component controller="cg.AttachmentComponentController" allowDML="true" access="global">
+<apex:attribute name="customObjectName" description="API Name of the custom object that the files will belong to. This object can also be one of the standard objects such as Solutions or Products. For example: 'MyObject__c' or 'Solution'" access="global"
+                type="String" required="required" assignTo="{!customObjectNameAT}"/>
+<apex:attribute name="customObjectFileName" description="API Name of the custom object that will represent the file. This custom file object is required to include fields indicated in the installation guide of S-Drive. For example: 'MyFile__c'" access="global"
+                type="String" required="required" assignTo="{!customObjectFileNameAT}"/>
+<apex:attribute name="objectId" description="Id of the parent object for the files. For example this will be the ID of the account object if this component is going to display that account's attachment." access="global"
+                type="String" required="required" assignTo="{!objectIdAT}"/>
+<apex:attribute name="relationshipName" description="Master-detail relation used for selected standard/custom object. For example: 'Parent__r'" access="global"
+                type="String" required="optional" assignTo="{!relationshipNameAT}" default="Parent__r" />                
+<apex:attribute name="title" description="Title of this component which is displayed as the header of the page block." access="global" 
+                type="String" required="optional" assignTo="{!titleAT}" default="Attached Files"/>                                                                                                              
+<apex:attribute name="fileNamespacePrefix" description="Namespace prefix for the file object. This attribute is required if the object has a namespace. For example: 'cg__'" access="global"
+                type="String" required="optional" assignTo="{!fileNamespacePrefixAT}" default=""/> 
+<apex:attribute name="objectNamespacePrefix" description="Namespace prefix for the parent object for the attachments. This attribute is required if the object has a namespace. For example: 'cg__'" access="global"
+                type="String" required="optional" assignTo="{!objectNamespacePrefixAT}" default=""/>
+<apex:attribute name="enableUpload" description="Set this attribute to false to disable upload. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableUploadAT}" default="true"/>
+<apex:attribute name="enableFolders" description="Set this attribute to false to disable folders. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableFoldersAT}" default="true"/>
+<apex:attribute name="enableDownload" description="Set this attribute to false to disable download. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableDownloadAT}" default="true"/>
+<apex:attribute name="enableDelete" description="Set this attribute to false to disable delete. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableDeleteAT}" default="true"/>
+<apex:attribute name="enableCopyURL" description="Set this attribute to false to disable copy URL. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableCopyURLAT}" default="true"/>
+<apex:attribute name="enableEmail" description="Set this attribute to false to disable email. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableEmailAT}" default="true"/>
+<apex:attribute name="enableEdit" description="Set this attribute to false to disable edit. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableEditAT}" default="true"/>
+<apex:attribute name="legacyIdSupport" description="Set this attribute to true to use 18-character ids. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!legacyIdSupportAT}" default="false"/>                
+<apex:attribute name="inline" description="Set this attribute to true to use this component inside an inline Visualforce page. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!inlineAT}" default="false"/>
+<apex:attribute name="inlineEdit" description="Set this attribute to true to use inline edit feature. The default for this attribute is false. If inline is set to true, inlineEdit attribute is ignored." access="global"
+                type="Boolean" required="optional" assignTo="{!inlineEditAT}" default="false"/>                
+<apex:attribute name="privateEnabled" description="Set this attribute to true if you want to enable private/public flag. Setting the private flag on a file hides the file from customer portal users. The default for this attribute is false." access="global"
+                type="Boolean" required="optional" assignTo="{!privateEnabledAT}" default="false"/>                  
+<apex:attribute name="orderBy" description="Name of the field that should be used to order the list of files. This attribute is optional and leaving this empty will not order the results in any specific order. For example: 'File_Name__c'" access="global"
+                type="String" required="optional" assignTo="{!orderByAT}" default=""/>
+<apex:attribute name="allowedFileExtensions" description="Semicolon seperated list of file extensions that are allowed to upload. This attribute is optional and leaving this empty will allow all kind of files to be uploaded. For example: '*.jpg;*.txt'" access="global"
+                type="String" required="optional" assignTo="{!allowedFileExtensionsAT}" default=""/>
+<apex:attribute name="defaultEmailAddress" description="Email To address that will be used as the default email while sending emails. This attribute is optional. For example: 'user@company.com'" access="global"
+                type="String" required="optional" assignTo="{!defaultEmailAddressAT}"/>
+<apex:attribute name="enableAttachFromSDriveFolders" description="Set this attribute to false to disable 'Attach From S-Drive Folders' button. The default for this attribute is true." access="global"
+                type="Boolean" required="optional" assignTo="{!enableAttachFromSDriveFoldersAT}" default="true"/>
+<apex:attribute name="enableDownloadManager" description="Set this attribute to true to enable 'Download Manager' button for S-Drive Attachments. The default for this attribute is false" access="global"
+                type="Boolean" required="optional" assignTo="{!enableDownloadManagerAT}" default="false"/>
+<apex:attribute name="enableJavaUpload" description="Set this attribute to true to enable 'Java based Upload Applet' for S-Drive Attachments. The default for this attribute is false" access="global"
+                type="Boolean" required="optional" assignTo="{!enableJavaUploadAT}" />
+<apex:attribute name="useUploadAsPopup" description="Set this attribute to true to enable upload widget as a popup window for S-Drive Attachments. The default for this attribute is false" access="global"
+                type="Boolean" required="optional" assignTo="{!useUploadAsPopupAT}" />
+<apex:attribute name="pageSize" description="Page size for pagination. Attachment items will be paginated based on this value. This attribute is optional and default value is 100." access="global"
+                type="Integer" required="optional" assignTo="{!pageSizeAT}" default="100" />              
+                                
+<apex:styleSheet value="{!URLFOR($Resource.cg__YuiScripts, 'assets/skins/sam/skin.css')}" />
+<apex:stylesheet value="{!URLFOR($Resource.cg__YuiScripts,'menu/assets/skins/sam/menu.css')} "/>
+ 
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts, 'yahoo-dom-event/yahoo-dom-event.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts, 'container/container-min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts, 'animation/animation-min.js')}" />
+
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'yahoo/yahoo-min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'event/event-min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'connection/connection_core-min.js')}" />
+<apex:includeScript value="{!URLFOR($Resource.cg__YuiScripts,'menu/menu-min.js')}" />
+ 
+<apex:includeScript value="/soap/ajax/15.0/connection.js"/>
+<apex:includeScript value="/soap/ajax/15.0/apex.js"/> 
+
+<script>
+
+    /*function setHoverLink() {
+        alert('Hello');
+        var hoverLinksDiv = YAHOO.util.Dom.getElementsByClassName("listHoverLinks", "div");
+        alert(hoverLinksDiv);
+        hoverLinksDiv.innerHTML = hoverLinksDiv.innerHTML + '<span class="pipe"> | </span> <a href="#attachmentcomponent"><title of the attachmentcomponent><a>';
+    }
+    YAHOO.util.Event.onDOMReady(setHoverLink);*/
+
+    function refreshCurrentFolder()
+    {
+        refreshFileList();
+    }
+    
+    var isValid=(function(){
+      var rg1=/^[^\\/:\*\?"<>\|~]+$/; // forbidden characters \ / : * ? " < > | ~
+      var rg2=/^\./; // cannot start with dot (.)
+      var rg4=/^\ /; // cannot start with space ( )
+      var rg3=/^(nul|prn|con|lpt[0-9]|com[0-9])(\.|$)/i; // forbidden file names
+      return function isValid(fname){
+        return rg1.test(fname)&&!rg2.test(fname)&&!rg3.test(fname)&&!rg4.test(fname);
+      }
+    })();
+    
+    // Create a namespace for our custom functions
+    YAHOO.namespace("cyangate.com");
+
+    YAHOO.cyangate.com.hideEditPanel = function() {
+        YAHOO.cyangate.com.editPanel.hide();
+    }   
+    
+    YAHOO.cyangate.com.showEditPanel = function() {
+        document.getElementById("editPanel").style.display = "block";
+        YAHOO.cyangate.com.editPanel.show();
+        var isFolder = false;
+        var nameTextBox = document.getElementById('{!$Component.editPanelPB.editForm.editPanelPBS.folderName}');
+        if(nameTextBox)
+        {
+            if (!(nameTextBox.createTextRange))
+            {
+                 nameTextBox.focus();
+                 nameTextBox.setSelectionRange(0, 9999);
+            }
+            else 
+            {
+                  setSelectionRange(nameTextBox, 0, 9999);
+            }
+            isFolder = true;
+        }
+     
+     /*
+     if(!isFolder)
+     {
+   
+         var labels = document.getElementById('{!$Component.editPanelPB.editForm.editPanelPBS}').getElementsByTagName('label');
+         for(var i=0; i<labels.length; i++)
+         {
+           if(labels[i].innerHTML=='Description')
+           {
+           
+               var desId = labels[i].attributes[0].value;  //for attribute
+             
+               var descTextBox = document.getElementById(desId);
+               
+               if(descTextBox.value.length>0)
+               {
+            
+                   if (!(descTextBox .createTextRange))
+                   {
+                         descTextBox.focus();
+                         descTextBox.setSelectionRange(0, 9999);
+                   }
+                   else 
+                    {
+                          setSelectionRange(descTextBox , 0, 9999);
+                    }
+                
+               }
+               else
+               {
+               
+                   descTextBox.focus();
+               
+               }
+           
+           }
+         }
+       }
+       */
+         
+    } 
+    
+    YAHOO.cyangate.com.hideCopyUrlPanel = function() {
+        YAHOO.cyangate.com.copyUrlPanel.hide();
+    }   
+    
+    YAHOO.cyangate.com.showCopyUrlPanel = function() {
+        document.getElementById("copyUrlPanel").style.display = "block";
+        YAHOO.cyangate.com.copyUrlPanel.show();
+    }
+    
+    YAHOO.cyangate.com.hideConfirmDeletePanel = function() {
+        YAHOO.cyangate.com.confirmDeletePanel.hide();
+    }   
+    
+    YAHOO.cyangate.com.showConfirmDeletePanel = function() {
+        document.getElementById("confirmDeletePanel").style.display = "block";
+        YAHOO.cyangate.com.confirmDeletePanel.show();
+    } 
+    
+    YAHOO.cyangate.com.hideNewFolderPanel = function() {
+        YAHOO.cyangate.com.newFolderPanel.hide();
+    }   
+    
+    YAHOO.cyangate.com.showNewFolderPanel = function() {
+        document.getElementById("newFolderPanel").style.display = "block";
+        YAHOO.cyangate.com.newFolderPanel.show();
+        var folderNameTextBox = document.getElementById('{!$Component.newFolderPanelPB.newFolderForm.newFolderPanelPBS.folderName}');
+        folderNameTextBox.focus();  
+    }
+    
+     function selectText()
+    {
+        var inputElem = document.getElementsByTagName("input");
+        for(var i=0; i<inputElem.length; i++)
+        {
+            if(inputElem[i].id.indexOf("attachmentFileUrl")!=-1)
+            {
+               
+                if (!(inputElem[i].createTextRange))
+                {
+                 inputElem[i].focus();
+                 inputElem[i].setSelectionRange(0, 9999);
+                }
+                else 
+                {
+                  setSelectionRange(inputElem[i], 0, 9999)
+                }
+                
+                return;
+            }
+        }
+    }
+
+        function setSelectionRange(input, selectionStart, selectionEnd)
+        {
+            
+                var range = input.createTextRange();
+                range.collapse(true);
+                range.moveEnd('character', selectionEnd);
+                range.moveStart('character', selectionStart);
+                range.select();
+            
+        }
+
+    // Function called when the DOM is ready to create the dialog,
+    // render the dialog into the document body, add our dialog skin
+    // css to the body tag, and wire up the buttons on our dialog    
+    YAHOO.cyangate.com.init = function() {
+        document.body.className = document.body.className + " yui-skin-sam";
+        
+         YAHOO.cyangate.com.editPanel = new YAHOO.widget.Panel(
+            "editPanel",  // The id of our dialog container
+            { 
+                    width           :   '450px',    
+                    visible         :   false,  // Should be invisible when rendered
+                    draggable       :   true,   // Make the dialog draggable
+                    close           :   false,  // Don't include a close title button
+                    modal           :   true,   // Make it modal
+                    fixedCenter     :   {!NOT(isAppleDevice)},   // Keep centered if window is scrolled
+                    zindex          :   90,     // Make sure it's on top of everything
+                    
+                    // This line adds the appear/vanish fade effect
+                    effect          :   {
+                                          effect:YAHOO.widget.ContainerEffect.FADE,
+                                          duration:0.35
+                                        } 
+            }
+         );
+         YAHOO.cyangate.com.copyUrlPanel = new YAHOO.widget.Panel(
+            "copyUrlPanel",  // The id of our dialog container
+            { 
+                    width           :   '450px',    
+                    visible         :   false,  // Should be invisible when rendered
+                    draggable       :   true,   // Make the dialog draggable
+                    close           :   false,  // Don't include a close title button
+                    modal           :   true,   // Make it modal
+                    fixedCenter     :   true,   // Keep centered if window is scrolled
+                    zindex          :   90,     // Make sure it's on top of everything
+                    
+                    // This line adds the appear/vanish fade effect
+                    effect          :   {
+                                          effect:YAHOO.widget.ContainerEffect.FADE,
+                                          duration:0.35
+                                        } 
+            }
+         );
+         YAHOO.cyangate.com.confirmDeletePanel = new YAHOO.widget.Panel(
+            "confirmDeletePanel",  // The id of our dialog container
+            { 
+                    width           :   '400px',    
+                    visible         :   false,  // Should be invisible when rendered
+                    draggable       :   true,   // Make the dialog draggable
+                    close           :   false,  // Don't include a close title button
+                    modal           :   true,   // Make it modal
+                    fixedCenter     :   true,   // Keep centered if window is scrolled
+                    zindex          :   90,     // Make sure it's on top of everything
+                    
+                    // This line adds the appear/vanish fade effect
+                    effect          :   {
+                                          effect:YAHOO.widget.ContainerEffect.FADE,
+                                          duration:0.35
+                                        } 
+            }
+         );
+         YAHOO.cyangate.com.newFolderPanel = new YAHOO.widget.Panel(
+            "newFolderPanel",  // The id of our dialog container
+            { 
+                    width           :   '450px',    
+                    visible         :   false,  // Should be invisible when rendered
+                    draggable       :   true,   // Make the dialog draggable
+                    close           :   false,  // Don't include a close title button
+                    modal           :   true,   // Make it modal
+                    fixedCenter     :   {!NOT(isAppleDevice)},   // Keep centered if window is scrolled
+                    zindex          :   90,     // Make sure it's on top of everything
+                    
+                    // This line adds the appear/vanish fade effect
+                    effect          :   {
+                                          effect:YAHOO.widget.ContainerEffect.FADE,
+                                          duration:0.35
+                                        } 
+            }
+         );
+        
+        // Render the dialog to the document.body level of the DOM
+        YAHOO.cyangate.com.editPanel.render(document.body);
+        YAHOO.cyangate.com.copyUrlPanel.render(document.body);
+        YAHOO.cyangate.com.confirmDeletePanel.render(document.body);
+        YAHOO.cyangate.com.newFolderPanel.render(document.body);
+    }
+    
+    var itemMenus = new Array();
+    function resetFileItems()
+    {
+        for (var i= 0 ; i < itemMenus.length; i++)
+        {
+            itemMenus[i].destroy();
+        }
+        itemMenus = new Array();
+    }
+    function showItemMenu(button)
+    {
+        
+        var menuDiv = "basicmenu_" + button.id.split('_')[1];
+        
+        var basicmenu = YAHOO.util.Dom.get(menuDiv);
+        
+        for (var i= 0 ; i < itemMenus.length; i++)
+        {
+            if (itemMenus[i].srcElement.id == menuDiv)
+            {
+                itemMenus[i].hide();
+                itemMenus[i].show();
+                return;
+            }
+        }
+        
+        YAHOO.cyangate.com.oMenu = new YAHOO.widget.Menu(basicmenu, 
+                { context:[button.id,"tr","br", ["beforeShow", "windowResize"]] });
+        itemMenus.push(YAHOO.cyangate.com.oMenu);
+        YAHOO.cyangate.com.oMenu.render("itemMenusDiv");  
+        YAHOO.cyangate.com.oMenu.show();
+        
+    }
+    
+    // Add the init method to the window.load event
+    YAHOO.util.Event.addListener(window, "load", YAHOO.cyangate.com.init);
+    
+    function checkAll(cb)
+    {
+        var inputElem = document.getElementsByTagName("input");
+        for(var i=0; i<inputElem.length; i++)
+        {
+            if(inputElem[i].id.indexOf("checkedone")!=-1)
+            inputElem[i].checked = cb.checked;
+        }
+        return false;
+    }    
+    
+    function anyFileSelected(cb)
+    {
+        var isSelected = false;
+        var inputElem = document.getElementsByTagName("input");
+        for(var i=0; i<inputElem.length; i++)
+        {   
+            if(inputElem[i].id.indexOf("checkedone")!=-1)
+            {
+                if(inputElem[i].checked)
+                {
+                    isSelected = true;
+                    break;
+                }
+            }       
+        }
+        return isSelected;
+    }
+    
+</script>
+<style>
+.fewerMore { display: none;}
+.processStyle
+ {
+     color: red;
+     font-weight: bold;
+ }
+ .breadCrumbStyle
+ {
+     font-weight: bold;
+     padding-top:5px;
+ }
+ .datePicker 
+ {
+    z-index: 9999;/*Changed this css property which was 100 prior*/
+    position: absolute;
+    display: none;
+    top: 0;
+    left: 0;
+    width: 17em;
+    background-color: #b7c6b2;
+    border-bottom: 1px solid #000;
+    border-right: 1px solid #000;
+    margin: 0;
+    padding: 1px 1px 2px 2px;
+ }
+</style>
+
+ <apex:pageBlock rendered="{!NOT(inlineAT)}"><apex:detail relatedList="true" rendered="{!NOT(inlineAT)}" inlineEdit="{!inlineEditAT}"></apex:detail></apex:pageBlock>
+ <div id="downloadArea" style="display: none"></div>
+ <apex:outputPanel layout="block" id="openArea" style="display: none">
+     <script>
+        var openFilePopupWarning =
+        {
+            init : function()
+            {   
+                if(this.popups_are_disabled() == true)
+                {           
+                    this.alert_to_disable_popup_blocker();
+                }
+            },
+    
+            alert_to_disable_popup_blocker : function()
+            {
+                var handleOK = function()
+                {
+                    this.hide();
+                };
+                
+                YAHOO.cyangate.com.errorDialog = 
+                    new YAHOO.widget.SimpleDialog("errorDialog", 
+                         { width: "300px",
+                           fixedcenter: true,
+                           visible: true,
+                           modal: true,
+                           draggable: true,
+                           close: false,
+                           hideaftersubmit: true,
+                           zIndex: 100,
+                           text: "You have popup blocker enabled. Please disable popup blocker and try again!",
+                           icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                           constraintoviewport: true,
+                           buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                         } );
+                YAHOO.cyangate.com.errorDialog.render(document.body);
+                YAHOO.cyangate.com.errorDialog.show();
+            },
+    
+            popups_are_disabled : function()
+            {           
+                    var popup = window.open("{!JSENCODE(openUrlForFile)}", "openFileWindow", "width=640,height=640");
+                
+                    if(!popup || popup.closed || typeof popup == "undefined" || typeof popup.closed == "undefined")
+                    {
+                        return true;
+                    }
+                    popup.focus();     
+        
+
+                    if(navigator && (navigator.userAgent.toLowerCase()).indexOf("chrome") > -1)
+                    {           
+                        var on_load_test = function(){popupWarning.test_chrome_popups(popup);};     
+                        var timer = setTimeout(on_load_test, 1000);
+                        return;  
+                    }
+            },
+    
+            test_chrome_popups : function(popup)
+            {
+                if(popup && popup.screenX != 0)
+                {           
+                    return true;
+                }
+                
+                this.alert_to_disable_popup_blocker();
+            }
+      };
+     </script>
+ </apex:outputPanel>
+ <div id="editPanel" style="display: none" width="100%" >
+  <div class="hd">
+    <apex:outputText value="Edit" />
+  </div>  
+  <div class="bd">
+  <apex:pageBlock id="editPanelPB">
+      <script>
+      function closePanelIfNoErrors(){
+          if ('true' != '{!pageHasErrors}'.toLowerCase())
+          {
+              refreshFileList();
+              YAHOO.cyangate.com.hideEditPanel();
+          }
+      }
+      </script>
+    <apex:form id="editForm">
+      <apex:actionFunction action="{!saveEditedFieldValues}" name="saveEditedFieldValuesAction" status="processStatus" 
+            oncomplete="closePanelIfNoErrors()" rerender="editPanelPB" />
+      <apex:actionRegion >
+        <apex:pageMessages />
+          <apex:pageBlockSection id="editPanelPBS" columns="1" rendered="{!updateAllowed}">
+                <apex:inputField id="folderName" label="Folder Name" required="true" value="{!editedFile[fileNamespacePrefixAT + 'File_Name__c']}" rendered="{!editedFile[fileNamespacePrefixAT + 'Content_Type__c'] == 'Folder'}" />
+                <apex:repeat value="{!configuredFields}" var="field" id="customFieldRepeater">
+                    <apex:inputField id="editFieldId" rendered="{!field.fieldUpdateable}" value="{!editedFile[field.fieldId]}" />
+                </apex:repeat>
+                <apex:inputCheckbox id="filePrivate" value="{!editedFile[fileNamespacePrefixAT + 'Private__c']}" rendered="{!(NOT(isCustomerPortalUser) && privateEnabledAT)}"/>
+          </apex:pageBlockSection>
+        <div style="text-align: right;" >
+              <apex:commandButton value="Save" 
+              action="{!saveEditedFieldValues}" oncomplete="closePanelIfNoErrors()"
+              rerender="editPanelPB" rendered="{!updateAllowed && (editedFile[fileNamespacePrefixAT + 'Content_Type__c'] != 'Folder')}" status="processStatus" />
+              <apex:commandButton value="Save" 
+                onclick="javascript:editFolder();return false;"
+                rendered="{!updateAllowed && (editedFile[fileNamespacePrefixAT + 'Content_Type__c'] == 'Folder')}" status="processStatus" />
+          <apex:commandButton value="Cancel" immediate="true" 
+              oncomplete="YAHOO.cyangate.com.hideEditPanel();"/>
+          <script>
+              function editFolder()
+                {
+                    var currentFolderId = '{!JSENCODE(currentFolderId)}';
+                    var fileNamespacePrefix = '{!JSENCODE(fileNamespacePrefixAT)}';
+                    var customObjectFileName = '{!JSENCODE(customObjectFileNameAT)}';
+                    var relationshipName = '{!JSENCODE(relationshipNameAT)}';
+                    var editedFileId = '{!JSENCODE(editedFile.Id)}';
+                    var objectId = '{!JSENCODE(objectIdAT)}';
+                    
+                    var newFolderNameValue = document.getElementById('{!$Component.editPanelPB.editForm.editPanelPBS.folderName}').value;
+                    
+                    if(newFolderNameValue == '')
+                    {
+                        
+                        var handleOK = function()
+                        {
+                            this.hide();
+                            YAHOO.cyangate.com.showEditPanel();
+                        };
+                        
+                        YAHOO.cyangate.com.disallowedNameDialog = 
+                            new YAHOO.widget.SimpleDialog("disallowedNameDialog", 
+                                 { width: "300px",
+                                   fixedcenter: true,
+                                   visible: true,
+                                   modal: true,
+                                   draggable: true,
+                                   close: false,
+                                   hideaftersubmit: true,
+                                   zIndex: 100,
+                                   text: "Name cannot be blank!",
+                                   icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                   constraintoviewport: true,
+                                   buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                                 } );
+                        YAHOO.cyangate.com.hideEditPanel();
+                        YAHOO.cyangate.com.disallowedNameDialog.render(document.body);
+                        YAHOO.cyangate.com.disallowedNameDialog.show();
+                        return;
+                    }
+                                                        
+                    if(!isValid(newFolderNameValue))
+                    {
+                        var handleOK = function()
+                        {
+                            this.hide();
+                            YAHOO.cyangate.com.showEditPanel();
+                        };
+                        
+                        var msg = 'Name cannot start with a space or a dot and cannot contain any of the following characters: \\ / : * ? \" < > | ~';
+                        YAHOO.cyangate.com.disallowedNameDialog = 
+                            new YAHOO.widget.SimpleDialog("disallowedNameDialog", 
+                                 { width: "300px",
+                                   fixedcenter: true,
+                                   visible: true,
+                                   modal: true,
+                                   draggable: true,
+                                   close: false,
+                                   hideaftersubmit: true,
+                                   zIndex: 100,
+                                   text: msg,
+                                   icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                   constraintoviewport: true,
+                                   buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                                 } );
+                        YAHOO.cyangate.com.hideEditPanel();
+                        YAHOO.cyangate.com.disallowedNameDialog.render(document.body);
+                        YAHOO.cyangate.com.disallowedNameDialog.show();
+                        return;
+                    }
+                                            
+                    saveEditedFieldValuesAction();
+                }
+          </script>
+        </div>
+      </apex:actionRegion>
+    </apex:form>
+    </apex:pageBlock>
+  </div>  
+ </div>
+ <div id="confirmDeletePanel" style="display: none" width="100%" >
+  <div class="hd">
+    <apex:outputText value="Delete" />
+  </div>  
+  <div class="bd">
+  <apex:pageBlock id="confirmDeletePanelPB">
+    <apex:form >
+      <apex:actionRegion >
+         <apex:pageMessages />
+          <apex:pageBlockSection columns="1" rendered="{!deleteAllowed}">
+                Are you sure?
+          </apex:pageBlockSection>
+        <div style="text-align: right;" >
+        <apex:actionStatus id="deleteStatus">
+              <apex:facet name="stop">
+                  <apex:commandButton value="Yes" 
+                       oncomplete="YAHOO.cyangate.com.hideConfirmDeletePanel();" action="{!deleteFile}"
+                       rerender="FileList" rendered="{!deleteAllowed}" status="deleteStatus" />
+              </apex:facet>
+              <apex:facet name="start">
+                  <apex:commandButton value="Processing..." disabled="true"
+                       status="deleteStatus" />
+              </apex:facet>
+          </apex:actionStatus>
+          <apex:commandButton value="Cancel" immediate="true" 
+              oncomplete="YAHOO.cyangate.com.hideConfirmDeletePanel();"/>
+        </div>
+      </apex:actionRegion>
+    </apex:form>
+   </apex:pageBlock>
+  </div>  
+ </div>
+ <div id="copyUrlPanel" style="display: none" width="100%" >
+  <div class="hd">
+    <apex:outputText value="Copy URL" />
+  </div>  
+  <div class="bd">
+  <apex:pageBlock id="copyUrlPanelPB">
+    <apex:form >
+      <apex:actionRegion >
+          <apex:pageBlockSection columns="1">
+            <apex:outputLabel value="Click Select URL, then right click the highlighted text and select Copy from the menu." for="attachmentFileUrl" />
+            <apex:inputText id="attachmentFileUrl" size="50" value="{!copyUrl}" />
+          </apex:pageBlockSection>
+        <div style="text-align: right;" >
+            <b><a href="javascript:selectText();">Select URL</a></b>
+            &nbsp;|&nbsp;
+            <b><a href="javascript:YAHOO.cyangate.com.hideCopyUrlPanel();">Close</a></b>
+        </div>
+      </apex:actionRegion>
+    </apex:form>
+   </apex:pageBlock> 
+  </div>
+ </div>
+ <div id="newFolderPanel" style="display: none" width="100%" >
+  <div class="hd">
+    <apex:outputText value="New Folder" />
+  </div>  
+  <div class="bd">
+  <apex:pageBlock id="newFolderPanelPB">
+      <script>
+      function closePanelIfNoErrors(){
+          if ('true' != '{!pageHasErrors}'.toLowerCase())
+          {
+              refreshFileList();
+              YAHOO.cyangate.com.hideNewFolderPanel();
+          }
+      }
+      </script>
+      
+      <apex:pageMessages />
+    <apex:form id="newFolderForm">
+        <apex:actionFunction action="{!createNewFolder}" name="createNewFolderAction" status="processStatus" 
+            oncomplete="closePanelIfNoErrors()" rerender="newFolderPanelPB" />
+
+          <apex:pageBlockSection columns="1" id="newFolderPanelPBS" rendered="{!NOT(ISNULL(newFolder))}">
+                <apex:inputField id="folderName" label="Folder Name" onkeypress="return noEnter(event);" required="true" value="{!newFolder[fileNamespacePrefixAT + 'File_Name__c']}" />
+                <apex:repeat value="{!configuredFields}" var="field" id="customFieldRepeater">
+                    <apex:inputField id="editFieldId" rendered="{!field.fieldUpdateable}" value="{!newFolder[field.fieldId]}" />
+                </apex:repeat>
+                <apex:inputCheckbox id="filePrivate" value="{!newFolder[fileNamespacePrefixAT + 'Private__c']}" rendered="{!(NOT(isCustomerPortalUser) && privateEnabledAT)}"/>
+          </apex:pageBlockSection>
+          <div style="text-align: right;" >
+            <apex:commandButton value="Create" 
+                onclick="javascript:createFolder();return false;"
+                rendered="{!fileCreatable}" status="processStatus" />
+            <apex:commandButton value="Cancel" immediate="true" 
+              oncomplete="YAHOO.cyangate.com.hideNewFolderPanel();" />
+            <script>
+                    function noEnter(ev)
+                    {
+                        if (window.event && window.event.keyCode == 13 || ev.which == 13)
+                        {
+                            return false;
+                        }
+                        else
+                        {
+                            return true;
+                        }
+                    }
+                    
+                    function createFolder()
+                    {
+                        var currentFolderId = '{!JSENCODE(currentFolderId)}';
+                        var fileNamespacePrefix = '{!JSENCODE(fileNamespacePrefixAT)}';
+                        var customObjectFileName = '{!JSENCODE(customObjectFileNameAT)}';
+                        var relationshipName = '{!JSENCODE(relationshipNameAT)}';
+                        var objectId = '{!JSENCODE(objectIdAT)}';
+                        
+                        var newFolderNameValue = document.getElementById('{!$Component.newFolderPanelPB.newFolderForm.newFolderPanelPBS.folderName}').value;
+                        
+                        if(newFolderNameValue == '')
+                        {
+                            
+                            var handleOK = function()
+                            {
+                                this.hide();
+                                YAHOO.cyangate.com.showNewFolderPanel();
+                            };
+                            
+                            YAHOO.cyangate.com.disallowedNameDialog = 
+                                new YAHOO.widget.SimpleDialog("disallowedNameDialog", 
+                                     { width: "300px",
+                                       fixedcenter: true,
+                                       visible: true,
+                                       modal: true,
+                                       draggable: true,
+                                       close: false,
+                                       hideaftersubmit: true,
+                                       zIndex: 100,
+                                       text: "Name cannot be blank!",
+                                       icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                       constraintoviewport: true,
+                                       buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                                     } );
+                            YAHOO.cyangate.com.hideNewFolderPanel();
+                            YAHOO.cyangate.com.disallowedNameDialog.render(document.body);
+                            YAHOO.cyangate.com.disallowedNameDialog.show();
+                            return;
+                        }
+                                                            
+                        if(!isValid(newFolderNameValue))
+                        {
+                            var handleOK = function()
+                            {
+                                this.hide();
+                                YAHOO.cyangate.com.showNewFolderPanel();
+                            };
+                            
+                            var msg = 'Name cannot start with a space or a dot and cannot contain any of the following characters: "\\ / : * ? \" < > | ~';
+                            YAHOO.cyangate.com.disallowedNameDialog = 
+                                new YAHOO.widget.SimpleDialog("disallowedNameDialog", 
+                                     { width: "300px",
+                                       fixedcenter: true,
+                                       visible: true,
+                                       modal: true,
+                                       draggable: true,
+                                       close: false,
+                                       hideaftersubmit: true,
+                                       zIndex: 100,
+                                       text: msg,
+                                       icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                                       constraintoviewport: true,
+                                       buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                                     } );
+                            YAHOO.cyangate.com.hideNewFolderPanel();
+                            YAHOO.cyangate.com.disallowedNameDialog.render(document.body);
+                            YAHOO.cyangate.com.disallowedNameDialog.show();
+                            return;
+                        }
+                                                                                                
+                        createNewFolderAction();
+                    }
+            </script>
+        </div>
+    </apex:form>
+    </apex:pageBlock>
+  </div>  
+ </div>
+ <script>
+     var popup = null;
+     var uploadPopupWindow = null;
+ </script>
+ <apex:outputPanel id="initUpload">
+ <script> 
+     var uploadUrl = '{!JSENCODE(uploadUrl)}'; 
+     var uploadAsPopup = '{!JSENCODE(uploadAsPopup)}'; 
+     var checkTimer;
+
+     var uploadPopupWarning =
+     {
+        init : function()
+        {   
+           if(uploadAsPopup == 'y')
+           {
+                if(!uploadPopupWindow  || uploadPopupWindow.closed || typeof uploadPopupWindow == "undefined" || typeof uploadPopupWindow.closed == "undefined")
+                {            
+                    if(this.popups_are_disabled() == true)
+                    {           
+                        this.alert_to_disable_popup_blocker();
+                    }
+                }
+                else
+                {
+                    uploadPopupWindow.focus();
+                }
+           }
+           else
+           {
+                 if(top === self)
+                 {
+                     window.open(uploadUrl,'_self');
+                 }
+                 else
+                 {
+                     var inlineUploadUrl = uploadUrl + '&inline=1';
+                     window.open(inlineUploadUrl,'_self');
+                 }
+           } 
+        },
+
+        alert_to_disable_popup_blocker : function()
+        {
+            //alert("You have popup blocker enabled. Please disable popup blocker and try again!");
+            var handleOK = function()
+            {
+                this.hide();
+            };
+            
+            YAHOO.cyangate.com.errorDialog = 
+                new YAHOO.widget.SimpleDialog("errorDialog", 
+                     { width: "300px",
+                       fixedcenter: true,
+                       visible: true,
+                       modal: true,
+                       draggable: true,
+                       close: false,
+                       hideaftersubmit: true,
+                       zIndex: 100,
+                       text: "You have popup blocker enabled. Please disable popup blocker and try again!",
+                       icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                       constraintoviewport: true,
+                       buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                     } );
+            YAHOO.cyangate.com.errorDialog.render(document.body);
+            YAHOO.cyangate.com.errorDialog.show();
+        },
+
+        popups_are_disabled : function()
+        {
+            uploadPopupWindow = window.open(uploadUrl,'Upload','resizable=yes,width=1050,height=550, top=10, left=10');
+            checkTimer = setInterval(checkWindowExists,500);
+                                                            
+            if(!uploadPopupWindow || uploadPopupWindow.closed || typeof uploadPopupWindow == "undefined" || typeof uploadPopupWindow.closed == "undefined")
+            {
+                return true;
+            }
+            
+            uploadPopupWindow.focus();
+                
+            //
+            // Chrome popup detection requires that the popup validates itself - so we need to give
+            // the popup time to load, then call js on the popup itself
+            //
+            if(navigator && (navigator.userAgent.toLowerCase()).indexOf("chrome") > -1)
+            {           
+                var on_load_test = function(){uploadPopupWarning.test_chrome_popups(uploadPopupWindow);};     
+                var timer = setTimeout(on_load_test, 1000);
+                return;  
+            }
+        },
+
+        test_chrome_popups: function(uploadPopupWindow)
+        {
+            if(uploadPopupWindow && uploadPopupWindow.screenX != 0)
+            {   
+                return true;
+            }
+            
+            //
+            // If the popup js fails - popups are blocked
+            //
+            this.alert_to_disable_popup_blocker();
+        }
+      };
+     
+     function checkWindowExists()
+     {
+         if(uploadPopupWindow == null || uploadPopupWindow == undefined || uploadPopupWindow.closed)
+         {
+             clearInterval(checkTimer);
+             refreshCurrentFolder();
+         }
+     }
+         
+ </script>
+ </apex:outputPanel>
+ <apex:outputPanel id="initDownload">
+ <script>       
+    
+    var popupWarning =
+    {
+        init : function()
+        {   
+            if(!popup || popup.closed || typeof popup == "undefined" || typeof popup.closed == "undefined")
+            {            
+                if(this.popups_are_disabled() == true)
+                {           
+                    this.alert_to_disable_popup_blocker();
+                }
+            }
+            else
+            {
+                var isFolderSelected = '{!isFolderSelected}';
+                if(isFolderSelected == 'true')
+                {
+                    //alert('You can\'t download a folder. Please check your selection list and try again!');
+                    var handleOK = function()
+                    {
+                        this.hide();
+                    };
+                    
+                    YAHOO.cyangate.com.errorDialog = 
+                        new YAHOO.widget.SimpleDialog("errorDialog", 
+                             { width: "300px",
+                               fixedcenter: true,
+                               visible: true,
+                               modal: true,
+                               draggable: true,
+                               close: false,
+                               hideaftersubmit: true,
+                               zIndex: 100,
+                               text: "You can\'t download a folder. Please check your selection list and try again!",
+                               icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                               constraintoviewport: true,
+                               buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                             } );
+                    YAHOO.cyangate.com.errorDialog.render(document.body);
+                    YAHOO.cyangate.com.errorDialog.show();
+                }
+                else
+                {
+                    var selectedIdNamePairs = '{!JSENCODE(selectedIdNamePairs)}';
+                    var objectId = '{!JSENCODE(objectIdAT)}';
+                    if (objectId.length == 18 && ('true' != '{!legacyIdSupportAT}'))
+                    {
+                        objectId = objectId.substring(0, 15);
+                    }
+                    popup.addNewDownloads(selectedIdNamePairs, objectId);
+                    popup.focus();
+                }
+            }
+        },
+
+        alert_to_disable_popup_blocker : function()
+        {
+            //alert("You have popup blocker enabled. Please disable popup blocker and try again!");
+            var handleOK = function()
+            {
+                this.hide();
+            };
+            
+            YAHOO.cyangate.com.errorDialog = 
+                new YAHOO.widget.SimpleDialog("errorDialog", 
+                     { width: "300px",
+                       fixedcenter: true,
+                       visible: true,
+                       modal: true,
+                       draggable: true,
+                       close: false,
+                       hideaftersubmit: true,
+                       zIndex: 100,
+                       text: "You have popup blocker enabled. Please disable popup blocker and try again!",
+                       icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                       constraintoviewport: true,
+                       buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                     } );
+            YAHOO.cyangate.com.errorDialog.render(document.body);
+            YAHOO.cyangate.com.errorDialog.show();
+        },
+
+        popups_are_disabled : function()
+        {     
+            var isFolderSelected = '{!isFolderSelected}';
+            if(isFolderSelected == 'true')
+            {
+                //alert('You can\'t download a folder. Please check your selection list and try again!');
+                var handleOK = function()
+                {
+                    this.hide();
+                };
+                
+                YAHOO.cyangate.com.errorDialog = 
+                    new YAHOO.widget.SimpleDialog("errorDialog", 
+                         { width: "300px",
+                           fixedcenter: true,
+                           visible: true,
+                           modal: true,
+                           draggable: true,
+                           close: false,
+                           hideaftersubmit: true,
+                           zIndex: 100,
+                           text: "You can\'t download a folder. Please check your selection list and try again!",
+                           icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+                           constraintoviewport: true,
+                           buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+                         } );
+                YAHOO.cyangate.com.errorDialog.render(document.body);
+                YAHOO.cyangate.com.errorDialog.show();
+            }
+            else
+            {         
+                var objectId = '{!JSENCODE(objectIdAT)}';
+                if (objectId.length == 18 && ('true' != '{!legacyIdSupportAT}'))
+                {
+                    objectId = objectId.substring(0, 15);
+                }     
+                popup = window.open("{!URLFOR($Page.cg__DownloadAppletPage)}?selectedIdNamePairs={!JSENCODE(selectedIdNamePairs)}&objectId=" + objectId, "downloadManager", "width=640,height=490");
+            
+                if(!popup || popup.closed || typeof popup == "undefined" || typeof popup.closed == "undefined")
+                {
+                    return true;
+                }
+                popup.focus();     
+    
+                //
+                // Chrome popup detection requires that the popup validates itself - so we need to give
+                // the popup time to load, then call js on the popup itself
+                //
+                if(navigator && (navigator.userAgent.toLowerCase()).indexOf("chrome") > -1)
+                {           
+                    var on_load_test = function(){popupWarning.test_chrome_popups(popup);};     
+                    var timer = setTimeout(on_load_test, 1000);
+                    return;  
+                }
+            }
+        },
+
+        test_chrome_popups : function(popup)
+        {
+            if(popup && popup.screenX != 0)
+            {           
+                return true;
+            }
+            
+            //
+            // If the popup js fails - popups are blocked
+            //
+            this.alert_to_disable_popup_blocker();
+        }
+      };
+     
+      
+     function handleEscKey(e)
+     {
+        var eventInstance = window.event ? event : e;
+        var keyCode = eventInstance.charCode ? eventInstance.charCode : eventInstance.keyCode;
+        if (keyCode == 27)
+        {
+            return false;
+        }
+        else if(keyCode == 13)
+        {
+         return false;
+        }
+      }
+ </script>
+  </apex:outputPanel>
+ <apex:form >
+<apex:pageBlock id="FileList" title="{!title}" rendered="{!fileAccessible}">
+   <apex:actionStatus id="processStatus" startStyleClass="processStyle">
+        <apex:facet name="start">
+            Processing...<br/>
+        </apex:facet>
+    </apex:actionStatus>
+    <script>
+        resetFileItems();
+    </script>
+    <div id="itemMenusDiv"></div>
+   <apex:pageMessages rendered="{!isCustomMessage}" />
+   <apex:pageBlockButtons location="top">
+        <apex:commandButton rendered="{!enableFoldersAT && enableUploadAT && fileCreatable}" value="New Folder" action="{!initNewFolder}" disabled="{!NOT(fileCreatable) || (isSearchInProgress && isSearchResultsFound)}" reRender="newFolderPanelPB" onComplete="YAHOO.cyangate.com.showNewFolderPanel();" status="processStatus" />
+        <apex:commandButton action="{!calculateUploadUrl}" onComplete="uploadPopupWarning.init();" value="Upload File(s)" rendered="{!NOT(isAppleDevice) && (enableUploadAT && fileCreatable)}"
+            disabled="{!NOT(fileCreatable) || (isSearchInProgress && isSearchResultsFound)}" reRender="initUpload" status="processStatus" />
+        <apex:commandButton action="{!attachFromSDrive}" rendered="{!(NOT(isCustomerPortalUser)) && enableAttachFromSDriveFoldersAT && fileCreatable}" value="Attach from S-Drive Folders" disabled="{!NOT(fileCreatable) || isCustomerPortalUser || (isSearchInProgress && isSearchResultsFound)}" status="processStatus" />
+        <apex:commandButton action="{!emailSelected}" disabled="{!NOT(hasFiles)}" rendered="{!enableEmailAT}" onclick="if(!anyFileSelected(this)){displayYUISimpleDialog('Please select file(s) to email!');return false;}" value="Email Selected" status="processStatus"/>
+        <apex:commandButton action="{!confirmDeleteSelected}" rendered="{!enableDeleteAT && fileDeletable}" disabled="{!NOT(fileDeletable) || NOT(hasFiles)}" value="Delete Selected" rerender="confirmDeletePanelPB" 
+            onComplete="YAHOO.cyangate.com.showConfirmDeletePanel();"
+            onclick="if(!anyFileSelected(this)){displayYUISimpleDialog('Please select item(s) to delete!');return false;}" status="processStatus" />
+        <apex:commandButton action="{!calculateSelectedIdNamePairs}" onComplete="popupWarning.init();" value="Download Manager" rendered="{!NOT(isAppleDevice) && enableDownloadManagerAT}"
+            reRender="initDownload" onclick="if(!anyFileSelected(this)){displayYUISimpleDialog('Please select file(s) to download!');return false;}" status="processStatus" />
+        <apex:actionFunction action="{!refresh}" rerender="FileList" name="refreshFileList" status="processStatus" />
+   </apex:pageBlockButtons>
+
+<apex:outputPanel layout="block" style="display:inline;text-align:left" rendered="{!showHomeFolder}">
+   <b><apex:commandLink id="homeLink" styleClass="breadCrumbStyle" value="Home" action="{!changeFolder}" reRender="FileList" status="processStatus" rendered="{!(enableFoldersAT||NOT(ISBLANK(currentFolderId)))&&showHomeFolder && NOT(isSearchInProgress && isSearchResultsFound)}"/></b>
+   <b><apex:commandLink id="homeLinkWhileSearching" styleClass="breadCrumbStyle" value="Back to Home" action="{!changeFolder}" reRender="FileList" status="processStatus" rendered="{!isSearchInProgress && isSearchResultsFound}"/> 
+       <apex:repeat value="{!folderHistoryStack}" var="folder" id="breadCrumbRepeater" rendered="{!NOT(isSearchInProgress && isSearchResultsFound)}">
+        /&nbsp; <apex:commandLink value="{!folder.Name}" styleClass="breadCrumbStyle" action="{!changeFolder}" reRender="FileList" status="processStatus">
+                <apex:param name="folderId" value="{!folder.Id}" />
+                <apex:param name="folderName" value="{!folder.Name}" />
+            </apex:commandLink>
+    </apex:repeat></b>
+</apex:outputPanel>
+<script>
+ function handleEmptySearchKey()
+  {
+    String.prototype.trim = function () {
+     return this.replace(/^\s*/, "").replace(/\s*$/, "");
+        }   
+      var searchKey = document.getElementById('{!$Component.inputBoxSearch}').value;
+      var trimmedKey = searchKey.trim();
+      if(trimmedKey == "")
+      { 
+          //window.alert("Search Keyword cannot be empty");
+          displayYUISimpleDialog("Search keyword cannot be empty!");
+      } 
+      else if(trimmedKey.length == 1 || trimmedKey.replace(/[*?]/g, "").length < 2)
+      {
+        //window.alert("Search Keyword must be longer than one character");
+        displayYUISimpleDialog("Search keyword must be longer than one character!");
+      }
+      else
+      {
+          searchFileList();
+      }
+  }
+  
+  function onClickSearchTextBox(e)
+  {
+     if(document.getElementById('{!$Component.inputBoxSearch}').value == "Search")
+     {
+         document.getElementById('{!$Component.inputBoxSearch}').value = "";
+     }
+  }
+  
+  function onClickEsleware(toForce)
+  {
+     if(toForce == "notForce")
+     {
+      if(document.getElementById('{!$Component.inputBoxSearch}').value == null || 
+            document.getElementById('{!$Component.inputBoxSearch}').value == '')
+         {
+             document.getElementById('{!$Component.inputBoxSearch}').value = 'Search';
+         }
+     }
+     else
+     {
+         document.getElementById('{!$Component.inputBoxSearch}').value = 'Search';
+     }
+  }
+  
+  function handleKeysOnSearchTextBox(ev)
+  {
+   if (window.event && window.event.keyCode == 13 || ev.which == 13) 
+   {
+      handleEmptySearchKey();
+      return false;
+   } 
+   else
+   {
+        return true;
+   }
+  }
+</script>
+  
+<style> 
+.yui-skin-sam .yuimenuitemlabel {
+    color: #000000;
+    cursor: hand;
+    cursor: pointer;
+    padding: 0 20px;
+    text-decoration: none;
+} 
+.hiddenItemMenu
+{
+    visiblility: hidden;
+    position: absolute;
+    left: -999em;
+    top: -999em;
+}
+
+.paginationStyleTop
+{
+    float:right; 
+    padding-top:5px;
+}
+.paginationStyleBottom
+{
+    text-align: right;
+    padding-top: 3px;
+}
+.searchBoxWrapper
+{
+    width:149px; /*follow your image's size*/
+    height:28px;/*follow your image's size*/
+    background-image:url('{!$Resource.cg__SearchBox}');
+    background-repeat:no-repeat; 
+    padding:0px;
+    margin:0px;
+    position:relative; 
+    float:right;
+}
+.inputBoxSearchStyle
+{
+    border:0px;
+    background-color:transparent; 
+    position:absolute;
+    top:4px;
+    left:9px;
+    width:110px;
+    height:20px;
+}
+.searchbox_submit {
+    border:0px; 
+    background-color:transparent; 
+    position:absolute;
+    top:4px;
+    left:125px;
+    width:16px;
+    height:20px;
+    cursor: pointer; cursor: hand;
+}
+  
+ </style>
+ <apex:outputPanel layout="inline">
+     <div align="center" style="display:inline; text-align:center;padding-left: 30em;">
+        <apex:outputText value="No Results Found!" style="color:red;font-size:16px;" rendered="{!(isSearchInProgress) && NOT(isSearchResultsFound) }"/>
+        <apex:outputText value="{!searchResultCount} Result(s) Found" style="font-size:16px" rendered="{!(isSearchInProgress) && isSearchResultsFound}"/>
+     </div>
+      <div class="searchBoxWrapper">
+            <apex:inputText id="inputBoxSearch" styleClass="inputBoxSearchStyle" value="{!searchKeyword}" onfocus="onClickSearchTextBox()" onblur="onClickEsleware('notForce')" onkeypress="return handleKeysOnSearchTextBox(event)"/>
+            <apex:image id="searchIcon" value="{!$Resource.cg__SearchIcon}" styleClass="searchbox_submit" onclick="handleEmptySearchKey()"/>
+      </div>
+
+    <apex:actionFunction action="{!searchKeywordResult}" rerender="FileList" name="searchFileList" status="processStatus"/> 
+    
+    <script>
+         if(document.getElementById('{!$Component.inputBoxSearch}').value == null || 
+            document.getElementById('{!$Component.inputBoxSearch}').value == '')
+         {
+             document.getElementById('{!$Component.inputBoxSearch}').value = 'Search';
+         }
+   </script> 
+</apex:outputPanel>
+   <apex:actionFunction name="cg_navigate" action="{!navigateToPage}" rerender="FileList" status="processStatus">
+        <apex:param name="pageNum" assignTo="{!pageNumAT}" value=""/>
+   </apex:actionFunction>
+   <apex:outputPanel layout="block" id="topPagination" rendered="{!showPages || hasFiles}" styleClass="paginationStyleTop" >
+       <apex:outputPanel rendered="{!hasFiles && NOT(isSearchInProgress && isSearchResultsFound)}"><b>Total Items:</b> {!totalItems}&nbsp;&nbsp;</apex:outputPanel>
+       <apex:outputPanel rendered="{!showPages}"><b>Page:&nbsp;</b></apex:outputPanel>
+
+       
+       <apex:repeat var="p" value="{!pages}" rendered="{!showPages}">
+           <apex:outputPanel onclick="cg_navigate('{!p}')" rendered="{!(p != pageNumAT)}" styleClass="btn">{!p}</apex:outputPanel>
+            
+           <apex:outputPanel rendered="{!p == pageNumAT}">{!pageNumAT}</apex:outputPanel>
+           &nbsp;
+       </apex:repeat>
+   </apex:outputPanel>
+
+<apex:outputPanel rendered="{!NOT(hasFiles)}">
+    <table class="list" style="border: 1px solid #D4DADC;">
+        <tbody>
+            <tr>
+                <td style="border: 0 none; font-size: lem;background-color: #F8F8F8;">
+                    <apex:outputLabel value="No records to display" />
+                </td>
+            </tr>
+         </tbody>
+    </table>
+</apex:outputPanel>
+<apex:actionFunction name="changeFolder" action="{!changeFolder}" reRender="FileList" status="processStatus">
+    <apex:param name="folderId" value=""/>
+    <apex:param name="folderName" value=""/>
+</apex:actionFunction>
+    
+   <apex:pageBlockTable value="{!files}" var="f" rendered="{!hasFiles || (isSearchInProgress && isSearchResultsFound) }">
+            <apex:column width="2%" rendered="{!(enableDownloadManagerAT || (enableEmailAT && NOT(isCustomerPortalUser)) || (enableDeleteAT && fileDeletable))}">
+                <apex:facet name="header">
+                 <apex:inputCheckbox >
+                     <apex:actionSupport rerender="" event="onclick" onsubmit="checkAll(this)"/>
+                 </apex:inputCheckbox>
+               </apex:facet>
+                <apex:inputCheckbox value="{!f.checked}" id="checkedone" />
+            </apex:column>
+           <apex:column headerValue="Actions" width="10%">
+           <apex:outputPanel layout="inline" rendered="{!(enableDownloadAT && (f.contentType != 'Folder')) || (enableCopyURLAT && (f.contentType != 'Folder')) || (fileUpdateable && enableEditAT && (fieldSetFieldsUpdateable || privateEnabledAT)) || (fileDeletable && enableDeleteAT)}">
+           <div style="text-align: center; white-space:nowrap;">
+                <button id="menutoggle_{!f.file.Id}" type="button" class="menubutton" onclick="showItemMenu(this)">Item Actions <img src="{!URLFOR($Resource.DownArrow)}" /></button>
+            </div>
+            </apex:outputPanel>
+            <div id="basicmenu_{!f.file.Id}" class="hiddenItemMenu yuimenu">
+                <div class="bd" style="border-radius: 4px;box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);">
+                    <ul class="first-of-type">
+                        <li class="yuimenuitem">
+                            <apex:commandLink value="Download" title="Download File" action="{!downloadFile}" rendered="{!enableDownloadAT && (f.contentType != 'Folder') }" reRender="downloadArea">
+                                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                            </apex:commandLink>
+                        </li>
+                        <li class="yuimenuitem">
+                            <apex:commandLink value="Open" title="Open File in New Window" action="{!openFile}" rendered="{!enableDownloadAT && (f.contentType != 'Folder') }" reRender="openArea" onComplete="openFilePopupWarning.init()">
+                                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                            </apex:commandLink>
+                        </li>
+                        <li class="yuimenuitem">
+                            <apex:commandLink value="Copy URL" title="Copy URL to Clipboard" action="{!retrieveCopyUrl}" rendered="{!enableCopyURLAT && (f.contentType != 'Folder')}" reRender="copyUrlPanelPB" onComplete="YAHOO.cyangate.com.showCopyUrlPanel();" status="processStatus">
+                                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                            </apex:commandLink>
+                        </li>
+                        <li class="yuimenuitem">
+                            <apex:commandLink value="Edit" title="Edit Fields" rendered="{!(fileUpdateable && enableEditAT && (fieldSetFieldsUpdateable || privateEnabledAT))}" 
+                                action="{!editFieldValues}" reRender="editPanelPB" onComplete="YAHOO.cyangate.com.showEditPanel();" status="processStatus">
+                                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                            </apex:commandLink>
+                        </li>
+                        <li class="yuimenuitem">
+                            <apex:commandLink value="Delete" title="Delete Item" rendered="{!(fileDeletable && enableDeleteAT)}" action="{!confirmDelete}"
+                                reRender="confirmDeletePanelPB" onComplete="YAHOO.cyangate.com.showConfirmDeletePanel();" status="processStatus">
+                                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                            </apex:commandLink>
+                        </li>
+                    </ul>            
+                </div>
+            </div>
+        </apex:column>
+        <apex:column width="3%">
+            <div align="center">
+                <apex:facet name="header">
+                    <apex:outputPanel layout="block" style="text-align: center;">
+                        <apex:commandLink value="T " title="Content Type" action="{!doSort}" status="processStatus" reRender="FileList">
+                            <apex:param name="sortField" value="{!fileNamespacePrefixAT + 'Content_Type__c'}" assignTo="{!sortFieldAT}"/>
+                        </apex:commandLink>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'ascending.gif')}" alt="ASC" title="Ascending" rendered="{!order == 'asc' && sortFieldAT == fileNamespacePrefixAT + 'Content_Type__c'}"></apex:image>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'descending.gif')}" alt="DESC" title="Descending" rendered="{!order == 'desc' && sortFieldAT == fileNamespacePrefixAT + 'Content_Type__c'}"></apex:image>
+                    </apex:outputPanel>
+                </apex:facet>
+                <apex:image rendered="{!NOT(enableDownload) && (f.contentType != 'Folder')}" title="{!f.contentType}" width="16" height="16" url="{!URLFOR($Resource.cg__SDriveFileIcons, f.iconName)}"></apex:image>
+                <apex:outputPanel rendered="{!(f.contentType == 'Folder')}">
+                    <apex:image title="{!f.contentType}" width="16" height="16" url="{!URLFOR($Resource.cg__SDriveFileIcons, f.iconName)}" 
+                    onclick="changeFolder('{!JSENCODE(f.Id)}','{!JSENCODE(f.fileName)}')" />
+                </apex:outputPanel>     
+                <apex:outputPanel rendered="{!enableDownloadAT && (f.contentType != 'Folder')}">
+                    <apex:actionSupport event="onclick" action="{!downloadFile}" reRender="downloadArea">
+                        <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+                    </apex:actionSupport>
+                    <apex:image title="{!f.contentType}" width="16" height="16" url="{!URLFOR($Resource.cg__SDriveFileIcons, f.iconName)}"></apex:image>
+                </apex:outputPanel>
+            </div>
+        </apex:column>
+        <apex:column headerValue="File Name" width="33%">
+            <apex:facet name="header">
+                <apex:outputPanel layout="block">
+                    <apex:commandLink value="File Name" title="File Name" action="{!doSort}" status="processStatus" reRender="FileList">
+                        <apex:param name="sortField" value="{!fileNamespacePrefixAT + 'File_Name__c'}" assignTo="{!sortFieldAT}"/>
+                    </apex:commandLink>
+                    <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'ascending.gif')}" alt="ASC" title="Ascending" rendered="{!order == 'asc' && sortFieldAT == fileNamespacePrefixAT + 'File_Name__c'}"></apex:image>
+                    <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'descending.gif')}" alt="DESC" title="Descending" rendered="{!order == 'desc' && sortFieldAT == fileNamespacePrefixAT + 'File_Name__c'}"></apex:image>
+                </apex:outputPanel>
+            </apex:facet>
+            <apex:outputText value="{!f.fileName}" rendered="{!NOT(enableDownloadAT) && (f.contentType != 'Folder')}"></apex:outputText>
+            <apex:outputLink title="{!f.fileName}" rendered="{!(f.contentType == 'Folder')}" 
+                value="javascript:changeFolder('{!JSENCODE(f.Id)}','{!JSENCODE(f.fileName)}')">
+                {!f.fileName}
+            </apex:outputLink>
+            <apex:commandLink value="{!f.fileName}" action="{!downloadFile}" rendered="{!enableDownloadAT && (f.contentType != 'Folder')}" reRender="downloadArea">
+                <apex:param name="attachmentFileId" value="{!f.file.Id}" />
+            </apex:commandLink>
+        </apex:column>
+        <apex:repeat value="{!configuredFields}" var="field" id="customFieldRepeater">
+        <!-- repeat over field wrappers, create a column for each of them. value="{!f.fieldValueMap[field.fieldId]}" -->
+            <apex:column rendered="{!NOT(field.fieldType == 'TEXTAREA' || field.fieldType == 'MULTIPICKLIST')}">
+                <apex:facet name="header">
+                    <apex:outputPanel layout="block">
+                        <apex:commandLink value="{!field.fieldLabel}" title="{!field.fieldLabel}" action="{!doSort}" status="processStatus" reRender="FileList">
+                            <apex:param name="sortField" value="{!field.fieldId}" assignTo="{!sortFieldAT}"/>
+                        </apex:commandLink>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'ascending.gif')}" alt="ASC" title="Ascending" rendered="{!order == 'asc' && sortFieldAT == field.fieldId}"></apex:image>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'descending.gif')}" alt="DESC" title="Descending" rendered="{!order == 'desc' && sortFieldAT == field.fieldId}"></apex:image>
+                    </apex:outputPanel>
+                </apex:facet>
+                <apex:outputField value="{!f.file[field.fieldId]}">
+                </apex:outputField>
+            </apex:column> 
+            <apex:column headerValue="{!field.fieldLabel}" rendered="{!(field.fieldType == 'TEXTAREA' || field.fieldType == 'MULTIPICKLIST')}">
+                 <apex:outputField value="{!f.file[field.fieldId]}">
+                </apex:outputField>
+            </apex:column>
+        </apex:repeat>
+        <apex:column headerValue="Private" width="2%" rendered="{!(NOT(isCustomerPortalUser) && privateEnabledAT)}">
+            <div align="center">
+                <apex:facet name="header">
+                    <apex:outputPanel layout="block">
+                        <apex:commandLink value="Private" title="Private" action="{!doSort}" status="processStatus" reRender="FileList">
+                            <apex:param name="sortField" value="{!fileNamespacePrefixAT + 'Private__c'}" assignTo="{!sortFieldAT}"/>
+                        </apex:commandLink>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'ascending.gif')}" alt="ASC" title="Ascending" rendered="{!order == 'asc' && sortFieldAT == fileNamespacePrefixAT + 'Private__c'}"></apex:image>
+                        <apex:image url="{!URLFOR($Resource.cg__SDriveFileIcons, 'descending.gif')}" alt="DESC" title="Descending" rendered="{!order == 'desc' && sortFieldAT == fileNamespacePrefixAT + 'Private__c'}"></apex:image>
+                    </apex:outputPanel>
+                </apex:facet>
+                <apex:image width="21" height="16" title="Private" alt="Private" url="/img/checkbox_checked.gif" rendered="{!f.accessibility}"></apex:image>
+                <apex:image width="21" height="16" title="Public" alt="Public" url="/img/checkbox_unchecked.gif" rendered="{!NOT(f.accessibility)}"></apex:image>
+            </div>    
+        </apex:column>
+   </apex:pageBlockTable>
+    <apex:outputPanel layout="block" id="bottomPagination" rendered="{!showPages || hasFiles}" styleClass="paginationStyleBottom" >
+       <apex:outputPanel rendered="{!hasFiles && NOT(isSearchInProgress)}"><b>Total Items:</b> {!totalItems}&nbsp;&nbsp;</apex:outputPanel>
+       <apex:outputPanel rendered="{!showPages}"><b>Page:&nbsp;</b></apex:outputPanel>
+       <apex:repeat var="p" value="{!pages}" rendered="{!showPages}">
+           <apex:outputPanel onclick="cg_navigate('{!p}')" rendered="{!(p != pageNumAT)}" styleClass="btn">{!p}</apex:outputPanel>
+            
+           <apex:outputPanel rendered="{!p == pageNumAT}">{!pageNumAT}</apex:outputPanel>
+           &nbsp;
+       </apex:repeat>
+   </apex:outputPanel>
+   <apex:outputLabel value="No records to display.." rendered="{!(ISNULL(files))}" styleClass="noRowsHeader"></apex:outputLabel>
+ </apex:pageBlock>
+   </apex:form>
+<script>
+beenFocused = true; 
+
+function displayYUISimpleDialog(message)
+{
+    var handleOK = function()
+    {
+        this.hide();
+    };
+    
+    YAHOO.cyangate.com.errorDialog = 
+        new YAHOO.widget.SimpleDialog("errorDialog", 
+             { width: "300px",
+               fixedcenter: true,
+               visible: true,
+               modal: true,
+               draggable: true,
+               close: false,
+               hideaftersubmit: true,
+               zIndex: 100,
+               text: message,
+               icon: YAHOO.widget.SimpleDialog.ICON_WARN,
+               constraintoviewport: true,
+               buttons: [{text:"OK", handler:handleOK, isDefault:true }]
+             } );
+    YAHOO.cyangate.com.errorDialog.render(document.body);
+    YAHOO.cyangate.com.errorDialog.show();
+}
+</script>   
+</apex:component>

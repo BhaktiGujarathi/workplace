@@ -1,0 +1,777 @@
+<apex:page controller="HandoverCREProcess" sidebar="false" showHeader="false" standardstylesheets="false" applyBodytag="false" docType="html-5.0">
+<html lang="en">
+    <head>
+        <title>Dashboard</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}"/>
+        <!--  <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/button.css')}"/>-->
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+       <!-- <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/checkbox.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/jquery.gridster.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/demo.css')}"/>-->
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-multiselect.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}"/>
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway"/>
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800"/>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+        
+        <style type="text/css">
+		.errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #d74c3b!important;
+        }
+        
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+        
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+        
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+        
+        .confirmM3 {
+            border-color: green!important;
+        }
+        
+        .warningM3 {
+            border-color: sandybrown!important;
+        }
+         .overlayStatus
+        {
+            position:fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:100%;
+            text-align:center;
+            vertical-align: middle;
+            background-color: #dcdcdc;
+            opacity:0.6;
+            filter:alpha(opacity=60);
+            z-index: 20 ;
+        }
+       
+        .loadIMG
+        {
+            display:block;
+            margin-top:20%;
+            margin-left:auto;
+            margin-right:auto;
+            text-align:center;
+            vertical-align: middle;
+        }
+		</style>
+    </head>
+    
+    <body>
+	<apex:form id="form">
+	<apex:actionStatus id="processStatus" layout="block">
+            <apex:facet name="start">
+                <apex:outputPanel styleClass="overlayStatus" >
+                    <apex:image value="/img/loading32.gif" styleClass="loadIMG"/>
+                    <apex:outputLabel value="Processing..." styleClass="loadLabel"/>
+                </apex:outputPanel>
+            </apex:facet>
+            <apex:facet name="stop"/>
+        </apex:actionstatus>
+        <!---------------------- Top Navbar ------------------------>        
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="#">Damac</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                <i class="fa fa-bell" aria-hidden="true"></i>
+                                <span class="label notification">10</span>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-calendar" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-profile-box dropdown">
+                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                <img src="assets/img/user.png" class="top-user-image" />
+                                <span class="top-user-name">Jane Doe</span>
+                            </a>
+                            <ul class="dropdown-menu site-dropdown user-dropdown">
+                                <li><a href="#" class="wave-button"> View Profile</a></li>
+                                <li><a href="#" class="wave-button">Settings</a></li>
+                                <li><a href="#" class="wave-button">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Sidebar Menu -->
+        <div class="nav-side-menu">
+            <div class="brand">Brand Logo</div>
+            <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+            <div class="menu-list">
+                <ul id="menu-content" class="menu-content collapse out">
+                    <li><a href="CRE-additional-parking.html"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                    <li  data-toggle="collapse" data-target="#cre" class="active" >
+                        <a><i class="fa fa-delicious" aria-hidden="true"></i> CRE SR's <span class="arrow"></span></a>
+                    </li>
+                    <ul class="sub-menu collapse in" id="cre">
+                        <li><a href="CRE-additional-parking.html">Additional Parking</a></li>
+                        <li><a href="CRE-aopt.html">AOPT</a></li>
+                        <li><a href="CRE-bounced-cheque.html">Bounced Cheque</a></li>
+                        <li><a href="CRE-funds-transfer.html">Fund Transfer</a></li>
+                        <li><a href="CRE-furniture-package.html">Furniture Package</a></li>
+                        <li><a href="CRE-mortgage.html">Mortgage</a></li>
+                        <li><a href="CRE-penalty-waiver.html">Penalty Waiver</a></li>
+                        <li><a href="CRE-proof-of-payment.html">Proof of Payment</a></li>
+                        <li><a href="CRE-refunds.html">Refunds</a></li>
+                        <li><a href="CRE-cocd.html">COCD</a></li>
+                        <li class="active"><a href="CRE-early-handover.html">Handover</a></li>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+        
+        <apex:inputHidden value="{!poaAttachmentBody}" id="POAAttachBody"/>
+        <apex:inputHidden value="{!poaAttachmentName}" id="POAAttachName"/>
+            <div class="wrapper">
+                <div class="row">
+                    <div class="col-md-8">
+                        <section id="block1">
+                            <div class="well">
+                            <div class="error">
+                            		<apex:pageMessages id="pageM"/>
+                            	</div>
+                                <h4>
+                                    Handover
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Select Unit for Handover</label>
+                                            <apex:selectList styleClass="form-control" value="{!strSelectedUnit}" multiselect="false" size="1">
+                                               <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" />
+                                               <apex:selectOptions value="{!lstUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Mode of Request</label>
+                                            <select class="form-control">
+                                                <option>--None--</option>
+                                                <option>Walk In</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Handover Milestone</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCase.Handover_Status__c}"/>                                            
+                                        </div>
+                                    </div>
+                                </div>
+                                <br/><br/>
+                                <div class="row">
+                                    <div class="col-lg-8">
+                                        <ul class="nav nav-pills">
+                                            <li role="presentation" class="active"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a></li>
+                                            <li role="presentation"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a></li>
+                                            <li role="presentation"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a></li>
+                                            <li role="presentation"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a></li>
+                                        </ul>
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <colgroup><col width="40%"/>
+                                                                <col width="60%"/>
+
+                                                            </colgroup><tbody>
+                                                            <tr>
+                                                                <td><b>Project</b></td>
+                                                                <td>The Trump Estates Park Residences</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Project City</b></td>
+                                                                <td>Dubailand, Dubai, UAE</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Bedroom Type</b></td>
+                                                                <td>{!objBookingUnit.Bedroom_Type__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                <td>{!objBookingUnit.Booking_Unit_Type__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Permitted Use</b></td>
+                                                                <td>{!objBookingUnit.Permitted_Use__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Ready/ Off plan</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Rental Pool</b></td>
+                                                                <td>{!objBookingUnit.Rental_Pool_Status__c}</td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan2">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <colgroup><col width="40%"/>
+                                                                <col width="60%"/>
+                                                            </colgroup><tbody>
+                                                            <tr>
+                                                                <td><b>Dispute</b></td>
+                                                                <td>{!objBookingUnit.Dispute_Flag__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Enforcement</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Litigation</b></td>
+                                                                <td>{!objBookingUnit.DSR_Flag__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Mortgage</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Court Case</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan3">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <colgroup><col width="40%"/>
+                                                                <col width="60%"/>
+                                                            </colgroup><tbody>
+                                                            <tr>
+                                                                <td><b>OQOOD Registered</b></td>
+                                                                <td>{!objBookingUnit.OQOOD_Reg_Flag__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Agreement Status</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>Under Termination</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>FTL sent</b></td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>EHO flag</b></td>
+                                                                <td>{!objBookingUnit.Early_Handover__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>HO flag</b></td>
+                                                                <td>{!objBookingUnit.Handover_Flag__c}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><b>PCC</b></td>
+                                                                <td>{!objBookingUnit.PCC_Generate__c}</td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <colgroup><col width="40%"/>
+                                                                <col width="60%"/>
+
+                                                            </colgroup><tbody>
+                                                            <apex:repeat value="{!lstOpenCase}" var="openCase" id="openCaseID">
+                                                                <tr>
+                                                                    <td><b>{!openCase.CaseNumber}</b></td>
+                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!openCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <br/>
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <colgroup><col width="40%"/>
+                                                                <col width="60%"/>
+                                                            </colgroup><thead>
+                                                            <tr><th colspan="2">Closed SRs</th>
+                                                            </tr></thead>
+                                                            <tbody>
+                                                            	<apex:repeat value="{!lstCloseCase}" var="closeCase" id="closeCaseID">
+	                                                                <tr>
+	                                                                    <td><b>{!closeCase.CaseNumber}</b></td>
+	                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!closeCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+	                                                                </tr>
+                                                            	</apex:repeat>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <h5>Additional Information</h5>
+                                        <div class="details">
+                                            <div class="row detailHeading">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4>1500000</h4>
+                                                </div>
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>% Received</h6>
+                                                    <h4>24%</h4>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current RERA Construction Status%</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Area Variation</h6>
+                                                        <h5>{!objBookingUnit.Area_Varied__c}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>HO Pack Send to Customer?</h6>
+                                                        <h5>{!objBookingUnit.Handover_Notice_Sent__c}</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Recharges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Registration Fee</h6>
+                                                        <h5>Paid</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Area</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Under Assignment</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Current ACD</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Snag Closure Stats</h6>
+                                                        <h5>80%</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Type Variation</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>BCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Recovery Flag</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>AR PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalty/ Over dues (Portfolio level)</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Outstanding</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>No. of Parking</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM charges due</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br/>
+                            </div>
+                        </section>
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Schedule Snagging
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Call Outcome</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCase.Call_Outcome__c}" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Schedule Snagging Date</label>
+                                            <apex:inputText styleClass="form-control UnitView" html-placeholder="01/01/1999" value="{!strUnitViewDate}" />
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="pull-right">
+                                            <button class="btn btn-sm btn-success">Confirm Date</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Snag Details
+                                </h4>
+                                <table class="paymentDue" cellpadding="10" width="100%">
+                                    <colgroup><col width="30%"/>
+                                        <col width="20%"/>
+                                    </colgroup><thead>
+                                    <tr>
+                                        <th>Snag Number</th>
+                                        <th>Snag Description</th>
+                                        <th>Logged On</th>
+                                        <th>Status</th>
+                                        <th>Target Completion Date</th>
+                                    </tr>
+                                    </thead>
+                                    <apex:repeat value="{!lstSNAGs}" var="snag">
+                                    
+                                    <tbody>
+                                        <tr>
+                                            <td>{!snag.Name}</td>
+                                            <td>{!snag.SNAG_Description__c}</td>
+                                            <td>{!snag.CreatedDate}</td>
+                                            <td>{!snag.Status__c}</td>
+                                            <td>{!snag.Target_Completion_Date__c}</td>
+                                        </tr>
+                                    </tbody>
+                                   </apex:repeat>
+                                </table>
+                                <br /><br />
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Schedule Handover Date</label>
+                                            <apex:inputText styleClass="form-control ScheduleHandover" html-placeholder="01/01/1999" value="{!strScheduleHandoverDate}" />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                
+                            </div>
+                        </section>
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Power of Attorney Details
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            <i class="fa fa-download"></i> Documents
+                                        </button>
+                                        <apex:actionfunction action="{!SOAtobeGenerated}" name="soaDoc"/>
+                                        <apex:actionfunction action="{!PCCtobeGenerated}" name="pccDoc"/>
+                                        <ul class="dropdown-menu">
+                                            <li><a href="/apex/StatementOfAccountPage" target="_blank" onClick="soaDoc();">Generate Statement of Account</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="/apex/PCCPage" target="_blank" onClick="pccDoc();">Generate PCC - AR</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#">View Offers available to Customer</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="#">View HO Pack sent to Customer</a></li>
+                                            <li role="separator" class="divider"></li>
+                                            <li><a href="/apex/PCCPage" target="_blank" onClick="pccDoc();">Generate PCC - FM</a></li>
+                                        </ul>
+                                    </div>
+                                </h4>
+                             <div class="row">
+                                <div class="col-lg-5">
+                                    <div class="form-group">
+                                        <label>POA?</label>
+                                        <apex:inputCheckbox value="{!blnPoAValue}" style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()"/>
+                                    </div>
+                                </div>
+                            </div>
+							<apex:outputPanel id="POAInfoBlock">
+                                <div class="row">
+									<h5>Power of Attorney Details</h5>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control" value="{!objCase.POA_Name__c}" html-placeholder="Enter name" id="POANameID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Relationship with Owner<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:selectList styleClass="form-control" value="{!strPOARelationWithOwner}" multiselect="false" size="1">
+                                               <apex:selectOptions value="{!lstRelationShip}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Expiry<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control POAExpiryDate" html-placeholder="01/01/1999" value="{!strPOAExpiryDate}" />
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued By<span style="color:red;font-size: initial;">*</span></label>
+                                            <apex:inputText styleClass="form-control" value="{!objCase.POA_Issued_By__c}" html-placeholder="Enter name" id="issuedByID"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                         <apex:outputPanel layout="block">
+                                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Power of Attorney</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="POAAttach" onchange="attachPOAFile();" />
+                                                    </span>
+                                                    <div>
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>                                    
+                                </div>
+                               </apex:outputPanel> 
+                            </div>
+                        </section>
+                        <section id="">
+                        <div class="well">
+                            <div class="row">
+                                <apex:commandButton value="Save Draft" styleClass="btn btn-sm" style="margin-left: 197px;" action="{!createHandoverSR}" reRender="pageM" oncomplete="complete();" status="processStatus"/>
+                                <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" style="margin-left: 100px; " action="{!submitCase}" reRender="pageM" onclick="complete();" oncomplete="disableEvents();" status="processStatus"/>
+                                <!--<button class="btn btn-sm" style="margin-left: 197px;" >Save Draft</button><button class="btn btn-sm btn-success" style="margin-left: 100px; ">Submit SR</button> -->
+                            </div>
+                        </div>
+                    </section>
+
+
+
+
+                    </div>
+                    <!----------------------------------Sidebar Fixed---------------------------------------->
+                    <div class="col-md-4">
+                        <div class="well sideBarFixed profileDisplay">
+                            <img src="{!URLFOR($Resource.PortalAssets, 'assets/img/customer1.jpg')}" />
+                            <h6>#CD - 3214DSA</h6>
+                            <h4>Mr. Robert Downey Jr. </h4>
+                            <span>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>                               
+                            </span>
+                            <label><a href="">View Portfolio</a></label>
+                            <h6>Organization Name</h6>
+                            <label>Damac</label>
+
+                            <h6>Contact Details</h6>
+                            <label>+971-2313-242-425</label>
+
+                            <h6>Email</h6>
+                            <label>robert.d@gmail.com</label>
+
+                            <h6>POA</h6>
+                            <label>Bob Woolmer</label>
+
+                            <h6>Nationality</h6>
+                            <label>American</label>
+
+                            <h6>Party Type</h6>
+                            <label>Value</label>
+
+                            <h6>Customer Classification</h6>
+                            <label>A++</label>
+
+                            <h6>Bulk</h6>
+                            <label>Value</label>
+
+                            <h6>Joint Buyer</h6>
+                            <label><a href="" class="btn btn-sm">Raymond Wejes</a></label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/jquery.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap.min.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-datepicker.min.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/main.js')}"/>
+		<!--  <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/button.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/checkbox.js')}"/>-->
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-multiselect.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/upload.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/ease.js')}"/>
+        <script>
+            $('.well input.datepicker').datepicker({
+            });
+            $(document).ready(function() {
+                $('#multi-select-demo').multiselect();
+            });
+            window.onload = function(){ 
+             $('[id$=POAInfoBlock]').hide();
+            }
+            $('.POAExpiryDate').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })
+            $('.ScheduleHandover').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })
+            $('.UnitView').datepicker({ 
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            })
+            
+            function hasAttorney() {
+            	console.log('!!!!!hasAttorney');
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+            }
+            function attachPOAFile(){
+                    var filename = document.getElementById("POAAttach").value;
+                    if( filename != '' ) {
+                        $('[id$=POAAttachName]').val(filename);
+                        var fbody = document.getElementById("POAAttach").files[0];
+                        var reader = new FileReader();
+                        reader.readAsDataURL(fbody);
+                        reader.onload = function(e) {
+                            var blobfile = window.btoa(this.result);
+                            $('[id$=POAAttachBody]').val(blobfile);
+                        }
+                    }
+                }
+            function complete() {
+            window.scrollTo(0, 0);
+           }
+        </script>
+    </apex:form>
+    </body>
+</html>
+</apex:page>

@@ -1,0 +1,89 @@
+<apex:page standardController="Opportunity" extensions="DealProgressPageController">
+
+    <apex:includeScript value="{!$Resource.jquery}"/>
+    <apex:includeScript value="{!$Resource.KnobProgressBarCircle}"/> 
+    
+    <script>    
+        j$ = jQuery.noConflict();
+        
+        j$(function() {
+            j$(".dial").knob({
+                'fgColor':'#2A94D6',
+                'bgColor':'#ededed', <!--'#F8F8F8', -->
+                'fontWeight ':'30px',
+                'format' : function (v) { return v + '%'},                
+                 readOnly:true
+            });
+
+            setTimeout(function() {
+                j$(".dial").each(function() {
+                    j$(this).val(j$(this).attr("rel"));
+                });
+            }, 10);            
+        });
+    </script>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0px 40px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: 300;
+            text-rendering: optimizelegibility;
+        }
+        
+        p {
+            font-size: 10px; 
+            line-height: 30px
+        }
+        
+        div.demo {
+            text-align: center; 
+            width: 280px; 
+            float: left;
+        }
+        
+        div.demo > p {
+            font-size: 20pxl
+        }
+        
+        .dial {
+            font-size:24px !important;
+        }
+     </style>
+    
+    <table width="100%">
+        <tr cellspacing="50" cellpadding="5">
+        
+            <!-- Verification Graph -->
+            <apex:outputPanel >
+                <td style="font-weight: bold;text-align:center;color:#2A94D6;" width="33%"> 
+                    <apex:outputLabel value="UW Verification ({!verificationPercentText}%)"/> 
+                    <br/><br/>
+                    <input type="text" class="dial" value="{!verificationPercent}" rel="{!verificationCompletedCount}/{!verificationTotalCount}" />
+                </td>
+            </apex:outputPanel>
+           
+            <!-- Stips Graph -->
+            <apex:outputPanel >
+                <td align="center" style="font-weight: bold;text-align:center;color:#2A94D6;" width="34%">
+                    <apex:outputLabel value="UW Stips ({!stipsPercentText}%)"/>
+                    <br/><br/>
+                    <input type="text" class="dial" value="{!stipsPercent}" rel="{!stipsCompletedCount}/{!stipsTotalCount}" />
+                </td>
+            </apex:outputPanel>
+           
+            <!-- Merchant Graph -->
+            <apex:outputPanel >
+                <td align="center" style="font-weight: bold;text-align:center;color:#2A94D6;" width="33%">
+                    <apex:outputLabel value="Merchant Interview Questions ({!merchantPercentText}%)"/>
+                    <br/><br/>
+                    <input type="text" class="dial" value="{!merchantPercent}" rel="{!opp.Interview_Completed_Count__c}/{!opp.Interview_Total_Count__c}" />
+                </td>
+            </apex:outputPanel>
+       
+        </tr>
+    </table>   
+    
+
+</apex:page>

@@ -1,0 +1,141 @@
+<apex:page controller="BankIntegrationSetupController">
+	
+	<apex:includeScript value="{!$Resource.jquery}" />
+	
+	<style>
+		.message {
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+		}
+	</style>	
+	
+	<script>
+		$(function() {
+			$(".convert-password").attr("type", "password").removeClass("convert-password");
+		});
+	</script>	
+	
+	<apex:form >
+		<apex:sectionHeader title="Bank Integration" subtitle="{!subtitle}" />
+
+		<apex:outputPanel rendered="{!NOT(mode == 'list')}">
+			<div class="ptBreadcrumb">
+				&nbsp;«&nbsp;<a href="/apex/BankIntegrationSetup">Back to List: Bank Integration</a>
+			</div>
+			<br />
+		</apex:outputPanel>
+		
+		<apex:pageMessages />
+				
+		<apex:pageBlock rendered="{!mode == 'list'}">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="New" action="{!newBank}" />
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockTable value="{!bankSettings}" var="bs">
+				<apex:column headerValue="" width="60px" style="text-align: center;">
+					<apex:commandLink value="Del" action="{!deleteBank}" onclick="return confirm('Are you sure?');">
+						<apex:param name="bank" value="{!bs.name}" />
+					</apex:commandLink>
+				</apex:column>
+				<apex:column headerValue="Bank">
+					<a href="/apex/BankIntegrationSetup?name={!bs.name}">{!bs.name}</a>
+				</apex:column>
+				<apex:column headerValue="Username">{!bs.username}</apex:column>
+			</apex:pageBlockTable>
+	
+		</apex:pageBlock>
+		
+		<apex:pageBlock rendered="{!mode == 'type'}">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="Next" action="{!selectType}" />
+				<apex:commandButton value="Cancel" action="{!cancel}" immediate="true" onclick="return confirm('Are you sure?');" />
+			</apex:pageBlockButtons>
+			
+			<apex:pageBlockSection columns="2">
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Bank Integration Type" />
+					<apex:selectList size="1" value="{!settings.Name}">
+						<apex:selectOption itemLabel="--None--" itemValue="" />
+						<apex:selectOption itemLabel="OnDeck" itemValue="OnDeck" />
+					</apex:selectList>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		
+		<apex:pageBlock rendered="{!mode == 'new'}">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="Save" action="{!saveBank}" />
+				<apex:commandButton value="Cancel" action="{!cancel}" immediate="true" onclick="return confirm('Are you sure?');" />
+			</apex:pageBlockButtons>
+		
+			<apex:pageBlockSection columns="2">
+				<apex:inputField value="{!settings.Username__c}" required="true" />
+				
+				<apex:inputField value="{!settings.Password__c}" required="true" styleClass="convert-password" />
+				
+				<apex:inputField value="{!settings.Api_Url__c}" />
+				
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Funder Account" />
+					<apex:inputField value="{!auxLookup.AccountId}" />
+				</apex:pageBlockSectionItem>		
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Program" />
+                    <apex:inputField value="{!auxSubmission.McaApp__Program__c}" />
+                </apex:pageBlockSectionItem>        
+	
+				<apex:pageBlockSectionItem rendered="{!settings.Name == 'OnDeck'}">		
+					<apex:outputLabel value="Api Id" />		
+					<apex:inputField value="{!settings.Attribute_1__c}" required="true" />
+				</apex:pageBlockSectionItem>
+				
+				<apex:pageBlockSectionItem rendered="{!settings.Name == 'OnDeck'}">		
+					<apex:outputLabel value="Test Mode" />		
+					<apex:inputField value="{!settings.Test_Mode__c}" />
+				</apex:pageBlockSectionItem>
+				
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		
+		<apex:pageBlock rendered="{!mode == 'view'}">
+			<apex:pageBlockButtons >
+				<apex:commandButton value="Edit" action="{!editBank}" />
+			</apex:pageBlockButtons>
+		
+			<apex:pageBlockSection columns="2">
+				<apex:outputField value="{!settings.Username__c}" />
+				
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Password" />
+					<apex:outputText value="{!maskedPassword}" />
+				</apex:pageBlockSectionItem>
+				
+				<apex:outputField value="{!settings.Api_Url__c}" />
+				
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Funder Account" />
+					<apex:outputField value="{!auxLookup.AccountId}" />
+				</apex:pageBlockSectionItem>		
+
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Program" />
+                    <apex:outputField value="{!auxSubmission.McaApp__Program__c}" />
+                </apex:pageBlockSectionItem>        
+
+				<apex:pageBlockSectionItem rendered="{!settings.Name == 'OnDeck'}">		
+					<apex:outputLabel value="Api Id" />		
+					<apex:outputField value="{!settings.Attribute_1__c}" />
+				</apex:pageBlockSectionItem>
+				
+				<apex:pageBlockSectionItem rendered="{!settings.Name == 'OnDeck'}">		
+					<apex:outputLabel value="Test Mode" />		
+					<apex:outputField value="{!settings.Test_Mode__c}" />
+				</apex:pageBlockSectionItem>
+				
+			</apex:pageBlockSection>
+		</apex:pageBlock>
+		
+	</apex:form>
+</apex:page>

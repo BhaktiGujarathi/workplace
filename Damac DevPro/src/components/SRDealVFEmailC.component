@@ -1,0 +1,183 @@
+<apex:component controller="SRDealVFEmailCtrl" access="global" >
+    <style>
+        .textFont{
+            font-family: sans-serif;    
+            font-size: 12px;
+        }
+        
+        .header{
+            background-color: black;
+            color: white;
+            font-family: sans-serif;    
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .sectionheader{
+            background-color: black;
+            color: white;
+            font-family: sans-serif;    
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .border {
+            border: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+        
+        .borderRight {
+            border-right: 1px solid black;
+            border-collapse: collapse;
+            padding: 5px;
+        }
+    </style>
+    <apex:attribute type="Id" name="booking" description="Contains the booking Id" assignTo="{!bookingId}" />
+    <div style="text-align">
+        <apex:image value="https://damacsandbox--damacdev--c.cs88.visual.force.com/servlet/servlet.ImageServer?id=0159E0000004pKk&oid=00D9E000000CrrJ" /><br/><br/>
+    </div>
+    <!-- <div class="header">Proposal for Approval</div> -->
+    <br/>
+    <div style="background-color: black; height: 10px;"></div>
+    <div class="sectionheader"> Customer Details </div>
+    <div style="background-color: black; height: 10px;"></div>
+     <table width="100%" class="border">
+        <tr class="border">
+            <td class="textFont border"> Customer Name </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.primaryBuyerName), 'N/A', cdwObject.primaryBuyerName)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border">Customer Name (as per scan)</td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.primaryBuyerScannedName), 'N/A', cdwObject.primaryBuyerScannedName)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border"> Joint Buyer Name </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.jointBuyersName), 'N/A', cdwObject.jointBuyersName)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border"> Joint Buyer Name (as per scan) </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.jointBuyersScannedName), 'N/A', cdwObject.jointBuyersScannedName)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border"> Projects </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.projectsName), 'N/A', cdwObject.projectsName)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border"> Number of Units </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.numberOfUnits), 'N/A', cdwObject.numberOfUnits)}</td>
+        </tr>
+        <tr class="border">
+            <td class="textFont border"> Total Selling Price (AED) </td>
+            <td class="textFont borderRight">{!IF(ISBLANK(cdwObject.totalSellingPrice), 'N/A', cdwObject.totalSellingPrice)}</td>
+        </tr>
+    </table>
+    <br/>
+    <apex:repeat var="unitId" value="{!bookingUnitIdsSet}">
+        <table width="100%" cols="2" class="border" cellpadding="10">
+            <tr>
+                <td  width="50%" valign="top" class="border">
+                    <div class="sectionheader">Unit Details</div>
+                    <table width="100%" class="border">
+                        <apex:repeat var="thisUnit" value="{!bookingUnitsMap[unitId]}"> 
+                            <tr>
+                                <td class="textFont borderRight"> Type </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Inventory__r.Unit_Type__c != null, thisUnit.Inventory__r.Unit_Type__c, 'N/A')}</td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Selling Price (AED) </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Selling_Price__c != null, thisUnit.Selling_Price__c, 'N/A')}</td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Area (SFT) </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Inventory__r.Area__c != null, thisUnit.Inventory__r.Area__c, 'N/A')}</td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Special Price (AED) </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Inventory__r.Special_Price__c != null , thisUnit.Inventory__r.Special_Price__c, 'N/A')}</td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Proposed Price (AED) </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Requested_Price__c != null, thisUnit.Requested_Price__c, 'N/A')}</td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Proposed Price (per SFT) </td>
+                                <td class="textFont borderRight">
+                                    <apex:outputText value="{0, number, ####.##}">
+                                        <apex:param value="{!IF(thisUnit.Requested_Price__c != null && thisUnit.Inventory__r.Area_Sqft_2__c != null, thisUnit.Requested_Price__c / thisUnit.Inventory__r.Area_Sqft_2__c, 0)}" />       
+                                    </apex:outputText>
+                                </td>
+                            </tr>
+                            <tr>    
+                                <td class="textFont borderRight"> Discount (%) </td>
+                                <td class="textFont borderRight">
+                                    <apex:outputText value="{0, number, ####.##}%">
+                                        <apex:param value="{!IF(thisUnit.Selling_Price__c != null && thisUnit.Requested_Price__c != null, ((thisUnit.Selling_Price__c - thisUnit.Requested_Price__c) / thisUnit.Selling_Price__c) * 100, 0)}" />       
+                                    </apex:outputText>   
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> Promotion/Scheme Name </td>
+                                <td class="textFont borderRight">{!IF(thisUnit.Inventory__r.Special_Price__c != null, thisUnit.Inventory__r.Special_Price__c, 'N/A')}</td> 
+                            </tr>
+                            <tr>
+                                <td class="textFont borderRight"> No. Of Parking </td>
+                                <td class="textFont borderRight">1</td>
+                            </tr>
+                        </apex:repeat>
+                    </table>
+                </td>
+                <td  width="50%" valign="top" class="border">
+                    <div class="sectionheader"> Payment Details </div>
+                    <table width="100%" class="border">
+                        <thead>
+                            <td class="textFont"> Description </td>
+                            <td class="textFont"> Milestone Event </td>
+                            <td class="textFont"> Standard Values </td>
+                            <td class="textFont"> Proposed Value </td>
+                        </thead>
+                        <tbody>
+                            <apex:repeat var="thisPaymentPlan" value="{!bookingUnitPaymentPlanMap[unitId].Payment_Terms__r}">
+                                <tr class="border">
+                                    <td class="textFont">{!thisPaymentPlan.Description__c}</td>
+                                    <td class="textFont">{!thisPaymentPlan.Milestone_Event__c}</td>
+                                    <td class="textFont">{!thisPaymentPlan.Percent_Value__c}</td>
+                                    <td class="textFont">{!IF(NOT(ISBLANK(thisPaymentPlan.Modified_Percent_Value__c)), thisPaymentPlan.Modified_Percent_Value__c, thisPaymentPlan.Percent_Value__c)}</td>
+                                </tr>   
+                            </apex:repeat>
+                        </tbody>                    
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </apex:repeat>
+    <br/>
+    <div class="sectionheader"> Other Details </div>
+    <table class="border" width="100%">    
+        <tr class="border">  
+            <td class="textFont border"> Sales Person </td>
+            <td class="textFont borderRight">{!spdwObject.pcName}</td>
+        </tr>
+        <tr class="border">  
+            <td class="textFont border"> Director of Sales </td>
+            <td class="textFont borderRight">{!spdwObject.dosName}</td>
+        </tr>
+        <tr class="border">  
+            <td class="textFont border"> Agent Involved </td>
+            <td class="textFont borderRight">{!spdwObject.agentName}</td>
+        </tr>
+        <tr class="border">  
+            <td class="textFont border"> Token Deposit Proposed (AED) </td>
+            <td class="textFont borderRight">{!spdwObject.requestedTokenAmount}</td>
+        </tr>
+    </table>
+    <br/>
+    <br/>
+    <!--<div class="textFont" style="font-size: 14px;">         
+         To approve or reject this item, reply to this email with the word <b>APPROVE</b>, <b>APPROVED</b>, <b>YES</b>, <b>REJECT</b>, <b>REJECTED</b>, or <b>NO</b> in the first line of the email message.<br/>
+         If replying via email you can also add comments on the second line. The comments will be stored with the approval request in Salesforce.<br/><br/>
+         <b>Note: </b> For salesforce.com to process your response the word <b>APPROVE</b>, <b>APPROVED</b>, <b>YES</b>, <b>REJECT</b>, <b>REJECTED</b>, or <b>NO</b> must be in the very first line of the reply email. 
+         Also, any comment must be in the second line. 
+     </div>
+     <br/><br/><br/><br/>-->
+</apex:component>

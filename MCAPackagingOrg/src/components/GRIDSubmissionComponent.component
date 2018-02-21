@@ -1,0 +1,258 @@
+<apex:component controller="GRIDSubmissionController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!submisionEditAllFlag}" access="global" />
+
+    <apex:includeScript value="/support/console/26.0/integration.js"/>    
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+
+   <apex:form id="Submissionform" styleClass="records">
+   <apex:outputLabel rendered="{!submisionIsRefrenceField }">Please remove '{!submisionRefrenceFieldLabel }' field from the 'GRIDSubmissionFieldSet' field set, as referenced fields are not allowed.</apex:outputLabel>
+
+    <apex:outputPanel id="submisiontable" title="Submission" rendered="{!NOT(submisionIsRefrenceField)}">
+        <script type="text/javascript">
+            
+            t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                  t$(".disBtn").prop('disabled', true);
+                  t$("a").attr("onmouseover","");
+                  t$("[id*='submissionTab_lbl']").text( 'Submissions'+' ({!submisionRecordCount})'); 
+                  
+                  t$('#submissionTableInner tr').hover(
+                    function() {
+                       console.log('hover');
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                    initCallSubmission();
+                });
+            //save functionality start
+            
+            
+        </script>
+        
+        <apex:pageBlock mode="inlineEdit">
+           
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Submission__c.createable}" id="newSubmsn">
+                    <input type="button" onclick="runNewSubmission()" class="{!if(submisionIsDisable,'btnDisabled disBtn','btn')}" value="New Submission" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!AND($ObjectType.Submission__c.updateable, NOT(submisionEditAllFlag))}">
+                    <apex:CommandButton action="{!editAllSubmissions}" value="Edit All" disabled="{!submisionIsDisable}" rerender="submisiontable" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Submission__c.updateable,$ObjectType.Submission__c.createable)}">
+                    <input type="button" onclick="runSaveSubmissions()" class="{!if(submisionIsDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refreshSubmissions}" value="Refresh" disabled="{!submisionIsDisable}" rerender="submisiontable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshSubmissions}" value="Cancel" disabled="{!submisionIsDisable}" rerender="submisiontable" status="loadingPanel" immediate="true" id="canclBtn"/>
+                <apex:commandButton value="Submission Wizard" disabled="{!submisionIsDisable}" onclick="submissionWizardPage()" rerender="submisiontable" status="loadingPanel" immediate="true" />
+                
+            </apex:pageBlockButtons>
+            
+            <apex:pageMessages id="submisionpgMsgId" escape="false" />
+            
+            <table class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="submissionTableInner">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!submisionFieldsetList}" var="submisionField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!submisionField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(submisionField.type != 'textarea', submisionField.type != 'multipicklist', submisionField.type != 'phone')}"> 
+                                        <img src="{!IF(submisionSortExprFieldApi==submisionField.fieldPath,IF(submisionSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="{!submisionField.fieldPath}" class="sorting" onclick="sortCallSubmissions('{!submisionField.type}');" />
+                                  </apex:OutputPanel>
+                                </div>
+                                
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!submisionWrapperLst}" var="submisionWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!submisionWraper.submisionIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!submisionWraper.submision.Id}" target="_blank" rendered="{!NOT(ISBLANK(submisionWraper.submision.Id))}" > View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!AND(NOT(ISBLANK(submisionWraper.submision.Id)),$ObjectType.Submission__c.deletable)}" />
+                                <apex:commandLink action="{!deleteSubmission}" value="Del" rerender="submisiontable" rendered="{!AND(NOT(ISBLANK(submisionWraper.submision.Id)),$ObjectType.Submission__c.deletable)}" status="loadingPanel">
+                                    <apex:param name="submisionIndexToRemove" value="{!submisionWraper.submisionIndex}" assignTo="{!submisionIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteSubmission}" value="Remove" rerender="submisiontable" rendered="{!(ISBLANK(submisionWraper.submision.Id))}"  styleClass="removeRow" status="loadingPanel" immediate="true">
+                                <apex:param name="submisionIndexToRemove" value="{!submisionWraper.submisionIndex}" assignTo="{!submisionIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!submisionFieldsetList}"  var="submisionfield">
+                                <td>
+                                    <apex:outputField value="{!submisionWraper.submision[submisionfield]}"  
+                                    rendered="{!AND(IF(submisionWraper.submisionEdit = false, true, false),NOT(ISBLANK(submisionWraper.submision.Id)))}" />
+                                    <apex:inputField value="{!submisionWraper.submision[submisionfield]}" 
+                                    rendered="{!OR(IF(submisionWraper.submisionEdit = true, true, false),ISBLANK(submisionWraper.submision.Id))}" />
+                                </td>
+                                
+                            </apex:repeat>
+                        </tr>
+                    </apex:repeat>
+                    </tbody>
+                   
+                </table>
+                <br />
+                
+              
+ {!IF((submisionOffsetsize + 1) > submisionRecordCount, IF(submisionRecordCount - submisionBlockSize <= 0, 0, submisionRecordCount - submisionBlockSize), submisionOffsetsize + 1)} - {!submisionWrapperLst.size + submisionOffsetsize} of {!submisionRecordCount}
+
+                <!-- panel grid for pagination buttons -->
+                   
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="submisiontable" action="{!beginningSubmissions}" status="loadingPanel" rendered="{!IF(submisionOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="submisiontable" action="{!previousSubmissions}"  status="loadingPanel" rendered="{!IF(submisionOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="submisiontable" action="{!nextSubmissions}" status="loadingPanel" rendered="{!IF(submisionWrapperLst.size + submisionOffsetsize < submisionRecordCount, true, false)}"/>
+                       
+                       
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="submisiontable" action="{!endSubmissions}" status="loadingPanel"  rendered="{!IF(submisionWrapperLst.size + submisionOffsetsize < submisionRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+            
+        </apex:pageBlock>
+                  
+            <apex:inputHidden value="{!submisionSortExpression}" id="submisionSortHiddencriterian"/>
+            <apex:inputHidden value="{!submisionSortDirection}" id="submisionSortHiddenOrder"/>
+            <apex:inputHidden value="{!submisionSortExprFieldApi}" id="submisionSortFieldApi"/>
+        </apex:outputPanel>
+            
+            
+            <apex:actionFunction action="{!newSubmission}" name="newSubmission" rerender="submisiontable" status="loadingPanel"/>
+            <apex:actionFunction action="{!saveSubmissions}" name="saveSubmissions" rerender="submisiontable" status="loadingPanel"/>
+            <apex:actionFunction action="{!sortSubmissions}" name="sortAllSubmissions" rerender="submisiontable" status="loadingPanel" >
+               <apex:param name="submisionTypeParam" value="" /> 
+            </apex:actionFunction>
+
+    </apex:form>
+    <script>
+        var isInConsoleSubmission = false;
+        var tabIdSubmission;
+        
+        function runNewSubmission() 
+        {
+            setTimeout(function() 
+            {               
+                newSubmission();
+            }, 100);
+        }
+        
+        function runSaveSubmissions() 
+        {
+            setTimeout(function() 
+            {               
+                saveSubmissions();
+            }, 100);
+        }
+        
+        function initCallSubmission()
+        {
+            setIsConsoleSubmission();
+            getFocusedPrimaryTabIdSubmission();
+            
+        }
+        
+        function setIsConsoleSubmission() {
+            isInConsoleSubmission = sforce.console.isInConsole();
+        }
+        
+        function getFocusedPrimaryTabIdSubmission() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdSubmission);
+        }
+                
+        var showTabIdSubmission = function showTabIdSubmission(result) {
+            //Display the tab ID
+            tabIdSubmission = result.id;
+        };
+        
+        function openConsoleTabSubmission(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdSubmission, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdSubmission);
+        }
+        
+        function sortCallSubmissions(submisionFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                 var submisionElement= event.target;
+                 var newsubmisionSortCol = t$(submisionElement).attr("Name"); // new sort field
+                 t$("input[id$='submisionSortFieldApi']").val(newsubmisionSortCol);
+                 var oldsubmisionSortCol = t$("input[id$='submisionSortHiddencriterian']").val();
+                 var indexSubmision;
+                 var submisionTempSortExpr;
+                 if(newsubmisionSortCol.endsWith('__c')) 
+                 {
+                     indexSubmision = newsubmisionSortCol.indexOf('__');
+                 }
+                 else if(newsubmisionSortCol.endsWith('Id'))
+                 {
+                     indexSubmision = newsubmisionSortCol.indexOf('Id');
+                 }
+
+                if(indexSubmision != null) {
+                    submisionTempSortExpr = newsubmisionSortCol.substring(0, indexSubmision);
+                }
+                else 
+                {
+                    submisionTempSortExpr = newsubmisionSortCol;
+                }
+                 
+               //if(String(newsubmisionSortCol) == String(oldsubmisionSortCol))
+               if(oldsubmisionSortCol.indexOf(submisionTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='submisionSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='submisionSortHiddenOrder']").val("DESC");
+                      t$(submisionElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='submisionSortHiddenOrder']").val("ASC");
+                      t$(submisionElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='submisionSortHiddencriterian']").val(newsubmisionSortCol);                   
+                    sortAllSubmissions(submisionFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='submisionSortHiddencriterian']").val(newsubmisionSortCol);
+                    t$("input[id$='submisionSortHiddenOrder']").val("ASC");
+                    t$(submisionElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllSubmissions(submisionFieldDataType);
+                
+                }
+                
+        }
+        function submissionWizardPage()
+        {
+            
+            var submissionUrl = '{!$Page.SubmissionWizard}';
+            submissionUrl += '?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}';
+            if(isInConsoleSubmission)
+            {
+                submissionUrl += '&isConsole=1';
+                openConsoleTabSubmission(submissionUrl, 'SubmissionWizard');
+            }
+            else
+            {
+                submissionUrl += '&isConsole=0';
+                window.open(submissionUrl, '_parent');
+            }
+        }
+    </script>
+</apex:component>

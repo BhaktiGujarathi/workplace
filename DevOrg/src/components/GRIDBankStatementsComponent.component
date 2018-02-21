@@ -1,0 +1,154 @@
+<apex:component controller="GRIDBankStatementsController" allowDML="true">
+    <apex:form id="BankStatementform" styleClass="records">
+        <apex:outputPanel id="bankStmntTable">
+        <apex:pageBlock mode="inlineEdit">
+            <apex:pageBlockButtons location="top">
+                <input type="button" onclick="runNewBankStatement()" class="btn" value="New Bank Statement" status="loadingPanel"/>
+                <apex:CommandButton action="{!editAllBankStatements}" value="Edit All" rerender="bankStmntTable" status="loadingPanel"/>
+                <input type="button" onclick="runSaveBankStatements()" class="btn" value="Save" status="loadingPanel" />
+                <apex:CommandButton action="{!refreshBankStatements}" value="Refresh" rerender="bankStmntTable" status="loadingPanel" immediate="true"/>
+                <apex:CommandButton action="{!refreshBankStatements}" value="Cancel" rerender="bankStmntTable" status="loadingPanel" immediate="true"/>
+            </apex:pageBlockButtons>
+        
+        
+            <apex:pageMessages id="bankStmntpgMsgId" escape="false" />
+                
+                <table  class="list" border="0" cellpadding="0" cellspacing="0">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntField">
+                            <th>
+                                 <div>
+                                    <apex:outputLabel value="{!bankStmntField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(bankStmntField.type != 'textarea', bankStmntField.type != 'picklist', bankStmntField.type != 'multipicklist')}"> 
+                                        <img src="{!IF(bankStmntSortExpression==bankStmntField.fieldPath,IF(bankStmntSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name ="{!bankStmntField.fieldPath}" class="sorting" onclick="sortCallBankStatements('{!bankStmntField.type}');" />
+                                    </apex:OutputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!bankStmntWrapperLst}" var="bankStmntWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!bankStmntWraper.bankStmntIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!bankStmntWraper.BankStmnt.Id}" target="blank" rendered="{!NOT(ISBLANK(bankStmntWraper.BankStmnt.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(bankStmntWraper.bankStmnt.Id))}"/>
+                                <apex:commandLink action="{!deleteBankStatement}" value="Del" rerender="bankStmntTable" rendered="{!NOT(ISBLANK(bankStmntWraper.BankStmnt.Id))}" status="loadingPanel">
+                                    <apex:param name="bankStmntIndexToRemove" value="{!bankStmntWraper.bankStmntIndex}" assignTo="{!bankStmntIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteBankStatement}" value="Remove" rerender="bankStmntTable" rendered="{!(ISBLANK(bankStmntWraper.bankStmnt.Id))}"  styleClass="removeRow" status="loadingPanel">
+                                <apex:param name="bankStmntIndexToRemove" value="{!bankStmntWraper.bankStmntIndex}" assignTo="{!bankStmntIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                            <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntfield">
+                                <td>
+                                    <apex:outputField value="{!bankStmntWraper.BankStmnt[bankStmntfield]}" rendered="{!AND(IF(bankStmntWraper.bankStmntEdit = false, true, false),NOT(ISBLANK(bankStmntWraper.bankStmnt.Id)))}" />
+                                    <apex:inputField value="{!bankStmntWraper.BankStmnt[bankStmntfield]}" rendered="{!OR(IF(bankStmntWraper.bankStmntEdit = true, true, false),ISBLANK(bankStmntWraper.bankStmnt.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr class="headerRow">
+                            <td><b>Average</b></td>
+                            <td></td>
+                            <apex:repeat value="{!bankStmntFieldsetList}" var="bankStmntfield">
+                                <td>
+                                    <apex:outputText value="{!bankStmntFieldToSumMap[bankStmntfield.fieldPath]}" rendered="{!bankStmntFieldToSumMap[bankStmntfield.fieldPath] != 100}" />
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                showing records {!IF((bankStmntOffsetsize + 1) > bankStmntRecordCount, IF(bankStmntRecordCount - bankStmntBlockSize <= 0, 0, bankStmntRecordCount - bankStmntBlockSize), bankStmntOffsetsize + 1)} - {!IF(bankStmntBlockSize + bankStmntOffsetsize <= bankStmntRecordCount, bankStmntBlockSize + bankStmntOffsetsize, bankStmntRecordCount)} Of {!bankStmntRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+                <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="bankStmntTable" action="{!beginningBankStatements}" status="loadingPanel" disabled="{!IF(bankStmntOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="bankStmntTable" action="{!previousBankStatements}"  status="loadingPanel" disabled="{!IF(bankStmntOffsetsize == 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="bankStmntTable" action="{!nextBankStatements}" status="loadingPanel" disabled ="{!IF(bankStmntBlockSize + bankStmntOffsetsize >= bankStmntRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="bankStmntTable" action="{!endBankStatements}" status="loadingPanel" disabled ="{!IF(bankStmntBlockSize + bankStmntOffsetsize >= bankStmntRecordCount, true, false)}"/>
+                </apex:pageBlockButtons>
+        </apex:pageBlock>
+        </apex:outputPanel>
+        <apex:actionFunction action="{!newBankStatement}" name="newBankStatement" rerender="bankStmntTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveBankStatements}" name="saveBankStatements" rerender="bankStmntTable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortBankStatements}" name="sortAllBankStatements" rerender="bankStmntTable" status="loadingPanel" >
+            <apex:param name="bankStmntTypeParam" value="" /> 
+        </apex:actionFunction>
+        
+        <apex:inputHidden value="{!bankStmntSortExpression}" id="bankStmntSortHiddencriterian"/>
+        <apex:inputHidden value="{!bankStmntSortDirection}" id="bankStmntSortHiddenOrder"/>
+        
+    </apex:form>
+    
+    <script>
+        function runNewBankStatement() 
+        {
+            setTimeout(function() 
+            {               
+                newBankStatement();
+            }, 200);
+        }
+        
+        function runSaveBankStatements() 
+        {
+            setTimeout(function() 
+            {               
+                saveBankStatements();
+            }, 200);
+        }
+        
+        function sortCallBankStatements(bankStmntFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                
+                 var bankStmntElement= event.target;
+                 
+                 var newbankStmntSortCol = t$(bankStmntElement).attr("Name"); // new sort field
+                 var oldbankStmntSortCol = t$("input[id$='bankStmntSortHiddencriterian']").val();
+                 console.log(oldbankStmntSortCol);
+                 
+               if(String(newbankStmntSortCol) == String(oldbankStmntSortCol))
+                {
+                    
+                    if(String(t$("input[id$='bankStmntSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='bankStmntSortHiddenOrder']").val("DESC");
+                      t$(bankStmntElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='bankStmntSortHiddenOrder']").val("ASC");
+                      t$(bankStmntElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='bankStmntSortHiddencriterian']").val(newbankStmntSortCol);
+                   
+                    sortAllBankStatements(bankStmntFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='bankStmntSortHiddencriterian']").val(newbankStmntSortCol);
+                    t$("input[id$='bankStmntSortHiddenOrder']").val("ASC");
+                    t$(bankStmntElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllBankStatements(bankStmntFieldDataType);
+                }
+        }
+    </script>
+    
+</apex:component>

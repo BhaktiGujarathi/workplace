@@ -1,0 +1,106 @@
+<apex:component controller="MCASubmissionsTabController" allowDML="true">
+    
+  <apex:form id="records" styleClass="records">
+<apex:pageMessages id="pageMessageId" />
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock mode="inlineedit">
+
+        <apex:actionFunction action="{!saveAllSubmissions}" name="saveAllSubmissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSubmissionCalculations()"/>
+        <apex:actionFunction name="submissionStatus" action="{!setSubmissionStatus}" rerender="declineReasonPanel" status="loadingPanel" oncomplete="return false;">
+<!--         oncomplete="submissionStatus1()" > -->
+            <apex:param value="" assignTo="{!submissionStatusValue}" name="decline"/>
+            <apex:param value="" assignTo="{!submissionIndex}" name="index"/>
+            <apex:param value="" assignTo="{!inlineEdit}" name="inlineFalse"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="submissionStatus1" rerender="declineReasonPanel" status="loadingPanel"/>
+
+        <apex:pageBlockButtons >
+
+            <apex:CommandButton action="{!newSubmission}" value="New Submission" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSubmissionCalculations()"
+                            rendered="{!$ObjectType.Submission__c.createable}"></apex:CommandButton>
+        <apex:CommandButton action="{!save}" onclick="runSaveAllSubmissions()" value="Save" oncomplete="computeSubmissionCalculations()" 
+                            rendered="{!OR($ObjectType.Submission__c.updateable,$ObjectType.Submission__c.createable)}"></apex:CommandButton>
+<!--         <input type="button" onclick="runSaveAllSubmissions()" class="btn" value="Save" /> -->
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSubmissionCalculations()"
+                            rendered="{!$ObjectType.Submission__c.updateable}"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSubmissionCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSubmissionCalculations()"
+                            rendered="{!OR($ObjectType.Submission__c.updateable,$ObjectType.Submission__c.createable)}"></apex:CommandButton>
+         <apex:commandButton action="{!refresh}" value="Submit to Banks" styleClass="btnCss" onclick="submissionWizard()" />
+      </apex:pageBlockButtons>
+
+      <apex:inlineEditSupport event="ondblclick" />
+         <table id="pgBlkTableId" class="tablesorting tablesorter" style="border: 1px solid black;">
+            <tr style="border: 1px solid black;">
+                <th >{!$ObjectType.Submission__c.Fields.Funder__c.Label}</th>
+                <th >{!$ObjectType.Submission__c.Fields.Status_Date__c.Label}</th>
+            </tr>
+            
+            <apex:repeat value="{!containers}" var="container">
+                <tr style="border: 1px solid black;">
+                    <td ><apex:outputField value="{!container.submission.Funder__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}" /><apex:inputField value="{!container.submission.Funder__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}" /></td>
+                    <td ><apex:outputField value="{!container.submission.Status_Date__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+                    <apex:inputField value="{!container.submission.Status_Date__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/></td>
+                </tr>
+            </apex:repeat>
+            
+         </table>
+         
+      
+
+    </apex:pageBlock>
+
+  </apex:form>
+  
+  <script type="application/javascript">
+  t$(document).ready(function(){
+        t$( document ).on( "change", ".status-field .statusPicklistDiv .inlineEditDiv select", function() {
+            var value = this.value || "";
+            var index = parseInt(t$(this).closest(".status-field").find("[data-index]").attr("data-index"),10);
+            console.log('----'+value+'-----'+index);
+            if(value == 'Declined')
+                submissionStatus(value,index,'true'+index);
+            else
+                submissionStatus(value,index,'false');
+            return true;
+        });
+  });
+  </script>
+  <script>
+        var submissionTabLabelOriginal ;
+        function runSaveAllSubmissions() {
+
+          setTimeout(function() {
+            saveAllSubmissions();
+          }, 1000);
+        }
+        
+        t$(function () {
+            submissionTabLabelOriginal = t$("[id*='submissiontab_lbl']").text();
+            computeSubmissionCalculations();
+        });
+        
+        function computeSubmissionCalculations() {
+            console.log('-----tab label component1----'+t$("[id*='submissiontab_lbl']").text());
+            var submissionCount = '{!submissionCount}';
+           // if(submissionCntUW != undefined && submissionCntUW != '' && submissionCntUW != 0 && submissionCntApproved != 0) {
+                var submissionTabLabel = 'Submissions'+' ';
+                console.log('-----submissionTabLabel------'+submissionTabLabel);
+                
+                
+                t$("[id*='submissiontab_lbl']").text(submissionTabLabel);                
+               
+                t$("[id*='submissiontab_lbl']").append('(' + {!submissionCntUW} +'/'+{!containers.size}+ ')');
+                
+        }
+
+      </script>
+      <script Language="JavaScript">
+       function submissionWizard() {
+           var pagePrefix= "{!$Page.SubmissionWizard}";
+           //alert(abc+'?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}');
+           window.open(pagePrefix +'?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}');
+       }
+    </script>
+</apex:component>

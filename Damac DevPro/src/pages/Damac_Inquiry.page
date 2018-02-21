@@ -1,0 +1,343 @@
+<apex:page cache="true" expires="82400" sidebar="true" controller="DamacInquiryController" tabStyle="CIL__tab">
+
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Agent Portal- CIL</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/damac-theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+
+        <style>
+            .global-content-w-footer{
+                padding-bottom:100px !important;
+            }
+
+            .custom-table thead > tr > th{
+                width: 200px !important;
+            }
+
+            .header-home{
+                background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Inquiries.jpg')}') no-repeat !important;
+                -webkit-background-size: cover!important;
+                -moz-background-size: cover!important;
+                background-size: cover!important;
+                position:relative;
+            }
+
+            .dt-buttons{
+                display: inline-block ;
+                float:left;
+                width:35%;
+                margin:0px;
+                padding:0px 10px;
+            }
+
+
+            .btn{
+                padding:6px !important;
+                text-decoration:none !important;
+            }
+
+            .refreshListButton{
+                padding-left:15px !important;
+                padding-right:15px !important;
+                margin:0px;
+            }
+            
+            label,p{
+            	margin:0px !important;
+            }
+
+            .dataTables_filter .SearchTitle,{
+                padding:6px 20px 10px;
+            	margin:0px !important;
+            	
+            }
+          
+            .dataTables_filter{
+                width:64%;
+                margin:0px;
+            	padding-bottom:8px !important;
+            }
+
+
+            .dt-button{
+                margin-right:10px !important;
+            }
+
+             .no-bg-image{
+                background:#000000 !important;
+            }
+
+            .outer td.oRight{
+                padding:0px !important;
+            }
+
+            .height-100vh{
+                width:100%;
+            }
+
+            .global-wrapper{
+                padding:7px !important;
+            }
+
+
+            @media only screen and (max-width: 767px){
+                .dt-buttons{
+                    display:block !important;
+                    width:100% !important;
+                }
+
+                .dataTables_filter{
+                    width:90% !important;
+                    display: block !important;
+                }
+
+                .height-100vh{
+                    width:85vw;
+                }
+            }
+        </style>
+    </head>
+<body > 
+    <apex:actionStatus id="pleasewait" stopText="">
+        <apex:facet name="start">
+            <div>
+            <!-- to disable whole page when user clicks on next button  -->
+                <div class="popupBackground override-bg"></div>
+                <div class="PopupPanel">
+                    <img src="{!$Resource.Portal_Loading_Image}" style="height:80%;width:80%"/>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <div class="global-wrapper content-bg">
+        <apex:insert name="body slds">
+            <apex:form id="inquiry-form">
+                <apex:actionFunction name="loadData" action="{!loadCILData}" status="pleasewait" oncomplete="setURL();" reRender="inquiryList,scriptTag">
+                </apex:actionFunction>
+                <section class="global-content-w-footer" id="inquiry-section">
+                    <div class="slds-container--large " style="background: #FFFFFF; padding-top:10px">
+                       
+                        <apex:outputPanel id="inquiryList" layout="block" styleClass="height-100vh">
+                          <div class="table-responsive ">
+                            <table class="table responsive custom-table">
+                            <thead>
+
+                                <tr>
+                                    
+                                    <apex:repeat value="{!$ObjectType.Inquiry__c.FieldSets.CIL_List}" var="DetailsList">
+                                        <th>
+                                            {!DetailsList.Label}
+                                        </th>
+                                    </apex:repeat>
+                                    <th style="width:20px !important;min-width:20px !important;text-align:center" class="no-bg-image">Action</th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <apex:repeat var="dataList" value="{!CILLists}">
+                                    <tr>
+                                        
+                                        <apex:repeat var="f" value="{!$ObjectType.Inquiry__c.FieldSets.CIL_List}">
+                                            <td>
+                                                <apex:outputField value="{!dataList[f]}" />
+                                            </td>
+                                        </apex:repeat>
+                                        <td style="text-align:center">
+                                            <a href="{!$Site.Prefix}/{!dataList['Id']}/e?retURL=/Damac_Inquiry?sfdc.tabName={!tabName}&RecordType={!inquiryRecordTypeId}" style="max-width:10vw;color:#0D80FC">
+                                            <!--<img src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/edit.svg')}" style="height:20px;width:30px"/>-->
+                                                Edit |
+                                            </a>
+                                            <a href="{!$Site.Prefix}/{!dataList['Id']}" style="max-width:10vw;color:#0D80FC">
+                                                
+                                                View
+                                            </a>
+                                        </td>
+                                        
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                            </table>
+                           </div>   
+                        </apex:outputPanel>     
+                    </div>
+                </section>
+            </apex:form>
+        </apex:insert>
+    </div>
+    
+    <script>
+    $('.page-name').text('CIL');
+    $('.header-home').addClass('header-inquiries-bg');
+    </script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <apex:outputPanel id="scriptTag">
+    <script>
+         $(document).ready(function() {
+            $('.custom-table').DataTable({
+                "bInfo": false,
+                "pageLength": 10,
+                "language": {
+                    "search": "<p class='SearchTitle'>Search</p>"
+                },
+                "lengthMenu": [10, 25, 50, 100],
+                dom: 'lBfrtip',
+                buttons: [
+                     {text: 'New CIL', className:'btn new'},
+                     {text: '', className:'btn refreshListButton'},
+                     { extend: 'excel', text: 'Download', className: 'download btn',filename: 'CIL - Agent Portal' },
+                     
+                ],
+                order:[],
+                columnDefs: [
+                   { type: 'de_date', targets: 4 },
+                   { type: 'formatted_numbers', targets : 0 },
+                   {    "targets": [ 6 ],
+                        "visible": false,
+                        "searchable": false
+                    }
+                ],
+                "oSearch": {"bSmart": false},
+                "fnDrawCallback": function () {
+                    $('[id$=Owner]').css('pointer-events','none');
+                    $('[id$=Owner]').css('color','Black');
+        
+                 }
+            });
+            $('.custom-table tr>td>span>a').each(function(i, link){
+                $(link).replaceWith($(link).text())
+            });
+             
+              $('[id$=Owner]').css('pointer-events','none');
+			$('[id$=Owner]').css('color','Black');
+        
+     
+
+            //Date Sorting
+             /*jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+                "de_date-asc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = e[1].split("/");
+                        c = 1 * (f[2] + f[1] + f[0])
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = e[1].split("/");
+                        d = 1 * (g[2] + g[1] + g[0])
+                    } else d = 1 / 0;
+                    var h = c < d ? -1 : c > d ? 1 : 0;
+                    return h
+                },
+                "de_date-desc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = e[1].split("/");
+                        c = 1 * (f[2] + f[1] + f[0])
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = e[1].split("/");
+                        d = 1 * (g[2] + g[1] + g[0])
+                    } else d = 1 / 0;
+                    var h = c < d ? 1 : c > d ? -1 : 0;
+                    return h
+                }
+            });*/
+             
+            
+             jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+              "formatted_numbers-pre": function ( a ) {
+                  var n = jQuery.trim(a).match(/IQ-[0-9]*/);
+                  var f= n[0].split('-');
+                  a=parseInt(f[1]);
+                  return a;
+               
+              },
+        
+              "formatted_numbers-asc": function ( a, b ) {
+                return a - b;
+              },
+        
+              "formatted_numbers-desc": function ( a, b ) {
+                return b - a;
+              },
+                 "de_date-asc": function(a, b) {
+                    var c, d;
+                     console.log('entered');
+                     debugger;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            t=e[1].split(' '),
+                           f = t[0].split("/"),
+                            
+                            h= (t[1] != null || t[1] != undefined)?t[1].split(':'):0,
+                            c = 1 * (f[2] + f[1] + f[0]+h[0]+h[1]);
+                            console.log(t[1]);
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            t=e[1].split(' '),
+                            g = t[0].split("/"),
+                            h= (t[1] != null || t[1] != undefined)?t[1].split(':'):0,
+                        d = 1 * (g[2] + g[1] + g[0]+h[1]+h[0])
+                    } else d = 1 / 0;
+                    var h = c < d ? -1 : c > d ? 1 : 0;
+                    return h
+                },
+                "de_date-desc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            t=e[1].split(' '),
+                            f = t[0].split("/"),
+                            h= (t[1] != null || t[1] != undefined)?t[1].split(':'):0,
+                        c = 1 * (f[2] + f[1] + f[0]+h[0]+h[1])
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            t=e[1].split(' '),
+                            g = t[0].split("/"),
+                            h= (t[1] != null || t[1] != undefined)?t[1].split(':'):0,
+                        d = 1 * (g[2] + g[1] + g[0]+h[1]+h[0])
+                    } else d = 1 / 0;
+                    var h = c < d ? 1 : c > d ? -1 : 0;
+                    return h
+                }
+          } );  
+          
+             
+            $('.new').click(function(){
+                window.location.href='{!$Site.Prefix}/{!CILPrefix}/e?retURL=/Damac_Inquiry?sfdc.tabName={!tabName}&RecordType={!inquiryRecordTypeId}';
+            });
+
+            $('.refreshListButton').click(function(){
+                loadData();
+            });
+
+        });
+      
+       
+
+    </script>
+    </apex:outputPanel>
+    <script>
+
+    $(document).ready(function(){
+        loadData();
+		        
+    });
+    </script>
+</body>
+</html>
+</apex:page>

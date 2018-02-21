@@ -1,0 +1,538 @@
+<apex:component controller="HandoverComponentController">
+<html>
+    <head>
+        <title>Dashboard</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/style.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/button.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/checkbox.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/jquery.gridster.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/demo.css')}"/>
+
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway"/>
+        <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800"/>
+
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+
+    </head>
+    <body>
+        <!---------------------- Top Navbar ------------------------>        
+        
+        <!-- Sidebar Menu -->
+
+        <!---------------------- Main content ------------------------>
+        
+                    <div class="col-md-8">
+                        <section id="step1">
+                            <div class="well">
+                                <h6>Step 1</h6>
+                                <h4>
+                                    Enter Details 
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm btn-success">View Requirements</button>
+                                    </div>
+                                    <p class="">Description Text</p>
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Select Unit for early handover</label>
+                                            <!--  <select class="form-control" id="sel1">
+                                                <option>Unit 1</option>
+                                            </select>-->
+                                            <apex:selectList styleClass="form-control formSelect" value="{!strSelectedUnit}" multiselect="false" size="1">
+                                                 <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}" rerender="duesID"/>
+                                               <apex:selectOptions value="{!lstUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>POA</label>
+                                           <!-- <select class="form-control" id="sel1">
+                                                  <option>Individual</option>
+                                                
+                                            </select>-->
+                                            <apex:inputField styleClass="form-control" id="sel1" value="{!objPOA.Type__c}"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="yellownoteSection"><i class="fa fa-info-circle" aria-hidden="true"></i> Complete all the requirements to move to NEXT <i class="fa fa-times pull-right" aria-hidden="true"></i></h6>
+                            <div class="well requirementWell" id="content">
+                                <h4>
+                                    Requirements for Transfer
+                                    <div class="pull-right">
+                                    	<div id="editor"></div>
+                                        <button class="btn btn-sm btn-primary" id="cmd">Download</button>
+                                    </div>
+                                </h4>
+                                <p>We are pleased to inform you that we are in possession of the Building Completion Certificate and are now ready to commence handover of your Unit(s). You would have already received the Handover Pack along with the Final Invoice by email and by post.</p>
+                                <ol>
+                                    <li>To take Handover of your unit, you are required to complete all outstanding payments including the Service Charges for the first year. The details of amount you are required to pay is listed below:</li>
+                                    <apex:outputPanel id="duesID">
+                                    <table class="paymentDue" cellpadding="10" width="60%">
+                                        <col width="80%"/>
+                                        <col width="20%"/>
+                                        <thead>
+                                            <tr>
+                                                <th width="70%">Payment Type</th>
+                                                <th>Amount Due</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Invoices which are due before Handover date</td>
+                                                <td>{!strOverdues}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Overdues towards instalments</td>
+                                                <td>{!strInstallFee}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Penalties</td>
+                                                <td>{!strPenalties}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Service Charges for first year</td>
+                                                <td>{!strServiceChrg}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Other dues</td>
+                                                <td>{!strOtherDues}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Total amount to be paid</strong></td>
+                                                <td><strong>{!strTotalAmt}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    
+                                    <p>This amount is payable to the following accounts:</p>
+                                    <table class="paymentDue" cellpadding="10" width="60%">
+                                        <col width="80%"/>
+                                        <col width="20%"/>
+                                        <thead>
+                                            <tr>
+                                                <th>Project Account Details</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Beneficiary Name</td>
+                                                <td>{!strProjectBenefName}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Beneficiary Bank</td>
+                                                <td>{!strProjectBenefBank}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Beneficiary Account No.&nbsp;</td>
+                                                <td>{!strProjectBenefAccNo}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>IBAN No.</td>
+                                                <td>{!strProjectBenefIBAN}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Branch</td>
+                                                <td>{!strProjectBenefBranch}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Swift code</td>
+                                                <td>{!strProjectBenefSwift}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <table class="paymentDue" cellpadding="10" width="60%">
+                                        <col width="80%"/>
+                                        <col width="20%"/>
+                                        <thead>
+                                            <tr>
+                                                <th>Service Charge Account Details</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Beneficiary Name</td>
+                                                <td>{!strServiceBenefName}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Beneficiary Bank</td>
+                                                <td>{!strServiceBenefBank}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Beneficiary Account No.&nbsp;</td>
+                                                <td>{!strServiceBenefAccNo}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>IBAN No.</td>
+                                                <td>{!strServiceBenefIBAN}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Branch</td>
+                                                <td>{!strServiceBenefBranch}</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Swift code</td>
+                                                <td>{!strServiceBenefSwift}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+									</apex:outputPanel>
+                                    <li>
+                                        Prerequisites for the handover of your Unit:
+                                        <ol class="innerList">
+                                            <li>
+                                                Obtain Payment Clearance Certificate (PCC) by clearing all outstanding balances
+                                            </li>
+                                            <li>Please obtain a NOC from your bank/finance company
+                                            </li>
+                                            <li>You are required to register with DEWA for connection to Electricity &amp; Water
+                                            </li>
+                                            <li>You are required to register with EMPOWER for connection to District Cooling
+                                            </li>
+                                            <li>It is the sole responsibility of the Owner of the Unit to ensure that they have obtained adequate insurance for their Unit(s) &amp; all contents
+                                            </li>
+                                        </ol>
+                                    </li>
+                                    <li>Schedule date for Snagging (in Portal) and visit the property to provide Snag observations </li>
+                                    <li>Schedule date for Handover (in Portal)</li>
+                                    <li>Ensure all prerequisites are completed before/by handover date</li>
+                                    <li>Visit the DAMAC CRM office on the scheduled date finish handover process, collect keys. You are required to carry the following documents on the day of Handover
+                                        <ol class="">
+                                            <li>POA (if applicable)
+                                            </li>
+                                            <li>PCC (if not already collected)
+                                            </li>
+                                        </ol>
+                                    </li>
+                                </ol>
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button class="btn btn-sm btn-success pull-right">View CRF</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </section>
+                        <section id="step2">
+                            <div class="clear-fix"></div>
+                            <h6 class="greennoteSection"><i class="fa fa-info-circle" aria-hidden="true"></i> Step 1 Successfully COMPLETED <i class="fa fa-times pull-right" aria-hidden="true"></i></h6>
+                            <div class="well">
+                                <h6>Step 2</h6>
+                                <h4>
+                                    Schedule Snagging
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm btn-success">Save and Continue</button>
+                                    </div>
+                                    <p class="">Description Text</p>
+                                </h4>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Schedule Snagging Date</label>
+                                            <input type="text" placeholder="01/01/1999" class="form-control datepicker"/>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Schedule Handover Date</label>
+                                            <input type="text" placeholder="01/01/1999" class="form-control datepicker"/>
+                                        </div>
+
+                                        <br />
+                                        <p>If primary buyer is not visiting for Snagging and/ or Handover, only a represenative with a POA issued by Primary Owner can perform these on behalf of do the same.</p>
+
+                                        <div class="form-group">
+                                            <label>POA</label>
+                                            <select class="form-control">
+                                                <option>Individual</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h5>Power of Attorney</h5>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Relationship with Owner</label>
+                                            <select class="form-control">
+                                                <option>Father</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Date of Expiry</label>
+                                            <input type="text" placeholder="01/01/1999" class="form-control datepicker"/>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Issued By</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-6 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload">
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Upload POA</label>
+                                    </div>
+
+                                </div>
+
+
+
+
+
+
+
+                            </div>
+
+
+
+                        </section>
+
+
+                        <section id="step3">
+                            <div class="well">
+                                <h6>Step 3</h6>
+                                <h4>
+                                    My Offers
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm btn-success">Save and Continue</button>
+                                    </div>
+                                </h4>
+
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <h4>Rental Proof</h4>
+                                            <p>message on Rental Pool if customer is eligible</p>
+                                            <a href="#">Initiate Rental Pool SR</a>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <h4>Mortgage</h4>
+                                            <p>message on Mortgage if customer is eligible</p>
+                                            <a href="#">Initiate Mortgage</a>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <h4>Additionally Parking</h4>
+                                            <p>message on Additionally Parking if customer is eligible</p>
+                                            <a href="#">Initiate Rental Pool SR</a>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <h4>Utility Registration</h4>
+                                            <p>message on Utility Registration if customer is eligible</p>
+                                            <a href="#">Initiate Rental Pool SR</a>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <h4>Furniture Parking</h4>
+                                            <p>message on Furniture Parking if customer is eligible</p>
+                                            <a href="#">Initiate Rental Pool SR</a>
+                                        </div>           
+                                    </div>
+                                </div>
+
+
+                                <h4>
+                                    My Snags
+                                </h4>
+
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <p>Total Snags Reported</p>
+                                            <h3>50</h3>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <p>Total Snags Closed</p>
+                                            <h3>30</h3>
+                                        </div>           
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <div class="thumbnail">
+                                            <p>Total Snags Reported</p>
+                                            <h3>10</h3>
+                                        </div>           
+                                    </div>
+                                </div>
+
+                                <h5>Snag Details</h5>
+                                <table class="paymentDue" cellpadding="10" width="100%">
+                                    <col width="30%"/>
+                                    <col width="20%"/>
+                                    <thead>
+                                        <tr>
+                                            <th>Snag Number</th>
+                                            <th>Snag Description</th>
+                                            <th>Logged On</th>
+                                            <th>Status</th>
+                                            <th>Target Completion Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>A0119</td>
+                                            <td>Decription</td>
+                                            <td>10:30:59</td>
+                                            <td>Completed</td>
+                                            <td>07 July 2017</td>
+                                        </tr>
+                                        <tr>
+                                            <td>A0119</td>
+                                            <td>Decription</td>
+                                            <td>10:30:59</td>
+                                            <td>Completed</td>
+                                            <td>07 July 2017</td>
+                                        </tr>
+                                        <tr>
+                                            <td>A0119</td>
+                                            <td>Decription</td>
+                                            <td>10:30:59</td>
+                                            <td>Completed</td>
+                                            <td>07 July 2017</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+
+                            </div>
+
+                        </section>
+
+
+
+                    </div>
+
+
+                    <div class="col-md-4">
+
+                        <div class="well sideBarFixed">
+                            <h6>Process Step list</h6>
+                            <h4>
+                                Early Handover<br/><p>We know it's really long, but with all this you'll be bulletproff safe!</p>
+                            </h4>
+                            <ul class="StepProgress">
+                                <li class="StepProgress-item is-done"><a class="pageScroll" href="#step1">Service Request</a></li>
+                                <li class="StepProgress-item current"><a class="pageScroll" href="#step2">Schedule Snagging Date</a></li>
+                                <li class="StepProgress-item"><a class="pageScroll" href="#step3">My Offers/ Snags</a></li>
+                            </ul>
+
+                        </div>
+                    </div>
+
+
+		<!--<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/main.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/bootstrap-datepicker.min.js')}"/>
+		  <apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/main.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/button.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/checkbox.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/upload.js')}"/>
+		<apex:includeScript value="{!URLFOR($Resource.PortalAssets, '/assets/js/ease.js')}"/>-->
+		<apex:includeScript value="{!$Resource.JSPDF}"/>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+        <script>
+            $(document).ready(function () {
+                //smooth scroll
+                $('a.pageScroll').bind('click', function (event) {
+
+                    var $anchor = $(this);
+                    $('html, body').stop().animate({
+                        scrollTop: $($anchor.attr('href')).offset().top - 85
+                    }, 1000, 'easeInOutExpo');
+
+                    event.preventDefault();
+                });
+
+                //Add Address Input on Button click ends Here
+                var max_fields = 10; //maximum input boxes allowed
+                var wrapper = $(".input_fields_wrap"); //Fields wrapper
+                var add_button = $(".add_field_button"); //Add button ID
+
+                var x = 1; //initlal text box count
+                $(add_button).click(function (e) { //on add input button click
+                    e.preventDefault();
+                    if (x < max_fields) { //max input box allowed
+                        x++; //text box increment
+                        $(wrapper).append('<div class="newInput"><input style="margin:3% 0% 3% 0%; " type="text" class="form-control formText" name="mytext[]"/><a href="#" class="remove_field">Remove</a></div>'); //add input box
+                    }
+                });
+
+                $(wrapper).on("click", ".remove_field", function (e) { //user click on remove text
+                    e.preventDefault();
+                    //$(this).parent('div').remove();
+                    $("div.newInput").remove();
+                    x--;
+                })
+
+                //Date Picker
+                $('.well input.datepicker').datepicker({
+                });
+            });
+            
+            var doc = new jsPDF();
+			var specialElementHandlers = {
+			    '#editor': function (element, renderer) {
+			        return true;
+			    }
+			};
+
+			$('#cmd').click(function () {
+			    doc.fromHTML($('#content').html(), 15, 15, {
+			        'width': 170,
+			            'elementHandlers': specialElementHandlers
+			    });
+			    doc.save('sample-file.pdf');
+			});
+        </script>
+
+
+    </body>
+</html>
+</apex:component>

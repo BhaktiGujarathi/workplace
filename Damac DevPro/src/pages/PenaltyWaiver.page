@@ -1,0 +1,587 @@
+<apex:page sidebar="false" showHeader="false" applyHtmlTag="false" applyBodyTag="false">
+    
+ <!--      <html xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />
+            <title>Penalty Waiver Service</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            
+            <!-- Import the Design System style sheet 
+            <apex:slds />
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+            <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous"/>
+            
+        </head>
+        
+        <body>
+            
+            <style>
+                .paddingLeft {
+                    padding-left: 40px;
+                }
+                
+                .customerSelectionDiv {
+                    border : 1px solid #d8dde6;
+                    margin-left: 39px;
+                    margin-top: 20px;
+                    padding-top: 20px;
+                    padding-bottom: 20px;
+                    margin-right: 39px;
+                    border-radius: 7px;
+                    background: rgba(220, 220, 220, 0.45)
+                }
+                
+            </style>
+            
+            <div class="slds-scope">
+                <apex:form >
+                    <apex:outputLabel value="Service Request - Penalty Waiver" styleclass="slds-text-heading_large paddingLeft" style="font-weight: 600;margin-top: 20px;"/>
+                    
+                    <apex:outputPanel layout="block" id="CustomerSelectionBlock" rendered="{! accountId == null}" styleclass="customerSelectionDiv">
+                        <!-- List of customers will be displayed in this block 
+                        <apex:outputPanel layout="block">
+                            <apex:outputLabel value="Select a customer : " styleClass="slds-text-heading_small paddingLeft"/>
+                            <apex:selectList id="AccountList" title="Select customer name" size="1" onchange="getAccountInfo();" multiselect="false" value="{!accountId}" style="margin-left: 10px;width:402px;" styleClass="slds-input textfield">
+                                <apex:selectOptions value="{!lstAllAccounts}"/>
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel id="CustomerInfoBlock" layout="block">
+                        <apex:outputPanel layout="block" rendered="{! accountId != null}">
+                            <apex:outputPanel layout="block" styleclass="customerSelectionDiv" >
+                                <apex:outputLabel value="Customer Information : " styleClass="slds-text-heading_medium paddingLeft"/>
+                                <apex:outputPanel layout="block" style="padding-top: 30px;">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Title" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.Salutation}"/> 
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Customer Id" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.Id}"/> 
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Mobile" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.PersonMobilePhone}"/> 
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="First Name" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.FirstName}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Nationality" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.Country_Of_Origin__pc}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Email" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.PersonEmail}" style="word-break: break-all;"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Middle Name" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.MiddleName}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Organization Name" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputLabel value="{! objCustomerAccount.MiddleName}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="POA" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputLabel value="{! objCustomerAccount.LastName}"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Last Name" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="{! objCustomerAccount.LastName}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Party Type" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputLabel value="{! objCustomerAccount.LastName}"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Bulk" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputLabel value="{! objCustomerAccount.LastName}"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Customer Classification" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputLabel value="{! objCustomerAccount.PersonMobilePhone}"/> 
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Portfolio Value" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+<!--                                        <apex:outputLabel value="{! objCustomerAccount.PersonEmail}"/>
+                                            <apex:commandLink value="View Portfolio"/>    
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Joint Buyer" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+<!--                                        <apex:outputLabel value="{! objCustomerAccount.PersonEmail}"/>
+                                            <apex:commandLink value="View Joint Buyer"/>    
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel layout="block" id="UnitListBlock">
+                                <apex:outputPanel layout="block" style="margin-top: 20px;">
+                                    <apex:outputLabel value="Select a unit for Penalty Waiver : " styleclass="slds-text-heading_small paddingLeft"/>
+                                    <apex:outputPanel id="BookingUnitBlock">
+                                        <apex:selectList id="BookingUnitList" title="Select a booking unit" size="1" onchange="getUnitInfo()" multiselect="false" value="{!bookingUnitId}" style="margin-left: 10px;width:402px;" styleClass="slds-input textfield">
+                                            <apex:selectOptions value="{!lstBookingUnits}"/>
+                                        </apex:selectList>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <apex:outputPanel layout="block" Id="UnitInfoBlock">
+                        <apex:outputPanel layout="block" rendered="{! bookingUnitId != null }">
+                            <apex:outputPanel layout="block" styleClass="customerSelectionDiv">
+                                <apex:outputPanel layout="block">
+                                    <apex:outputLabel value="Unit Information : " styleClass="slds-text-heading_medium paddingLeft"/>
+                                    <apex:commandLink value="Closed SRs" styleclass="slds-text-heading_small" style="float: right; margin-right: 60px;"/>
+                                    <apex:commandLink value="Open SRs" styleclass="slds-text-heading_small" style="float: right; margin-right: 60px;"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" style="padding-top: 30px;">
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Unit Details" styleclass="slds-text-heading_small" style="float: right;font-weight: 600;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Flags" styleclass="slds-text-heading_small" style="float: right;font-weight: 600;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Unit Status" styleclass="slds-text-heading_small" style="float: right;font-weight: 600;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Project" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Property_Name__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Dispute" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Dispute_Flag__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="OQOOD Registered" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.OQOOD_Reg_Flag__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Project City" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.OQOOD_Reg_Flag__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Enforcement" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.OQOOD_Reg_Flag__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Agreement Status" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.OQOOD_Reg_Flag__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Bedroom Type" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Bedroom_Type__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Litigation" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.Bedroom_Type__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Under Termination" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.Bedroom_Type__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Unit Type( Villa/High-rise)" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Booking_Unit_Type__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Mortgage" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="FTL Sent" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Permitted Use" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Permitted_Use__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Court Case" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="EHO Flag" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Ready/Off Plan" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="HO Flag" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="Rental Pool" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputField value="{!selectedUnit.Rental_Pool_Agreement__c}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                        </div>
+                                        <div class="col-md-2">
+                                             <apex:outputLabel value="PCC" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-2">
+                                             <!--<apex:outputField value="{!selectedUnit.}" styleclass="slds-text-heading_small"/>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        
+                            <!--<apex:outputPanel layout="block">
+                                <apex:outputPanel layout="block" style="margin-top: 20px;">
+                                    <apex:outputLabel value="Additional Information : " styleclass="slds-text-heading_small paddingLeft"/>
+                                    <apex:outputPanel layout="block">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <apex:outputLabel value="Area" styleclass="slds-text-heading_small"/>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        
+                            <apex:outputPanel layout="block" styleClass="customerSelectionDiv">
+                                <apex:outputPanel layout="block">
+                                    <apex:outputLabel value="Penalty Waiver Request Details :" styleClass="slds-text-heading_medium paddingLeft"/>
+                                    <apex:commandButton value="Generate Statement Of Penalty" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="float: right; margin-right: 60px;height: 32px;"/>
+                                    <apex:commandButton value="Generate Statement Of Account" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="float: right; margin-right: 60px;height: 32px;"/>
+                                </apex:outputPanel>
+                                <apex:outputPanel layout="block" style="padding-top: 30px;" styleclass="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                             <apex:outputLabel value="Penalty Calculated" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <apex:outputField value="{!selectedUnit.Penalty_Amount__c}" id="PenaltyAmount"/>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                             <apex:outputLabel value="Penalty as of date" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                             <apex:outputText value="{0,date,dd/MM/yyyy}">
+                                                 <apex:param value="{!NOW()}"/>
+                                             </apex:outputText>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                             <apex:outputLabel value="Amount to be waived(AED)" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-3" id="AmountInput">
+                                             <apex:inputText styleclass="form-control" id="RequestedAmount" onkeyup="calculate()" value="{!objCase.Amount_to_be_waived__c}"/>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="margin-top: 14px;">
+                                        <div class="col-md-3">
+                                             <apex:outputLabel value="% to be waived" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                             <apex:outputText id="PercentWaived" value="{!objCase.Percent_to_be_waived__c}"/>
+                                        </div>
+                                    </div>
+                                    <div class="row" style="margin-top: 14px;">
+                                        <div class="col-md-3">
+                                             <apex:outputLabel value="Penalty Category" styleclass="slds-text-heading_small" style="float: right;"/>
+                                        </div>
+                                        <div class="col-md-3">
+                                             <apex:inputField value="{!objCase.Penalty_Category__c}" style="" styleClass="slds-input textfield"/>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        
+                            <apex:outputPanel layout="block" id="IsPOABlock">
+                                <apex:outputPanel layout="block" style="margin-top: 20px;">
+                                    <apex:outputLabel value="POA?" styleclass="slds-text-heading_small paddingLeft"/>
+                                    <apex:inputField style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()" value="{!objCase.IsPOA__c}"/>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        
+                            <apex:outputPanel layout="block" id="POAInfoBlock" styleClass="customerSelectionDiv">
+                                <apex:outputPanel layout="block" style="margin-top: 20px;">
+                                    <apex:outputLabel value="Power of Attorney" styleClass="slds-text-heading_medium paddingLeft"/>
+                                    <apex:outputPanel layout="block" style="padding-top: 30px;" styleclass="form-group">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Name" styleclass="slds-text-heading_small" style="float: right;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputField styleclass="form-control" value="{!objCase.POA_Name__c}"/>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-top: 20px;">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Relationship with Owner" styleclass="slds-text-heading_small" style="float: right;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputField styleclass="form-control" value="{!objCase.POA_Relationship_with_Buyer__c}"/>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-top: 20px;">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Date of Expiry" styleclass="slds-text-heading_small" style="float: right;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputField styleclass="form-control" value="{!objCase.POA_Expiry_Date__c}" style="width: 295px;"/>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-top: 20px;">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Issued By" styleclass="slds-text-heading_small" style="float: right;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputField styleclass="form-control" value="{!objCase.POA_Issued_By__c}"/>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <apex:outputLabel value="Verified" styleclass="slds-text-heading_small"/>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Upload POA" styleclass="slds-text-heading_small" style="float: right;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputFile value="Browse" styleClass="slds-text-heading_small"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:commandButton value="View" styleClass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected"/>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                        
+                            <apex:outputPanel layout="block" style="margin-top: 20px;" styleClass="paddingLeft">
+                                <apex:commandButton value="View CRF" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="margin-left: 200px;width: 200px;height: 32px;"/>
+                                <apex:commandButton value="Download CRF" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="margin-left: 200px;width: 200px;height: 32px;"/>
+                            </apex:outputPanel>
+                            
+                            
+                            <apex:outputPanel layout="block" id="UploadCRF" styleClass="customerSelectionDiv" style="padding-top: 0px;">
+                                <apex:outputPanel layout="block">
+                                    <apex:outputPanel layout="block" style="padding-top: 30px;" styleclass="form-group">
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <apex:outputLabel value="Verified" styleclass="slds-text-heading_small"/>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-3">
+                                                 <apex:outputLabel value="Upload Signed CRF" styleclass="slds-text-heading_small" style="padding-left: 61px;"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:inputFile value="Browse" styleClass="slds-text-heading_small"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <apex:commandButton value="View" styleClass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected"/>
+                                            </div>
+                                            <div class="col-md-3">
+                                                 <span class="glyphicon glyphicon-remove"></span>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </apex:outputPanel>
+                            
+                            <apex:outputPanel layout="block" style="margin-top: 20px;margin-bottom: 300px;" styleClass="paddingLeft">
+                                <apex:commandButton value="Submit SR" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="margin-left: 200px;width: 200px;height: 32px;"/>
+                                <apex:commandButton value="Save as Draft" onclick="insCase();" styleclass="slds-text-heading_small slds-button slds-button--brand slds-button--neutral slds-not-selected" style="margin-left: 200px;width: 200px;height: 32px;"/>
+                            </apex:outputPanel>
+                            
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    
+                    <!--<apex:actionFunction name="getAccount" action="{!getAccountDetails}" reRender="CustomerInfoBlock"/>
+                    <apex:actionFunction name="getUnit" action="{!getBookinUnitDetails}" reRender="UnitInfoBlock" oncomplete="hidePOA();"/>
+                    <!--<apex:actionFunction name="updtCase" action="{!insertCaseDetails}" onComplete="return false;"/>
+                    
+                </apex:form>
+            </div>
+            
+            <script>
+               $( document ).ready(function() {
+                    $('[id$=POAInfoBlock]').hide(); 
+               });
+               
+               function insCase() {
+                   updtCase();
+               }
+               
+               function getAccountInfo() {
+                   getAccount();
+               }
+               
+               function getUnitInfo() {
+                   if( $('[id$=BookingUnitList]').val() != '' ) {
+                       $('[id$=UnitError]').remove();
+                       getUnit();
+                   }
+                   else {
+                       $('[id$=BookingUnitBlock]').append('<div id="UnitError" ><span class="help-inline" style="color:red;margin-left: 290px;">Please select atleast one booking unit.</span></div>');
+                       $('[id$=UnitInfoBlock]').hide();
+                   }
+               }
+               
+               function hidePOA() {
+                   $('[id$=POAInfoBlock]').hide();
+               }
+               
+               function calculate() {
+                   var penalAmount = parseInt( $('[id$=PenaltyAmount]').text().replace(/\,/g,"")); 
+                   var reqAmount = parseInt( $('[id$=RequestedAmount]').val());
+                   var perc="";
+                   if(isNaN(penalAmount) || isNaN(reqAmount)) {
+                       perc="";
+                       console.log('Inside if block');
+                       $('[id$=PercentWaived]').text('');
+                   } 
+                   else if( reqAmount > penalAmount ) {
+                       $('[id$=AmountError]').remove();
+                       $('[id$=AmountInput]').append('<span id="AmountError" class="help-inline" style="color:red">Entered amount is greater than penalty.</span>');
+                   }
+                   else {
+                       $('[id$=AmountError]').remove();
+                       perc = ( (reqAmount/penalAmount) * 100 ).toFixed(3);
+                   }
+                   $('[id$=PercentWaived]').text(perc+'%');
+               }
+               
+               function hasAttorney() {
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+               }
+            </script>
+        </body>
+    </html> -->
+    
+</apex:page>

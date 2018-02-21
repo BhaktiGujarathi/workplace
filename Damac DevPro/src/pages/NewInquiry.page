@@ -1,0 +1,506 @@
+<apex:page docType="html-5.0" id="createlead" applyHtmlTag="false" applyBodyTag="false" title="New Lead"   showHeader="false" controller="NewInquiryController">
+<html>
+    <head>
+        <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/> 
+        <title>New Inquiry</title>
+
+        <meta name="application-name" content="New Lead" />
+        <meta name="apple-mobile-web-app-title" content="New Lead" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <link rel="stylesheet" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/css/bootstrap.min.css')}" />
+        <link href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/css/salesforce-lightning-design-system-vf.css')}" rel="stylesheet" type="text/css"/>
+        <link href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/css/damac-theme.css')}" rel="stylesheet" type="text/css"/>
+        <script src='https://www.google.com/recaptcha/api.js'></script>
+        <style>
+        .modal-content{
+            border-radius:0px !important;
+        }
+        
+        .g-recaptcha div { margin-left: auto; margin-right: auto;}
+
+        .modal-title{
+            background: #0D80FC !important;
+            font-size:18px !important;
+            text-align:center;
+            font-family: Arial,sans-serif !important;
+            padding:10px !important;
+            color:#FFFFFF !important;
+        }
+
+        .modal-header{
+            border:0px !important;
+        }
+
+        .modal .slds-form-element__label,.modal .slds-input{
+            font-size:14px !important;
+            font-family: Arial,sans-serif !important;
+        }
+
+        .slds-input{
+            height:45px !important;
+            line-height:45px !important;
+            border-radius:0px !important;
+        }
+
+        .error{
+            display:none;
+            font-size:12px !important;
+            font-family:Arial,sans-serif !important;
+            color: red !important;
+        }
+        
+        .errorNum{
+            display:none;
+            font-size:12px !important;
+            font-family:Arial,sans-serif !important;
+            color: red !important;
+        }
+        
+        .errorEmail{
+            display:none;
+            font-size:12px !important;
+            font-family:Arial,sans-serif !important;
+            color: red !important;
+        }
+
+        .slds-button--neutral{
+            border-radius:0px !important;
+            background: #0D80FC !important;
+            font-size:18px !important;
+            font-family:Arial,sans-serif !important;
+            color:#FFFFFF !important;
+            cursor: pointer !important;
+        }
+
+        .global-content .slds-form-element__label{
+            color: #FFFFFF !important;
+        }
+        </style>
+    </head>
+    <body>
+    <div class="global-wrapper body-bg">
+		<apex:actionstatus id="status">
+	        <apex:facet name="start">
+	            <div class="waitingSearchDiv" id="el_loading" style="background-color: rgba(0,0,0,0.65); height: 100%;width:100%; z-index: 102;">  
+	                <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+	                    <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+	                    <span class="waitingDescription">Please Wait...</span>
+	                </div>
+	            </div>
+	        </apex:facet> 
+	    </apex:actionstatus>
+        <apex:form id="inquiry_form" styleclass="slds">
+        	<apex:pageMessages id="messages"></apex:pageMessages>
+            <input type="hidden" id="saveFlag" value="{!saveRecordFlag}" />
+            <input type="hidden" id="captchaValidation" value="{!captchaValidation}" />
+            <div class="header-container">
+                <div class="slds-grid slds-wrap slds-wrap-override banner-tint slds-p-around--small">
+                    <div class="slds-size--4-of-12 slds-medium-size--2-of-12 align-flex-center">
+                        <img src="{!URLFOR($Resource.Inquiry_Resources, 'assets_inquiry/images/logo.png')}" style="width:200px !important;"/>
+                    </div>
+                    <div class="slds-size--4-of-12 slds-medium-size--8-of-12 text-large text-color-white slds-text-align--center align-flex-center">
+                            New Inquiry
+                    </div>
+                    <div class="slds-size--4-of-12 slds-medium-size--2-of-12 text-large text-color-white align-flex-center" id="leadCount">
+                           
+                    </div>
+                </div>
+            </div>
+            
+            <div class="global-content slds-container--medium slds-container--center">
+
+                <section class="slds-p-around-small slds-p-bottom--xx-large banner-tint" role="banner">
+
+                    <div class="slds-grid slds-wrap slds-wrap-override slds-p-around--small">
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small">
+                            <div class="slds-form-element slds-is-required">
+                              <label class="slds-form-element__label" for="firstName">
+                                  First Name 
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="firstName" value="{!inquiryObj.First_Name__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div>
+                        </div>
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  Country of Residence
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="country" value="{!inquiryObj.Country_of_Residence__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="lastName">
+                                  Last Name
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="lastName" value="{!inquiryObj.Last_Name__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div>
+                        </div>
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  Type of Property Interest
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="typeOfProperty" value="{!inquiryObj.Type_of_Property_Interested_in__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  No of Bedrooms
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="noOfBedrooms" value="{!inquiryObj.No_of_Bedrooms__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="mobileCountryCode">
+                                  Mobile Country Code
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="mobileCountryCode" value="{!inquiryObj.Mobile_CountryCode__c}" styleClass="slds-input" style="padding-right:0px;"/>
+                              </div>
+                              <span class="error">Please select country code.</span>
+                            </div>
+                        </div>
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  Property
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:selectList size="1"  styleClass="slds-input" id="property"  value="{!selProperty}">
+                                    <apex:actionSupport event="onchange" action="{!onPropertychange}" rerender="building-container"/>
+                                    <apex:selectOptions value="{!properties}"/>
+                                </apex:selectList>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="mobile">
+                                  Mobile
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="mobile" value="{!inquiryObj.Mobile_Phone_Encrypt__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                              <span class="errorNum">Please enter numbers only.</span>
+                            </div>
+                        </div>
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="email">
+                                  Email
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="email" value="{!inquiryObj.Email__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                              <span class="errorEmail">Error: Invalid Email Address.</span>
+                            </div>
+                        </div>
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="planguage">
+                                  Preferred Language
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="planguage" value="{!inquiryObj.Preferred_Language__c}" styleClass="slds-input" style="padding-right:0px;"/>
+                              </div>
+                              <span class="error">Please select language.</span>
+                            </div>
+                        </div>
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element ">
+                              <label class="slds-form-element__label" for="campaign">
+                                  Campaign
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:outputPanel id="campaign-container">
+                                    <apex:selectList size="1" id="campaign"  styleClass="slds-input" value="{!inquiryObj.Campaign__c}" style="padding-right:0px;">
+                                        <apex:selectOptions value="{!campaigns}"/>
+                                    </apex:selectList>
+                                </apex:outputPanel>
+                              </div>
+                              <!-- <div class="slds-form-element__control">
+                                <apex:inputField id="campaign" value="{!inquiryObj.Campaign__c}" styleClass="slds-input"/>
+                              </div> 
+                              <span class="error">Please select campaign.</span>-->
+                            </div>
+                        </div>
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  Building
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:outputPanel id="building-container">
+                                    <apex:selectList size="1" id="building"  styleClass="slds-input" value="{!selBuilding}" disabled="{!showPicklist}">
+                                        <apex:selectOptions value="{!buildings}"/>
+                                    </apex:selectList>
+                                </apex:outputPanel>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        <!-- <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element  slds-is-required">
+                              <label class="slds-form-element__label" for="selectSample1">
+                                  Nationality
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputField id="nationality" value="{!inquiryObj.Nationality__c}" styleClass="slds-input"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div> 
+                        </div>-->
+                        <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-p-around--small ">
+                            <div class="slds-form-element">
+                              <label class="slds-form-element__label" for="comments">
+                                  Comments
+                              </label>
+                              <div class="slds-form-element__control">
+                                <apex:inputTextarea id="comments" value="{!inquiryObj.Comments__c}" styleClass="slds-input" style="height:100px !important"/>
+                              </div>
+                              <span class="error">Please enter the details.</span>
+                            </div>
+                        </div>
+                  
+                        <span class="error" id="captchaError" style="margin:0 auto;">Please attempt the captcha to proceed.</span>
+                        <div id="captcha" class="g-recaptcha slds-size--1-of-1 slds-p-around--small slds-text-align--center" data-sitekey="6Lf91yEUAAAAAJSTqdK9WheCupH7H1wTA34TKegw"></div>
+                        <div class="slds-size--1-of-1 slds-p-around--small">
+                            <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                <div class="slds-button slds-button--neutral save-form" onclick="saveForm()">Save</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+            </div>
+            <!-- <div class="modal fade" id="confirmation_popup" role="dialog" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-title">Promoter Information</div>
+                        </div>
+                        <div class="modal-body">
+                            <div class="slds slds-grid slds-wrap">
+                                <div class="slds-size--1-of-1">
+                                    <div class="slds-form-element slds-p-around--small">
+                                      <label class="slds-form-element__label" for="selectSample1">
+                                          Promoter Name
+                                      </label>
+                                      <div class="slds-form-element__control">
+                                        <apex:inputField id="promoterName" value="{!inquiryObj.Promoter_Name__c}" styleClass="slds-input"/>
+                                      </div>
+                                      <span class="error">Please enter Promoter Name.</span>
+                                    </div>
+                                </div>
+                                <div class="slds-size--1-of-1">
+                                    <div class="slds-form-element slds-p-around--small">
+                                      <label class="slds-form-element__label" for="selectSample1">
+                                          Inquiry Source
+                                      </label>
+                                      <div class="slds-form-element__control">
+                                        <apex:inputField id="inquirySource" value="{!inquiryObj.Inquiry_Source__c}" styleClass="slds-input"/>
+                                      </div>
+                                      <span class="error">Please enter Inquiry Source.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="slds-size--1-of-1">
+                                    <div class="slds-form-element slds-p-around--large slds-container--center slds-text-align--center">
+                                        <div class="slds-button slds-button--neutral" onclick="validatePromoter();">Save</div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+
+                    </div>
+                </div>    
+            </div> -->
+            <apex:actionFunction name="recaptchaVerification" action="{!recaptchaVerification}" status="status" reRender="inquiry_form,scriptTag,messages" oncomplete="ShowApexMessages(); grecaptcha.render('captcha',{'sitekey' : '6Lf91yEUAAAAAJSTqdK9WheCupH7H1wTA34TKegw'});updateCounter();">
+            	<apex:param value="" assignTo="{!recaptchaResponse}" name="recaptchaResponse" />
+            	<apex:param value="" assignTo="{!fieldValidation}" name="fieldValidation" />
+           	</apex:actionFunction>
+            <apex:actionFunction name="saveInquiry" action="{!saveInquiry}" status="status"
+            reRender="inquiry_form,scriptTag,messages" oncomplete="ShowApexMessages()"
+            ></apex:actionFunction>
+        </apex:form>
+    </div>
+    <script src="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/js/alerts.js')}"></script>
+    <script src="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/js/jquery.min.js')}"></script>
+    <script src="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/js/bootstrap.min.js')}"></script>
+    <apex:outputPanel id="scriptTag">
+        <script>
+        updateCounter();
+          function updateCounter(){
+            var saveFlag = document.getElementById("saveFlag").value;
+            var leadCount = 0;
+            console.log('entered');
+            //if(saveFlag == "false")
+            //	sessionStorage.sessLeadCount = leadCount;
+            if (!sessionStorage.sessLeadCount) //If source not found, pop the form
+            {    
+                
+                //$('#confirmation_popup').addClass('overlay-target'); 
+                //$('#confirmation_popup').modal({
+                //    backdrop: 'static',
+                //    keyboard: false
+                //}).show();
+                leadCount = 0;
+                sessionStorage.sessLeadCount = leadCount;
+            } 
+            else
+            {
+                //retrieve from the storage and set the value 
+                /*$("[id$=promoterName]").val(sessionStorage.promotername);
+                $("[id$=inquirySource]").val(sessionStorage.source);*/
+                
+                var saveLeadFlag = document.getElementById("saveFlag").value;
+                console.log('saveLeadFlag = '+saveLeadFlag);
+                if(saveLeadFlag == "true")
+                {
+                    leadCount = parseInt(sessionStorage.sessLeadCount);
+                    leadCount ++;
+                    sessionStorage.sessLeadCount = leadCount;
+                    
+                }
+
+                 /*$('#confirmation_popup').modal('hide');*/
+                
+                
+            }
+            $("#leadCount").html("Inquiry Count : "+sessionStorage.sessLeadCount);
+
+          }
+
+            /*function validatePromoter(){
+
+                var validateFailed = false; 
+
+                if(isEmpty($('[id$=promoterName]'))){
+                    $('[id$=promoterName]').closest('.slds-form-element').find('.error').show();
+                    validateFailed = true;
+                }
+                else{
+                    $('[id$=promoterName]').closest('.slds-form-element').find('.error').hide();
+                }
+
+                if(isEmpty($('[id$=inquirySource]'))){
+                    $('[id$=inquirySource]').closest('.slds-form-element').find('.error').show();
+                    validateFailed = true;
+                }
+                else{
+                    $('[id$=inquirySource]').closest('.slds-form-element').find('.error').hide();
+                }
+
+                if(!validateFailed){
+                    sessionStorage.promotername = $('[id$=promoterName]').val();
+                    sessionStorage.source =  $('[id$=inquirySource]').val();
+                    $('#confirmation_popup').modal('hide');
+                }
+
+            }*/
+
+            function isEmpty(obj){
+
+                if(null != $(obj).val() && $(obj).val().trim() != '')
+                    return false;
+                else
+                    return true;
+
+            }
+          	
+
+                
+			function saveForm(){
+
+              var validateFailed = false;
+                $('.slds-is-required .slds-input').each(function(){
+                    if(isEmpty($(this))){
+                        validateFailed = true;
+                        $(this).closest('.slds-is-required').find('.error').show();
+                    }
+                    else{
+                        $(this).closest('.slds-is-required').find('.error').hide();
+                    }
+                });
+                console.log('validateFailed = '+validateFailed);
+                //Validate numbers only
+                var numbers = /^[0-9]+$/;
+                if( !validateFailed && (($('[id$="mobile"]').val()).match(numbers)) == null ){
+                    validateFailed = true;
+                    $('[id$="mobile"]').closest('.slds-is-required').find('.errorNum').show();
+                }
+                
+                if(!validateFailed && !validateEmail(($('[id$="email"]').val())) ) {
+                	validateFailed = true;
+                	$('[id$="email"]').closest('.slds-is-required').find('.errorEmail').show();
+                }
+                var recaptchaResponse = $("[id^='g-recaptcha-response']").val();
+                console.log(recaptchaResponse);
+                if(recaptchaResponse!=null && recaptchaResponse!='' && !validateFailed){
+                	recaptchaVerification(recaptchaResponse, validateFailed);
+               	}
+               	else{
+               		document.getElementById('captchaError').style.display='block';
+               		grecaptcha.reset();
+               	}
+   
+            }
+            
+			/* Method to check email. */     
+            function validateEmail(email) {
+                 var regexStr = /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+                 return regexStr.test(email);
+            }
+			
+
+            function ShowApexMessages()
+            {    
+                if($('[id$=messages]').text() != '')
+                {    
+                      var msg = $('[id$=messages]').text();              
+                      if(msg.search("Success:") >= 0){
+                          $('[id$=messages]').hide();
+                          
+                         notie.alert(1,$('[id$=messages]').text().replace('Success:',''),10);
+                      }
+                      else
+                      {
+                         $('[id$=messages]').hide();
+                         notie.alert(3,$('[id$=messages]').text().replace('Error:','').replace('Errors',''),10);
+                      }
+                }
+                /*setTimeout(function(){
+                	window.location.href = window.location.href;
+                }, 2000);*/
+            }
+        </script>
+    </apex:outputPanel>
+
+    </body>
+</html>
+</apex:page>

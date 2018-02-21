@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <webLinks>
+        <fullName>aiPLbtn_PrintLabel_Contact</fullName>
+        <availability>online</availability>
+        <displayType>massActionButton</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Print Label</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <requireRowSelection>true</requireRowSelection>
+        <url>try{
+	var jspLocationOfCurrentPage = location.href ;
+	if(!jspLocationOfCurrentPage){
+		jspLocationOfCurrentPage = window.location.href;
+		if(!jspLocationOfCurrentPage){
+			jspLocationOfCurrentPage = document.URL;
+			if(!jspLocationOfCurrentPage){
+				var txt=&quot;There was an error getting the url for this page.\n\n&quot;;
+				txt+=&quot;Please try another web browser\n&quot;;
+				txt+=&quot;Click OK to continue.\n&quot;;
+				alert(txt);
+			}
+		}
+	}
+	var jspFcfStartIndex = jspLocationOfCurrentPage.lastIndexOf(&apos;fcf=&apos;)+4;
+	var jspFcfEndIndex = jspLocationOfCurrentPage.indexOf(&apos;&amp;&apos;,jspFcfStartIndex);
+	if(jspFcfEndIndex == -1){
+		jspFcfEndIndex = jspLocationOfCurrentPage.length;
+	}
+	jspLocationOfCurrentPage = jspLocationOfCurrentPage.substring(jspFcfStartIndex , jspFcfEndIndex) ; 
+
+	var jspSelectedListViewId = jspLocationOfCurrentPage+&apos;_listSelect&apos;; 
+	var jspSelectedId = document.getElementById(jspSelectedListViewId);
+	var jspSelectedOptionId;
+	if(!jspSelectedId &amp;&amp; jspLocationOfCurrentPage){
+		var txt=&quot;There was an error getting the url for this page.\n\n&quot;;
+		txt+=&quot;Your ListView id, when you entered into list views, was &quot; + jspLocationOfCurrentPage + &quot;\n&quot;;
+		txt+=&quot;This list view is going to use in aiEasyLabel Lite\n&quot;;
+		txt+=&quot;Click OK to continue.\n&quot;;
+		alert(txt);
+		jspSelectedOptionId = jspLocationOfCurrentPage;
+		
+	}else if(!jspSelectedId &amp;&amp; !jspLocationOfCurrentPage){
+		var txt=&quot;There was an error getting the url for this page.\n\n&quot;;
+		txt+=&quot;Please try to enter again int this page and then click on this button or notify it at pablo@alpha-index.co.uk\n&quot;;
+		txt+=&quot;Click OK to continue.\n&quot;;
+		alert(txt);
+	}else if(jspSelectedId){
+		jspSelectedOptionId = jspSelectedId.value;
+	}
+	
+	if(jspSelectedOptionId){
+		var jspContactIdArray = {!GETRECORDIDS($ObjectType.Contact)}; 
+
+		var myParams = &apos;SObjectType=C&apos;; 
+		myParams = myParams + &apos;&amp;listViewId=&apos;+jspSelectedOptionId; 
+		myParams = myParams + &apos;&amp;records=&apos;+jspContactIdArray; 
+		myParams = myParams + &apos;&amp;retUrl=&apos;+parent.location.href.substring(location.href.lastIndexOf(&apos;/&apos;) , location.href.length) ; 
+		// Get the style that we want for the window which show the label PDF 
+		var myStyle = &apos;height=150,width=320,location=no,resizable=true,toolbar=no,status=no,menubar=no,scrollbars=1&apos;; 
+
+
+		// Now open the window to show the label PDF 
+		window.open(&apos;/apex/aiell__aiPLvfp_managePrintLabel?&apos; + myParams,&apos;_self&apos;,myStyle,1);
+	}
+}catch(error){
+	var txt=&quot;There was an error on this page.\n\n&quot;;
+	txt+=&quot;Error description: &quot; + error.message + &quot;\n\n&quot;;
+	txt+=&quot;Please try again or notify it at pablo@alpha-index.co.uk\n&quot;;
+	txt+=&quot;Click OK to continue.\n&quot;;
+	alert(txt);
+}</url>
+    </webLinks>
+</CustomObject>

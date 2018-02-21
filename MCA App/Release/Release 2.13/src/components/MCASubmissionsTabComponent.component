@@ -1,0 +1,194 @@
+<apex:component controller="MCASubmissionsTabController" allowDML="true">
+    <script Language="JavaScript">
+    function submissionWizard()
+    {
+          window.open('/apex/SubmissionWizard?id={!opportunityObj.Id}&accId={!opportunityObj.AccountId}');
+    }
+    </script>
+  <apex:form id="records" styleClass="records">
+<apex:pageMessages id="pageMessageId" />
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock mode="inlineedit">
+
+      <script>
+        var submissionTabLabelOriginal ;
+        function runSaveAllSubmissions() {
+
+          setTimeout(function() {
+            saveAllSubmissions();
+          }, 1000);
+        }
+        
+        function runNewSubmissions() {
+
+          setTimeout(function() {
+            newSubmissions();
+          }, 1000);
+        }
+        
+        function runEditSubmissions() {
+
+          setTimeout(function() {
+            editSubmissions();
+          }, 1000);
+        }
+        t$(function () {
+            submissionTabLabelOriginal = t$("[id*='submissiontab_lbl']").text();
+            computeSubmissionCalculations();
+        });
+        
+        function computeSubmissionCalculations() {
+            console.log('-----tab label component1----'+t$("[id*='submissiontab_lbl']").text());
+            var submissionCount = '{!submissionCount}';
+           // if(submissionCntUW != undefined && submissionCntUW != '' && submissionCntUW != 0 && submissionCntApproved != 0) {
+                var submissionTabLabel = 'Submissions'+' ';
+                console.log('-----submissionTabLabel------'+submissionTabLabel);
+                
+                
+                t$("[id*='submissiontab_lbl']").text(submissionTabLabel);                
+               
+                t$("[id*='submissiontab_lbl']").append('(' + {!submissionCntUW} +'/'+{!containers.size}+ ')');
+                
+        }
+
+      </script>
+        <apex:actionFunction action="{!saveAllSubmissions}" name="saveAllSubmissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSubmissionCalculations()"/>
+        <apex:actionFunction action="{!newSubmission}" name="newSubmissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSubmissionCalculations()"/>
+        <apex:actionFunction action="{!editAll}" name="editSubmissions" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSubmissionCalculations()"/>
+        <apex:actionFunction name="submissionStatus" action="{!setSubmissionStatus}" rerender="declineReasonPanel" status="loadingPanel" oncomplete="return false;">
+<!--         oncomplete="submissionStatus1()" > -->
+            <apex:param value="" assignTo="{!submissionStatusValue}" name="decline"/>
+            <apex:param value="" assignTo="{!submissionIndex}" name="index"/>
+            <apex:param value="" assignTo="{!inlineEdit}" name="inlineFalse"/>
+        </apex:actionFunction>
+        <apex:actionFunction name="submissionStatus1" rerender="declineReasonPanel" status="loadingPanel"/>
+
+        <apex:pageBlockButtons >
+            <apex:outputpanel rendered="{!$ObjectType.Submission__c.createable}">
+                <input type="button" onclick="runNewSubmissions()" class="btn" value="New Submission" />
+            </apex:outputPanel>
+            <apex:outputpanel rendered="{!OR($ObjectType.Submission__c.updateable,$ObjectType.Submission__c.createable)}">
+                <input type="button" onclick="runSaveAllSubmissions()" class="btn" value="Save" /> 
+            </apex:outputPanel>
+            <apex:outputpanel rendered="{!$ObjectType.Submission__c.updateable}">
+                <input type="button" onclick="runEditSubmissions()" class="btn" value="Edit All" />
+            </apex:outputPanel>
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSubmissionCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSubmissionCalculations()"
+                            rendered="{!OR($ObjectType.Submission__c.updateable,$ObjectType.Submission__c.createable)}"></apex:CommandButton>
+         <apex:commandButton action="{!refresh}" value="Submit to Banks" styleClass="btnCss" onclick="submissionWizard()" />
+      </apex:pageBlockButtons>
+      
+      <apex:pageBlockSection columns="1" title="Submissions ({!containers.size})" collapsible="false" >
+     
+         <apex:pageBlockTable id="pgBlkTableId" value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header" >
+
+          <!--apex:inlineEditSupport event="ondblclick" /-->
+
+          <apex:column >
+
+            <apex:outputLink value="/{!container.submission.Id}" target="blank" rendered="{!NOT(ISBLANK(container.submission.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.submission.Id)),$ObjectType.Submission__c.deletable)}"/>
+            <apex:commandLink action="{!deleteSubmission}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.submission.Id)),$ObjectType.Submission__c.deletable)}" status="loadingPanel"  oncomplete="computeSubmissionCalculations()">
+              <apex:param name="recordToDelete" value="{!container.submission.Id}" assignTo="{!recordToDelete}"></apex:param>
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink value="Remove" action="{!removeSubmission}" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.submission.Id))}" status="loadingPanel" oncomplete="computeSubmissionCalculations()">
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Funder__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Funder__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}" />
+            <apex:inputField value="{!container.submission.Funder__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}" />
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Date_Submitted__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Date_Submitted__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Date_Submitted__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status__c.Label}" styleClass="status-field wrapperClass" >
+            
+            <apex:outputPanel html-data-index="{!container.index}" style="display:none;"/>
+            <apex:outputPanel styleClass="statusPicklistDiv">
+                <apex:outputField value="{!container.submission.Status__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}" styleClass="wrapperClass"/>
+                <apex:inputField value="{!container.submission.Status__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}" onChange="submissionStatus(this.value,{!container.index},'false');" >
+                </apex:inputField> 
+                 
+            </apex:outputPanel>
+            <br/><br/>
+            
+            <apex:outputPanel id="declineReasonPanel">
+                 <apex:inputField value="{!container.submission.DecliedReason__c}" 
+                 rendered="{!OR(AND(IF(container.submissionStatusValue='Declined',true,false),ISBLANK(container.submission.Id)),AND(IF(container.submissionStatusValue='Declined',true,false),editAll),AND(IF(container.submissionStatusValue='Declined',true,false),IF(CONTAINS(inlineEdit,'true'),true,false),IF(CONTAINS(inlineEdit,Text(container.index)),true,false)))}"/>
+                 <apex:outputField value="{!container.submission.DecliedReason__c}" 
+                 rendered="{!AND(IF(container.submission.Status__c='Declined',true,false),
+                                 NOT(editAll))}"/>
+                                 <!--,
+                                 IF(CONTAINS(inlineEdit,'true'),false,true))}"  /> -->
+                 
+                 
+            </apex:outputPanel>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status_Date__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Status_Date__c}"  rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Status_Date__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Notes__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Notes__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Notes__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Highest_Funding_Amt__c.Label}" styleClass="wrapperClass" >
+            <apex:outputField value="{!container.submission.Highest_Funding_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Highest_Funding_Amt__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+            <apex:facet name="header">
+                 Highest<br />Funding Amt
+             </apex:facet>
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Longest_Term__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Longest_Term__c}"  rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Longest_Term__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+            <apex:facet name="header">
+                 Longest<br />Term
+             </apex:facet>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Submission__c.Fields.Program__c.Label}" styleClass="wrapperClass">
+            <apex:outputField value="{!container.submission.Program__c}" rendered="{!AND(NOT(ISBLANK(container.submission.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.submission.Program__c}" rendered="{!OR((ISBLANK(container.submission.Id)), editAll)}"/>
+          </apex:column>
+
+        </apex:pageBlockTable>
+        
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+  
+  <script type="application/javascript">
+     var flag = true;
+     t$(document).ready(function(){
+        t$( document ).on( "change", ".status-field .statusPicklistDiv .inlineEditDiv select", function() {
+            var value = this.value || "";
+            var index = parseInt(t$(this).closest(".status-field").find("[data-index]").attr("data-index"),10);
+            console.log('----'+value+'-----'+index);
+            if(value == 'Declined')
+                submissionStatus(value,index,'true'+index);
+            else
+                submissionStatus(value,index,'false');
+            return true;
+        });
+  });
+  
+          
+  </script>
+</apex:component>

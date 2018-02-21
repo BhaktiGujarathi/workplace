@@ -1,0 +1,340 @@
+<apex:page sidebar="false" showHeader="false" controller="ezfileloader.ezFileLoaderSidebarComponentV2">
+
+    <apex:includeScript value="{!URLFOR($Resource.ezfileloader__ezFileLoader,'Jquery-1.8.2.js')}" />
+        
+    
+    <style>
+    
+        .button1style
+        {
+            /*---------Border-Radius----------------*/
+        
+            -webkit-border-radius: 5px;
+            border-radius: 5px; 
+            border: 1px solid #333333;
+            padding:3px 5px;
+            /*---------CSS3-Gradient+Fallback-------*/
+            
+            background: #efefef;
+            background: -moz-linear-gradient(top,  #efefef 0%, #eeeeee 50%, #dddddd 51%, #dddddd 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#efefef), color-stop(50%,#eeeeee), color-stop(51%,#dddddd), color-stop(100%,#dddddd));
+            background: -webkit-linear-gradient(top,  #efefef 0%,#eeeeee 50%,#dddddd 51%,#dddddd 100%);
+            background: -o-linear-gradient(top,  #efefef 0%,#eeeeee 50%,#dddddd 51%,#dddddd 100%);
+            background: -ms-linear-gradient(top,  #efefef 0%,#eeeeee 50%,#dddddd 51%,#dddddd 100%);
+            background: linear-gradient(to bottom,  #efefef 0%,#eeeeee 50%,#dddddd 51%,#dddddd 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#efefef', endColorstr='#dddddd',GradientType=0 );
+        }
+        
+        .button1style:hover
+        {   
+            
+            /*---------Gradient-Hover---------*/
+            
+            background: #cccccc;
+            background: -moz-linear-gradient(top,  #cccccc 0%, #bbbbbb 50%, #aaaaaa 51%, #888888 100%);
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#cccccc), color-stop(50%,#bbbbbb), color-stop(51%,#aaaaaa), color-stop(100%,#888888));
+            background: -webkit-linear-gradient(top,  #cccccc 0%,#bbbbbb 50%,#aaaaaa 51%,#888888 100%);
+            background: -o-linear-gradient(top,  #cccccc 0%,#bbbbbb 50%,#aaaaaa 51%,#888888 100%);
+            background: -ms-linear-gradient(top,  #cccccc 0%,#bbbbbb 50%,#aaaaaa 51%,#888888 100%);
+            background: linear-gradient(to bottom,  #cccccc 0%,#bbbbbb 50%,#aaaaaa 51%,#888888 100%);
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#cccccc', endColorstr='#888888',GradientType=0 );
+        }
+    </style>
+
+    <body style="background-color: #CFEEF8;">
+        
+        
+        <div id="dropbox" style="height: 140px; width: 180px; overflow-y: auto;">
+            <table id="UploadTable" style="width: 100%;">
+                <tr>
+                    <td id="messagetd">Drop Files Here...</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div id="FlashDiv" style="padding: 0px 0px 0px 22px; width: 100% x;">
+            
+            <div style="margin: 0 Auto;">
+                <apex:flash src="{!URLFOR($Resource.ezfileloader__ezFileLoader, '/ezFileUpload.swf')}"
+                height="25" width="150"
+                flashvars="sid={!$Api.Session_ID}&surl={!$Api.Partner_Server_URL_90}&RecordID={!RecordId}&maxLimit=10&ipAddress={!ipAddress}&DocURL={!DocURL}&OwnerId={!OwnerId}&ObjectType={!ObjectType}" />
+            </div>
+        </div><br />
+        <div id="ScreenshotDiv" style="width:100%;">
+            <!-- <center><a onclick="parent.location='/apex/ScreenCapture?ParentId={!RecordId}'" >Attach Screenshot</a></center> -->
+            
+                <input style="margin: 0 Auto;display: block;" class="button1style" type="button" value="Paste From Clipboard" onclick="parent.location='/apex/ScreenCapture?ParentId={!RecordId}'" />
+            
+        </div>
+        <script>
+        
+
+        var RightSide;
+        function FlashVersion()
+        {
+            //$('#UploadTable').empty();
+            $('#messagetd').html('Drag and Drop Not Supported, please use the button below to select files.');
+            
+             var dropbox = document.getElementById("dropbox");
+            // init event handlers
+            dropbox.addEventListener("dragenter", badDrag, false);
+            //dropbox.addEventListener("dragexit", badDrag, false);
+            dropbox.addEventListener("dragleave", badDrag, false);
+            dropbox.addEventListener("dragover", badDrag, false);
+            dropbox.addEventListener("drop", badDrag, false);
+            
+            
+            var AFound = Boolean({!ValidPage});
+            if (AFound)
+            {
+                $('#FlashDiv').show();
+                $('#ScreenshotDiv').show();
+            }
+            else{
+                //not valid!
+                $('#FlashDiv').hide(); 
+                $('#ScreenshotDiv').hide();
+                $('#UploadTable').empty();
+                $('#UploadTable').append('{!NotValidPageFeedBack}');
+            } 
+        }
+    
+        /* This function will called back by Flash compoennt on every successful or failed upload. */
+        function flashCallBack(status,AttachmentId,AttachmentName,error,AttachmentSize)
+        {     
+            var urlString ="";
+            //alert("Status "+ status +" AttachmentId "+AttachmentId+" AttachmentName "+AttachmentName+"  error "+error+" AttachmentSize "+AttachmentSize);
+            if(status=="Done")
+            {            
+                urlString='<a target="_top" href=/'+AttachmentId+'><b><font color=green>'+status+'!</font></b></a> &nbsp;'+AttachmentName.substring(0,20);
+            }
+            if(status=="Error")  
+            {      
+                urlString="<a  href=javascript:alert('"+ escape(error) +"');><font color=red>"+status+"</font></a> &nbsp;"+AttachmentName.substring(0,20);          
+            }
+            var span = document.getElementById(AttachmentName); 
+            span.innerHTML = urlString;  
+        } 
+    
+        
+        
+        function largeFiles(files,maxSize) 
+        {
+            var  fileNames=files.split(",");  
+            for(i=0;i<fileNames.length;i++){   
+                var error = "Maximum allowed file size is "+ maxSize +"MB";
+                var urlString="<a  href=javascript:alert('"+ escape(error) +"');><font color=red>Error</font></a> &nbsp;"+fileNames[i].substring(0,20);          
+                var span = document.getElementById(fileNames[i]); 
+                span.innerHTML = urlString;                        
+            }
+        }   
+        function clearFiles()
+        {
+           $('#UploadTable').empty();
+        }
+        
+        function selectedFiles(files)
+        {
+            var n=files.split(",");
+            $('#UploadTable').empty();
+            $('#UploadTable').append('<table>');
+            for(i=0;i<n.length;i++){                
+                $('#UploadTable').append('<tr><td><span id="'+n[i]+'" ><img src="{!URLFOR($Resource.ezFileLoader, '/bar-circle.gif')}" height="15" width="15"/>'+n[i].substring(0,20)+'</span></td><tr>');          
+            }  
+            $('#UploadTable').append('</table>');
+         }
+           
+        function DetectSafariBrowser()
+        { 
+            var val = navigator.userAgent.toLowerCase(); 
+            if((val.indexOf("safari") > -1) && (val.indexOf("chrome") == -1))
+                return true;      
+            return false;
+        }
+        
+         
+        $(function(){ 
+            
+            if('draggable' in document.createElement('span') && 'FileReader' in window)
+            {
+                var ParentURL = "{!JSENCODE($CurrentPage.parameters.sURL)}";
+                var ParentURLArray = ParentURL.split('/');
+                RightSide = ParentURLArray[ParentURLArray.length - 1];
+                //Debug("URL: " + ParentURLArray[ParentURLArray.length - 1]);
+                
+                var AFound = Boolean({!ValidPage});
+                if (AFound)
+                {
+                    var dropbox = document.getElementById("dropbox");
+                    // init event handlers
+                    dropbox.addEventListener("dragenter", dragEnter, false);
+                    //dropbox.addEventListener("dragexit", dragExit, false);
+                    dropbox.addEventListener("dragleave", dragExit, false);
+                    dropbox.addEventListener("dragover", dragOver, false);
+                    dropbox.addEventListener("drop", drop, false);
+                }
+                else
+                {
+                    //not valid!
+                    $('#FlashDiv').hide(); 
+                    $('#ScreenshotDiv').hide(); 
+                    $('#UploadTable').empty();
+                    $('#UploadTable').append('{!NotValidPageFeedBack}');
+                }
+            }
+            else
+            {
+                FlashVersion(); 
+                
+            }
+            
+            
+        
+            
+            if (jQuery.browser.msie)
+            {
+                $('#ScreenshotDiv').hide(0);
+            }
+            if ( jQuery.browser.safari)
+            {
+                if (jQuery.browser.chrome)
+                {
+                
+                }
+                else
+                {
+                    $('#ScreenshotDiv').hide(0);
+                }
+            }
+        });
+        
+        function badDrag(evt) 
+        {
+           
+            
+            console.log(evt);
+        }
+     
+        function dragEnter(evt) 
+        {
+            evt.stopPropagation();
+            evt.preventDefault();
+            document.getElementById("dropbox").style.backgroundColor="#8FF984";
+        }
+
+        function dragExit(evt) 
+        {
+            //alert("exits");
+            evt.stopPropagation();
+            evt.preventDefault();
+            document.getElementById("dropbox").style.backgroundColor="#CFEEF8";
+        }
+        function dragOver(evt) 
+        {
+            evt.stopPropagation();
+            evt.preventDefault();
+            document.getElementById("dropbox").style.backgroundColor="#8FF984";
+            //$("#iframeid", top.document).css('height','500px');
+        }
+        
+        function GetFileName(pFile)
+        {
+            if (pFile.fileName != undefined)
+            {
+                return pFile.fileName;
+            }
+            else
+            {
+                return pFile.name;
+            }
+        }
+        
+        function drop(evt) 
+        {
+            document.getElementById("dropbox").style.backgroundColor="#CFEEF8";
+            $('#UploadTable').empty();
+            evt.stopPropagation();
+            evt.preventDefault();
+            var files = evt.dataTransfer.files;
+            var count = files.length;
+            document.getElementById("dropbox").height = count * 25;
+            Debug("Count: " + files.length);
+            $.each(evt.dataTransfer.files, function(index, value) 
+            { 
+                var pFileName = GetFileName(value);
+                
+                var HTMLToAdd = '<tr id="Row_' + index + '">';
+                HTMLToAdd += '<td align="right"><span style="color:green;" id="progress"><img src="{!URLFOR($Resource.ezFileLoader, '/bar-circle.gif')}" height="15" width="15"/></span></td>';
+                HTMLToAdd += '<td>' + pFileName + '</td>';
+                HTMLToAdd += '</tr>';
+                
+                $('#UploadTable').append(HTMLToAdd);
+
+                var MyFileReader = new FileReader();
+                MyFileReader.onload = (function(pFile, pIndex) 
+                    { 
+                        return function(e) 
+                        { 
+                        
+                            console.log(e.target.result);
+                        
+                            var base64 = e.target.result.substring(e.target.result.indexOf('base64') + 7);
+                            
+                            //var base64 = e.target.result;
+                            
+                            $.post("/apex/ezFileLoaderAJAXResource", 
+                                { 
+                                    Name: pFile, 
+                                    ParentId: "{!RecordId}", 
+                                    Body: base64  
+                                },
+                                function(JSONResponse) 
+                                    {
+                                        try
+                                        {
+                                            //var JSONResponse = $.parseJSON(data); //Not Needed
+ 
+                                            if (JSONResponse.Success == true)
+                                            {
+                                                $('#Row_' + pIndex).find('#progress').html('<a target="_top" href="/' + JSONResponse.AttachmentId + '"><b><font color=green>Done!</font></b></a>');
+                                            }
+                                            else
+                                            {
+                                                $('#Row_' + pIndex).find('#progress').html('<a target="_top" onClick = "alert(\'' + JSONResponse.Error + '\');"><b>Error!</b></a>');
+                                            }
+                        
+                                        }
+                                        catch(ex)
+                                        {
+                                            //Debug(ex.message);
+                                            $('#Row_' + pIndex).find('#progress').html('<a target="_top" onClick = "alert(\'' + ex.message + '\');"><b>Error!</b></a>');
+                                        }
+                                    }
+                                );
+
+                        }; 
+                    })(pFileName,index);
+                
+                MyFileReader.readAsDataURL(value);
+                
+                
+            });
+        }
+        
+
+           
+        function Debug(str)
+        {
+            //$('#DebugOut').append("<br/>" + str);
+            //console.log(str);
+        }
+      
+        function DisplayPropertiesOfObject(obj)
+        {
+            for(var key in obj){
+                Debug('<b>' + key + '</b>: ' + obj[key]);
+            }
+        }
+    </script>
+    </body>
+</apex:page>

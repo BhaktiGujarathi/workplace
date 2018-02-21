@@ -1,0 +1,169 @@
+<apex:page standardController="HarvestProject__c" extensions="CreateInvoiceController">
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+    <script src="{!URLFOR($Resource.jquery_vfFloatingHeaders)}"></script>
+    
+    <style>
+        .tableContainer
+        {
+            height:290px; 
+            width: 100%;
+            overflow: auto;
+        }       
+        .floatingStyle 
+        { 
+            position:relative; 
+        } 
+    </style>
+    
+     <script>
+    	$(document).ready(function() {
+       		$('.floatingHeaderTable').vfFloatingHeaders();
+    	});
+    	
+    </script>  
+    
+	<!-- script to check all the checkboxes -->
+    <script type="text/javascript">
+        function checkAll(cb,cbid)
+        {
+            var inputElem = document.getElementsByTagName("input");                    
+            for(var i=0; i<inputElem.length; i++)
+            {            
+                 if(inputElem[i].id.indexOf(cbid)!=-1){                                       
+                    inputElem[i].checked = cb.checked;
+                }
+            }
+        }
+        
+        function openInvoices(invoiceList){
+        	var arr = new Array();
+        	arr = invoiceList.split(',');
+        	if(invoiceList != '[]'){
+	        	for(var i=0; i<arr.length; i++)
+	            {        
+	            	arr[i] = arr[i].replace(" ",""); 
+	            	arr[i] = arr[i].replace("[",""); 
+	            	arr[i] = arr[i].replace("]",""); 
+	            	var win = 	window.open('/'+arr[i],'_blank');
+	            	//,'_newtab');
+	            	win.focus();
+	            }
+	        }
+        }
+    </script>
+    
+	<apex:form >
+		<apex:pageMessages id="pageMessageId" />
+		
+		 <apex:actionStatus id="loadingStatus" stopText="">
+			<apex:facet name="start">
+        	<apex:outputPanel >
+            	<apex:image url="/img/loading.gif" />
+				<apex:outputLabel value="Loading..."/>         
+			</apex:outputPanel>                 
+			</apex:facet>
+		</apex:actionStatus>
+        
+        <apex:actionRegion >
+		<apex:pageBlock title="Create New Invoices" >
+			<apex:pageBlockSection columns="3">
+				<apex:inputField value="{!HarvestProject__c.Account__c}" label="Client">
+					<apex:actionSupport event="onchange" action="{!populateProjects}"
+                                                    	 reRender="pgBlockTable,cb,pageMessageId,noRecords"
+                                                    	 status="loadingStatus" /> 
+                                                    
+				</apex:inputField>
+				<apex:inputField value="{!HarvestProject__c.DateStarted__c}" label="From">
+					<apex:actionSupport event="onchange" action="{!populateProjects}"
+                                                    	 reRender="pgBlockTable,cb,pageMessageId,noRecords"
+                                                    	 status="loadingStatus" /> 
+				</apex:inputField>
+				<apex:inputField value="{!HarvestProject__c.DateCompleted__c}" label="To">
+					<apex:actionSupport event="onchange" action="{!populateProjects}"
+                                                    	 reRender="pgBlockTable,cb,pageMessageId,noRecords"
+                                                    	 status="loadingStatus" /> 
+				</apex:inputField>
+			</apex:pageBlockSection>
+			
+			<apex:outputPanel id="projectTable"> 
+				<br/>
+				<apex:outputpanel style="overflow:auto; height:300px; width:100%" layout="block" id="pgBlockTable" > 
+					<apex:pageBlockTable value="{!projectListWrapper}"  
+										 var="wrapper" 
+										 styleclass="floatingHeaderTable" > 
+						
+						<apex:column width="10px">
+							<apex:facet name="header"> 
+	                        	<apex:inputCheckbox onclick="checkAll(this,'checkBox')"/>
+ 	                        </apex:facet>
+							<apex:inputCheckbox value="{!wrapper.isSelected}" id="checkBox"/>
+						</apex:column>
+						<apex:column width="35px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.Name.Label}
+	                        </apex:facet>
+	                        <apex:outputLink value="/{!wrapper.prjct['Id']}" id="theLink" target="_blank">
+	                        	<apex:outputField value="{!wrapper.prjct['Name']}"/>
+	                        </apex:outputLink>
+						</apex:column>
+						<apex:column value="{!wrapper.prjct['Budget__c']}" width="25px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.Budget__c.Label}
+	                        </apex:facet>
+						</apex:column>
+						<apex:column value="{!wrapper.prjct['Account__c']}"  width="25px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.Account__c.Label}
+	                        </apex:facet>
+						</apex:column>
+						<apex:column value="{!wrapper.prjct['Opportunity__c']}"  width="25px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.Opportunity__c.Label}
+	                        </apex:facet>
+						</apex:column>
+						<apex:column value="{!wrapper.prjct['TotalProjectHours__c']}"  width="25px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.TotalProjectHours__c.Label}
+	                        </apex:facet>
+						</apex:column>
+						<apex:column value="{!wrapper.totalHrs}"  width="25px">
+							<apex:facet name="header">
+	                       		Total Hours
+	                        </apex:facet>
+						</apex:column>
+						<apex:column value="{!wrapper.prjct['Oldest_Uninvoiced_Date__c']}"  width="25px">
+							<apex:facet name="header">
+	                       		{!$ObjectType.HarvestProject__c.fields.Oldest_Uninvoiced_Date__c.Label}
+	                        </apex:facet>
+						</apex:column>
+ 					</apex:pageBlockTable> 
+ 					
+ 					<apex:outputPanel rendered="{!projectListWrapper.size==0}" id="noRecords">
+						<apex:pageBlockSection >
+							No records for this filter or all the entries are invoiced
+							<br/>
+						</apex:pageBlockSection>
+					</apex:outputPanel>
+				</apex:outputpanel>	
+				<br/>
+				
+				<apex:inputCheckbox value="{!createSingleInvoice}" label="Create Single Invoice"  id="cb"/>
+<!-- 								    disabled="{!isCBDisabled}"/> -->
+				<apex:outputText value="Create Single Invoice"/>
+			</apex:outputPanel>
+			
+			<div align="center">
+			 
+				<apex:commandButton value="Create Invoices" action="{!CreateInvoices}" 
+															onComplete="openInvoices('{!invoiceIdList}'); return false;" 
+															reRender="pgBlockTable,cb,pageMessageId,noRecords"
+															status="loadingStatus"/>
+                                                            
+				<apex:commandButton action="{!Cancel}" value="Cancel"/>
+			</div>
+		</apex:pageBlock>
+		</apex:actionRegion>
+	</apex:form>
+
+</apex:page>

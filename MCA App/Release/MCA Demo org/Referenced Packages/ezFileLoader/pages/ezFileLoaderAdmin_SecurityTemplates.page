@@ -1,0 +1,251 @@
+<apex:page setup="true" controller="ezfileloader.ezFileLoaderAdmin_SecurityTemplates" title="ezFileLoader Administration: Templates">
+    <apex:form id="PrimaryForm">
+        <c:ezFileLoaderAdminNav PageTitle="Templates"/>
+        <apex:pageMessages id="UserMessages"></apex:pageMessages>  
+        <script type="text/javascript">
+            function checkAll(cb,cbid)
+            {
+                var inputElem = document.getElementsByTagName("input");                     
+                for(var i=0; i<inputElem.length; i++)
+                {             
+                     if(inputElem[i].id.indexOf(cbid)!=-1)
+                     {                                        
+                        inputElem[i].checked = cb.checked;
+                    }
+                }
+            }
+        </script>
+        <style>
+            a.Alpha
+            {
+                text-decoration:none;
+            }
+            a.Alpha:hover
+            {
+                text-decoration:underline;
+            }
+        </style>
+        
+        <apex:pageBlock title="Batch Processes">
+            <apex:commandButton value="Apply to Existing Attachments" action="{!doApplyChangesToExisting}" reRender="UserMessages"/>
+        </apex:pageBlock>
+        
+        <apex:pageBlock title="Security Details" id="PrimaryPB">
+            <apex:pageblockbuttons location="top" >
+                <apex:commandButton action="{!save}" value="Save" rerender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                <apex:commandButton action="{!CloneObjectMethod}" rerender="UserMessages,PrimaryPB" status="PagingStatus" value="Clone" />
+            </apex:pageblockbuttons>
+            
+            <!-- <center><apex:actionStatus id="PagingStatus" startText="Loading..." StopText="    "/></center>-->
+            <center>
+                <apex:actionStatus id="PagingStatus">
+                    <apex:facet name="start">
+                        Please Wait...
+                    </apex:facet>
+                    <apex:facet name="stop">
+                        &nbsp;
+                    </apex:facet>
+                </apex:actionStatus>
+            </center>
+            <apex:outputpanel rendered="{!CloneObjectVisible}" >
+                <center>
+                    <b>Select Object To Clone To</b> &nbsp;&nbsp;&nbsp;&nbsp;
+                    <apex:SelectList value="{!SelectedCloneObject}" size="1"><apex:SelectOptions value="{!CloneObjectList}" /><apex:actionSupport event="onchange" action="{!CloneObjectSelected}" rerender="UserMessages,PrimaryPB" status="PagingStatus" /></apex:SelectList>
+                </center>
+                <br />
+            </apex:outputpanel>
+            <apex:pageblockSection columns="1">
+                <apex:pageBlockSectionItem >
+                    <b>Object</b>
+                    <apex:SelectList value="{!SelectedObject}" size="1">
+                        <apex:SelectOptions value="{!ObjectSOList}" />
+                        <apex:actionSupport event="onchange" action="{!ObjectSelected}" reRender="UserMessages,PrimaryPB" status="PagingStatus" />
+                    </apex:SelectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <b>View</b>
+                    <apex:selectList value="{!SelectedView}" size="1">
+                        <apex:selectOptions value="{!ViewOptionList}" />
+                        <apex:actionSupport event="onchange" status="PagingStatus" action="{!ViewSelected}" rerender="UserMessages,PrimaryPB" />
+                    </apex:selectList>
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:commandButton value="Search By Name" status="PagingStatus" action="{!UserSearchstringMethod}" rerender="UserMessages,PrimaryPB" />
+                    <apex:inputText value="{!UserSearchString}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel rendered="{!SelectedView == 'User'}" value="<b>Filter By Profile/Role</b>" escape="false" />
+                    <apex:selectList rendered="{!SelectedView == 'User'}" value="{!SelectedProfileRole}" size="1"><apex:SelectOptions value="{!ProfileRoleOptions}" /><apex:actionSupport action="{!AlphabetFilter}" reRender="UserMessages,PrimaryPB" status="PagingStatus" event="onchange"  /></apex:selectList>
+                </apex:pageBlockSectionItem>
+            </apex:pageblockSection>
+            
+            <table cellpadding="3" cellspacing="0" style="width:100%;">
+                <tr>
+                    <td style="text-align:left;">
+                        <apex:outputPanel rendered="{!SelectedView == 'User'}">
+                            <apex:commandButton value="First" action="{!UserMoveToFirst}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                            <apex:commandButton value="Back" action="{!UserMoveBackwards}" disabled="{!UserBackButtonDisabled}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!SelectedView == 'Profile'}">
+                            <apex:commandButton value="First" action="{!ProfileMoveToFirst}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                            <apex:commandButton value="Back" action="{!ProfileMoveBackwards}" disabled="{!ProfileBackButtonDisabled}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                        </apex:outputPanel>
+                    </td>
+                    
+                    
+                    <td style="text-align:center;">
+                        <apex:outputPanel rendered="{!AllOptionVisible}">
+                            <apex:outputPanel rendered="{!'All' == SelectedAlphabet}">
+                                <apex:commandLink value="All" rerender="UserMessages,PrimaryPB" style="background-color:yellow;" status="PagingStatus" action="{!AlphabetFilter}">
+                                    <Apex:param name="passAlphabetall" value="All" assignTo="{!SelectedAlphabet}" />
+                                </apex:commandLink>&nbsp;|
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!'All' != SelectedAlphabet}">
+                                <apex:commandLink value="All" rerender="UserMessages,PrimaryPB" status="PagingStatus" action="{!AlphabetFilter}">
+                                    <Apex:param name="passAlphabetall" value="All" assignTo="{!SelectedAlphabet}" />
+                                </apex:commandLink>&nbsp;|
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                        <apex:repeat value="{!AlphabetList}" var="AL">
+                            &nbsp;
+                            <apex:outputPanel rendered="{!AL == SelectedAlphabet}">
+                                <apex:commandLink value="{!AL}" rerender="UserMessages,PrimaryPB" status="PagingStatus"  style="background-color:yellow;" action="{!AlphabetFilter}">
+                                    <Apex:param name="passAlphabet1" value="{!AL}" assignTo="{!SelectedAlphabet}" />
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!AL != SelectedAlphabet}">
+                                <apex:commandLink value="{!AL}" rerender="UserMessages,PrimaryPB" status="PagingStatus"  action="{!AlphabetFilter}">
+                                    <Apex:param name="passAlphabet2" value="{!AL}" assignTo="{!SelectedAlphabet}" />
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                            &nbsp;|
+                        </apex:repeat>
+                        &nbsp;
+                        <apex:commandLink value="Z" rerender="UserMessages,PrimaryPB" status="PagingStatus" action="{!AlphabetFilter}">
+                            <Apex:param name="passAlphabet3" value="Z" assignTo="{!SelectedAlphabet}" />
+                        </apex:commandLink>
+                    </td>
+                    
+                    <td  style="text-align:right;"> 
+                        
+                        <apex:outputPanel rendered="{!SelectedView == 'User'}">
+                            <apex:commandButton value="Next" action="{!UserMoveForward}" disabled="{!UserNextButtonDisabled}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                            <apex:commandButton value="Last" action="{!UserMoveToLast}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!SelectedView == 'Profile'}">
+                            <apex:commandButton value="Next" action="{!ProfileMoveForward}" disabled="{!ProfileNextButtonDisabled}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                            <apex:commandButton value="Last" action="{!ProfileMoveToLast}" reRender="UserMessages,PrimaryPB" status="PagingStatus"/>
+                        </apex:outputPanel>
+                    </td>
+                    
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <apex:outputPanel rendered="{!SelectedView == 'User'}">
+                            <apex:PageBlockTable value="{!UserWrapperList}" var="record" cellpadding="5" width="100%" >
+                                <apex:column headerValue="User">
+                                    <apex:outputText value="{!record.UserRecord.Name}"/> 
+                                </apex:column>
+                                <apex:column headerValue="View" >
+                                    <apex:SelectList size="1" value="{!record.ViewSelect}">
+                                        <apex:selectOptions value="{!RadioOptions}" />
+                                    </apex:SelectList>
+                                </apex:column>
+                                <apex:column headerValue="Email" >
+                                    <apex:SelectList size="1"  value="{!record.EmailSelect}">
+                                        <apex:selectOptions value="{!RadioOptions}" />
+                                    </apex:SelectList>
+                                </apex:column>
+                                <apex:column headerValue="Edit/Delete" >
+                                    <apex:SelectList size="1"  value="{!record.EditDeleteSelect}">
+                                        <apex:selectOptions value="{!RadioOptions}" />
+                                    </apex:SelectList>
+                                </apex:column>
+                                <apex:column headerValue="Set Security" >
+                                    <apex:SelectList size="1" value="{!record.SetSecuritySelect}">
+                                        <apex:selectOptions value="{!RadioOptions}" />
+                                    </apex:SelectList>
+                                </apex:column>
+                           </apex:PageBlockTable>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!SelectedView == 'Profile'}">
+                            <apex:PageBlockTable value="{!ProfileWrapperList}" var="record" cellpadding="5" width="100%" >
+                                <apex:column headerValue="Profile">
+                                    <apex:outputText value="{!record.ProfileRecord.Name}"/> 
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:outputLabel >
+                                            <apex:inputCheckbox value="{!ViewCheckAll}" onclick="checkAll(this,'View')" />
+                                            View
+                                        </apex:outputLabel> 
+                                    </apex:facet>
+                                    <apex:inputCheckbox value="{!record.View}" id="View"/>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:outputLabel >
+                                            <apex:inputCheckbox value="{!EmailCheckAll}" onclick="checkAll(this,'Email')" />
+                                            Email
+                                        </apex:outputLabel> 
+                                    </apex:facet>
+                                    <apex:inputCheckbox value="{!record.Email}" id="Email"/>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:outputLabel >
+                                            <apex:inputCheckbox value="{!DeleteCheckAll}" onclick="checkAll(this,'EditDelete')" />
+                                            Edit/Delete
+                                        </apex:outputLabel> 
+                                    </apex:facet>
+                                    <apex:inputCheckbox value="{!record.EditDelete}" id="EditDelete"/>
+                                </apex:column>
+                                <apex:column >
+                                    <apex:facet name="header">
+                                        <apex:outputLabel >
+                                            <apex:inputCheckbox value="{!SecurityCheckAll}" onclick="checkAll(this,'SetSecurity')" />
+                                            Set Security
+                                        </apex:outputLabel> 
+                                    </apex:facet>
+                                    <apex:inputCheckbox value="{!record.SetSecurity}" id="SetSecurity"/>
+                               </apex:column>
+                            </apex:PageBlockTable>
+
+                        </apex:outputPanel>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <apex:outputPanel rendered="{!SelectedView == 'User'}">
+                            <apex:repeat value="{!UserPageNumbers}" var="pn" >
+                                <apex:commandLink style="text-decoration:none;{!IF(pn==UserSelectedPageNumber,'color:red;','')}" value="{!pn}" action="{!UserPageNumberSelected}" reRender="UserMessages,PrimaryPB" status="PagingStatus">
+                                    <apex:param name="SelectedPageNumber" assignTo="{!UserSelectedPageNumber}" value="{!pn}"/>
+                                </apex:commandLink>&nbsp;&nbsp;
+                            </apex:repeat>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!SelectedView == 'Profile'}">
+                            <apex:repeat value="{!ProfilePageNumbers}" var="pn" >
+                                <apex:commandLink style="text-decoration:none;{!IF(pn==ProfileSelectedPageNumber,'color:red;','')}" value="{!pn}" action="{!ProfilePageNumberSelected}" reRender="UserMessages,PrimaryPB" status="PagingStatus">
+                                    <apex:param name="SelectedProfilePageNumber" assignTo="{!ProfileSelectedPageNumber}" value="{!pn}"/>
+                                </apex:commandLink>&nbsp;&nbsp;
+                            </apex:repeat>
+                        </apex:outputPanel>
+                    </td>
+                    <td style="text-align:right;">
+                        <apex:outputPanel rendered="{!SelectedObject != null && SelectedObject != ''}">
+                            Number of records per page&nbsp;&nbsp;&nbsp;&nbsp;
+                            <apex:outputPanel rendered="{!SelectedView == 'Profile'}">
+                                <apex:SelectList value="{!SelectedProfileListSize}" size="1"><apex:selectOptions value="{!ListSizeOptions}" /><apex:actionSupport event="onchange" action="{!AlphabetFilter}"  reRender="UserMessages,PrimaryPB" status="PagingStatus" /></apex:SelectList>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!SelectedView == 'User'}">
+                                <apex:SelectList value="{!SelectedUserListSize}" size="1"><apex:selectOptions value="{!ListSizeOptions}" /><apex:actionSupport event="onchange" action="{!AlphabetFilter}"  reRender="UserMessages,PrimaryPB" status="PagingStatus" /></apex:SelectList>
+                            </apex:outputPanel>
+                        </apex:outputPanel>
+                    </td>
+                </tr>
+            </table>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

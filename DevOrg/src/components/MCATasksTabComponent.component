@@ -1,0 +1,144 @@
+<apex:component controller="MCATasksTabController" allowDML="true">
+    <apex:form id="records" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false" />
+        <c:MCAJQTabComponent />
+
+        <apex:pageBlock mode="inlineedit" >
+            <script>
+                var taskTabLabelOriginal;
+                function runSaveAllTasks() {
+
+                  setTimeout(function() {
+                    saveAllTasks();
+                  }, 500);
+                }
+                
+                function runNewTasks() { 
+                 
+                setTimeout(function() {
+                        
+                        newTasks();
+                }, 500);
+                   
+                }
+                
+                function runEditTasks() {
+
+                  setTimeout(function() {
+                    editTasks();
+                  }, 500);
+                }
+                function runDeleteTasks() {
+
+                  setTimeout(function() {
+                    deleteTasks();
+                  }, 500);
+                }
+                
+                t$('#removeRow').click(function() {
+                    alert('hiii');
+                    t$('input').blur();
+                    
+                });
+                
+                t$(function () {
+                    taskTabLabelOriginal = t$("[id*='tasktab_lbl']").text();
+                    computeCalculations();
+                });
+                function computeCalculations() {
+                        var taskTabLabel = 'Tasks' ; // + ' (' + {!containers.size} +')';
+                        t$("[id*='tasktab_lbl']").text(taskTabLabel);
+                        t$("[id*='tasktab_lbl']").append(' (' + {!containers.size} +')');         
+                }
+                
+                t$(".saveBtn").click(function(){      
+                    t$('.saveBtn').prop('disabled', true);
+                });
+            </script>
+            <apex:actionFunction action="{!saveAllTasks}" name="saveAllTasks" rerender="records,refreshComponent,pageMessageId" status="loadingPanel" oncomplete="computeCalculations()"/>
+            <apex:actionFunction action="{!newTask}" name="newTasks" rerender="records,refreshComponent,pageMessageId" status="loadingPanel" oncomplete="computeCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editTasks" rerender="records,refreshComponent,pageMessageId" status="loadingPanel" oncomplete="computeCalculations()"/>
+            <apex:actionFunction action="{!deleteTask}" name="deleteTasks" rerender="records,refreshComponent,pageMessageId" status="loadingPanel" oncomplete="computeCalculations()"/>
+            
+            <apex:pageBlockButtons location="top" >
+      
+                <input type="button" onclick="runNewTasks()" class="btn"  status="loadingPanel" value="New Task"  />
+                <input type="button" onclick="runSaveAllTasks()" class="btn saveBtn"  status="loadingPanel" value="Save"  />
+
+                <apex:outputPanel rendered="{!taskPermission}">
+                    <input type="button" class="btn"  onclick="runEditTasks()" value="Edit All" status="loadingPanel" oncomplete="computeCalculations()"/>
+                </apex:outputPanel>
+        
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeCalculations()"></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeCalculations()"></apex:CommandButton>
+            </apex:pageBlockButtons>
+            <div class="test" >
+                <div class="container-new">
+                    <table class="tablesorting tablesorter">
+                        <thead class="header">
+                            <tr>
+                                <th>Action<div>Action</div>
+                                </th>
+                                <th>{!$ObjectType.Task.Fields.Subject.Label}<div>{!$ObjectType.Task.Fields.Subject.Label}</div>
+                                </th>
+                                <th>Due Date<div>Due Date</div>
+                                </th>
+                                <th>{!$ObjectType.Task.Fields.Priority.Label}<div>{!$ObjectType.Task.Fields.Priority.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Task.Fields.Status.Label}<div>{!$ObjectType.Task.Fields.Status.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Task.Fields.Description.Label}<div>{!$ObjectType.Task.Fields.Description.Label}</div>
+                                </th>
+                                <th>Assigned To<div>Assigned To</div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!containers}" var="container">
+                                <tr>
+                                    <td>
+                                        <apex:outputLink value="/{!container.task.Id}" target="blank" rendered="{!NOT(ISBLANK(container.task.Id))}"> View </apex:outputLink>
+                                        <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(container.task.Id))}"/>
+                                        <apex:commandLink action="{!deleteTask}" value="Del" rerender="records,refreshComponent" rendered="{!NOT(ISBLANK(container.task.Id))}" status="loadingPanel" oncomplete="computeCalculations()">
+                                            <apex:param name="recordToDelete" value="{!container.task.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                                            <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        <apex:commandLink action="{!removeTask}" value="Remove" rerender="records,refreshComponent" 
+                                        rendered="{!(ISBLANK(container.task.Id))}" status="loadingPanel" 
+                                         oncomplete="computeCalculations()" styleClass="removeRow">
+                                        <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.task.Subject}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.task.Subject}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.task.ActivityDate}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.task.ActivityDate}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.task.Priority}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.task.Priority}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                      <apex:outputField value="{!container.task.Status}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                      <apex:inputField value="{!container.task.Status}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.task.Description}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.task.Description}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.task.OwnerId}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.task.OwnerId}" rendered="{!OR((ISBLANK(container.task.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:component>

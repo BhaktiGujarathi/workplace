@@ -1,0 +1,418 @@
+<apex:page controller="DamacHomeController" cache="true" tabStyle="HOME__tab">
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+        <title>Agent Portal- Home</title>
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        
+        <style>
+            .chart-override{
+                text-align: center;
+                vertical-align: middle;
+                line-height: 300px;
+            }
+            
+            .title-responsive{
+                text-align: center;
+            }
+            
+            .title{
+                text-align:center;
+                padding-top:30px;
+                color:Black !important;
+                font-weight:bold !important;
+                width:100%;
+            }
+            
+            .slds [hidden], .slds template,[hidden],template{
+                display:block !important;
+            }
+        
+            .legend-color{
+                height:12px;
+                width:24px;
+                display:inline-block;   
+            }
+          
+            .legend-text{
+             display:inline-block;
+             color:Black;
+             font-family:Arial,sans-serif !important;
+             font-size:9px !important;
+             padding-right:10px;
+            }
+            
+           html,body{
+            width:100%;
+           }
+           
+           text{
+               font-size:11px !important;
+           }
+
+          @media only screen and (max-width: 767px){
+                .home-col-1{
+                  margin-right:0px !important;
+                }
+           }
+
+           .home-col-1{
+              margin-right:7px;
+              margin-bottom:7px;
+              background:#FFFFFF;
+              overflow:hidden;
+           }
+
+           .home-col-2{
+              margin-bottom:7px;
+              background:#FFFFFF;
+              overflow:hidden;
+           }
+
+           
+         
+        </style>
+    </head>
+<body >
+    <div class="global-wrapper content-bg">
+        <apex:insert name="body">
+            <apex:form id="registration-form" styleClass="slds">
+
+                <section class=" slds" id="home-section">
+                    <div class="slds-grid slds-wrap">
+                      <div  class="slds-size--1-of-1 slds-medium-size--4-of-12 monthly-sale ie-responsive" style="">
+                          <apex:outputPanel rendered="{!isAdminAccount}" layout="block" styleClass="home-col-1">
+                              <div id="" class="text-medium text-color-black title title-responsive"> Monthly Sales</div>
+                              <div id="monthly-sale" style="width:100%;height:300px;" class="chart-override text-color-secondary text-small"></div>
+                          </apex:outputPanel> 
+                          <apex:outputPanel rendered="{!isAdminAccount == false}" layout="block"  styleClass="home-col-1">
+                              <div id="" class="text-medium text-color-black title title-responsive"> Monthly Sales</div>
+                              <div id="" style="width:100%;height:300px;line-height:20px;padding-top:100px" class="chart-override text-color-secondary text-small">
+                               <p>No data available at this moment!</p><p> Start using the portal to populate the graph :(</p>    
+                              </div>
+                          </apex:outputPanel>
+                     </div>
+
+                      <div  class="slds-size--1-of-1 slds-medium-size--4-of-12 monthly-brokerage ie-responsive">
+                          <apex:outputPanel rendered="{!isAdminAccount}" layout="block" styleClass="home-col-1">
+                                <div id="" class="text-medium text-color-black title title-responsive">DP Docs Overdue</div>
+                                <div id="dp-overdue" style="width:100%;height:300px" class="chart-override"></div>
+                           </apex:outputPanel>
+                          <apex:outputPanel rendered="{!isAdminAccount == false}" layout="block" styleClass="home-col-1">
+                                <div id="" class="text-medium text-color-black title title-responsive">DP Docs Overdue</div>
+                                  <div id="" style="width:100%;height:200px;line-height:20px;padding-top:100px" class="chart-override text-color-secondary text-small">
+                                   <p>No data available at this moment!</p><p> Start using the portal to populate the graph :(</p>    
+                                  </div>
+                           </apex:outputPanel> 
+                      </div>
+                      <div  class="slds-size--1-of-1 slds-medium-size--4-of-12 dp-overdue ie-responsive">
+                             <apex:outputPanel rendered="{!isAdminAccount}" layout="block" styleClass="home-col-2">
+                               <div id="" class="text-medium text-color-black title title-responsive"> Monthly Brokerage</div>
+                              <div id="monthly-brokerage" style="height:300px" class="chart-override text-color-secondary text-small"></div>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        
+                        <div  class="slds-size--1-of-1 slds-medium-size--4-of-12 ie-responsive">
+                            <apex:outputPanel rendered="{!IF(AND(isAdminAccount,isEligibleForTierProgram),TRUE,FALSE)}" layout="block" styleClass="home-col-1">
+                                 <div id="" class="text-medium text-color-black title title-responsive">{!currentQuarterName}</div>
+                                 <div id="quarter-tier-chart" style="height:200px;margin:0 auto" class="chart-override gauge-chart"></div>
+                                 <div class=" title-responsive" style="text-align:center;font-size:12px;color:Black">AED,Millions</div>
+                                 <div class="legend-tier title-responsive" style="display:block;text-align:center;height:82.4px;background:#FFFFFF !important">
+                                     <div class="legend-color" style="background:#6F6F6F;"></div>
+                                     <div class="legend-text"> Silver</div>
+                                     <div class="legend-color" style="background:#DEB815;"></div>
+                                     <div class="legend-text"> Gold</div>
+                                     <div class="legend-color" style="background:#BAB7B8;"></div>
+                                     <div class="legend-text"> Platinum</div>
+                                 </div>
+                            </apex:outputPanel>
+                        </div>
+                        <div class="slds-size--1-of-1 slds-medium-size--4-of-12 ie-responsive">
+                            <apex:outputPanel rendered="{!IF(AND(isAdminAccount,isEligibleForTierProgram),TRUE,FALSE)}" layout="block" styleClass="home-col-1" >
+                                 <div id="" class="text-medium text-color-black title title-responsive">{!annualTierName}</div>
+                                 
+                                 <div id="annual-tier-chart" style="height:200px;margin:0 auto" class="chart-override gauge-chart"></div>
+                                 <div id="" class="title-responsive" style="text-align:center;font-size:12px;color:Black">AED,Millions</div>
+                                 <div class="legend-tier title-responsive" style="display:block;text-align:center;height:82.4px;background:#FFFFFF !important">
+                                     <div class="legend-color" style="background:#6F6F6F;"></div>
+                                     <div class="legend-text"> Silver</div>
+                                     <div class="legend-color" style="background:#DEB815;"></div>
+                                     <div class="legend-text"> Gold</div>
+                                     <div class="legend-color" style="background:#BAB7B8;"></div>
+                                     <div class="legend-text"> Platinum</div>
+                                 </div>
+                            </apex:outputPanel>
+                        </div>
+                    </div>
+                    <div class="slds-grid slds-wrap">
+                        
+                    </div>
+                </section>
+            </apex:form>
+            
+        </apex:insert>
+        <script>
+
+            google.charts.load("current", {packages:['corechart','bar','gauge']});
+            google.charts.setOnLoadCallback(drawChart);
+
+            if (GetIEVersion() > 0) {
+              if(window.innerWidth<768){
+                $('.ie-responsive').parent().css('display','block');
+              }
+            }
+
+            function drawChart() {
+             var data = google.visualization.arrayToDataTable([
+                ['', '{!rejected}', '{!dpDocsOK}', '{!awaitingDPDocsOK}', { role: 'annotation' } ],
+                <apex:repeat value="{!monthlySalesList}" var="sales">
+                    ['{!sales.monthYear}', {!sales.rejectedSalesVal},{!sales.dpDocsVal},{!sales.awaitingDPDocVal},''],
+                </apex:repeat>
+                
+              ]);
+
+              var options = {
+                
+                legend: { position: 'top' },
+                bar: { groupWidth: '50%' },
+                isStacked: true,
+                colors:[
+                    '#DEDEDE','#0D80FC','#FAAB20'
+                    ],
+                vAxis:{
+                    title:'Sales, AED Million\'s',
+                    ticks:{!salesYaxis}
+                },
+                  chartArea:{
+                             width:'75%'}
+              };
+              
+              
+               
+              if({!monthlySalesListSize} == 0){
+                $("#monthly-sale").html('<p>No data available at this moment:(</p><p> Start using the portal to populate the graph!</p>');
+                $("#monthly-sale").css('line-height','1');
+                $('#monthly-sale').css('padding-top','100px');
+
+              }
+              else{
+                   var chart = new google.visualization.ColumnChart(document.getElementById("monthly-sale"));
+                   chart.draw(data, options);
+              }
+             
+            }
+
+             if({!isAdminAccount}){
+
+                google.charts.setOnLoadCallback(drawMontlyBrokerageChart);
+             }
+
+            function drawMontlyBrokerageChart() {
+             var data = google.visualization.arrayToDataTable([
+                ['', '{!unpaidDue}', '{!paid}', { role: 'annotation' } ],
+                <apex:repeat value="{!monthlyBrokerageList}" var="brokerage">
+                     ['{!brokerage.monthYear}', {!brokerage.unpaidDueVal},{!brokerage.paidVal},''],
+                </apex:repeat>
+              ]);
+
+              var options = {
+                
+                legend: { position: 'top' },
+                bar: { groupWidth: '25%' },
+                 colors:[
+                    '#FAAB20','#0D80FC'
+                    ],
+                hAxis:{
+                    title:'Brokerage, AED Thousand\'s',
+                    ticks:{!brokerageXAxis}
+                },
+                bars:'horizontal',
+                isStacked:true
+              };
+
+              if({!monthlyBrokerageListSize} == 0){
+                $("#monthly-brokerage").html('<p>No data available at this moment:(</p><p> Start using the portal to populate the graph!</p>');
+                $("#monthly-brokerage").css('line-height','1');
+                $('#monthly-brokerage').css('padding-top','100px');
+              }
+              else{
+                   var chart = new google.visualization.BarChart(document.getElementById("monthly-brokerage"));
+                   chart.draw(data, options);
+              }
+
+            
+            }
+
+            if({!isAdminAccount}){
+               
+                
+                google.charts.setOnLoadCallback(drawDPOverdue);
+            }
+
+            function drawDPOverdue() {
+             var data = google.visualization.arrayToDataTable([
+                ['', 'DP+Docs', 'DP Only', 'Docs Only', { role: 'annotation' } ],
+                <apex:repeat value="{!dpDocsOverDueList}" var="dpDocs">
+                    ['{!dpDocs.weekDays}', {!dpDocs.noOfDPDOCSOverdueDays},{!dpDocs.noOfDPOverdueDays},{!dpDocs.noOfDocsOverdueDays},''],
+                </apex:repeat>
+               
+              ]);
+
+              var options = {
+               
+                legend: { position: 'top',  },
+                bar: { groupWidth: '75%' },
+                colors:[
+                    '#DEDEDE','#0D80FC','#FAAB20'
+                    ],
+                hAxis:{
+                    title:'No. of days aging',
+                },
+                vAxis:{
+                    title:'No of. bookings',
+                    ticks:{!dpDocsYAxis}
+                },
+                chartArea:{
+                      width:'75%'}
+             
+            
+              };
+
+
+              if({!dpDocsOverDueListSize} == 0){
+                $("#dp-overdue").html('<p>No data available at this moment:(</p><p> Start using the portal to populate the graph!</p>');
+                $("#dp-overdue").css('line-height','1');
+                $('#dp-overdue').css('padding-top','100px');
+              }
+              else{
+                    var chart2 = new google.visualization.ColumnChart(document.getElementById("dp-overdue"));
+                    chart2.draw(data, options);
+              
+              }
+            }
+            
+              google.charts.setOnLoadCallback(drawQuarterlyTier);
+              function drawQuarterlyTier() {
+        
+                var data = google.visualization.arrayToDataTable([
+                  ['Label', 'Value'],
+                  ['', {!currentQuarterSalesVal}],
+                ]);
+        
+               options = {
+                   legend: { position: 'bottom'},
+                   width: 200,
+                   height: 200,
+                   min:0,
+                   max:200,
+                   redFrom: 0,
+                   redTo: 20,
+                   redColor: "#6F6F6F",
+                   greenFrom: 20,
+                   greenTo: 40,
+                   greenColor: "#DEB815",
+                   yellowFrom:40, 
+                   yellowTo: 200,
+                   yellowColor:"#BAB7B8",
+                   minorTicks: 0, 
+                   majorTicks:[0,20,40,60,80,100,120,140,160,180,200]
+                   
+               };
+        
+                var chart = new google.visualization.Gauge(document.getElementById('quarter-tier-chart'));
+        
+                chart.draw(data, options);
+
+                 initGaugeChart();
+                
+                google.visualization.events.addListener(chart, 'ready', function () {
+                   initGaugeChart();
+                });
+              }
+            
+              function initGaugeChart(){
+                $('.gauge-chart circle:nth-child(2)').attr('fill', 'white'); //background
+                $('.gauge-chart circle').addClass('circle-override');
+                $('.gauge-chart circle:nth-child(2)').attr('stroke', 'white');
+                $('.gauge-chart circle:nth-child(2)').attr('stroke-width', '0');
+                $('.gauge-chart circle:nth-child(1)').attr('fill', 'transparent'); //outer-ring
+                $('.gauge-chart circle:nth-child(1)').attr('stroke-width', '0');
+                $('.gauge-chart circle:nth-child(1)').attr('stroke', 'white');
+                $('.gauge-chart circle:nth-child(3)').attr('fill', '#666666'); //the circle pointer
+                $('.gauge-chart circle:nth-child(3)').attr('stroke', 'white');
+                $('.gauge-chart text').attr('fill', 'black');
+                $('.gauge-chart text:nth-child(1)').attr('fill', 'black');
+                $('.gauge-chart text:nth-child(1)').attr('font-size', '33');
+                $('.gauge-chart text').attr('left');
+                $('.gauge-chart path:nth-child(2)').attr('fill-opacity', '2');
+                $('.gauge-chart table').css('margin','0 auto');
+            }
+            
+              google.charts.setOnLoadCallback(drawAnnualTier);
+              function drawAnnualTier() {
+        
+                var data = google.visualization.arrayToDataTable([
+                  ['Label', 'Value'],
+                  ['', {!annualSalesVal}],
+                ]);
+        
+               options = {
+                   legend: { position: 'bottom'},
+                   width: 200,
+                   height: 200,
+                   min:0,
+                   max:320,
+                   redFrom: 0,
+                   redTo: 80,
+                   redColor: "#6F6F6F",
+                   greenFrom: 80,
+                   greenTo: 160,
+                   greenColor: "#DEB815",
+                   yellowFrom:160, 
+                   yellowTo: 320,
+                   yellowColor:"#BAB7B8",
+                   minorTicks: 0, 
+                   majorTicks:[0,40,80,120,160,200,240,280,320]
+                   
+               };
+        
+                var chart = new google.visualization.Gauge(document.getElementById('annual-tier-chart'));
+        
+                chart.draw(data, options);
+
+                 initGaugeChart();
+                
+                google.visualization.events.addListener(chart, 'ready', function () {
+                   initGaugeChart();
+                });
+              }
+
+              function GetIEVersion() {
+                var sAgent = window.navigator.userAgent;
+                var Idx = sAgent.indexOf("MSIE");
+
+                // If IE, return version number.
+                if (Idx > 0) 
+                  return parseInt(sAgent.substring(Idx+ 5, sAgent.indexOf(".", Idx)));
+
+                // If IE 11 then look for Updated user agent string.
+                else if (!!navigator.userAgent.match(/Trident\/7\./)) 
+                  return 11;
+
+                else
+                  return 0; //It is not IE
+              }
+
+
+            
+             
+        </script>
+       
+    </div>
+</body>
+</html> 
+</apex:page>

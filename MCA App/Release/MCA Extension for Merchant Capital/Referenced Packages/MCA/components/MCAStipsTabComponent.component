@@ -1,0 +1,134 @@
+<apex:component controller="McaApp.MCAStipsTabController" allowDML="true">
+<script src="/soap/ajax/20.0/connection.js" type="text/javascript"></script>
+  <apex:form id="records" styleClass="records">
+    
+    <script Language="JavaScript">
+        var stipsTabLabelOriginal ;
+        t$(function () {
+            stipsTabLabelOriginal = t$("[id*='stipstab_lbl']").text();
+            console.log('-----tab label component----'+t$("[id*='stipstab_lbl']").text());
+            computestipCalculations();
+        });
+        
+        function computestipCalculations() {
+            //if({!stipsOpenCnt} != 0 || {!stipsCloseCnt} != 0) {
+             console.log('-----tab label component11111----'+t$("[id*='stipstab_lbl']").text());
+             console.log('---{!containers.size}--'+{!containers.size});
+                var stipsTabLabel = 'Stips' ; //+ ' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')';
+                console.log('-----stipsTabLabel----'+stipsTabLabel);
+                t$("[id*='stipstab_lbl']").text(stipsTabLabel);               
+                t$("[id*='stipstab_lbl']").append(' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')');
+        }
+        
+        function EmailStips()
+        {
+            var email = '{!opportunity.Owner_1__r.Email}';
+            sforce.connection.sessionId = "{!$Api.Session_ID}";
+            var result = sforce.connection.query("Select Name, Id, StageName, (Select Id,MCAApp__Status__c From MCAApp__Items_Needed__r where MCAApp__Status__c != 'Completed' OR MCAApp__Status__c != 'Cancelled') From Opportunity where Id ='{!Opportunity.Id}'");
+            records = result.getArray("records");
+            console.log('####'+result);
+            console.log('@@@@@'+records[0].McaApp__Items_Needed__r);
+            //alert('**records*'+records);
+            if(records[0].McaApp__Items_Needed__r == null)
+            {
+                alert("{!$Label.mcaapp__EmailOpenStipsNoStips}");
+            }
+            else if(email == null || email == undefined || email == '')
+            {
+               alert("{!$Label.mcaapp__EmailStips_MailIdNotPresent}");
+            }
+            else if(records.length > 0){
+            window.open('{!DestURL}');
+            }
+         }
+    </script>
+    
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+
+      <script>
+
+        function runSaveAllStips() {
+
+          setTimeout(function() {
+            saveAllStips();
+          }, 1000);
+        }
+
+      </script>
+
+      <apex:actionFunction action="{!saveAllStips}" name="saveAllStips" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+
+      <apex:pageBlockButtons >
+
+        <apex:CommandButton action="{!newStip}" value="New Stip" rerender="records,refreshComponent" immediate="true" oncomplete="computestipCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!save}" onclick="runSaveAllStips()" value="Save" oncomplete="computestipCalculations()" rerender="records,refreshComponent"></apex:CommandButton>
+<!--         <input type="button" onclick="runSaveAllStips()" class="btn" value="Save"/> -->
+
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"></apex:CommandButton>
+
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"></apex:CommandButton>
+
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"></apex:CommandButton>
+<!--         <apex:commandButton onclick="window.open('{!DestURL}');" value="Email Stips" action="{!refresh}" rerender="records,refreshComponent" status="loadingPanel"/> -->
+        <apex:commandButton onclick="EmailStips()" value="Email Stips" action="{!refresh}" rerender="records,refreshComponent" status="loadingPanel"/>
+      </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="1" title="Stips ({!containers.size})" collapsible="false">
+        <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column >
+
+            <apex:outputLink value="/{!container.stip.Id}" target="blank" rendered="{!NOT(ISBLANK(container.stip.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value=" | " rendered="{!NOT(ISBLANK(container.stip.Id))}"/>
+
+            <apex:commandLink action="{!deleteStip}" value="Del" rerender="records,refreshComponent" rendered="{!NOT(ISBLANK(container.stip.Id))}" status="loadingPanel" immediate="true" oncomplete="computestipCalculations()">
+              <apex:param name="recordToDelete" value="{!container.stip.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeStip}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.stip.Id))}" status="loadingPanel" immediate="true" oncomplete="computestipCalculations()">
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+          </apex:column>
+          
+          <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.Name.Label}">
+            <apex:outputField value="{!container.stip.Name}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.Name}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}" />
+          </apex:column>
+          <!--  
+          <apex:column headerValue="{!$ObjectType.Stips__c.Fields.Type__c.Label}">
+            <apex:outputField value="{!container.stip.Type__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.Type__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}"/>
+          </apex:column>
+          -->
+          <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Status__c.Label}">
+            <apex:outputField value="{!container.stip.McaApp__Status__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.McaApp__Status__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Requested_by__c.Label}">
+            <apex:outputField value="{!container.stip.McaApp__Requested_by__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.McaApp__Requested_by__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Date_Requested__c.Label}">
+            <apex:outputField value="{!container.stip.McaApp__Date_Requested__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.McaApp__Date_Requested__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.Fields.McaApp__Recv_d__c.Label}">
+            <apex:outputField value="{!container.stip.McaApp__Recv_d__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.stip.McaApp__Recv_d__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll)}"/>
+          </apex:column>
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+</apex:component>

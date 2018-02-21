@@ -1,0 +1,636 @@
+<apex:page showHeader="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" standardStylesheets="false"
+        controller="DashboardController" extensions="CREPortalHomeController">
+    <html lang="en">    
+        <head> 
+            <title>Dashboard</title>
+            <meta charset="utf-8"/>
+            <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+            <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap.min.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/style.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-datepicker.min.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/bootstrap-multiselect.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.AllProcessesAssets, 'css/diff-theme.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/normalize.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-default.css')}" />
+            <apex:stylesheet value="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/css/ns-style-bar.css')}" />
+
+            <link rel='shortcut icon' href='favicon.ico' type='image/x-icon' />
+            <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Raleway" />
+            <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800" />
+            <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" />
+
+            <link rel="stylesheet" href="{!URLFOR($Resource.fullCalendar, 'fullcalendar.min.css')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}" />
+            <script src="{!URLFOR($Resource.fullCalendar, 'lib/jquery-ui.min.js')}" />
+            <script src="{!URLFOR($Resource.fullCalendar, 'lib/moment.min.js')}" />
+            <script src="{!URLFOR($Resource.fullCalendar, 'fullcalendar.min.js')}" />
+        </head>
+        <body>
+        <style>
+        .portfolioNTasks .well {
+		    height: 550px
+		}
+        </style>
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-default navbar-fixed-top">
+                <div class="container-fluid">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="#">Damac</a>
+                    </div>
+                    <div class="search-bar">
+                        <div class="form-group">
+                            <input type="search" class="form-control" placeholder="Search for properties, service requests ..." onfocus="this.placeholder = ''" onblur="this.placeholder = 'Search for properties, service requests ...'" />
+                            <i class="fa fa-search" aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="collapse navbar-collapse" id="myNavbar">
+                        <ul class="nav navbar-nav navbar-right">
+                            <li class="top-notification-box">
+                                <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                    <i class="fa fa-bell" aria-hidden="true"></i>
+                                    <span class="label notification">10</span>
+                                </a>
+                            </li>
+                            <li class="top-notification-box">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-envelope" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="top-notification-box">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                    <i class="fa fa-calendar" aria-hidden="true"></i>
+                                </a>
+                            </li>
+                            <li class="top-profile-box dropdown">
+                                <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                    <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/user.png')}" class="top-user-image" />
+                                    <span class="top-user-name">{!$User.FirstName + ' ' + $User.LastName}</span>
+                                </a>
+                                <ul class="dropdown-menu site-dropdown user-dropdown">
+                                    <li><a href="my-profile.html" class="wave-button"> View Profile</a></li>
+                                    <li><a href="#" class="wave-button">Settings</a></li>
+                                    <li><a href="/secur/logout.jsp" class="wave-button">Logout</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <!-- Sidebar Menu -->
+            <div class="nav-side-menu">
+                <div class="brand">
+                    <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/Damac_logo.png')}" width="150" />
+                </div>
+                <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+                <div class="menu-list">
+
+                    <ul id="menu-content" class="menu-content collapse out">
+                        <li class="active"><a href="dashboard.html"><i class="fa fa-dashboard fa-lg"></i> My Dashboard</a></li>
+                        <li  data-toggle="collapse" data-target="#customer" class="collapsed">
+                            <a><i class="fa fa-bolt" aria-hidden="true"></i> Self Services <span class="arrow"></span></a>
+                        </li>
+
+                        <ul class="sub-menu collapse" id="customer">
+                            <li><a href="additional-parking.html"> Additional Parking</a></li>
+                            <li><a href="add-unit-portfolio.html"> Add Unit to Portfolio</a></li>
+                            <li><a href="assignment.html">Assignment</a></li>
+                            <li  data-toggle="collapse" data-target="#products" class="collapsed">
+                                <a>Contact Details <span class="arrow"></span></a>
+                            </li>
+                            <ul class="sub-menu collapse" id="products">
+                                <li><a href="primary-details.html">Primary Details</a></li>
+                                <li><a href="secondary-details.html">Secodnary Details</a></li>
+                                <li><a href="name-nationality.html">Name/ Nationality</a></li>
+                                <li><a href="update-passport.html">Passport Details</a></li>
+                            </ul>
+                            <li><a href="complaint.html">Complaint</a></li>
+                            <li><a href="early-handover.html">Early Handover</a></li>
+                            <li><a href="furniture-package.html">Furniture Package</a></li>
+                            <li><a href="handover.html">Handover</a></li>
+                            <li><a href="mortgage.html">Mortgage</a></li>
+                            <li><a href="noc-visa.html">NOC Visa</a></li>
+                            <li><a href="proof-of-payment.html">Proof of Payment</a></li>
+                            <li><a href="rental-pool.html">Rental Pool</a></li>
+                            <li><a href="title-deed.html">Title Deed</a></li>
+                            <li><a href="utility-registration.html">Utility Registration</a></li>
+                        </ul>
+
+                        <li><a href=""><i class="fa fa-building-o fa-lg"></i> Project update</a></li>
+                        <li><a href=""><i class="fa fa-group fa-lg"></i> Community portal</a></li>
+                        <li><a href=""><i class="fa fa-bullseye fa-lg"></i> Loyalty / Referals</a></li>
+                        <li><a href=""><i class="fa fa-tags fa-lg"></i> Damac offers</a></li>
+                        <li><a href=""><i class="fa fa-commenting-o fa-lg"></i> Feedback</a></li>
+                        <li><a href=""><i class="fa fa-rss fa-lg"></i> News</a></li>
+
+
+                    </ul>
+                </div>
+            </div>
+
+
+            <!-- Main content -->
+            <section class="main-content-section dashboardSection">
+                <div class="wrapper">
+                    <!-- Number Statistics -->
+                    <div class="cardStats">
+                        <div class="well active">
+                            <div class="row">
+                                <div class="col-xs-2 col-sm-2">
+                                    <img class="" src="{!URLFOR($Resource.AllProcessesAssets, '/img/investment_active_card.png')}" alt=""/>
+                                </div>
+                                <div class="col-xs-8 col-sm-8">
+                                    <h4>{!strTotalInvestment}</h4>
+                                    <h6>Total Investment</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-xs-2 col-sm-2">
+                                    <img class="" src="{!URLFOR($Resource.AllProcessesAssets, '/img/current_value.png')}" alt=""/>
+                                </div>
+                                <div class="col-xs-8 col-sm-8">
+                                    <h4>325 Million</h4>
+                                    <h6>Current Value</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-xs-2 col-sm-2">
+                                    <img class="" src="{!URLFOR($Resource.AllProcessesAssets, '/img/pending_payments.png')}" alt=""/>
+                                </div>
+                                <div class="col-xs-8 col-sm-8">
+                                    <h4>{!pendingPayments}</h4>
+                                    <h6>Pending Payments</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-xs-2 col-sm-2">
+                                    <img class="" src="{!URLFOR($Resource.AllProcessesAssets, '/img/next_payment.png')}" alt=""/>
+                                </div>
+                                <div class="col-xs-8 col-sm-8">
+                                    <h4><apex:outputText value="{0,date,MMM/dd/yy}">
+                                           <apex:param value="{!myNextPaymentDate}"/>
+                                       </apex:outputText>
+                                    </h4>
+                                    <h6>My Next Payment</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-xs-2 col-sm-2">
+                                    <img class="" src="{!URLFOR($Resource.AllProcessesAssets, '/img/pending_request.png')}" alt=""/>
+                                </div>
+                                <div class="col-xs-8 col-sm-8">
+                                    <h4>{!pendingRequests}</h4>
+                                    <h6>Pending Request</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Case list section -->
+                    <div class="row portfolioNTasks">
+                        <div class="col-xs-12 col-sm-12 col-md-9 col-lg-9">
+                              <!-- Case List -->
+                              <div class="row">
+                                  <c:CaseList />
+                              </div>
+                        </div>
+                        <!-- Service Request Actions -->
+                        <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                            <c:SRTasksList />
+                        </div><!-- Service Request Action Ends Here -->
+                    </div>
+                    <!-- Case list section ends here -->
+                    
+                    <!-- Graphical Statistics -->
+                    <div class="row chartSection">
+                        
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="well">
+                                <div class="row">
+                                    <div class="col-sm-12 cardHeading">
+                                        <h5 class="pull-left">Service Request</h5>
+                                        <span class="pull-right dropdown">
+                                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                                            </a>
+                                            <ul class="row dropdown-menu site-dropdown">
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                                            </ul>
+                                        </span>
+                                    </div>
+                                    <div class="col-sm-12 chartFilter">
+                                        <!--<button class="col-sm-3 btn btn-default active">Weekly</button>
+									    <button class="col-sm-3 btn btn-default">Monthly</button>
+									    <button class="col-sm-3 btn btn-default">Yearly</button>-->
+                                        <button class="btn btn-xs btn-default active">Weekly</button>
+                                        <button class=" btn btn-xs btn-default">Monthly</button>
+                                        <button class="btn btn-xs btn-default">Yearly</button>
+                                    </div>
+
+                                    <div class="col-sm-12">
+                                        <div class="col-sm-6"><h2>54%</h2></div>
+                                    </div>
+
+                                    <!-- Line Chart Section -->
+                                    <div class="col-sm-12 chart-container">
+                                        <canvas id="canvas"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Booking Section ends here -->
+
+                        <!-- Performance Status -->
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="well">
+                                <div class="row">
+                                    <div class="col-sm-12 cardHeading">
+                                        <h5 class="pull-left">Performance Status</h5>
+                                        <span class="pull-right dropdown">
+                                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                                            </a>
+                                            <ul class="row dropdown-menu site-dropdown">
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                                            </ul>
+                                        </span>
+                                    </div>
+                                    <div class="col-sm-12 chartFilter">
+                                        <!--<button class="col-sm-3 btn btn-default active">Weekly</button>
+									    <button class="col-sm-3 btn btn-default">Monthly</button>
+									    <button class="col-sm-3 btn btn-default">Yearly</button>-->
+                                        <button class="btn btn-xs btn-default active">Weekly</button>
+                                        <button class=" btn btn-xs btn-default">Monthly</button>
+                                        <button class="btn btn-xs btn-default">Yearly</button>
+                                    </div>
+
+                                    <!-- Doughnut Chart Section -->
+                                    <div class="col-sm-12 doughNut">
+                                        <div class="col-sm-6" id="canvas-holder">
+                                            <canvas id="chart-area"></canvas>
+                                        </div>
+                                        <div class="col-sm-6 doughNutLegends">
+                                            <div class="col-sm-12">
+                                                <div class="col-sm-2"><span class="purple"></span></div>
+                                                <div class="col-sm-10">
+                                                    <h6>Paid Installments</h6>
+                                                    <h4>20044.44</h4>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12">
+                                                <div class="col-sm-2"><span class="orange"></span></div>
+                                                <div class="col-sm-10">
+                                                    <h6>Down Payments</h6>
+                                                    <h4>85904.73</h4>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-12">
+                                                <div class="col-sm-2"><span class="blue"></span></div>
+                                                <div class="col-sm-10">
+                                                    <h6>Pending Payments</h6>
+                                                    <h4>343618.92</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Progress Bar -->
+                                    <div class="col-sm-12 progressBar">
+                                        <label class="col-sm-12">
+                                            <h5 class="pull-left"><strong>Profile Completion</strong></h5>
+                                            <h5 class="pull-right"><strong>18%</strong></h5>
+                                        </label>
+                                        <div class="col-sm-12" id="myProgress">
+                                            <div id="myBar"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Performance Stats Section ends here -->
+
+                        <!-- Project Status Section -->
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="well">
+                                <div class="row">
+                                    <div class="col-sm-12 cardHeading">
+                                        <h5 class="pull-left">Project Status</h5>
+                                        <span class="pull-right dropdown">
+                                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                                            </a>
+                                            <ul class="row dropdown-menu site-dropdown">
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                                            </ul>
+                                        </span>
+                                    </div>
+                                    <div class="form-group">
+                                        <select class="form-control projectStatusBtn" id="projectMenu">
+                                            <option value="" selected="selected" disabled="disabled" >Select Project (select one)</option>
+                                            <option value="">The Trump Estate Park</option>
+                                            <option value="">Just Cavalli Villas</option>
+                                            <option value="">Golf Vita at DAMAC Hills</option>
+                                            <option value="">Bait Al Aseel</option>
+                                            <option value="">Aurum Villas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-12">
+                                        <h5>Completed:<strong>80%</strong></h5>
+                                        <h5>Nov:<strong>4%</strong><i class="fa fa-arrow-up" aria-hidden="true"></i></h5>
+                                    </div>
+
+                                    <!-- Line Chart Section -->
+                                    <div class="col-sm-12 chart-container">
+                                        <canvas id="projectStatus"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Project Status Section End Section -->
+
+                        <!-- Recommended Projects -->
+                        <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+                            <div class="well recommendedProjects" style="max-height: 340px;">
+                                <div class="row">
+                                    <div class="col-sm-12 cardHeading">
+                                        <h5 class="pull-left">Recommended Projects</h5>
+                                        <span class="pull-right dropdown">
+                                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                                            </a>
+                                            <ul class="row dropdown-menu site-dropdown">
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                                            </ul>
+                                        </span>
+                                    </div>
+                                    <div class="col-sm-12">
+                                        <div class="projectDetail">
+                                            <span class="overlayTag">upcoming</span>
+                                            <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/project1.png')}" alt=""/>
+                                            <div>
+                                                <h5><strong>The Trump Estates Park</strong></h5>
+                                                <h6>Dubailand, Dubai, UAE</h6>
+                                                <p><i class="fa fa-caret-right" aria-hidden="true"></i>AED 549,000</p>
+                                            </div>
+                                        </div>
+                                        <div class="projectDetail">
+                                            <span class="overlayTag">upcoming</span>
+                                            <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/project2.png')}" alt=""/>
+                                            <div>
+                                                <h5><strong>Just Cavalli Villas</strong></h5>
+                                                <h6>Dubailand, Dubai, UAE</h6>
+                                                <p><i class="fa fa-caret-right" aria-hidden="true"></i>AED 549,000</p>
+                                            </div>
+                                        </div>
+                                        <div class="projectDetail">
+                                            <span class="overlayTag">upcoming</span>
+                                            <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/project3.png')}" alt=""/>
+                                            <div>
+                                                <h5><strong>Golf Vita at DAMAC Hills</strong></h5>
+                                                <h6>Dubailand, Dubai, UAE</h6>
+                                                <p><i class="fa fa-caret-right" aria-hidden="true"></i>AED 549,000</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Recommended Projects ends here -->
+                    </div><!-- Graphical Statistics Ends here -->
+
+                    <!-- Portfolio and Task Row -->
+                    <div class="row portfolioNTasks">
+                        <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12">
+                            <c:My_Portfolio AccountId="{!customerAccount.Id}"/>
+                        </div><!-- My Portfolio Ends Here -->
+
+                        <!-- Service Request Actions -->
+                          <div class="col-xs-12 col-sm-12 col-md-3 col-lg-3">
+                         <!--  <c:SRTasksList /> -->
+                        </div><!-- Service Request Action Ends Here -->
+                    </div><!-- Portfolio and Task Row Ends Here -->
+
+                    <!-- Recent Activity and Calendar Row -->
+                    <div class="row recentActivityNCalendar ">
+                        <div class="col-xs-12 col-sm-12 col-md-5 col-lg-5">
+                            <div class="well recommendedProjects">
+                                <div class="row">
+                                    <div class="col-sm-12 cardHeading">
+                                        <h5 class="pull-left">Recent Activity</h5>
+                                        <span class="pull-right dropdown">
+                                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                                <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                                            </a>
+                                            <ul class="row dropdown-menu site-dropdown">
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                                                <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                                            </ul>
+                                        </span>
+                                    </div>
+                                    <!-- Recent Activity Section -->
+                                    <div class="col-sm-12 recentActivity">
+                                        <div class="row ">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><a>nb12345</a> <strong>Transfer Service</strong> to Power of Attorney has been <strong>completed</strong> successfully</span>
+                                                </div>
+                                                <div class="activityFeedback">
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley1.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley2.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley3.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley4.png')}" alt=""/></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_user.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9">Update Contact Information </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_adduser.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"> Added <strong>Prashant Kashyap</strong> as Power of Attorney</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_user.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9">Update Contact Information </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9">Title Deed Document uploaded for <a>nb12345</a></span>
+                                                </div>
+                                                <div class="uploadedDoc">
+                                                    <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/attached_doc.png')}" alt=""/>
+                                                    <span>
+                                                        <h6>Title Deed.doc</h6>
+                                                        <p>123kb</p>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_booking.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><strong>Booked</strong> 40 units in <strong>The Trump Estate Park</strong> under <a>nb12345</a></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><strong>Requested Transfer Service</strong> under <a>nb12345</a></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><a>nb12345</a> <strong>Transfer Service</strong> to Power of Attorney has been <strong>completed</strong> successfully</span>
+                                                </div>
+                                                <div class="activityFeedback">
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley1.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley2.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley3.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley4.png')}" alt=""/></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9">Title Deed Document uploaded for <a>nb12345</a></span>
+                                                </div>
+                                                <div class="uploadedDoc">
+                                                    <img src="{!URLFOR($Resource.AllProcessesAssets, '/img/attached_doc.png')}" alt=""/>
+                                                    <span>
+                                                        <h6>Title Deed.doc</h6>
+                                                        <p>123kb</p>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_booking.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><strong>Booked</strong> 40 units in <strong>The Trump Estate Park</strong> under <a>nb12345</a></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><strong>Requested Transfer Service</strong> under <a>nb12345</a></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-xs-1 col-md-1"><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/icon_doc.png')}" alt=""/></div>
+                                            <div class="col-xs-11 col-md-11">
+                                                <div class="activityDesc clearfix">
+                                                    <span class="activityTime pull-right col-xs-12 col-md-3">01:30AM</span>
+                                                    <span class="pull-left col-xs-12 col-md-9"><a>nb12345</a> <strong>Transfer Service</strong> to Power of Attorney has been <strong>completed</strong> successfully</span>
+                                                </div>
+                                                <div class="activityFeedback">
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley1.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley2.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley3.png')}" alt=""/></div>
+                                                    <div><img src="{!URLFOR($Resource.AllProcessesAssets, '/img/smiley4.png')}" alt=""/></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Recent Activity Ends Here -->
+
+                        <!-- Calendar Section -->
+                        <div class="col-xs-12 col-sm-12 col-md-7 col-lg-7">
+                            <div class="well calendarContainer">
+                                <div class="row">
+                                    <div class="col-sm-12">
+                                        <c:FullCalendar />
+                                    </div>
+                                </div>
+                            </div>
+                        </div><!-- Calendar Section Ends Here -->
+                    </div><!-- Recent Activity and Calendar Row Ends here -->
+
+                </div><!-- Wrapper Ends here -->
+            </section><!-- Main content Ends Here -->
+
+
+            <!-- Scripts -->
+            <!-- <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}" /> -->
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap.min.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-datepicker.min.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/main.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/bootstrap-multiselect.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/upload.js')}" />
+            <script src="{!URLFOR($Resource.PortalAssets, 'assets/js/ease.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/modernizr.custom.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/classie.js')}" />
+            <script src="{!URLFOR($Resource.NotificationStyles, 'NotificationStyles/js/notificationFx.js')}" />
+            <script src="{!URLFOR($Resource.assets, '/assets/js/bootstrap-datepicker.min.js')}" />
+
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/button.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/checkbox.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/steps.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/moment.js')}" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.6.0/Chart.bundle.min.js"></script>
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/utils.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/fullcalendar.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/jquery.nicescroll.min.js')}" />
+            <script src="{!URLFOR($Resource.AllProcessesAssets, '/js/customerchart.js')}" />
+
+        </body>
+    </html>
+</apex:page>

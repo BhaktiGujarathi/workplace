@@ -1,0 +1,1130 @@
+<apex:component controller="BuyerDetailsController" extensions="TbitsCallout" allowDML="true">
+	<apex:attribute type="UtilityWrapperManager"
+		name="availableInventories" description="The string to update"
+		assignTo="{!uwmObject}" />
+	<style>
+		.errorMsg{
+			color: red;
+		}
+	</style>
+	<!-- Action Functions : Start -->
+	<apex:actionFunction name="closeSearchSection" action="{!closeSearchSection}" reRender="searchSection, errorBlock" status="status"/>
+	<apex:actionFunction name="openSearchSection" action="{!openSearchSection}" reRender="searchSection, errorBlock" status="status">
+		<apex:param name="BuyerType" value="" assignTo="{!BuyerType}"/>
+		<apex:param name="inventoryPosition" value="" assignTo="{!inventoryPosition}"/>
+		<apex:param name="buyerPosition" value="" assignTo="{!buyerPosition}"/> 
+	</apex:actionFunction>
+	<apex:actionFunction name="reloadBuyersSection" reRender="buyerSection, errorBlock" status="status" oncomplete="disableFields();"/>
+	<apex:actionFunction name="populateSamePrimaryBuyers" action="{!populateSamePrimaryBuyers}" oncomplete="showError('{!errorMessage}'); disableFields();" reRender="buyerSection, errorBlock" status="status"/>
+	<apex:actionFunction name="populateSameJointBuyers" action="{!populateSameJointBuyers}" oncomplete="showError('{!errorMessage}'); disableFields();" reRender="buyerSection, errorBlock" status="status"/>
+	<apex:actionFunction name="saveExistingBuyerDetails" action="{!saveExistingBuyerDetails}" reRender="buyerSection, errorBlock" status="status" oncomplete="disableFields();"/>
+	<apex:actionFunction name="addJointBuyer" action="{!addJointBuyer}" reRender="buyerSection, errorBlock" status="status" oncomplete="disableFields(); lockFieldsOnExistingAccount();">
+		<!-- onComplete="openSearchModal('{!inventoryPosition}')" -->
+		<apex:param assignTo="{!selectedInventory}" name="selectedInventory" value="" />
+		<apex:param assignTo="{!inventoryPosition}" name="inventoryPosition" value="" />
+	</apex:actionFunction>
+	<apex:actionFunction name="removeJointBuyer" action="{!removeJointBuyer}" reRender="buyerSection, errorBlock" status="status" oncomplete="disableFields();">
+		<!-- onComplete="openSearchModal('{!inventoryPosition}')" -->
+		<apex:param assignTo="{!selectedInventory}" name="selectedInventory" value="" />
+		<apex:param assignTo="{!inventoryPosition}" name="inventoryPosition" value="" />
+		<apex:param assignTo="{!buyerPosition}" name="buyerPosition" value="" />
+	</apex:actionFunction>
+	<apex:actionFunction name="ChangeBuyerFields" action="{!updateJointBuyers}" reRender="buyerSection, errorBlock" status="status" oncomplete="j$('#buyerCustomStatus').hide();">
+		<apex:param assignTo="{!BuyerType}" name="SelBuyerTypeVal" value="" />
+		<apex:param assignTo="{!inventoryPosition}" name="inventoryPosition" value="" />
+	</apex:actionFunction>
+	<!-- Action Functions : Ends -->
+	<!-- Status Block : Starts -->
+	<div class="slds-spinner_container" style="position: fixed; display: none;" id="buyerCustomStatus">
+       	<div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+           	<span class="slds-assistive-text">Loading</span>
+			<div class="slds-spinner__dot-a"></div>
+			<div class="slds-spinner__dot-b"></div>
+		</div>
+		<div class="slds-container--fluid" style="margin-top: 15%">
+            <div class="slds-grid slds-grid--align-center slds-text-heading--small" id="buyerCustomStatusMessage"></div>
+        </div>
+	</div>
+	<!-- Status Block : Ends -->
+	<!-- Error Block : Starts -->
+	<div class="slds-notify_container" id="buyerErrorBox" style="display: none;">
+		<div class="slds-notify slds-notify--toast slds-theme--error"
+			role="alert" xmlns="http://www.w3.org/2000/svg"
+			xmlns:xlink="http://www.w3.org/1999/xlink">
+			<span class="slds-assistive-text">Error</span> <a
+				href="javascript:void(0);"
+				class="slds-button slds-notify__close slds-button--icon-inverse"
+				title="Close" onclick="j$('#buyerErrorBox').hide();"> <svg
+					class="slds-button__icon slds-button__icon--large"
+					aria-hidden="true">
+					<use
+						xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+				</svg> <span class="slds-assistive-text">Close</span>
+			</a>
+			<div class="slds-notify__content slds-media">
+				<div class="slds-media__figure">
+					<svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+						<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+					</svg>
+				</div>
+				<div class="slds-media__body">
+					<h2 class="slds-text-heading--small" id="buyerErrorPrefix"><apex:outputText value="{!$Label.Error_Prefix}" escape="false"/></h2>
+					<span id="buyerErrorMessage"></span>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Error Block : Ends -->
+	<apex:outputPanel layout="block" id="page2">
+		<apex:outputPanel layout="block"
+			styleClass="slds-grid slds-wrap slds-m-bottom--xx-small">
+			<apex:variable var="primaryJointBuyerCount" value="{!0}" />
+			<apex:variable var="inventoryCount" value="{!0}" />
+			<apex:repeat value="{!inventoryIdsList}" var="thisKey">
+				<apex:outputPanel styleClass="slds-container--fluid buyer_selected_units">
+					<article class="slds-card slds-m-top--xx-small">
+						<div class="slds-card__header slds-grid slds-m-left--small">
+							<header
+								class="slds-media slds-media--center slds-has-flexi-truncate">
+								<div class="slds-media__figure"
+									xmlns="http://www.w3.org/2000/svg"
+									xmlns:xlink="http://www.w3.org/1999/xlink">
+									<span class="slds-icon_container slds-icon-standard-home"
+										title="description of icon when needed"> <svg
+											class="slds-icon slds-icon--small" aria-hidden="true">
+	                						<use
+												xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/standard-sprite/svg/symbols.svg#home')}"></use>
+	                					</svg>
+									</span>
+								</div>
+								<div class="slds-media__body">
+									<h2>
+										<a href="javascript:void(0);" class="slds-card__header-link slds-truncate"> 
+											<span class="slds-text-heading--small">Inventory Id - {!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}</span>
+										</a>
+										<apex:inputText style="display: none;" value="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Property_Country__c}" styleClass="propertyCountry{!inventoryCount}_hiddenField"/>
+									</h2>
+								</div>
+								<div class="slds-form">
+									<div class="slds-form-element">
+										<label class="slds-form-element__label" for="searchInput">Search an existing customer</label>
+										<div class="slds-form-element slds-lookup"
+											data-select="single" data-scope="single">
+											<div class="slds-form-element__control">
+												<div
+													class="slds-input-has-icon slds-input-has-icon--right slds-size--small"
+													xmlns="http://www.w3.org/2000/svg"
+													xmlns:xlink="http://www.w3.org/1999/xlink">
+													<svg aria-hidden="true" class="slds-input__icon">
+														<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+													</svg>
+													<input id="searchInput" class="slds-input" type="text"
+														placeholder="" aria-autocomplete="list" role="combobox"
+														aria-expanded="true"
+														aria-activedescendant="searchDropDown"
+														onclick="openBuyerDetails('{!inventoryCount}');" />
+												</div>
+											</div>
+										</div>
+									</div>
+									<apex:outputPanel styleClass="slds-form-element" rendered="{!inventoryCount == 0}">
+										<div class="slds-form-element__control">
+											<span class="slds-checkbox"> 
+												<label class="slds-checkbox__label"> 
+													<apex:inputCheckbox value="{!uwmObject.dealRecord.All_Primary_Buyer_Same__c}"  
+	                                            						onclick="allPrimaryBuyersSame();"
+	                                            						styleClass="checkbox-pb-AllPrimaryBuyer"
+	                                            						disabled="{!IF(uwmObject.dealRecord.Booking_Wizard_Level__c != 'Level 2', true, false)}">
+	                                            	</apex:inputCheckbox>
+													<span class="slds-checkbox--faux"></span> 
+													<span class="slds-form-element__label">All primary buyers same</span>
+												</label>
+											</span>
+										</div>
+									</apex:outputPanel>
+									<apex:outputPanel styleClass="slds-form-element" rendered="{!inventoryCount == 0}">
+										<div class="slds-form-element__control">
+											<span class="slds-checkbox"> 
+												<label class="slds-checkbox__label"> 
+													<apex:inputCheckbox value="{!uwmObject.dealRecord.All_Joint_Buyer_Same__c}" 
+	                                            						onclick="allJointBuyersSame();"
+	                                            						styleClass="checkbox-pb-AllJointBuyer"
+	                                            						disabled="{!IF(uwmObject.dealRecord.Booking_Wizard_Level__c != 'Level 2', true, false)}">
+	                                            	</apex:inputCheckbox>
+													<span class="slds-checkbox--faux"></span> 
+													<span class="slds-form-element__label">All joint buyers same</span> 
+												</label>
+											</span>
+										</div>
+									</apex:outputPanel>
+								</div>
+							</header>
+						</div>
+						<apex:outputPanel layout="block" styleclass="slds-card__body slds-card__body--inner slds-theme--default" id="buyerSection">
+							<div class="slds-card__body--inner slds-grid slds-wrap slds-grid--pull-padded">
+								<apex:variable var="childCount" value="{!0}" />
+								<apex:repeat value="{!inventoryBuyerWrapperMap[thisKey].jointBuyerList}" var="thisBuyer">
+									<div
+										class="slds-tile slds-media slds-card__tile slds-size--1-of-1 slds-medium-size--1-of-2 
+		                    			            slds-large-size--1-of-2 inventoryNumber-{!inventoryCount} buyerNumber-{!inventoryCount}{!childCount} 
+		                    			            slds-border--top slds-p-top--x-small"
+										xmlns="http://www.w3.org/2000/svg"
+										xmlns:xlink="http://www.w3.org/1999/xlink">
+										<div class="slds-media__figure">
+											<div class="slds-icon_container slds-icon-standard-contact"
+												title="if needed">
+												<svg class="slds-icon slds-icon--small" aria-hidden="true">
+		                    						  <use
+														xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/standard-sprite/svg/symbols.svg#contact')}"></use>
+		                    						</svg>
+												<span class="slds-assistive-text">Buyer</span>
+											</div>
+										</div>
+										<apex:variable var="buyerType" value="{!IF(thisBuyer.Primary_Buyer__c, 'Primary', 'Joint')}" />
+										<div class="slds-media__body">
+											<div class="slds-grid slds-has-flexi-truncate">
+												<h3 class="slds-truncate"
+													title="{!buyerType} Buyer">
+													<a href="javascript:void(0);">{!buyerType} Buyer</a>
+												</h3>
+												<a href="javascript:void(0);"
+													class="slds-button slds-notify__close slds-button--icon"
+													title="Close" style="margin-left: 59%; margin-top: 2px;"
+													onclick="validateAndRemoveBuyer('{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Id}', '{!inventoryCount}', '{!childCount}', '{!buyerType}');">
+													<svg class="slds-button__icon slds-button__icon--small"
+														aria-hidden="true">
+															<use
+															xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+														</svg>
+												</a>
+											</div>
+											<div class="slds-tile__detail slds-text-body--small">
+												<!-- Hidden Fields Section -->
+												<!-- <apex:inputText style="display: none;" value="{!thisBuyer.Id}" styleClass="buyer_Id_hiddenField" /> -->
+												<apex:inputText style="display: none;" value="{!thisBuyer.Party_ID__c}" styleClass="{!buyerType}partyid{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Account__c}" styleClass="{!buyerType}account{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Inquiry__c}" styleClass="{!buyerType}inquiry{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.National_ID__c}" styleClass="{!buyerType}National_ID__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.First_Name_Read__c}" styleClass="{!buyerType}First_Name_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Last_Name_Read__c}" styleClass="{!buyerType}Last_Name_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Date_of_Birth_Read__c}" styleClass="{!buyerType}Date_of_Birth_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Nationality_Read__c}" styleClass="{!buyerType}Nationality_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.National_ID_Read__c}" styleClass="{!buyerType}National_ID_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Passport_Expiry_Date_Read__c}" styleClass="{!buyerType}Passport_Expiry_Date_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<apex:inputText style="display: none;" value="{!thisBuyer.Passport_Number_Read__c}" styleClass="{!buyerType}Passport_Number_Read__c{!primaryJointBuyerCount}{!childCount}_hiddenField" />
+												<!-- Hidden Fields Section -->
+												<div class="slds-form-element__group">
+														<div class="slds-form-element__row slds-size--3-of-4 slds-m-bottom--small">
+															<div class="slds-form-element">
+																<label class="slds-form-element__label"> 
+																	<abbr class="slds-required" title="required">*</abbr>Buyer Type
+																</label>
+																<div class="slds-form-element__control">
+																	<apex:selectList value="{!thisBuyer.Buyer_Type__c}" size="1" 
+																					 onchange="InvokeChangeFields(j$(this).val(), '{!inventoryCount}');" 
+																					 styleClass="slds-input {!buyerType}buyertype{!primaryJointBuyerCount}{!childCount}"
+																					 disabled="{!IF(thisBuyer.Primary_Buyer__c, false, true)}">
+																		<apex:selectOptions value="{!BuyerTypes}"/>
+																	</apex:selectList>
+																</div>
+															</div>
+														</div>
+														<apex:repeat value="{!IF(ISBLANK(thisBuyer.Buyer_Type__c), buyerTypeSectionMap['Individual'], buyerTypeSectionMap[thisBuyer.Buyer_Type__c])}" var="sec">
+															<fieldset class="slds-form--compound" style="display: block;">
+																<legend class="slds-form-element__label slds-text-title--caps slds-border--bottom">{!sec.SectionTitle}</legend>
+																<div class="slds-form-element__row slds-size--3-of-4">
+																	<apex:repeat value="{!sec.lstSectionFieldInfo}" var="fld">
+																		<div class="slds-form-element row p_{!buyerType}{!fld.FieldName}{!primaryJointBuyerCount}{!childCount}">
+																			<label class="slds-form-element__label"> 
+																				<abbr class="slds-required" title="required" style="display:{!IF(fld.bRequired,'','none')};">*</abbr>{!fld.FieldLabel}
+																			</label>
+																			<apex:outputPanel rendered="{!fld.customStyleClass == 'dateComponent'}">
+																				<div class="slds-input-has-icon slds-input-has-icon--right">
+																					<svg aria-hidden="true" class="slds-input__icon input-text-default">
+				                                                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, 'assets/icons/utility-sprite/svg/symbols.svg#event')}"></use>
+				                                                                    </svg>
+																					<apex:inputText value="{!thisBuyer[fld.FieldName]}" styleClass="slds-input {!buyerType}{!fld.FieldName}{!primaryJointBuyerCount}{!childCount} {!fld.customStyleClass}" />
+																				</div>	
+																			</apex:outputPanel>
+																			<apex:inputField value="{!thisBuyer[fld.FieldName]}" 
+																							 styleClass="slds-input {!buyerType}{!fld.FieldName}{!primaryJointBuyerCount}{!childCount} {!fld.customStyleClass}" 
+																							 rendered="{!fld.customStyleClass != 'dateComponent' && fld.FieldName != 'Passport_Number__c' && fld.FieldName != 'Nationality__c'}"/>
+																			<apex:inputField value="{!thisBuyer[fld.FieldName]}" 
+																							 styleClass="slds-input {!buyerType}{!fld.FieldName}{!primaryJointBuyerCount}{!childCount} {!fld.customStyleClass}" 
+																							 rendered="{!fld.FieldName == 'Passport_Number__c' || fld.FieldName == 'Nationality__c'}" 
+																							 onchange="searchCustomers('{!buyerType}', '{!primaryJointBuyerCount}{!childCount}');"/>
+																		</div>
+																		<apex:outputText value="{!fld.LineBreakTag}" rendered="{!fld.LineBreak}" escape="false"/>
+																	</apex:repeat>
+																</div>
+															</fieldset>
+														</apex:repeat>
+														<fieldset class="slds-form--compound">
+															<apex:outputPanel styleClass="slds-form-element__row slds-size--3-of-4" rendered="{!buyerType == 'Primary'}" layout="block">
+																<div class="slds-form-element">
+																	<div class="slds-form-element__control slds-m-top--small"> 
+																		<div class="slds-file-selector slds-file-selector--files">
+																			<div class="slds-file-selector__dropzone">
+																				<label class="slds-file-selector__body">
+																					<input type="file" class="slds-file-selector__input slds-assistive-text passportCopy{!primaryJointBuyerCount}{!childCount} {!buyerType}File"
+																							accept="image/*" 
+																							onchange="readPassportDetails(this, '{!buyerType}', '{!primaryJointBuyerCount}{!childCount}', 'passports');"/> 
+																					<span class="slds-file-selector__button slds-button slds-button--neutral passportsButton{!primaryJointBuyerCount}{!childCount}">
+																						<svg class="slds-button__icon slds-button__icon--left" aria-hidden="true">
+																							<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+																						</svg>
+																						<span class="passportsLabel{!primaryJointBuyerCount}{!childCount}">Upload Passport</span>
+																					</span> 
+																				</label>
+																			</div>
+																		</div>
+																	</div>
+																</div>
+																<div class="slds-form-element">
+																	<div class="slds-form-element__control slds-m-top--small"> 
+																		<div class="slds-file-selector slds-file-selector--files">
+																			<div class="slds-file-selector__dropzone">
+																				<label class="slds-file-selector__body">
+																					<input type="file" class="slds-file-selector__input slds-assistive-text passportCopy{!primaryJointBuyerCount}{!childCount} {!buyerType}File"
+																							accept="image/*" 
+																							onchange="readPassportDetails(this, '{!buyerType}', '{!primaryJointBuyerCount}{!childCount}', 'ids');"/> 
+																					<span class="slds-file-selector__button slds-button slds-button--neutral idsButton{!primaryJointBuyerCount}{!childCount}">
+																						<svg class="slds-button__icon slds-button__icon--left" aria-hidden="true">
+																							<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/utility-sprite/svg/symbols.svg#upload"></use>
+																						</svg>
+																						<span class="idsLabel{!primaryJointBuyerCount}{!childCount}">Upload National Id</span>
+																					</span> 
+																				</label>
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</apex:outputPanel>
+														</fieldset>
+												</div>
+											</div>
+										</div>
+									</div>
+									<apex:variable var="childCount" value="{!childCount+1}" />
+								</apex:repeat>
+							</div>
+						</apex:outputPanel>
+						<div class="slds-card__footer">
+							<div class="slds-grid slds-no-flex slds-m-left--small">
+								<a href="javascript:void(0);"
+									class="slds-button slds-button--neutral"
+									title="Add Joint Buyer"
+									onClick="addJointBuyer('{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Id}', '{!inventoryCount}');">Add
+									Joint Buyer</a>
+							</div>
+						</div>
+					</article>
+				</apex:outputPanel>
+				<apex:variable var="inventoryCount" value="{!inventoryCount+1}" />
+				<apex:variable var="primaryJointBuyerCount"
+					value="{!primaryJointBuyerCount+1}" />
+			</apex:repeat>
+			<apex:variable var="inventoryCount" value="{!0}" />
+			<apex:variable var="childCount" value="{!0}" />
+		</apex:outputPanel>
+	</apex:outputPanel>
+	<!-- Modal Section -->
+	<div id="searchSection" >
+	<apex:outputPanel layout="block" rendered="{!showSearchSection}">
+		<div role="dialog" class="slds-modal slds-fade-in-open"
+			xmlns="http://www.w3.org/2000/svg"
+			xmlns:xlink="http://www.w3.org/1999/xlink">
+			<div class="slds-modal__container">
+				<div class="slds-modal__header">
+					<a href="javascript:void(0);"
+						class="slds-button slds-modal__close slds-button--icon-inverse"
+						title="Close" onClick="closeSearchSection();"> 
+						<svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+							<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+						</svg> 
+						<span class="slds-assistive-text">Close</span>
+					</a>
+					<h2 id="searchBuyer" class="slds-text-heading--medium">Search Buyer</h2>
+					<fieldset class="slds-form--compound slds-size--1-of-1 slds-p-top--large">
+						<div class="slds-form-element__group">
+							<div class="slds-form-element__row">
+								<div class="slds-form-element slds-size--1-of-2">
+									<div class="slds-input-has-icon slds-input-has-icon--right">
+										<svg aria-hidden="true" class="slds-input__icon">
+											<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+										</svg>
+										<input id="modal_searchInput_Inquiry" class="slds-input"
+												type="text" placeholder="Search in Inquiry"
+												aria-autocomplete="list" role="combobox"
+												aria-expanded="true"
+												aria-activedescendant="modal_searchDropDown_Inquiry"
+												onkeyup="searchBuyersInquiry(this);" />
+										<div class="slds-lookup__menu" role="listbox" id="modal_searchDropDown_Inquiry" style="display: none;">
+											<div class="slds-lookup__item">
+												<button class="slds-button">
+													<svg aria-hidden="true" class="slds-icon slds-icon-text-default slds-icon--x-small">
+														<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+													</svg>
+													<span id="searchTextInquiry"></span>
+												</button>
+											</div>
+											<span id="searchResultsInquiry"></span>
+										</div>
+									</div>
+								</div>
+								<div class="slds-form-element slds-size--1-of-2">
+									<div class="slds-input-has-icon slds-input-has-icon--right">
+										<svg aria-hidden="true" class="slds-input__icon">
+											<use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+										</svg>
+										<input id="modal_searchInput_Account" class="slds-input"
+												type="text" placeholder="Search in Account"
+												aria-autocomplete="list" role="combobox"
+												aria-expanded="true"
+												aria-activedescendant="modal_searchDropDown_Account"
+												onkeyup="searchBuyersAccount(this, j$('.pb_invpos_modal').val(), j$('.pb_buypos_modal').val());" />
+										<div class="slds-lookup__menu" role="listbox" id="modal_searchDropDown_Account" style="display: none;">
+											<div class="slds-lookup__item">
+												<button class="slds-button">
+													<svg aria-hidden="true"
+														class="slds-icon slds-icon-text-default slds-icon--x-small">
+														<use
+															xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+													</svg>
+													<span id="searchTextAccount"></span>
+												</button>
+											</div>
+											<span id="searchResultsAccount"></span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</fieldset>
+				</div>
+				<div class="slds-modal__content slds-p-around--medium">
+					<div class="slds-form-element slds-lookup slds-is-open" data-select="single">
+						<apex:inputText style="display: none;" value="{!searchAndSelectBuyer.Party_ID__c}" styleClass="pb_partyid_modal" />
+						<apex:inputText style="display: none;" value="{!searchAndSelectBuyer.Account__c}" styleClass="pb_account_modal"/>
+						<apex:inputText style="display: none;" value="{!searchAndSelectBuyer.Inquiry__c}" styleClass="pb_inquiry_modal"/>
+						<apex:inputText style="display: none;" value="{!inventoryPosition}" styleClass="pb_invpos_modal"/>
+						<apex:inputText style="display: none;" value="{!buyerPosition}" styleClass="pb_buypos_modal"/>
+						<apex:repeat value="{!lstBuyerInfoSections}" var="sec">
+							<fieldset class="slds-form--compound" style="display: block;">
+								<legend class="slds-form-element__label slds-text-title--caps slds-border--bottom">{!sec.SectionTitle}</legend>
+								<div class="slds-form-element__row slds-size--1-of-1">
+									<apex:repeat value="{!sec.lstSectionFieldInfo}" var="fld">
+										<apex:outputPanel layout="block" styleclass="slds-form-element" rendered="{!fld.FieldName != 'Phone_Country_Code__c' && fld.FieldName != 'Phone__c'}">
+											<label class="slds-form-element__label">{!fld.FieldLabel}</label>
+											<apex:inputText value="{!searchAndSelectBuyer[fld.FieldName]}" styleClass="slds-input {!fld.FieldClass}_modal {!fld.customStyleClass}">
+												<script>
+													j$('.{!fld.FieldClass}_modal').attr('disabled', true);
+												</script>
+											</apex:inputText>
+										</apex:outputPanel>
+										<apex:outputText value="{!fld.SearchLineBreakTag}" escape="false" rendered="{!fld.LineBreak && fld.FieldName != 'Phone_Country_Code__c' && fld.FieldName != 'Phone__c'}"/>
+									</apex:repeat>
+								</div>
+							</fieldset>
+						</apex:repeat>
+					</div>
+				</div>
+				<div class="slds-modal__footer">
+					<a href="javascript:void(0);" class="slds-button slds-button--neutral" title="Cancel" onclick="closeSearchSection();">Cancel</a> 
+					<a href="javascript:void(0);" class="slds-button slds-button--brand" title="Save" onClick="saveExistingBuyerDetails();" oncomplete="closeSearchSection();">Save</a>
+				</div>
+			</div>
+		</div>
+		<div class="slds-backdrop slds-backdrop--open"></div>
+	</apex:outputPanel>
+	</div>
+	<!-- Modal search section : Ends -->
+	<script type="text/javascript">
+		function showError(errorMessage){
+			if(errorMessage){
+				document.getElementById('buyerErrorBox').style.display = "block";
+				document.getElementById('buyerErrorMessage').innerHTML = errorMessage;
+			}
+			disableFields();
+		}
+		
+		function InvokeChangeFields(partyType, invpos){
+			if(partyType && invpos){
+				ChangeBuyerFields(partyType, invpos);
+			}
+		}
+		
+		function openBuyerDetails(inventoryPosition){
+			var buyerPosition = j$('[class*=buyerNumber-'+inventoryPosition+']').length - 1;
+			var buyerType = j$('.Primarybuyertype'+inventoryPosition+'0').val();
+			/* Resetting the fields. */
+			j$('#modal_searchInput_Account').val('');
+			j$('#modal_searchInput_Inquiry').val('');
+			openSearchSection(buyerType, inventoryPosition, buyerPosition);
+		}
+		
+		function allPrimaryBuyersSame(){
+			/* If all validation pass then only populate the same primary buyers. */
+			populateSamePrimaryBuyers();
+		}
+		
+		function allJointBuyersSame(){
+			/* If all validation pass then only populate the same joint buyers. */
+			populateSameJointBuyers();
+		}
+		
+		function readPassportDetails(fileDom, type, index, documentType){
+			Visualforce.remoting.timeout = 120000;
+			document.getElementById('buyerCustomStatusMessage').innerHTML = 'Reading uploaded file..'
+			j$('#buyerCustomStatus').show();
+			var file = j$(fileDom)[0].files[0];
+			var tibitsBuyerMap = JSON.parse('{!tibitsBuyerMapJson}');
+			if (file) {
+				var fileName = file.name;
+				var filesize = file.size;
+				if(fileName.split('.')[1].toLowerCase() != 'jpg' && 
+				   fileName.split('.')[1].toLowerCase() != 'jpeg'){
+				   	j$('#buyerCustomStatus').hide();	
+					document.getElementById('buyerErrorBox').style.display = "block";
+					document.getElementById('buyerErrorMessage').innerHTML = 'Please enter a valid file format. Only JPEG, JPG format allowed.';
+				}else if(filesize > 1048576){
+					j$('#buyerCustomStatus').hide();	
+					document.getElementById('buyerErrorBox').style.display = "block";
+					document.getElementById('buyerErrorMessage').innerHTML = 'Please upload a small file. File size can\'t be greater than 10 MB.';
+				}else{
+				    var reader = new FileReader();
+				    reader.readAsDataURL(file);
+				    reader.onload = function(e) {
+				        Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.TbitsCallout.getPassportDetails}', 
+				        												e.target.result, 
+				        												file.name, 
+				        												'{!uwmObject.dealRecord.Id}',
+				        												documentType,
+					        function(result, event){
+					            if (event.status) {
+					            	if(result.errorCode != null && result.errorCode == 200){
+					            		for(var i = 0; i < result.fields.length; i++){
+					            			if(result.fields[i].name && result.fields[i].text && tibitsBuyerMap[result.fields[i].name]){
+					            				if(result.fields[i].name != null && result.fields[i].name == 'DateOfBirth'){
+							            			var dates = result.fields[i].text.match(/.{1,2}/g);
+							            			j$('.'+type+'Date_of_Birth__c'+index).val(dates[2]+'/'+dates[1]+'/19'+dates[0]);
+							            			j$('.'+type+'Date_of_Birth_Read__c'+index+'_hiddenField').attr("value", dates[1]+'/'+dates[2]+'/19'+dates[0]);
+							            		}else if(result.fields[i].name != null && result.fields[i].name == 'ExpirationDate'){
+							            			if(documentType == 'passports'){
+							            				var dates = result.fields[i].text.match(/.{1,2}/g);
+							            				j$('.'+type+'Passport_Expiry_Date__c'+index).val(dates[2]+'/'+dates[1]+'/20'+dates[0]);
+							            				j$('.'+type+'Passport_Expiry_Date_Read__c'+index+'_hiddenField').attr("value", dates[1]+'/'+dates[2]+'/20'+dates[0]);
+							            			}
+							            		}else if(result.fields[i].name != null && result.fields[i].name == 'NationalId'){
+							            			j$('.'+type+'National_ID__c'+index+'_hiddenField').val(result.fields[i].text);
+							            			j$('.'+type+'National_ID_Read__c'+index+'_hiddenField').attr("value", result.fields[i].text);
+							            		}else{
+					            					j$('.'+type+tibitsBuyerMap[result.fields[i].name].buyerField+index).val(result.fields[i].text);	
+					            					if(result.fields[i].name != null && result.fields[i].name == 'Name'){
+														j$('.'+type+'First_Name_Read__c'+index+'_hiddenField').attr("value", result.fields[i].text);
+													}
+													if(result.fields[i].name != null && result.fields[i].name == 'LastName'){
+														j$('.'+type+'Last_Name_Read__c'+index+'_hiddenField').attr("value", result.fields[i].text);
+													}
+													if(result.fields[i].name != null && result.fields[i].name == 'CountryLong'){
+														j$('.'+type+'Nationality_Read__c'+index+'_hiddenField').attr("value", result.fields[i].text);
+													}
+													if(result.fields[i].name != null && result.fields[i].name == 'PassportNumber'){
+														j$('.'+type+'Passport_Number_Read__c'+index+'_hiddenField').attr("value", result.fields[i].text);
+													}
+					            					if(tibitsBuyerMap[result.fields[i].name].buyerField == 'Country__c'){
+								            			j$('.'+type+tibitsBuyerMap[result.fields[i].name].buyerField+index).change();	
+								            		}
+				            					}
+					            			}
+						            	}	
+						            	j$('#buyerCustomStatus').hide();	
+						            	j$('.'+documentType+'Button'+index).addClass('slds-button--success');
+						            	j$('.'+documentType+'Label'+index).html('Document Uploaded');
+						            	searchCustomers(type, index); 
+					            	}else{
+					            		document.getElementById('buyerErrorBox').style.display = "block";
+										document.getElementById('buyerErrorMessage').innerHTML = 'Webservice failed : '+result.errorCode+' : '+result.errorDescription.message+
+																								 '<br/> Can\'t read the uploaded file, please proceed with manually filling up the data.';
+										j$('#buyerCustomStatus').hide();
+					            	}
+					            } else if (event.type === 'exception') {
+					            	document.getElementById('buyerErrorBox').style.display = "block";
+									document.getElementById('buyerErrorMessage').innerHTML = 'Can\'t read the uploaded file, please proceed with manually filling up the data.';
+									j$('#buyerCustomStatus').hide();
+					            } else {
+					                j$('#buyerCustomStatus').hide();
+					            }
+					            j$(fileDom).val('');
+					        }
+					    );
+				    };
+			    }
+			}
+		}
+		
+		function searchCustomers(type, index){
+			j$('#buyerCustomStatusMessage').html('Searching for customer in database..');
+			j$('#buyerCustomStatus').show();
+			var passportNumber = j$('.'+type+'Passport_Number__c'+index).val();
+			var nationality = j$('.'+type+'Nationality__c'+index).val();
+			var buyerPersonAccountMap = JSON.parse('{!buyerPersonAccountMappingJson}');
+			if(passportNumber && nationality){
+				Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.BuyerDetailsController.searchExistingCustomer}', passportNumber, nationality,
+			        function(result, event){
+			            if (event.status) {
+			            	if(result != null){
+				            	if(result.accountId){
+			            			j$('.'+type+'account'+index+'_hiddenField').val(result.accountId);
+			            		}
+			            		var buyerFields = '{!buyerFields}';
+			            		for(var thisField in buyerPersonAccountMap){
+			            			if(result[buyerPersonAccountMap[thisField]]){
+			            				if(thisField.toLowerCase().indexOf('date') !== -1){
+			            					var utcPassportExpiry = new Date(result[buyerPersonAccountMap[thisField]]);
+					            			var dd = utcPassportExpiry.getDate(); 
+											var mm = utcPassportExpiry.getMonth()+1;
+											var yyyy = utcPassportExpiry.getFullYear(); 
+											if(dd<10){dd='0'+dd} 
+											if(mm<10){mm='0'+mm};
+											//Format : DD/MM/YYYY
+					            			var stringDate = dd+'/'+mm+'/'+yyyy;
+					            			j$('.'+type+thisField+index).val(stringDate);
+			            				}else{
+					            			j$('.'+type+thisField+index).val(result[buyerPersonAccountMap[thisField]]);
+				            			}
+				            			if(thisField != 'Phone_Country_Code__c' && thisField != 'Phone__c'){
+				            				j$('.'+type+thisField+index).attr('disabled', 'true');
+				            			}
+			            			}
+			            		}
+		            		}
+			            	j$('#buyerCustomStatus').hide();	   
+			            } else if (event.type === 'exception') {
+							j$('#buyerCustomStatus').hide();
+			            } else {
+			                j$('#buyerCustomStatus').hide();
+			            }
+			        }
+			    );	
+			}else{
+				j$('#buyerCustomStatus').hide();
+			}
+		} 
+		
+		function validateAndSaveBuyerFields(){
+			/* If all validation pass then only call the select payment plan screen. */
+			saveBuyerDetails();	
+		}
+		
+		function validateRequiredFields(mode){
+			/* If all validation pass then only call the select payment plan screen. */
+			selectPaymentPlan(mode);
+        }
+		
+        function validateAndRemoveBuyer(inventoryId, inventoryPosition, buyerPosition, btype){
+			if(btype != '' && btype != null && btype == 'Primary'){
+				document.getElementById('buyerErrorBox').style.display = "block";
+				document.getElementById('buyerErrorMessage').innerHTML = 'Primary buyer cannot be removed, primary buyer is required to complete the booking process.';		
+			}else{
+				removeJointBuyer(inventoryId, inventoryPosition, buyerPosition);
+			}
+		}	
+		
+		function searchBuyersInquiry(key){
+			Visualforce.remoting.timeout = 120000;
+			j$('#buyerCustomStatus').show();
+			j$('buyerCustomStatusMessage').html('Searching inquiry in the system..');
+			j$('#modal_searchDropDown_Account').fadeOut();
+			searchKey = j$(key).val();
+			if(searchKey == ''){
+	            j$('#'+j$(key).attr('aria-activedescendant')).hide();
+	        }else{
+	        	j$('#'+j$(key).attr('aria-activedescendant')).show();
+	        }
+	        var searchList = "<ul class=\"slds-lookup__list\" role=\"listbox\" style=\"max-height: 240px;\">";	
+	        Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.BuyerDetailsController.getCustomerRelatedInquiry}', searchKey, 
+				function(result, event){
+					if (event.status) {
+						for(var i=0; i<result.length; i++){
+							searchList = searchList + '<li role="presentation" onclick="populateInquiryValues(\''+result[i].Id+'\');">'+ 
+														  '<span class="slds-lookup__item-action slds-media slds-media--center" role="option">'+
+															  '<svg aria-hidden="true" class="slds-icon slds-icon-standard-lead slds-icon--small">'+
+																  '<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/standard-sprite/svg/symbols.svg#lead"></use>'+
+															  '</svg>'+result[i].First_Name__c+' '+result[i].Last_Name__c+
+														  '</span>'+
+													  '</li>';
+						}
+						searchList += '</ul>';
+					}else{
+						searchList += '<li role="presentation" class="slds-lookup__item">No Inquiry Records Found</li></ul>';
+					}
+					j$('#buyerCustomStatus').hide();	
+					j$('#searchTextInquiry').text('Searching inquiries as "'+searchKey+'".');
+					j$('#searchResultsInquiry').html(searchList);
+				}
+			);
+		}  
+		
+		function populateInquiryValues(recordId){
+			j$('#modal_searchDropDown_Inquiry').fadeOut();
+			var inquiry = new Booking.Inquiry__c();
+			var buyerFieldsLength = '{!buyerFields.size}';
+			var buyerInquiryMap = JSON.parse('{!buyerInquiryMappingJson}');
+			inquiry.retrieve({
+				where: { Id: { eq: recordId } }
+			}, function(err, records) {
+				if(err) {
+					console.log(err);
+				} else {
+					j$('#modal_searchInput_Inquiry').val(records[0].get('First_Name__c')+' '+records[0].get('Last_Name__c'));
+					if(records[0].get('Id')){
+						j$('.pb_inquiry_modal').val(records[0].get('Id'));
+					}
+					for(var thisField in buyerInquiryMap){
+						if(thisField.toLowerCase().indexOf('date') !== -1){
+							if(records[0].get(buyerInquiryMap[thisField])){
+								var utcDate = new Date(records[0].get(buyerInquiryMap[thisField]));
+			           			var dd = utcDate.getDate(); 
+								var mm = utcDate.getMonth()+1;
+								var yyyy = utcDate.getFullYear(); 
+								if(dd<10){dd='0'+dd} 
+								if(mm<10){mm='0'+mm};
+								//Format : DD/MM/YYYY
+			           			var stringDate = dd+'/'+mm+'/'+yyyy;
+			           			j$('.'+thisField+'_modal').val(stringDate);
+		           			}
+						}else{
+							j$('.'+thisField+'_modal').val(records[0].get(buyerInquiryMap[thisField]));
+						}
+					}
+				}
+			});
+	    }
+		
+		function searchBuyersAccount(key, invPos, buyPos){
+			Visualforce.remoting.timeout = 120000;
+			j$('#buyerCustomStatus').show();
+			j$('buyerCustomStatusMessage').html('Searching account in the system..');
+			j$('#modal_searchDropDown_Inquiry').fadeOut();
+			searchKey = j$(key).val();
+			if(searchKey == ''){
+	            j$('#'+j$(key).attr('aria-activedescendant')).hide();
+	        }else{
+	        	j$('#'+j$(key).attr('aria-activedescendant')).show();
+	        }
+	        var buyerType = j$('.Primarybuyertype'+invPos+'0').val();
+	        var searchList = "<ul class=\"slds-lookup__list\" role=\"listbox\" style=\"max-height: 240px;\">";	
+	        Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.BuyerDetailsController.getCustomerRelatedAccount}', searchKey, buyerType,
+				function(result, event){
+					if (event.status) {
+						for(var i=0; i<result.length; i++){
+						    var accountName = 'No Name';
+						    if(buyerType && buyerType == 'Individual'){
+						        accountName = result[i].FirstName+' '+result[i].LastName;  
+						    }
+						    if(buyerType && buyerType == 'Corporate'){
+						        accountName = result[i].Name;  
+						    }
+							searchList = searchList + '<li role="presentation" onclick="populateAccountValues(\''+result[i].Id+'\',\''+result[i].PersonContactId+'\''+',\''+buyerType+'\');">'+ 
+														  '<span class="slds-lookup__item-action slds-media slds-media--center" role="option">'+
+															  '<svg aria-hidden="true" class="slds-icon slds-icon-standard-account slds-icon--small">'+
+																  '<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/standard-sprite/svg/symbols.svg#account"></use>'+
+															  '</svg>'+accountName+
+														  '</span>'+
+													  '</li>';
+						}
+						searchList += '</ul>';
+					}else{
+						searchList += '<li role="presentation" class="slds-lookup__item">No Account Records Found</li></ul>';
+					}
+					j$('#buyerCustomStatus').hide();	
+					j$('#searchTextAccount').text('Searching account as "'+searchKey+'".');
+					j$('#searchResultsAccount').html(searchList);
+				}
+			);
+		} 
+		
+		function populateAccountValues(accountId, contactId, buyerType){
+			j$('#modal_searchDropDown_Account').fadeOut();
+			var buyerFieldsLength = '{!buyerFields.size}';
+			var buyerCorporateMap = JSON.parse('{!buyerCorporateMappingJson}');
+			var buyerPersonAccountMap = JSON.parse('{!buyerPersonAccountMappingJson}');
+			var account = new Booking.Account();
+			account.retrieve({
+				where: { Id: { eq: accountId } }
+			}, function(err, records) {
+				if(err) {
+					console.log(err);
+				} else {
+					if(buyerType && buyerType == 'Corporate'){
+						for(var thisField in buyerCorporateMap){
+							if(records[0].get(buyerCorporateMap[thisField])){
+								if(thisField.toLowerCase().indexOf('date') !== -1){
+									if(records[0].get(buyerCorporateMap[thisField])){
+										var utcDate = new Date(records[0].get(buyerCorporateMap[thisField]));
+					           			var dd = utcDate.getDate(); 
+										var mm = utcDate.getMonth()+1;
+										var yyyy = utcDate.getFullYear(); 
+										if(dd<10){dd='0'+dd} 
+										if(mm<10){mm='0'+mm};
+										//Format : DD/MM/YYYY
+					           			var stringDate = dd+'/'+mm+'/'+yyyy;
+					           			j$('.'+thisField+'_modal').val(stringDate);
+				           			}
+								}else{
+									j$('.'+thisField+'_modal').val(records[0].get(buyerCorporateMap[thisField]));
+								}
+							}
+						}
+						j$('#modal_searchInput_Account').val(records[0].get('Name'));
+					}else{
+						j$('#modal_searchInput_Account').val(records[0].get('FirstName')+' '+records[0].get('LastName'));
+					}
+					if(records[0].get('Party_ID__c')){
+						j$('.pb_partyid_modal').val(records[0].get('Party_ID__c'));
+			        }
+			        j$('.pb_account_modal').val(accountId);
+				}
+			});
+			if(contactId && contactId != 'undefined'){
+				var contact = new Booking.Contact();
+				contact.retrieve({
+					where: { Id: { eq: contactId } }
+				}, function(err, records) {
+					if(err) {
+						console.log(err);
+					} else {
+						for(var thisField in buyerCorporateMap){
+							if(records[0].get(buyerCorporateMap[thisField])){
+								if(thisField.toLowerCase().indexOf('date') !== -1){
+									if(records[0].get(buyerCorporateMap[thisField])){
+										var utcDate = new Date(records[0].get(buyerCorporateMap[thisField]));
+					           			var dd = utcDate.getDate(); 
+										var mm = utcDate.getMonth()+1;
+										var yyyy = utcDate.getFullYear(); 
+										if(dd<10){dd='0'+dd} 
+										if(mm<10){mm='0'+mm};
+										//Format : DD/MM/YYYY
+					           			var stringDate = dd+'/'+mm+'/'+yyyy;
+					           			j$('.'+thisField+'_modal').val(stringDate);
+				           			}
+								}else{
+									j$('.'+thisField+'_modal').val(records[0].get(buyerCorporateMap[thisField]));
+								}
+							}
+						}
+					}
+				});
+			}else{
+				var contact = new Booking.Contact();
+				contact.retrieve({
+					where: { AccountId: { eq: accountId } }
+				}, function(err, records) {
+					if(err) {
+						console.log(err);
+					} else {
+						for(var thisField in buyerCorporateMap){
+							if(records[0].get(buyerCorporateMap[thisField])){
+								if(thisField.toLowerCase().indexOf('date') !== -1){
+									if(records[0].get(buyerCorporateMap[thisField])){
+										var utcDate = new Date(records[0].get(buyerCorporateMap[thisField]));
+					           			var dd = utcDate.getDate(); 
+										var mm = utcDate.getMonth()+1;
+										var yyyy = utcDate.getFullYear(); 
+										if(dd<10){dd='0'+dd} 
+										if(mm<10){mm='0'+mm};
+										//Format : DD/MM/YYYY
+					           			var stringDate = dd+'/'+mm+'/'+yyyy;
+					           			j$('.'+thisField+'_modal').val(stringDate);
+				           			}
+								}else{
+									j$('.'+thisField+'_modal').val(records[0].get(buyerCorporateMap[thisField]));
+								}
+							}
+						}
+					}
+				});
+			}
+	    }
+	  	
+	  	function saveAndCloseBuyerDetails(){
+	  		var isAccountExists = false;
+			var invpos = j$('.pb_invpos_modal').val();
+			var buypos = j$('.pb_buypos_modal').val();
+			var type = buypos == 0 ? 'Primary' : 'Joint';
+			var buyertype = j$('.'+type+'buyertype'+invpos+''+buypos).val();
+			var buyerFieldsLength = '{!buyerFields.size}';
+			var buyerCorporateMap = JSON.parse('{!buyerCorporateMappingJson}');
+			var buyerPersonAccountMap = JSON.parse('{!buyerPersonAccountMappingJson}');
+			j$('#modal_searchInput_Account').val('');
+			j$('#modal_searchInput_Inquiry').val('');
+			if(j$('.pb_partyid_modal').val()){
+				j$('.'+type+'partyid'+invpos+buypos+'_hiddenField').val(j$('.pb_partyid_modal').val());
+			}
+			if(j$('.pb_account_modal').val()){
+				j$('.'+type+'account'+invpos+buypos+'_hiddenField').val(j$('.pb_account_modal').val());
+				j$('.'+type+'inquiry'+invpos+buypos+'_hiddenField').val('');
+				isAccountExists = true;
+			}
+			if(j$('.pb_inquiry_modal').val()){
+				j$('.'+type+'inquiry'+invpos+buypos+'_hiddenField').val(j$('.pb_inquiry_modal').val());
+				j$('.'+type+'account'+invpos+buypos+'_hiddenField').val('');
+				j$('.'+type+'partyid'+invpos+buypos+'_hiddenField').val('');
+				isAccountExists = false;
+			}
+			if(buyertype == 'Corporate'){
+				for(var thisField in buyerCorporateMap){
+					if(j$('.'+thisField+'_modal').val()){
+						if(thisField != 'Phone_Country_Code__c' && thisField != 'Phone__c'){
+							if(thisField == 'City__c'){
+								j$('.'+type+'Country_c'+invpos+buypos).change();
+								if(j$('.'+thisField+'_modal').val()){
+									if(j$('.'+type+thisField+invpos+buypos).text() == '--None--'){
+										j$('.'+type+thisField+invpos+buypos).find('option').remove();
+										var op = document.createElement('option');
+										op.value = j$('.City__c_modal').val();
+										op.text = j$('.City__c_modal').val();
+										j$('.'+type+thisField+invpos+buypos).append(op);
+									}
+								}
+							}
+							j$('.'+type+thisField+invpos+buypos).val(j$('.'+thisField+'_modal').val());
+						}
+					}
+					if(isAccountExists && j$('.'+thisField+'_modal').val()){
+						j$('.'+type+thisField+invpos+buypos).attr('disabled', isAccountExists);
+						j$('.'+type+'buyertype'+invpos+buypos).attr('disabled', 'true');
+						j$('.'+type+'City__c'+invpos+buypos).attr('disabled', 'true');
+						j$('.'+thisField+'_modal').val('');
+					}else{
+						j$('.'+type+thisField+invpos+buypos).removeAttr('disabled');
+					}
+				}
+			} 
+			if(buyertype == 'Individual'){
+				for(var thisField in buyerPersonAccountMap){
+					if(j$('.'+thisField+'_modal').val()){
+						if(thisField != 'Phone_Country_Code__c' && thisField != 'Phone__c'){
+							if(thisField == 'City__c'){
+								if(j$('.'+thisField+'_modal').val()){
+									j$('.'+type+'Country__c'+invpos+buypos).change();
+									if(j$('.'+type+thisField+invpos+buypos).text() == '--None--'){
+										j$('.'+type+thisField+invpos+buypos).find('option').remove();
+										var op = document.createElement('option');
+										op.value = j$('.City__c_modal').val();
+										op.text = j$('.City__c_modal').val();
+										j$('.'+type+thisField+invpos+buypos).append(op);
+									}
+								}
+							}
+							j$('.'+type+thisField+invpos+buypos).val(j$('.'+thisField+'_modal').val());
+						}
+					}
+					if(isAccountExists && j$('.'+thisField+'_modal').val()){
+						j$('.'+type+thisField+invpos+buypos).attr('disabled', isAccountExists);
+						j$('.'+type+'buyertype'+invpos+buypos).attr('disabled', 'true');
+						j$('.'+type+'City__c'+invpos+buypos).attr('disabled', 'true');
+						j$('.'+thisField+'_modal').val('');
+					}else{
+						j$('.'+type+thisField+invpos+buypos).removeAttr('disabled');
+					}
+				}
+			}
+			j$('.pb_inquiry_modal').val('');
+			j$('.pb_account_modal').val('');
+			j$('.pb_partyid_modal').val('')
+			//j$('#searchSection').hide();
+		}
+		
+		function selectListStyle(){
+			// Mutation object
+			var MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+			// Defining observer 
+			var observer = new MutationObserver(function(mutations) { 
+			    mutations.forEach(function(mutation) {
+				    // If the myListClass was removed from the list - re-assign it
+				    j$('.row select').each( function(){
+				    	var classname = j$(this).parent().parent().attr('class').split("row ").pop();
+						if(classname){
+							if(j$(this).hasClass(classname.slice(2, classname.length))){
+							}else{
+								j$(this).addClass(classname.slice(2, classname.length));
+							}
+						}
+				    	if(!j$(this).hasClass('slds-select')){
+				    		j$(this).addClass('slds-select');
+				    		j$('[class*=City__c]').each(function (){
+								j$(this).change();
+							});
+				    	}else{
+				    	}
+				    });															    
+			    });
+			});
+			setTimeout(function(){
+		    	/* Locking fields if account exists. */  
+		    	lockCityFields();
+			}, 100);
+			// A target object for the observer
+			var myNode = document.querySelectorAll('.row'); 
+			for(var i=0; i < myNode.length; i++){
+				// Assigning observer to the dependent picklist
+				observer.observe(myNode[i], {
+				    childList: true,
+				    subtree: true,
+				    attributes: true,
+				});
+			}
+		}
+		
+		function settingDatePicker(){
+		    var assetsLoc = '{!URLFOR($Resource.SLDS_VF214)}';
+	    	j$.aljsInit({
+				assetsLocation: assetsLoc,
+				scoped: true
+			});
+       		j$('.dateComponent').each(function() {
+       			var dateToPopulate;
+            	if(j$(this).val()){
+            		dateToPopulate = moment(j$(this).val(), 'DD/MM/YYYY');
+            	}else{
+            		//dateToPopulate = moment();	
+            	}
+           		j$(this).datepicker({
+	                format: 'DD/MM/YYYY'
+	            });
+            });
+		}
+		
+		function lockCityFields(){
+			j$('[class*=City__c]').each(function (){
+				if(j$(this).val()){
+					j$(this).attr('disabled', true);
+				}
+			});		
+		}
+		
+		function lockFieldsOnExistingAccount(){
+	  		console.log('#### Locking Fields On Existing Account.');
+	  		var buyerType = 'Primary';
+			var buyerCorporateMap = JSON.parse('{!buyerCorporateMappingJson}');
+			var buyerPersonAccountMap = JSON.parse('{!buyerPersonAccountMappingJson}');
+			var totalInventoryCount = j$('[class*=buyer_selected_units]').length;
+			for(var i = 0; i < totalInventoryCount; i++){
+				var totalBuyerCount = j$('[class*=buyerNumber-'+i+']').length;
+				for(var j = 0; j < totalBuyerCount; j++){
+					if(j == 0){
+						buyerType = 'Primary';
+					}else{
+						buyerType = 'Joint';
+					}
+					var index = i+''+j;
+					var btype = j$('.'+buyerType+'buyertype'+index).val();
+					var accountId = j$('.'+buyerType+'account'+index+'_hiddenField').val();
+					if(accountId){
+						if(btype == 'Corporate'){
+							for(var thisField in buyerCorporateMap){
+								if(thisField != 'Phone_Country_Code__c' && thisField != 'Phone__c'){
+									if(j$('.'+buyerType+thisField+index).val()){
+										j$('.'+buyerType+thisField+index).attr('disabled', 'true');
+									}
+								}
+							}
+						}
+						if(btype == 'Individual'){
+							for(var thisField in buyerPersonAccountMap){
+								if(thisField != 'Phone_Country_Code__c' && thisField != 'Phone__c'){
+									if(j$('.'+buyerType+thisField+index).val()){
+										j$('.'+buyerType+thisField+index).attr('disabled', 'true');
+									}
+								}
+							}
+						}
+						j$('.'+buyerType+'buyertype'+index).attr('disabled', 'true');
+						//j$('.'+buyerType+'City__c'+index).attr('disabled', 'true');
+					}
+				}
+			}
+		}
+		
+		function disableFields(){
+			console.log('#### Generic disable fields.');
+			var validated = true;
+			var totalBuyerCount = 0;
+			var startPosition = 0;
+			var primaryBuyerSame = j$('.checkbox-pb-AllPrimaryBuyer').attr('checked') == 'checked' ? true : false;
+			var jointBuyerSame = j$('.checkbox-pb-AllJointBuyer').attr('checked') == 'checked' ? true : false;
+			if(primaryBuyerSame && !jointBuyerSame){
+				startPosition = 0;
+				totalBuyerCount = 1;
+			}else if(!primaryBuyerSame && jointBuyerSame){
+				startPosition = 1;
+			}else if(primaryBuyerSame && jointBuyerSame){
+				startPosition = 0;
+			}else{	
+				startPosition = 0;
+			}
+			var totalInventoryCount = totalInventoryCount = j$('[class*=buyer_selected_units]').length;
+			var buyerCorporateMap = JSON.parse('{!buyerCorporateMappingJson}');
+			var buyerPersonAccountMap = JSON.parse('{!buyerPersonAccountMappingJson}');
+			for(var i = 1; i <= totalInventoryCount; i++){
+				if((!primaryBuyerSame && jointBuyerSame) || (primaryBuyerSame && jointBuyerSame) || (!primaryBuyerSame && !jointBuyerSame)){
+					totalBuyerCount = j$('[class*=buyerNumber-'+i+']').length;
+				}
+				var btype = j$('.Primarybuyertype'+i+'0').val();
+				for(var j = startPosition; j < totalBuyerCount; j++){
+					var index = i+''+j;
+					var buyerType;
+					if(j == 0){
+						buyerType = 'Primary';
+					}else{
+						buyerType = 'Joint';
+					}
+					if(btype == 'Corporate'){
+						for(var thisField in buyerCorporateMap){
+							var existingAccountId = j$('.'+buyerType+'account'+index+'_hiddenField').val();
+							if(existingAccountId || primaryBuyerSame || jointBuyerSame){
+								if(j$('.'+buyerType+thisField+index).val()){
+									j$('.'+buyerType+thisField+index).attr('disabled', 'true');
+								}else{
+									j$('.'+buyerType+thisField+index).removeAttr('disabled');
+								}
+								j$('.'+buyerType+'buyertype'+index).attr('disabled', 'true');
+							}
+						}
+					}
+					if(btype == 'Individual'){
+						for(var thisField in buyerPersonAccountMap){
+							var existingAccountId = j$('.'+buyerType+'account'+index+'_hiddenField').val();
+							if( existingAccountId|| primaryBuyerSame || jointBuyerSame){
+								if(j$('.'+buyerType+thisField+index).val()){
+									j$('.'+buyerType+thisField+index).attr('disabled', 'true');
+								}else{
+									j$('.'+buyerType+thisField+index).removeAttr('disabled');
+								}
+								j$('.'+buyerType+'buyertype'+index).attr('disabled', 'true');
+							}
+						}
+					}
+					//j$('.'+buyerType+'City__c'+index).attr('disabled', 'true');
+				}
+			}
+		}
+		
+		j$(document).ready(function() {
+			j$(window).scrollTop(0);
+			/* Setting style on select list options. */
+			selectListStyle();
+			/* Setting date picker. */
+			settingDatePicker();
+			/* Locking city fields. */
+			//lockCityFields();
+			/* Calling method to disable fields. */
+			disableFields();
+			/* Locking fields if account exists. */
+			lockFieldsOnExistingAccount();
+		});
+		j$('#buyerCustomStatus').hide();
+    </script>
+</apex:component>

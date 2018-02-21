@@ -1,0 +1,399 @@
+<apex:component controller="MCAOffersTabController" allowDML="true">
+    <style>
+        .columnWidth {
+            width: 95px;
+        }
+    </style>
+    <apex:form id="records" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false"/>
+        <c:MCAJQTabComponent />
+
+        <apex:pageBlock mode="inlineedit">
+            <script>
+
+                function runSaveAllOffers() {
+
+                  setTimeout(function() {
+                    saveAllOffers();
+                  }, 1000);
+                }
+                
+                function runNewOffers() {
+
+                  setTimeout(function() {
+                    newOffers();
+                  }, 1000);
+                }
+                
+                function runEditOffers() {
+
+                  setTimeout(function() {
+                    editOffers();
+                  }, 1000);
+                }
+                t$(function () {
+                    offerTabLabelOriginal = t$("[id*='offertab_lbl']").text();
+                    computeOfferCalculations();
+                });
+                
+                function computeOfferCalculations() {
+                    console.log('-----tab label component1----'+t$("[id*='offertab_lbl']").text());
+                        var OffersTabLabel = 'Offers'+' ' ;//+ ' (' + {!containers.size} + ')';
+                        t$("[id*='offertab_lbl']").text(OffersTabLabel);              
+                        t$("[id*='offertab_lbl']").append('(' + {!containers.size} + ')');
+                }
+                
+                function dwPage()
+                {            
+                    window.open('{!dwURL}', "_blank");
+                }
+                
+                function EmailOffers()
+                {            
+                    window.open('{!DestURL}');
+                }
+                
+                t$(".saveBtn").click(function(){      
+                    t$('.saveBtn').prop('disabled', true);
+                });
+            </script>
+            <style>
+               .inputFieldCSS {
+                        <!--padding-top: 0;-->
+                        width: 55px;
+                     }
+                .top-wrapper {
+                     width:100%;
+                     position:fixed;
+                     z-index:10;
+                     background:inherit;
+                 }
+
+                 .bottom-wrapper {
+                     width:100%;
+                     z-index:5;
+                     overflow:auto;
+                 }
+                 
+                 #contentFrame {border:solid 1px #f00;} 
+            </style>
+            <apex:actionFunction action="{!saveAllOffers}" name="saveAllOffers" rerender="records,refreshComponent" status="loadingPanel" />
+            <apex:actionFunction action="{!newOffer}" name="newOffers" rerender="records,refreshComponent" status="loadingPanel" />
+            <apex:actionFunction action="{!editAll}" name="editOffers" rerender="records,refreshComponent" status="loadingPanel" />
+        
+            <apex:pageBlockButtons location="top" >
+
+                <input type="button"  onclick="runNewOffers()" value="New Offer" class="btn"/>
+                <input type="button" id="saveButton" onclick="runSaveAllOffers()" class="btn saveBtn" value="Save"/>
+                <input type="button" onclick="runEditOffers()" value="Edit All" class="btn"/>
+
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" ></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" ></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" onclick="EmailOffers()" value="Send Offers" rerender="records,refreshComponent" status="loadingPanel"  immediate="true"></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" onclick="dwPage()" value="Deal Entry Wizard" rerender="records,refreshComponent" status="loadingPanel"  immediate="true"></apex:CommandButton>
+            </apex:pageBlockButtons>
+            <div class="test" >
+                <div class="container-new">
+                    <table class="tablesorting tablesorter">
+                        <thead class="header">
+                            <tr>
+                                <th>Action<div>Action</div>
+                                </th>
+                                <th> {!$ObjectType.Offer__c.Fields.Deal_Type__c.Label}<div>{!$ObjectType.Offer__c.Fields.Deal_Type__c.Label}</div>
+                                </th>
+                                <th> {!$ObjectType.Offer__c.Fields.Amount__c.Label}<div>{!$ObjectType.Offer__c.Fields.Amount__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Payoff_Amount__c.Label}<div>{!$ObjectType.Offer__c.Fields.Payoff_Amount__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Net_Funded_Amount__c.Label}<div>{!$ObjectType.Offer__c.Fields.Net_Funded_Amount__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Payback_Amt__c.Label}<div>{!$ObjectType.Offer__c.Fields.Payback_Amt__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Rate__c.Label}<div>{!$ObjectType.Offer__c.Fields.Rate__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Term_Months__c.Label}<div>{!$ObjectType.Offer__c.Fields.Term_Months__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Holdback__c.Label}<div>{!$ObjectType.Offer__c.Fields.Holdback__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Payment_Amt__c.Label}<div>{!$ObjectType.Offer__c.Fields.Payment_Amt__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.PMT_Schedule__c.Label}<div>{!$ObjectType.Offer__c.Fields.PMT_Schedule__c.Label}</div>
+                                </th>
+                                <th>Orig.Fee<div>Orig.Fee</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Buy_Rate__c.Label}<div>{!$ObjectType.Offer__c.Fields.Buy_Rate__c.Label}</div>
+                                </th>
+                                <th>Expected %<div>Expected %</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Payback_Funded__c.Label}<div>{!$ObjectType.Offer__c.Fields.Payback_Funded__c.Label}</div>
+                                </th>
+                                <th>Referral Payout %<div>Referral Payout %</div>
+                                </th>
+                                <th>Submission<div>Submission</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Funder__c.Label}<div>{!$ObjectType.Offer__c.Fields.Funder__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Status__c.Label}<div>{!$ObjectType.Offer__c.Fields.Status__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Offer__c.Fields.Details__c.Label}<div>{!$ObjectType.Offer__c.Fields.Details__c.Label}</div>
+                                </th>
+                             </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!containers}" var="container">
+                                <tr>
+                                    <td>
+                                        <apex:outputLink value="/{!container.offer.Id}" target="blank" rendered="{!NOT(ISBLANK(container.offer.Id))}"> View </apex:outputLink>
+                                        <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.offer.Id)),$ObjectType.Offer__c.deletable)}"/>
+                                
+                                        <apex:commandLink action="{!deleteOffer}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.offer.Id)),$ObjectType.Offer__c.deletable)}" status="loadingPanel" >
+                                            <apex:param name="recordToDelete" value="{!container.offer.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                                            <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+
+                                        <apex:commandLink value="Remove" action="{!removeOffer}" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.offer.Id))}" status="loadingPanel" >
+                                            <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Deal_Type__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Deal_Type__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Amount__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:80%"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Payoff_Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Payoff_Amount__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                            
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.offer.Net_Funded_Amount__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                         <apex:inputField value="{!container.offer.Net_Funded_Amount__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Payback_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Payback_Amt__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:80%"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Rate__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}" style="width:55px"/>
+                                        <apex:inputField value="{!container.offer.Rate__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:55px"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Term_Months__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Term_Months__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:80%"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Holdback__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Holdback__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:80%"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Payment_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Payment_Amt__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" style="width:80%"/>
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.offer.PMT_Schedule__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                         <apex:inputField value="{!container.offer.PMT_Schedule__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Origination_fee__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Origination_fee__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" styleClass="inputFieldCSS"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Buy_Rate__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Buy_Rate__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" styleClass="inputFieldCSS"/>
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.offer.Expected__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                         <apex:inputField value="{!container.offer.Expected__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" styleClass="inputFieldCSS"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Payback_Funded__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Payback_Funded__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Referral_Payout__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Referral_Payout__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}" styleClass="inputFieldCSS"/>
+                                    </td>
+                                    <td>
+                                      <apex:selectList value="{!container.offer.Submission__c}" size="1" id="values" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}">
+                                      <apex:selectOptions value="{!submissionNames}"/>
+                                      </apex:selectList>
+                                      <apex:outputField value="{!container.offer.Submission__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}">
+                                      </apex:outputField>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Funder__c}" >
+                                        <apex:inlineEditSupport disabled="true"/>
+                                        </apex:outputField>
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.offer.Status__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Status__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.offer.Details__c}" rendered="{!AND(NOT(ISBLANK(container.offer.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.offer.Details__c}" rendered="{!OR((ISBLANK(container.offer.Id)), editAll, container.isedited)}"/>
+                                        
+                                    </td>
+                                </tr> 
+                            </apex:repeat>  
+                        </tbody>
+                        <tfoot class="footertotalrow">
+                            <tr>
+                                <td class="totalRow"><apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputLabel value="High" /> <br />
+                                    <apex:outputLabel value="Low" />
+                                </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!fundingAmountHigh}" />
+                                    </apex:outputText> <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!fundingAmountLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!payOffAmountHigh}" />
+                                    </apex:outputText> <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!payOffAmountLow}" />
+                                    </apex:outputText>
+                                </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!netAmountHigh}" />
+                                    </apex:outputText> <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!netAmountLow}" />
+                                    </apex:outputText>
+                                   </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!paybackHigh}" />
+                                    </apex:outputText> <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!paybackLow}" />
+                                    </apex:outputText>
+                                   </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!rateHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!rateLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                        <apex:param value="{!termsHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!termsLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}%">
+                                    <apex:param value="{!holdbackHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}%">
+                                    <apex:param value="{!holdbackLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!paymentAmountHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!paymentAmountLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!originationFeeHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!originationFeeLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!buyRateHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!buyRateLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                    <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!expectedHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!expectedLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                     <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!payoutHigh}" />
+                                    </apex:outputText>
+                                    <br />
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}">
+                                    <apex:param value="{!payoutLow}" />
+                                    </apex:outputText>
+                                    </apex:outputPanel>
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                                <td class="totalRow">
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+</apex:component>

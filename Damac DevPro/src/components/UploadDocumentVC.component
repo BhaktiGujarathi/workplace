@@ -1,0 +1,414 @@
+<apex:component id="docComponent" controller="DocumentViewer" access="global" allowDML="true"> 
+    <apex:stylesheet value="{!URLFOR($Resource.NSIBPM__DocumentCSS,'css/base.css')}" />
+    <apex:stylesheet value="{!$Resource.NSIBPM__DocumentCSS}/popup/reveal.css"/>
+    <apex:includeScript value="{!$Resource.NSIBPM__DocumentCSS}/popup/jquery.min.js"/>
+    <apex:includeScript value="{!$Resource.NSIBPM__DocumentCSS}/popup/jquery.reveal.js"/>
+    <style type="text/css">
+        .loader {
+          z-index: 1200;
+          position: absolute;
+          margin-left: -60px;
+          filter: Alpha(Opacity =70);
+          opacity: 0.70;
+          -moz-opacity: 0.70;
+          top: 35%;
+          left: 55%;
+        }
+        .pg3 .bPageBlock {
+            width:600px;
+            display:table !important;
+         }
+        .bbt {
+            float:left; 
+            padding:3px 5px !important;
+        }
+        @media \0screen {
+         .bbt {
+            float:left; padding:2px 5px !important;
+            }
+        }
+        @media screen and (-webkit-min-device-pixel-ratio:0) {  
+        .bbt {
+            float:left; padding:4px 5px !important;
+            }
+        }
+        #pg4 .bPageBlock {
+            width:680px;    
+            border:none !important;
+        }
+        #DivNoBorder .bPageBlock {
+            border:none !important;
+        }
+        .order_line_item {
+            width:140px;
+        }
+        #iframe_pg {
+            width:1127px !important;
+        }
+        .pg_up .bPageBlock, #pg_up .bPageBlock {
+            width:850px;
+            border:none !important;
+        }
+        .reveal-modal {
+            left: 45% !important;
+        }
+        .doc_opport {
+            width:150px;
+        }
+        
+        /*  newly added Css on 9-3-2012   */
+        .upl_ordr {
+            width: 70px;
+        }
+        .upl_ordr_typ {
+            width: 80px;
+        }
+        .upl_ordr_status {
+            width: 100px;
+        }
+        .up_ordr_ownr {
+            width: 180px;
+        }
+        .up_ordr_opp {
+            width: 170px;
+        }
+    </style>
+    <style type="text/css">
+        .actionLink:hover{
+            text-decoration:underline !important;
+        }
+    </style>
+    <script language="javascript"> 
+            function EditdocAction(DocId){
+                document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm2:hdnDocId').value = DocId;
+                EditDoc();
+            }
+            //Display the current document into the viewer once the document has been selected 
+            function ShowImg(id,val,url){ 
+                var x = location.pathname;
+                document.getElementById('PreviewDiv').innerHTML = '';
+                var elmIfr = document.createElement("IFRAME");  
+                elmIfr.style.width= "100%";
+                elmIfr.style.height= "750px";
+                var usertype = '{!JSENCODE(userType)}';
+                if(x!=null && x.indexOf('customer')>-1){
+                    usertype = 'Community';
+                }
+                var DomainVal = '{!JSENCODE(DomainName)}';
+                var strhostName = window.location.host;
+                if(document.getElementById('DocTitle')!=null && val!=null && val!=''){
+                    document.getElementById('DocTitle').value = val;
+                    document.getElementById('DocTitle').innerHTML = 'Previewing - '+val;
+                }
+                if(val.substring(val.indexOf('.')+1,val.length)=='jpg'|| val.substring(val.indexOf('.')+1,val.length)=='gif'|| val.substring(val.indexOf('.')+1,val.length)=='bmp'|| val.substring(val.indexOf('.')+1,val.length)=='png')
+                {
+                    document.getElementById('imgShow').style.display = 'block'; 
+                    document.getElementById('display').style.display = 'block';
+                    /*
+                        if(usertype=='salesforce'){
+                            elmIfr.src = "https://"+strhostName+"/servlet/servlet.FileDownload?file="+id;
+                        }else{
+                            elmIfr.src = "https://"+strhostName+"/customer/servlet/servlet.FileDownload?file="+id;;
+                        }
+                    */
+                    if(id != null && id != ''){
+	                    if(DomainVal!=null && DomainVal!='N/A'){
+	                        elmIfr.src = "https://"+strhostName+"/"+DomainVal+"/servlet/servlet.FileDownload?file="+id;;
+	                    }else{
+	                        elmIfr.src = "https://"+strhostName+"/servlet/servlet.FileDownload?file="+id;
+	                    }
+                    }else{
+                    	elmIfr.src = url;
+                    }
+                    var s=document.getElementById('imgShow').src;              
+                }
+                if(val.substring(val.indexOf('.')+1,val.length)=='rtf' || val.substring(val.indexOf('.')+1,val.length)=='TIF' || val.substring(val.indexOf('.')+1,val.length)=='doc'|| val.substring(val.indexOf('.')+1,val.length)=='docx'|| val.substring(val.indexOf('.')+1,val.length)=='ppt'|| val.substring(val.indexOf('.')+1,val.length)=='pptx' || val.substring(val.indexOf('.')+1,val.length)=='xls'|| val.substring(val.indexOf('.')+1,val.length)=='xlsx')
+                {
+                    document.getElementById('imgShow').style.display = 'none';
+                    document.getElementById('display').style.display = 'none'; 
+                    if(id != null && id != ''){
+	                    if(DomainVal!=null && DomainVal!='N/A'){
+	                        elmIfr.src = "https://"+strhostName+"/"+DomainVal+"/servlet/servlet.FileDownload?file="+id;;
+	                    }else{
+	                        elmIfr.src = "https://"+strhostName+"/servlet/servlet.FileDownload?file="+id;
+	                    }
+                    }else{
+                    	elmIfr.src = url;
+                    }
+                }else{
+                    document.getElementById('imgShow').style.display = 'none';
+                    document.getElementById('display').style.display = 'block'; 
+                    if(id != null && id != ''){  
+	                    if(DomainVal!=null && DomainVal!='N/A'){
+	                        elmIfr.src = "https://"+strhostName+"/"+DomainVal+"/servlet/servlet.FileDownload?file="+id;;
+	                    }else{
+	                        elmIfr.src = "https://"+strhostName+"/servlet/servlet.FileDownload?file="+id;
+	                    }
+                    }else{
+                    	elmIfr.src = url;
+                    }
+                }
+                document.getElementById('PreviewDiv').appendChild(elmIfr);
+                document.getElementById('PreviewDiv').style.display = ''; 
+        }
+        //Clearing the Existing values in popup when user clicks on AddLine
+        function ClearValues(SRDocId,docname){
+            document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:docBlock:popUpPB:DocumentName').innerHTML = docname;
+            document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:hdnDocName').value = docname;
+            document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:hdnSRDocId').value = SRDocId;
+        }
+        //Validation when User didnot enter values for Required Fields 
+        function Validation(){
+            document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:hdnExternalComments').value = document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:docBlock:popUpPB:ExternalComments').value;
+            UploadSave();
+        }
+    </script> 
+            <apex:attribute name="ObjectName" type="String" access="global" assignTo="{!strObjectName}" description="This specifies Object Name to get the default Folder Selected"/>   
+            <apex:form id="theForm">
+                <apex:inputhidden id="hdnSRDocId" value="{!strSRDocId}"/>
+                <apex:inputhidden id="hdnDocName" value="{!strAttachmentName}"/>
+                <apex:inputhidden id="hdnExternalComments" value="{!strExternalComments}"/>
+                <apex:actionFunction action="{!upload}" status="NewDocStatus" name="UploadSave"/>
+                <apex:pageBlock id="docBlock" title="{!IF(lstDoc!=null && lstDoc.size>0,'Documents to be Uploaded','')}">
+                    <apex:pageblockbuttons location="top">
+                        <apex:commandbutton value="View Service Request" action="{!Back_To_SR}" title="Returns to Service Request"/>
+                    </apex:pageblockbuttons>
+                    <apex:messages id="msg" style="color:Red;"></apex:messages>
+                    <apex:actionstatus id="status" startText="Processing.."></apex:actionstatus>           
+                    <div id="dvDocs" style="display:block;">
+                        <apex:pageblocktable value="{!lstDoc}" var="Doc" id="theTblContact" rendered="{!IF(lstDoc!=null && lstDoc.size>0,true,false)}">
+                             <apex:column headervalue="Action" style="width:{!IF(isPortalUser==false,'130px;','110px;')}">
+                                <apex:outputLabel rendered="{!canEditRecord}">
+	                                <a data-reveal-id="myModalEdit" data-animation="fade" onClick="EditdocAction('{!JSENCODE(Doc.Id)}');return false;" style="cursor:pointer; float:left; text-decoration:none;display:{!IF(isPortalUser==true,'none','')};">
+	                                    <apex:outputlabel id="btnEdit" value="Edit" styleClass="actionLink" style="cursor:pointer; float:left;" />
+	                                </a>
+                                </apex:outputLabel>
+                                <apex:outputLabel id="labelId16" style="display:none;float:left;" rendered="{!canEditRecord}">&nbsp;|&nbsp;</apex:outputLabel>
+                                <apex:outputLabel id="labelId13" style="float:left;display:{!IF(isPortalUser==true,'none','')};" rendered="{!canEditRecord}">&nbsp;|&nbsp;</apex:outputLabel> 
+                                <apex:outputlabel value="Preview" id="btnView" styleClass="actionLink" onclick="ShowImg('{!JSENCODE(Doc.NSIBPM__Doc_ID__c)}','{!JSENCODE(Doc.Name)}','{!JSENCODE(Doc.Doc_URL__c)}')" style="cursor:pointer;float:left;display:{!IF((Doc.Doc_URL__c!=null && Doc.Doc_URL__c!=''),'',IF(Doc.NSIBPM__Doc_ID__c != null && Doc.NSIBPM__Doc_ID__c != '','','none'))};"/>
+                                <a data-reveal-id="myModal1"  id="lnkUpload" data-animation="fade" styleClass="actionLink" style="display:{!IF(Doc.Doc_URL__c==null || Doc.Doc_URL__c=='',IF(Doc.NSIBPM__Doc_ID__c == null || Doc.NSIBPM__Doc_ID__c =='','','none'),'none')};};text-decoration:none;">
+                                    <apex:outputlabel id="btnUpload" value="Upload" style="cursor:pointer;float:left;" styleClass="actionLink" onclick="ClearValues('{!JSENCODE(Doc.Id)}','{!JSENCODE(Doc.Name)}');"/>
+                                </a>
+                                <apex:outputLabel id="lnkReplaceLbl" style="float:left;display:{!IF(Doc.NSIBPM__Doc_ID__c!=null && Doc.NSIBPM__Doc_ID__c!='' && (Doc.NSIBPM__Service_Request__r.NSIBPM__External_Status_Name__c=='Token Deposit Paid' || Doc.NSIBPM__Status__c=='Submitted' ||  Doc.NSIBPM__Status__c=='Rejected' || Doc.NSIBPM__Service_Request__r.NSIBPM__External_Status_Name__c=='Draft' || Doc.NSIBPM__Status__c=='Re-upload'),'','none')};" >&nbsp;|&nbsp;</apex:outputLabel>
+                                <a data-reveal-id="myModal1" id="lnkReplace" data-animation="fade" styleClass="actionLink" style="display:{!IF(Doc.NSIBPM__Doc_ID__c!=null && Doc.NSIBPM__Doc_ID__c!='' && (Doc.NSIBPM__Service_Request__r.NSIBPM__External_Status_Name__c=='Token Deposit Paid' || Doc.NSIBPM__Status__c=='Submitted' ||  Doc.NSIBPM__Status__c=='Rejected' || Doc.NSIBPM__Service_Request__r.NSIBPM__External_Status_Name__c=='Draft' || Doc.NSIBPM__Status__c=='Re-upload'),'','none')};text-decoration:none;">
+                                    <apex:outputlabel id="btnReplace" value="Replace" style="cursor:pointer;float:left;" styleClass="actionLink" onclick="ClearValues('{!JSENCODE(Doc.Id)}','{!JSENCODE(Doc.Name)}');"/>
+                                </a>
+                            </apex:column>
+                            <apex:column headervalue="Name">
+                                <apex:outputLabel >{!Doc.Name}</apex:outputLabel>
+                            </apex:column>
+                            <apex:column headervalue="Instructions">
+                                <apex:outputLabel >{!Doc.NSIBPM__Document_Description_External__c}</apex:outputLabel>
+                            </apex:column>
+                            <apex:column headervalue="Required">
+                                <!--  <apex:outputfield value="{!Doc.Is_Not_Required__c}"/> -->
+                                <img src="/img/checkbox_checked.gif" style="display:{!IF(Doc.NSIBPM__Is_Not_Required__c==true,'none','')}" alt="Checked" class="checkImg" id="Active_chkbox" title="Checked" height="16" width="21"/>
+                                <img src="/img/checkbox_unchecked.gif" style="display:{!IF(Doc.NSIBPM__Is_Not_Required__c==true,'','none')}" alt="Not Checked" class="checkImg" id="InActive_chkbox" title="Not Checked" height="16" width="21"/>
+                            </apex:column>
+                             <apex:column headervalue="Original Verified">
+                                <apex:outputField value="{!Doc.NSIBPM__Original_Verified__c}"/>
+                            </apex:column>
+                            <apex:column headervalue="Status">
+                                <apex:outputLabel >{!Doc.NSIBPM__Status__c}</apex:outputLabel>
+                            </apex:column>
+                             <apex:column headervalue="Internal Comments" rendered="{!!isPortalUser}">
+                                <apex:outputLabel >{!Doc.NSIBPM__Comments__c}</apex:outputLabel>
+                            </apex:column>
+                            <apex:column headervalue="Comments">                                    
+                                <apex:outputLabel >{!Doc.NSIBPM__Rejection_Reason__c}</apex:outputLabel>
+                            </apex:column>
+                            <apex:column headervalue="Customer Comments">
+                                <apex:outputLabel >{!Doc.NSIBPM__Customer_Comments__c}</apex:outputLabel>
+                            </apex:column>
+                            <apex:column headervalue="Last Modified Date">                                    
+                                <apex:outputfield value="{!Doc.LastmodifiedDate}"></apex:outputfield>
+                            </apex:column>
+                        </apex:pageblocktable>
+                        <div>
+                        <script>
+                            //document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm:docBlock:theTblContact').className = 'newgrid';
+                        </script>
+                    </div>
+                    <div>
+                        <apex:pageblock title="Generated Documents" rendered="{!IF(ltGeneratedDocs!=null && ltGeneratedDocs.size>0,true,false)}">
+                            <apex:pageblocktable value="{!ltGeneratedDocs}" var="gen">
+                                <apex:column headervalue="Preview">
+                                    <apex:outputfield value="{!gen.Preview_Download_Document__c}"/>
+                                </apex:column>
+                                <apex:column headervalue="Name">
+                                    <apex:outputLabel >{!gen.Name}</apex:outputLabel>
+                                </apex:column>
+                                <apex:column headervalue="Instructions">
+                                    <apex:outputLabel >{!gen.NSIBPM__Document_Description_External__c}</apex:outputLabel>
+                                </apex:column>
+                                <apex:column headervalue="Status">
+                                    <apex:outputLabel >{!gen.NSIBPM__Status__c}</apex:outputLabel>
+                                </apex:column>
+                                 <apex:column headervalue="Internal Comments" rendered="{!!isPortalUser}">
+                                    <apex:outputLabel >{!gen.NSIBPM__Comments__c}</apex:outputLabel>
+                                </apex:column>
+                                <apex:column headervalue="Comments">                                    
+                                    <apex:outputLabel >{!gen.NSIBPM__Rejection_Reason__c}</apex:outputLabel>
+                                </apex:column>
+                                <apex:column headervalue="Customer Comments">
+                                    <apex:outputLabel >{!gen.NSIBPM__Customer_Comments__c}</apex:outputLabel>
+                                </apex:column>
+                                <apex:column headervalue="Last Modified Date">                                    
+                                    <apex:outputfield value="{!gen.LastmodifiedDate}"></apex:outputfield>
+                                </apex:column>
+                            </apex:pageblocktable>
+                        </apex:pageblock>
+                    </div>
+                    <div id="myModal1" class="reveal-modal" style="display:block;">  
+                        <a class="close-reveal-modal">&#215;</a>
+                        <apex:outputpanel layout="block" style="display:block" id="NewDocPopUp">
+                        <div class="hd_div">Upload Required Document</div> 
+                            <div style="margin-top:20px;"  id="pg">
+                                <apex:pageBlock mode="maindetail" id="popUpPB">
+                                    <div id="dvNewDoc" style="display:block">
+                                        <apex:actionStatus id="NewDocStatus">            
+                                            <apex:facet name="start">                
+                                                    <img src="/img/loading32.gif" style="vertical-align:middle;" class="loader"/>
+                                            </apex:facet>        
+                                        </apex:actionStatus>
+                                        <table cellspacing="8" cellpadding="0" border="0">
+                                            <tr>
+                                                <td style="font-weight:bold;text-align:right">
+                                                    File to upload
+                                                </td>
+                                                <td align="left">
+                                                <div class="requiredInput"><div class="requiredBlock"> </div>
+                                                    <apex:inputFile id="file" value="{!document.body}" contentType="{!document.ContentType}" filename="{!FileName}"/> 
+                                                </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight:bold;text-align:right">
+                                                    Document Name
+                                                </td>
+                                                <td align="left">
+                                                     <apex:outputtext value="" id="DocumentName" style="font-weight:bold;"/>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="font-weight:bold;text-align:right;vertical-align:top;">
+                                                    Customer Comments 
+                                                </td>
+                                                <td align="left">
+                                                    <apex:inputTextarea value="{!document.Description}" id="ExternalComments" style="width:300px;resize:none;"/>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <apex:pageBlockButtons id="popup1btn" location="bottom" style="float:right;" styleClass="pbButtonb">
+                                        <apex:commandButton id="cmdSave" value="Save" onclick="Validation();return false;" style="float:left;"/>
+                                        <apex:commandButton id="cmdCancel" action="{!Cancel}" value="Cancel" style="float:left;"/>
+                                    </apex:pageBlockButtons>
+                                </apex:pageBlock>
+                            </div>
+                            </apex:outputpanel>
+                     </div>
+                    <!-- End of the Light Box PopUp Starts when user clicks on the Add Line Button -->   
+                       <div id="display" style="padding:10px;display:block;width:99.2%;padding-top:20px;">
+                             <h5 id="DocTitle" value=""/>
+                             <table border="1" cellpadding="0" cellspacing="0"  style="width:100%;" height="750px" id="tblImagePane">
+                                  <tr>
+                                       <td> 
+                                            <apex:outputPanel layout="block" id="detail">
+                                                <div id="PreviewDiv" style="padding:0px;display:none;width:99.5%;">  
+                                                </div>
+                                                <img id="imgShow" src="" style="display:block; width:99%;" height="750px" />
+                                            </apex:outputPanel>
+                                       </td>
+                                  </tr>
+                             </table>
+                       </div>
+                </div>
+               </apex:pageBlock> 
+           </apex:form>
+           
+           <apex:form id="theForm2">    
+               <apex:inputhidden value="{!strLastDocId}" id="lstDocId"/>
+               <apex:inputhidden value="{!strLastDocName}" id="lstDocName" />
+               <!-- <apex:inputhidden value="{!selOrdId}" id="hdnSelOrdId" /> -->   
+               <apex:inputhidden id="hdnDocId" value="{!AgrDocId}"/>
+               <apex:inputhidden id="hdnstrError" value="{!strError}"/>
+               <apex:actionfunction name="EditDoc" action="{!EditDoc}" status="MainStatus" reRender="popUpPB4,updatemsg" />
+               
+                    <!-- Start of  LightBox -->
+                    <div id="myModalEdit" class="reveal-modal" style="display:block; height:270px;width:600px;"> 
+                        <apex:actionStatus id="MainStatus">            
+                            <apex:facet name="start">                
+                                    <img src="/img/loading32.gif" style="vertical-align:middle;" class="loader"/>
+                            </apex:facet>        
+                        </apex:actionStatus>
+                        <a class="close-reveal-modal">&#215;</a>
+                        <div id="DivNoBorder">
+                        <apex:pageBlock id="thePB2">
+                            <apex:outputpanel layout="block" style="display:block" id="NewDocPopUp1">
+                            <div class="hd_div">Required Document Details</div> 
+                                <div style="margin-top:20px;" id="pg">
+                                    <apex:pageMessages id="updatemsg"/>
+                                    <apex:pageBlock mode="maindetail" id="popUpPB4">
+                                        <div id="dvNewDoc" style="display:block">
+                                            <table cellspacing="8" cellpadding="0" border="0">
+                                                <tr>
+                                                    <td style="font-weight:bold;text-align:right">
+                                                        Status
+                                                    </td>
+                                                   <td align="left" >
+                                                      <apex:inputfield id="statfld" Value="{!objSRDocEdit.NSIBPM__Status__c}"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>  
+                                                    <td style="font-weight:bold;text-align:right">
+                                                       Original Verified
+                                                    </td>
+                                                    <td align="left">
+                                                    <apex:inputcheckbox id="Image" value="{!objSRDocEdit.NSIBPM__Original_Verified__c}" ></apex:inputcheckbox>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight:bold;text-align:right;vertical-align:top;">
+                                                        Internal Comments
+                                                    </td>
+                                                   <td align="left" >
+                                                      <apex:inputTextarea id="Namespace" Value="{!objSRDocEdit.NSIBPM__Comments__c}" style="width:300px;resize:none;"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="font-weight:bold;text-align:right;vertical-align:top;">
+                                                        Comments
+                                                    </td>
+                                                    <td align="left">
+                                                      <apex:inputTextarea id="RejectionReason" value="{!objSRDocEdit.NSIBPM__Rejection_Reason__c}" style="width:300px;resize:none;"/>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </div>
+                                        <apex:pageBlockButtons location="bottom" style="float:right;" styleClass="pbButtonb">
+                                            <apex:commandButton id="cmdSaveDoc" value="Save" status="MainStatus" action="{!SaveDoc}" style="float:left;" rerender="hdnstrError,updatemsg,popUpPB4" onComplete="CloseLightBox();"/>
+                                            <apex:commandButton id="cmdCancelDoc" action="{!Cancel}" status="MainStatus" value="Cancel" style="float:left;"/>
+                                        </apex:pageBlockButtons>
+                                    </apex:pageBlock>
+                                </div>
+                                </apex:outputpanel>
+                            </apex:pageBlock>
+                            </div>
+                            <a class="close-reveal-modal" id="popup2">&#215;</a>
+                        </div>
+                    <!-- End of  LightBox -->
+                
+                <script>
+                    function CloseLightBox(){
+                        var msg = document.getElementById('DocumentUploadPage:DocUploadComp:docComponent:theForm2:hdnstrError').value; 
+                        //console.log('msg===>'+msg);                       
+                        if(msg==null || msg==''){
+                            document.getElementById('popup2').click();
+                            window.parent.location.href = '/{!JSENCODE($CurrentPage.parameters.Id)}';
+                            window.parent.location.reload(); 
+                        }
+                    }
+                </script>
+            </apex:form>
+</apex:component>

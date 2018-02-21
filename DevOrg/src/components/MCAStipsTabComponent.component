@@ -1,0 +1,406 @@
+<apex:component controller="MCAStipsTabController" allowDML="true">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.js"></script>
+    <apex:includeScript value="{!URLFOR($Resource.FileSaver)}"  />
+    <style>
+      .inpufield{
+          width:99px;
+        }
+        .columnWidth {
+            width: 99px;
+        }
+        #stipDropbox {
+            width: 93%; 
+            height:8px;
+            padding: 1.1em;
+            margin: 0 auto;
+            margin-bottom:14px;
+            border: 6px white double;
+            color:white;
+            //font-weight:bold;
+            font-size:10px;
+            border-color: white !important;
+            border-radius:20px;
+            background-color:#69c;
+        }
+        .assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 35%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #progressBar {
+            width: 400px;
+            height: 22px;
+            border: 1px solid #111;
+            //background-color: #FFD80F;
+        }
+        #progressBar div {
+            height: 100%;
+            color: #fff;
+            text-align: right;
+            line-height: 22px; /* same as #progressBar height if we want text middle aligned */
+            width: 0;
+            background-color: #0099ff;
+        }
+    </style>
+
+    <script src="/soap/ajax/20.0/connection.js" type="text/javascript"></script>
+    <apex:form id="records" styleClass="records">
+        
+        <apex:pageMessages id="pageMessageId" escape="false" />    
+        <script Language="JavaScript">
+            var stipsTabLabelOriginal ;
+            t$(function () {
+                stipsTabLabelOriginal = t$("[id*='stipstab_lbl']").text();
+                computestipCalculations();
+            });
+
+            function computestipCalculations() {
+                var stipsTabLabel = 'Stips' ; //+ ' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')';
+                t$("[id*='stipstab_lbl']").text(stipsTabLabel);              
+                t$("[id*='stipstab_lbl']").append(' (' + {!stipsOpenCnt} + '/'+{!containers.size}+')');
+            }// end computestipCalculations()
+
+            function EmailStips() 
+            {
+               
+                var email = '{!opportunity.Owner_1__r.Email}';
+                sforce.connection.sessionId = "{!$Api.Session_ID}";
+                var result = sforce.connection.query("Select Name, Id, StageName, (Select Id,Status__c From Items_Needed__r where Status__c != 'Completed' OR Status__c != 'Cancelled') From Opportunity where Id ='{!Opportunity.Id}'");
+                records = result.getArray("records");
+                var label = '{!$Label.McaGrid_EmailStips}';
+                            
+                if(records[0].Items_Needed__r == null) {
+                    alert("{!$Label.EmailOpenStipsNoStips}");
+                } else if((email == null || email == undefined || email == '') && (label.toUpperCase() != 'OPPORTUNITY OWNER')){
+                    alert("{!$Label.EmailStips_MailIdNotPresent}");
+                } else if(records.length > 0){
+                    window.open('{!DestURL}');
+                }// end else - if
+            }// End EmailStips()
+            
+            
+        </script>
+        <script>
+             function callAddAttachment(stipID) {
+                 console.log('--->');
+                 window.open('{!addAttachmentURL}'+stipID);
+                //openAddAttachment();
+            }// end openAddAttachment()
+            function runSaveAllStips() {
+                setTimeout(function() {
+                    saveAllStips1();
+                }, 1000);
+            }// end runSaveAllStips()
+
+            function runNewStips() {
+                setTimeout(function() {
+                    newStips();
+                }, 1000);
+            }// end runNewStips()
+
+            function runEditStips() {
+                setTimeout(function() {
+                    editStips();
+                }, 1000);
+            }// end runEditStips()
+
+            t$(".saveBtn").click(function(){      
+                t$('.saveBtn').prop('disabled', true);
+            });
+        </script>
+        <c:MCAJQTabComponent />
+        <apex:actionFunction action="{!collectStipData}" name="collectStipDataBase64" reRender="records,refreshComponent, dragDropSection" status="loadingPanel" >
+            <apex:param name="data" id="data" value="" />
+            <apex:param name="name" id="name" value="" />
+            <apex:param name="stipID" id="stipID" value="" />
+        </apex:actionFunction>
+        <apex:pageBlock mode="inlineedit" >
+            <apex:inlineEditSupport event="ondblclick" />
+            
+            <apex:actionFunction action="{!saveAllStips}" name="saveAllStips1" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+            <apex:actionFunction action="{!newStip}" name="newStips" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editStips" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"/>
+            <div id="assign-action-spinner-main">
+                
+                <div id="progressBar" class="assign-action-spinner-content">
+                    Please Wait Files are Compressing.
+                    <div></div>
+                </div>
+            </div>
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Stips__c.createable}">
+                    <input type="button" onclick="runNewStips()" class="btn" value="New Stip"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Stips__c.updateable,$ObjectType.Stips__c.createable)}">
+                    <input type="button" onclick="runSaveAllStips()" class="btn saveBtn" value="Save"/> 
+                </apex:outputpanel>
+                <apex:outputpanel rendered="{!$ObjectType.Stips__c.updateable}">
+                    <input type="button" onclick="runEditStips();" class="btn" value="Edit All"/> 
+                </apex:outputpanel>
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computestipCalculations()"></apex:CommandButton>
+
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" 
+                oncomplete="computestipCalculations()" rendered="{!OR($ObjectType.Stips__c.updateable,$ObjectType.Stips__c.createable)}"></apex:CommandButton>
+                <apex:commandButton onclick="EmailStips()" value="Email Stips" action="{!refresh}" rerender="records,refreshComponent" status="loadingPanel"/>
+            </apex:pageBlockButtons>
+            <div class="test" >
+                <div class="container-new">
+                    <table class="tablesorting tablesorter">
+                        <thead class="header">
+                            <tr>
+                                <th>View/del<div></div>
+                                </th>
+                                <th>{!$ObjectType.Stips__c.Fields.Name.Label}<div>{!$ObjectType.Stips__c.Fields.Name.Label}</div>
+                                </th>
+                                
+                                <th>{!$ObjectType.Stips__c.Fields.Status__c.Label}<div>{!$ObjectType.Stips__c.Fields.Status__c.Label}</div>
+                                </th>
+                                <th>No. of Attachment<div>No. of Attachment</div>
+                                </th>
+                                <th>Drop Attachment<div>Drop Attachment</div>
+                                </th>
+                                <th>{!$ObjectType.Stips__c.Fields.Requested_by__c.Label}<div>{!$ObjectType.Stips__c.Fields.Requested_by__c.Label}</div>
+                                </th>
+                                <th>{!$ObjectType.Stips__c.Fields.Date_Requested__c.Label}<div>{!$ObjectType.Stips__c.Fields.Date_Requested__c.Label}</div>
+                                </th>
+                                <th>Submission<div>Submission</div>
+                                </th>
+                                
+                                <th>{!$ObjectType.Stips__c.Fields.Notes__c.Label}<div>{!$ObjectType.Stips__c.Fields.Notes__c.Label}</div>
+                                </th>
+                             </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!containers}" var="container">
+                                <tr>
+                                    <td>
+                                        <apex:outputLink value="/{!container.stip.Id}" target="blank" rendered="{!NOT(ISBLANK(container.stip.Id))}"> View </apex:outputLink>
+                                        <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.stip.Id)),$ObjectType.Stips__c.deletable)}"/>
+                                        <apex:commandLink action="{!deleteStip}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.stip.Id)),$ObjectType.Stips__c.deletable)}" status="loadingPanel" oncomplete="computestipCalculations()">
+                                        <apex:param name="recordToDelete" value="{!container.stip.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                                        <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        <apex:outputLabel value=" | " rendered="{!NOT(ISBLANK(container.stip.Id))}"/>
+                                        <apex:outputLink onclick="callAddAttachment('{!container.stip.Id}'); return false;" rendered="{!NOT(ISBLANK(container.stip.Id))}"> Attach</apex:outputLink>
+                                        
+                                        <apex:commandLink action="{!removeStips}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.stip.Id))}" status="loadingPanel" oncomplete="computestipCalculations()">
+                                        <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.stip.Name}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                         <apex:inputField value="{!container.stip.Name}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}" styleClass="inpufield"/>
+                                    </td>
+                                    <td>
+                                         <apex:outputField value="{!container.stip.Status__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.stip.Status__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:commandLink onclick="create_zip('{!container.noAttachment}', '{!container.listAttachID}', '{!container.stip.Id}'); return false;" 
+                                            value="{!container.noAttachment} file" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited),(if(container.noAttachment == 1 && container.noAttachment != null, true, false)))}"/>
+                                         <apex:commandLink onclick="create_zip('{!container.noAttachment}', '{!container.listAttachID}', '{!container.stip.Id}'); return false;" 
+                                            value="{!container.noAttachment} files" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited), (if(container.noAttachment != 1 && container.noAttachment != null , true, false)))}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputPanel id="dragDropSection" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}">
+                                            <div style="border-width:2px;border:4px #69c;height:auto;width:auto;border-radius:17px;">  &nbsp; 
+                                                <div id="stipDropbox" ondragover="getDragover(event);"  
+                                                    ondragenter="getDragenter(event);" ondrop="getDropFiles(event, '{!container.stip.Id}');"
+                                                    ondragexit="getDragexit(event);">
+                                                    <span id="stripDropLabel">Drop files to attach</span>
+                                                </div>
+                                                <apex:outputPanel id="Op1">
+                                                    <img id="preview" src="" alt="[ image will display here ]" />
+                                                </apex:outputPanel> 
+                                            </div>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.stip.Requested_by__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.stip.Requested_by__c}" styleClass="columnWidth" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:outputField value="{!container.stip.Date_Requested__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.stip.Date_Requested__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td>
+                                        <apex:selectList value="{!container.stip.Submission__c}" size="1" id="values" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, editmode, container.isedited)}" >
+                                        <apex:selectOptions value="{!submissionNames}"/>
+                                        </apex:selectList>
+                                        <a href="/{!container.stip.Submission__c}">
+                                        <apex:outputText value="{!container.submissionName}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}">
+                                        </apex:outputText></a>
+                                    </td>
+                                    
+                                    <td>
+                                        <apex:outputField value="{!container.stip.Notes__c}" rendered="{!AND(NOT(ISBLANK(container.stip.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.stip.Notes__c}" rendered="{!OR((ISBLANK(container.stip.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                </tr>   
+                            </apex:repeat>
+                        </tbody>
+                    </table>   
+                </div>
+            </div>
+        </apex:pageBlock>
+        <script type="text/javascript">
+            t$("#assign-action-spinner-main").hide();
+            var fName = new Array();
+            function getDragenter(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            function getDragexit(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            function getDragover(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            function getDropFiles(event, stipID) {
+                
+                var element = event.target;
+                var tempFile = event.dataTransfer.files;
+                //console.log('hiii'+element.result);
+                event.preventDefault();
+                event.stopPropagation();
+                var files = event.dataTransfer.files,
+                file = files;
+                if (files.length == 1 ) {
+                    document.getElementById('stripDropLabel').innerHTML ='Uploading ' + files[0].name;
+                }else if (files.length  >  1) {
+                    document.getElementById('stripDropLabel').innerHTML ='Uploading ' + files.length + ' files';
+                }
+                if (files.length) {
+                    for (i = 0; i < files.length; i++) { 
+                        file = files[i];
+                        //document.getElementById('droplabel').innerHTML = 'Uploading ' + file.name;
+                        console.log(file);                        
+                        //console.log('----->'+event.target.result);
+                        processImage(file, i, stipID);
+                    }
+                }
+            }
+            function processImage(file, i, stipID) {
+                console.log('stip----->'+stipID);
+                console.log('name----->'+file.name);
+                fName.push(file.name);
+
+                if (! file.type.match('image.*')) {
+                    //document.getElementById('droplabel').innerHTML ='Uploading ' + file.name;
+                    // return;
+                }
+
+                var reader = new FileReader();
+
+                reader.onloadend = function(event){
+                    //var img = document.getElementById("preview");
+                    //img.src = event.target.result;
+                    console.log('111----->'+fName[count]);
+                    collectStipDataBase64(event.target.result, fName[count], stipID);
+                    count++;
+                };
+                reader.readAsDataURL(file);
+            }
+           
+            
+        </script>
+    </apex:form>
+        <script type="text/javascript">
+        var zip;
+        var barPercentage = 10;
+        // Download attachment into zip
+        function create_zip(noAttachmentRecords, stringAttID, stipID) {
+            zip = new JSZip();
+            alert('Inside create zip'+stringAttID);
+            t$("#assign-action-spinner-main").show();
+            var content, noCall = 0;
+            
+            stringAttID = stringAttID.replace("[","");
+            stringAttID = stringAttID.replace("]","");
+            var listAttID = stringAttID.split(",");
+            
+            try{
+                for(var count = 0; count < listAttID.length; count++) {
+                    noCall++;
+                    var listAtt = [];
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]); 
+                    count++;
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]); 
+                    count++;
+                    if(listAttID[count] != null && listAttID[count] != '')
+                        listAtt.push(listAttID[count]);
+                     if(barPercentage < 80) {
+                        progress(90, t$('#progressBar'));
+                        barPercentage +=10;
+                    }
+                    alert(listAtt);
+                    // Vf remoting start
+                    Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.MCAStipsTabController.getAttachments}',
+                    '{!opportunity.id}', listAtt,
+                        function(result, event){
+                            if (event.status) {
+                                // add files into zip
+                                noCall--;
+                                for (var i = 0; i < result.length; i++) {
+                                    zip.file(result[i].attName, result[i].attchBody, {base64: true});
+                                    progress(90, t$('#progressBar'));
+                                    if(noCall == 0)
+                                        progress(100, t$('#progressBar'));
+                                    //console.log('----'+result[i]);
+                                }// end For
+                                if(noCall == 0) {
+                                //t$("#assign-action-spinner-main").hide();
+                                    zip_Creation();
+                                }
+                            }// End If
+                        }// End return function of vf remoting
+                    );// End vf remoting invoke function
+                }//end for
+            }catch(err) {
+                alert('Please select less file. Error Is '+err.message);
+            }// end try - catch
+            
+        }//End create_zip()
+        
+        function progress(percent, t$element) {
+            var progressBarWidth = percent * t$element.width() / 100;
+            t$element.find('div').animate({ width: progressBarWidth }, 500).html();
+            
+        }
+        function zip_Creation() {
+            
+            // Check browser and perform download operation
+            var isIE = /*@cc_on!@*/false;
+            if(isIE){
+                //alert('hiii out side safari');
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Stip_Attachments.zip");
+            }else if(navigator.vendor.indexOf("Apple")==0 && /\sSafari\//.test(navigator.userAgent)) {
+                content = zip.generate();
+                location.href="data:application/zip;base64," + content;
+            } else {
+                content = zip.generate({type:"blob"});
+                // see FileSaver.js
+                saveAs(content, "Stip_Attachments.zip");
+            }// End Else If
+            t$("#assign-action-spinner-main").hide();
+            progress(0, t$('#progressBar'));
+        }
+    </script>
+</apex:component>

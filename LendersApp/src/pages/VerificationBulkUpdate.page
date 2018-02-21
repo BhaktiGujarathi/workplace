@@ -1,0 +1,642 @@
+<apex:page standardController="UWVerification__c" tabStyle="UWVerification__c" recordSetVar="verifications" extensions="VerificationBulkUpdateController" sidebar="false" action="{!init}">
+ <Apex:sectionHeader title="Verification Bulk Update"/>
+    <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js" / >
+    <apex:includeScript value="{!urlfor($Resource.McaApp__MCATableSorter, 'jquery-1.11.1.min.js')}" />
+    <apex:includeScript value="{!urlfor($Resource.McaApp__MCATableSorter, 'jquery.tablesorter.min.js')}" />
+    <style>
+    <!-- for action spinner -->
+        #assign-action-spinner-main {
+
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content {
+
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+
+        #assign-action-spinner-content img {
+
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content p {
+
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        
+    /*-------------table header fix--------------*/
+        .fieldfilter table {
+
+            width: 100%;
+            margin-bottom: 10px;
+            margin-top: 10px;
+        }
+
+        #records tr {
+
+            background:#fff !important;
+        }
+
+        #records tr:hover {
+
+            background:#e6f4ff !important;
+        }
+        
+        #records td:hover {}
+
+        #records table {
+
+            border-spacing:0;
+            width:100%;
+        }
+      
+        #records td, th {
+
+            border-bottom:1px solid #eee;
+            color: #000;
+            padding: 10px;
+            text-align:center;
+         }
+
+        #records th {
+
+            background-color: #e0e3e5;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        #records th:hover {
+            
+            cursor:pointer;
+            background-color:#ddd;
+            color:blue;
+        }
+/*---------- multiselect dropdown--------------------*/
+        .filterdrop {
+        
+            width: 50%;
+        }
+
+        .multiselect {
+
+            z-index:222; 
+        }
+        
+        .multiselect li {
+
+            margin-left: -5px;
+            margin-top: -2px;
+            width: 111%;
+            text-align: justify;
+        }
+
+        .multiselect li:hover {
+            
+            background:#C4E5FF;
+        }
+        
+        .multiselect ul {
+
+            background-color: #e6f4ff;
+            border: 1px;
+            color: #000;
+            left: 30%;
+            padding: 2px 15px 2px 5px;
+            position: relative;
+            top: -12px;
+            width: 46%;
+            list-style: none;
+        }    
+        
+        .pbTitle {
+
+            width:40% !important
+        }
+           
+    </style>
+
+    <script>
+        // classes textnode,textinputnode,id=records,headers,tablesorter and tablesorting are purely used for sorting purpose
+        var selectedstage = [];// storing selected stages value
+        var selectedstatus = [];// storing selected status value
+        var changesdone = 0;
+        $(document).ready(function () {
+
+            $(".selectedStatus").prop("readonly", true);
+            $(".selectedStage").prop("readonly", true);
+            selectedstage = [];
+            selectedstatus = [];
+            $('.selectstages').hide();
+            $('.selectstatus').hide();
+            
+            filtersetting();
+        });
+
+         
+        var people, asc1 = 1,
+        asc2 = 1,
+        asc3 = 1;
+
+        function sort_table(col, asc) {
+            console.log('----'+col+'----'+asc);
+            actualData = document.getElementById("actualData");
+            var rows = actualData.rows,
+                rlen = rows.length,
+                arr = new Array(),
+                arrshow= new Array(),
+                i, j, cells, clen;
+            
+            for (i = 0; i < rlen; i++) {
+                
+                cells = rows[i].cells;
+                clen = cells.length;                
+                arr[i] = new Array();
+                for (j = 0; j < clen; j++) {
+                 console.log('----'+cells[j].className);
+                    if (cells[j].className == "wrapperInput") {
+                        
+                        arr[i][j] = cells[j].childNodes[0].value;
+                        cells[j].childNodes[0].setAttribute('value',arr[i][j]);
+                    }
+                    else {
+
+                        arr[i][j] = cells[j].innerHTML;
+                    }
+                }
+
+                arr[i].showData = rows[i].innerHTML;
+            }
+            // sort the array by the specified column number (col) and order (asc)
+            
+            arr.sort(function (a, b) {
+
+                return (a[col] == b[col]) ? 0 : ((a[col] > b[col]) ? asc : -1 * asc);
+            });
+
+            for (i = 0; i < rlen; i++) {
+            
+                rows[i].innerHTML = arr[i].showData;
+            }
+        }
+
+        // taking values from  picklist on custom setting
+        function filtersetting(){
+            var defaultStage='{!selectedstage}';
+            var defaultStatus='{!selectedstatus}';
+            if (defaultStage!=''){
+                selectedstage=defaultStage.split(',');
+                for(i=0;i<selectedstage.length;i++){
+                $('input:checkbox[value="' + selectedstage[i] + '"]').prop('checked', true);
+                }
+            }
+            if (defaultStatus!=''){
+                 selectedstatus=defaultStatus.split(',');
+                for(i=0;i<selectedstatus.length;i++){
+                $('input:checkbox[value="' + selectedstatus[i] + '"]').prop('checked', true);
+              }
+            }
+        }
+
+        function statusToggle() {
+
+            $(".selectstatus").slideToggle('fast');
+        }
+
+        function stageToggle() {
+
+            $(".selectstages").slideToggle('fast');
+        }
+
+        // tracking the changes in input field
+        function callchanges() {
+
+            changesdone = changesdone+1;
+        }
+            
+        //function to be called after filters cleared or revamping the page
+        function cleanarrays() {
+
+            selectedstage = [];
+            selectedstatus = [];
+            changesdone = 0;
+            $('.selectstages').hide();
+            $('.selectstatus').hide();
+            $(".selectedStatus").prop("readonly", true);
+            $(".selectedStage").prop("readonly", true);
+            
+            assignTableSorter();
+        }
+
+        // select  or deselect  all stage
+        function selectAllStage() {
+
+            var element = event.target;
+            selectedstage = [];
+            var chosen = '';
+            console.log(element.checked);
+
+            if (element.checked) { // check select status
+
+                $(".iptCheckboxStage").each(function() { //loop through each checkbox
+                   this.checked = true;   //select all checkboxes with class "checkbox1"  
+                   selectedstage.push(this.value);
+                });
+            }
+            else {
+
+                $('.iptCheckboxStage').each(function() { //loop through each checkbox
+                    this.checked = false; //deselect all checkboxes with class "checkbox1"                       
+                });
+            }
+
+            for(i = 0;i < selectedstage.length; i++) {
+
+                chosen = selectedstage[i] + ',' + chosen;
+            }
+
+            chosen = chosen.slice(0, -1);
+            $('.selectedStage').val(chosen);
+        }
+
+        //  on selecting stages for filters ,compare with selected element and process accordingly
+        function selectStage() {
+
+            var element = event.target;
+            var chosen = '';
+            var i;
+            //console.log(element.value);
+            var index = selectedstage.indexOf(element.value);
+            
+            if (index > -1) {
+
+                selectedstage.splice(index,1);
+            }
+            else {
+
+                selectedstage.push(element.value);
+            }
+            
+            for(i = 0;i < selectedstage.length; i++) {
+
+                chosen = selectedstage[i]+','+ chosen;
+            }
+
+            chosen = chosen.slice(0, -1);
+            $('.selectedStage').val(chosen);
+            
+            if ($('.iptCheckboxStage:checked').length == $('.iptCheckboxStage').length) {
+
+                $('.checkAllStage').each(function() {
+                    this.checked = true;
+                });  
+            }
+            else {
+
+                $('.checkAllStage').each(function() {
+                    this.checked = false;
+                });
+            }
+        }
+        //select all interview
+        function selectAllInterview() {
+
+            var element = event.target;
+            if (element.checked) { // check select status
+
+                $(".inputInterview").each(function() { //loop through each checkbox
+                   this.checked = true;   //select all checkboxes with class "checkbox1"  
+                });
+            }
+            else {
+
+                $(".inputInterview").each(function() { //loop through each checkbox
+                    this.checked = false; //deselect all checkboxes with class "checkbox1"                       
+                });
+            }
+
+            callchanges();
+        }
+        
+        //select all Completed
+        function selectAllCompleted() {
+
+        var element = event.target;
+
+        if (element.checked) { // check select status
+
+                $(".inputCompleted").each(function() { //loop through each checkbox
+                   this.checked = true;   //select all checkboxes with class "checkbox1"  
+                });
+            }
+            else {
+
+                $(".inputCompleted").each(function() { //loop through each checkbox
+                    this.checked = false; //deselect all checkboxes with class "checkbox1"                       
+                });
+            }
+
+            callchanges();
+        }
+        
+         // select  or deselect  all stage
+        function selectAllStatus() {
+
+            var element = event.target;
+            selectedstatus = [];
+            var chosen = '';
+            console.log(element.checked);
+
+            if (element.checked) { // check select status
+
+                $(".iptCheckboxStatus").each(function() { //loop through each checkbox
+                   this.checked = true;   //select all checkboxes with class "checkbox1"  
+                   selectedstatus.push(this.value);
+                });
+            }
+            else {
+
+                $('.iptCheckboxStatus').each(function() { //loop through each checkbox
+                    this.checked = false; //deselect all checkboxes with class "checkbox1"                       
+                });
+            }
+            
+            for (i = 0;i < selectedstatus.length; i++) {
+
+                chosen = selectedstatus[i] + ',' + chosen;
+            }
+
+            chosen = chosen.slice(0, -1);
+            $('.selectedStatus').val(chosen);
+        }
+        // on selecting status for filters ,compare with selected element and process accordingly
+        function selectStatus() {
+
+            var element = event.target;
+            var chosen = '';
+            var i;
+            //console.log(element.value);
+            var index = selectedstatus.indexOf(element.value);
+            if (index > -1) {
+
+                selectedstatus.splice(index,1);
+            }
+            else {
+
+                selectedstatus.push(element.value);
+            }
+
+            for(i = 0;i < selectedstatus.length; i++) {
+
+                chosen = selectedstatus[i] + ',' + chosen;
+            }
+
+            chosen = chosen.slice(0, -1);
+            $('.selectedStatus').val(chosen);
+            
+            if ($('.iptCheckboxStatus:checked').length == $('.iptCheckboxStatus').length) {
+
+                $('.checkAllStatus').each(function() {
+                    this.checked = true;
+                });  
+            }
+            else {
+
+                $('.checkAllStatus').each(function() {
+                    this.checked = false;
+                });
+            }
+            
+        }
+
+        // function on call of filter changes
+        function quickcheckFilter() {
+
+            if (changesdone > 0) {
+
+                var r = confirm("You may lose your changes! Do you still want to continue?");
+                if (r == true) {
+
+                    applyfilter();
+                } 
+            }
+            else {
+
+                applyfilter();
+            }
+        }
+
+        // checking  for changes on clear
+        function quickcheckclear() {
+
+            if (changesdone > 0) {
+
+                var r = confirm("You may lose your changes! Do you still want to continue?");
+                if (r == true) {
+
+                    clearfilter();
+                } 
+            }
+            else {
+
+                clearfilter();
+            }
+        }
+
+        // checking for cancel 
+        function quickcheckcancel() {
+
+            if (changesdone > 0) {
+
+                var r = confirm("You may lose your changes! Do you still want to continue?");
+                
+                if (r == true) {
+                    cancel();
+                } 
+            }
+            else {
+
+               cancel();
+            }
+        }
+
+        //function on complete after every filter
+        function  clean() {
+
+            changesdone = 0;
+            $('.selectstages').hide();
+            $('.selectstatus').hide();
+            $(".selectedStatus").prop("readonly", true);
+            $(".selectedStage").prop("readonly", true);
+            
+            assignTableSorter();
+        }
+
+        function assignTableSorter() {
+
+            asc1 = 1,
+            asc2 = 1,
+            asc3 = 1;
+        }
+        
+        function checkSaveClose() {
+
+            changesdone = 0;
+            saveClose();
+        }
+
+        window.onbeforeunload = function(event) {
+
+            if (changesdone > 0) {
+
+                event.returnValue = "You may lose your changes! Please stay on page and save your changes before leaving";
+            }
+        };
+    </script>
+    <apex:form >
+        <apex:pageBlock >
+            <apex:pageMessages id="pagemessage"/>
+            <apex:actionStatus id="loadingPanel" layout="block">
+                <apex:facet name="start">
+                    <div id="assign-action-spinner-main">
+                        <div id="assign-action-spinner-content">
+                            <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                            <p>Processing...</p>
+                        </div>
+                    </div>
+                </apex:facet>
+            </apex:actionStatus>
+            <apex:pageBlockButtons >
+                    <apex:commandButton value="Quick Save" action="{!saveVerifications}"  onComplete="clean();" rerender="tablePanel,pagemessage" status="loadingPanel"/>
+                    <input type="button" class="btn" value="Save and Close" onclick="checkSaveClose();"/>
+                    <input type="button" class="btn" value="Cancel"  onclick="quickcheckcancel();"/>
+                    <apex:actionFunction action="{!cancel}"  name="cancel"/>
+                    <apex:actionFunction action="{!updateRecords}"  name="saveClose"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="1" collapsible="true" title="Filters">
+            <apex:outputpanel id="filter">
+                <table class='fieldfilter' style="width:100%;margin-bottom: 10px;">
+                    <tr>
+                        <td style="text-align:center;vertical-align: baseline;padding-top: 10px;padding-bottom: 10px;width:32%;">
+                            <div id="statusSelection">
+                            <label for="statuschosen" style="padding-right:10px;">Status</label>
+                            <apex:inputtext value="{!selectedstatus}" id="statuschosen" styleClass="selectedStatus filterdrop"  onclick="statusToggle();" onkeypress="statusToggle();"/>
+                                <div class="multiselect selectstatus">
+                                <ul>
+                                    <li>
+                                        <input type="checkbox" value="true" Class="checkAllStatus"  onclick="selectAllStatus();"  />Select All
+                                    </li>
+                                    <apex:repeat value="{!verificationStatus}" var="status">
+                                    <li>
+                                    <input type="checkbox" value="{!status}" Class="iptCheckboxStatus"  onclick="selectStatus();"  />{!status}
+                                    </li>
+                                    </apex:repeat>
+                                 </ul>
+                                 </div>
+                                </div>
+                           </td>
+                           <td style="text-align:center;vertical-align: baseline;padding-top: 10px;padding-bottom: 10px;width:32%;">
+                                <div id="stageSelection">
+                                    <label for="stagechosen" style="padding-right:10px;">Stage</label>
+                                    <apex:inputtext value="{!selectedstage}" id="stagechosen" styleClass="selectedStage filterdrop"  onclick="stageToggle();" onkeypress="stageToggle();" />
+                                    <div class="multiselect selectstages">
+                                    <ul>
+                                        <li>
+                                        <input type="checkbox" value="true" Class="checkAllStage" onclick="selectAllStage();"  />Select All
+                                        </li>
+                                        <apex:repeat value="{!verificationStages}" var="stages">
+                                        <li>
+                                            <input type="checkbox" value="{!stages}" Class="iptCheckboxStage"  onclick="selectStage();"  />{!stages}
+                                        </li>
+                                        </apex:repeat>
+                                    </ul>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="text-align:center;vertical-align: baseline;padding-top: 10px;padding-bottom: 10px;width:32%;">
+                                <div>
+                                    <apex:outputLabel value="Assigned To Me"/>&nbsp;&nbsp;
+                                    <apex:inputCheckbox styleClass="AssigntoMe" value="{!myVerifications}"/>
+                                    <input id="hiddenElement" type="hidden" />
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                         <td></td>
+                         <td style="text-align:center;vertical-align: baseline;padding-top: 10px;padding-bottom: 10px;width:32%;">
+                            <input type="button" class="btn" value="Apply Filters" onclick="quickcheckFilter();"/>
+                            <input type="button" class="btn" value="Clear Filters"  onclick='quickcheckclear();'/>
+                            <apex:actionFunction action="{!clearFilter}" name="clearfilter" oncomplete="cleanarrays();" status="loadingPanel" rerender="tablePanel,pagemessage,filter" />
+                            <apex:actionFunction action="{!applyFilter}" name="applyfilter" status="loadingPanel" rerender="tablePanel,pagemessage" onComplete="clean();" />
+                        </td>
+                        <td></td>
+                    </tr>
+                </table>    
+                
+            </apex:outputpanel>
+            </apex:pageBlockSection>
+            <apex:outputPanel id="tablePanel">
+            <table id="records" cellspacing="0" cellpadding="0" style="width:100%">
+                            <thead>
+                            <tr>
+                                <th style="padding-right: 0px; padding-left: 0px;" class="header" onclick="sort_table( 0, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Sr.No</th>
+                                <th class="header" onclick="sort_table( 1, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">View</th>
+                                <th class="header" onclick="sort_table( 2, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Action</th>
+                                <th class="header" onclick="sort_table( 3, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Name</th>
+                                <th class="header" onclick="sort_table( 4, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Description</th>
+                                <th class="header" onclick="sort_table( 5, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Rating</th>
+                                <th class="header" onclick="sort_table( 6, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Status</th>
+                                <th class="header" onclick="sort_table( 7, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Stage</th>
+                                <th class="header" ><input type="checkbox" value="true" Class="iptCompleted" onclick="selectAllCompleted();"/>
+                                <span onclick="sort_table( 8, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Completed</span>
+                                </th>
+                                <th class="header"><input type="checkbox" value="true" Class="iptInterview" onclick="selectAllInterview();"/>
+                                <span onclick="sort_table( 9, asc1); asc1 *= -1; asc2 = 1; asc3 = 1;">Interview</span>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody id="actualData">
+                                <apex:repeat value="{!verificationWrapperLst}" var="wrapper">
+                                <tr>
+                                    <td class="textnode">{!wrapper.wrapIndex}</td>
+                                    <td><apex:outputLink value="/{!wrapper.verify.Id}" target="_blank"> View </apex:outputLink></td>
+                                    <td><apex:outputText value="{!wrapper.verify.Action_Link__c}" escape="false" /></td>
+                                    <td class="wrapperInput"><apex:inputField value="{!wrapper.verify.Name}" onchange="callchanges();"/></td>
+                                    <td class="wrapperInput"><apex:inputField value="{!wrapper.verify.Notes__c}" onchange="callchanges();"  style="width:240px;"/></td>
+                                    <td class="wrapperInput"><apex:inputField value="{!wrapper.verify.Rating__c}" onchange="callchanges();" /></td>
+                                    <td class="wrapperInput"><apex:inputField value="{!wrapper.verify.Status__c}" onchange="callchanges();" /></td>
+                                    <td><apex:outputField value="{!wrapper.verify.Stage__c}"  /></td>
+                                    <td style='text-align: center;'><apex:inputField value="{!wrapper.verify.Completed__c}" styleClass="inputCompleted" onchange="callchanges();"/></td>
+                                    <td style='text-align: center;'><apex:inputField value="{!wrapper.verify.Interview__c}" styleClass="inputInterview" onchange="callchanges();"/></td>
+                                </tr>
+                                </apex:repeat>
+                            </tbody>
+                        </table>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

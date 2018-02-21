@@ -1,0 +1,826 @@
+<apex:component controller="AvailableUnitsController" allowDML="true"> 
+    <apex:attribute type="UtilityWrapperManager" name="availableInventories" description="The string to update" assignTo="{!availableInventoryList}"/>
+    <style type="text/css">
+        .noUi-tooltip{
+            padding:0px 0px !important;
+            bottom: 98% !important;
+            background: none !important;
+            color: #666666 !important;
+        }
+        .noUi-handle:before{
+            top: 0px !important;
+            transform: rotate(0deg)!important;
+            border-radius: 10px !important;
+        }
+        .noUi-marker-horizontal.noUi-marker-large{
+            display: none !important;
+        }
+        .noUi-value{
+            display: none !important;
+        }
+        .noUi-pips-horizontal{
+            height: 0px !important; 
+        }
+    </style>
+    <!-- Error Block : Starts -->
+    <div class="slds-notify_container" id="unitErrorBox" style="display:none;">
+        <div class="slds-notify slds-notify--toast slds-theme--error" role="alert" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+            <span class="slds-assistive-text">Error</span>
+            <a href="javascript:void(0);" class="slds-button slds-notify__close slds-button--icon-inverse" title="Close" onclick="j$('#unitErrorBox').hide();">
+                <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                    <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                </svg>
+                <span class="slds-assistive-text">Close</span>
+            </a>
+            <div class="slds-notify__content slds-media">
+                <div class="slds-media__figure">
+                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                    </svg>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-text-heading--small" id="unitErrorPrefix">
+                        <apex:outputText value="{!$Label.Error_Prefix}" escape="false" />
+                    </h2>
+                    <span id="unitErrorMessage"></span>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <!-- Error Block : Ends -->
+    <!-- Status Block : Starts -->
+    <div class="slds-spinner_container" style="position: fixed; display:none; " id="availableUnitsCustomStatus">
+        <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        <div class="slds-container--fluid" style="margin-top: 15%">
+            <div class="slds-grid slds-grid--align-center slds-text-heading--small" id="availableUnitsCustomStatusMessage"></div>
+        </div>
+    </div>
+    <!-- Status Block : Ends -->
+    <apex:outputPanel layout="block" id="page1"> 
+        <apex:outputPanel layout="block" styleClass="slds-grid slds-wrap page1 "> 
+            <!--Campaign and promotion tree-->
+            <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-4" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <!-- Inventory Lookup : Starts -->
+                <apex:outputPanel id="inventorySearchBlock" layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small">
+                    <fieldset class="slds-form--compound slds-size--1-of-1">
+                        <legend class="slds-form-element__label slds-text-title--caps">
+                            Search an Inventory
+                        </legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-input-has-icon slds-input-has-icon--right" >
+                                            <svg aria-hidden="true" class="slds-input__icon">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+                                            </svg>
+                                            <apex:inputText styleClass="slds-input inventorySearchInput" value="{!inventoryName}" 
+                                                            html-placeholder="Search an Inventory" html-aria-autocomplete="list" 
+                                                            html-role="combobox" html-aria-expanded="true" html-aria-activedescendant="inventorySearchSection"
+                                                            onkeyup="searchInventory(this);" onclick="setPageNumber(1);"/>
+                                            <div class="slds-lookup__menu" role="listbox" id="inventorySearchSection" style="display: none;">
+                                                <div class="slds-lookup__item">
+                                                    <span id="searchTextInventory"></span>
+                                                </div>
+                                                <span id="searchResultsInventory"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <apex:inputText styleClass="selectedAgencyId" value="{!availableInventoryList.dealRecord.Agency__c}" style="display: none;"/>   
+                        <apex:inputText styleClass="selectedAgentId" value="{!availableInventoryList.dealRecord.Agent_Name__c}" style="display: none;"/> 
+                        <apex:inputText styleClass="selectedAgentType" value="{!agencyType}" style="display: none;"/> 
+                    </fieldset>
+                </apex:outputPanel>
+                <!-- Inventory Lookup : Ends -->
+                <apex:outputPanel id="filters" layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small filters">
+                    <fieldset class="slds-form--compound">
+                        <legend class="slds-form-element__label slds-text-title--caps">Select a Campaign</legend> <!-- or a promotion -->
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <!-- <label class="slds-form-element__label" for="selectedCampaign">Campaign</label> -->
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-select_container">
+                                            <apex:selectList value="{!fwObject.selectedCampaign}" size="1" styleClass="slds-select" id="selectedCampaign" onclick="setPageNumber(1);">
+                                               <apex:actionSupport event="onchange" action="{!refreshthePropertyFilters}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                    reRender="selectedProject, selectedBuilding, selectedTypeOfBedroom, selectedFloor, 
+                                                                              selectedPackage, selectedPriceRange, inventoryTable, nopropertiesblock" 
+                                                                    status="status"/>
+                                               <apex:selectOptions value="{!CampaignList}"/>
+                                           </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <label class="slds-form-element__label" for="selectedPromotion">Promotion</label>
+                                    <div class="slds-form-element__control">
+                                        <apex:outputPanel styleClass="slds-select_container" id="selectedPromotion" layout="block">
+                                            <apex:selectList value="{!availableInventoryList.dealRecord.Promotion__c}" size="1" styleClass="slds-select" disabled="{!NOT(hasPromotions)}" onChange="reRenderPromotion(); getProperty('{!fwObject.selectedCampaign}');"> 
+                                               <apex:selectOptions value="{!PromotionList}"/>
+                                           </apex:selectList>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div> -->
+                        </div>
+                    </fieldset>
+                    <fieldset class="slds-form--compound">
+                        <legend class="slds-form-element__label slds-text-title--caps">Select a project</legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <!-- <label class="slds-form-element__label" for="selectedProject">Project</label> -->
+                                    <div class="slds-form-element__control">
+                                        <apex:outputPanel styleClass="slds-select_container" id="selectedProject" layout="block">
+                                            <apex:selectList value="{!fwObject.selectedProject}" size="1" styleClass="slds-select" disabled="{!NOT(hasProjects)}" onclick="setPageNumber(1);" >
+                                                <apex:actionSupport event="onchange" action="{!refreshtheBuildingFilters}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                    reRender="selectedBuilding, selectedTypeOfBedroom, selectedPriceRange, 
+                                                                              selectedFloor, selectedPackage, inventoryTable, nopropertiesblock" 
+                                                                    status="status" />
+                                               <apex:selectOptions value="{!ProjectList}"/>
+                                           </apex:selectList>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <legend class="slds-form-element__label slds-text-title--caps">Select a Building</legend>
+                                    <div class="slds-form-element__control">
+                                        <apex:outputPanel styleClass="slds-select_container" id="selectedBuilding" layout="block">
+                                            <apex:selectList value="{!fwObject.selectedBuilding}" size="1" styleClass="slds-select" disabled="{!NOT(hasBuildings)}" onclick="setPageNumber(1);">
+                                                <apex:actionSupport event="onchange" action="{!refreshtheBedroomFilters}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                    reRender="selectedTypeOfBedroom, selectedPriceRange, selectedFloor, 
+                                                                              selectedPackage, inventoryTable, nopropertiesblock" 
+                                                                    status="status"/>
+                                               <apex:selectOptions value="{!BuildingList}"/>
+                                           </apex:selectList>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="slds-form--compound"> 
+                        <legend class="slds-form-element__label slds-text-title--caps">Select Type of Bedroom</legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row"> 
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <!-- <label class="slds-form-element__label" for="selectedTypeOfBedroom">Type of Bedroom</label> -->
+                                    <div class="slds-form-element__control">
+                                        <apex:outputPanel styleClass="slds-select_container" id="selectedTypeOfBedroom" layout="block">
+                                            <apex:selectList value="{!fwObject.selectedTypeOfBedroom}" size="1" styleClass="slds-select" disabled="{!NOT(hasBedrooms)}" onclick="setPageNumber(1);">
+                                            <apex:actionSupport event="onchange" action="{!getProperties}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                    reRender="selectedPriceRange, selectedFloor, selectedPackage, inventoryTable, nopropertiesblock" 
+                                                                    status="status"/>
+                                               <apex:selectOptions value="{!BedroomTypeList}"/>
+                                           </apex:selectList>
+                                        </apex:outputPanel>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <fieldset class="slds-form--compound"> 
+                        <legend class="slds-form-element__label slds-text-title--caps">Select a price range</legend>
+                        <div class="slds-form-element__group">
+                            <apex:outputPanel id="selectedPriceRange" layout="block">
+                                <div class="slds-form-element__row"> 
+                                    <div class="slds-form-element slds-size--1-of-4">
+                                        <label class="slds-form-element__label">Minimum Price</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:inputText value="{!fwObject.priceRangeStartSelected}" styleClass="slds-input minprice" onchange="refreshPriceRelatedInventory();" onclick="setPageNumber(1);"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element slds-size--1-of-4">
+                                        <label class="slds-form-element__label">Maximum Price</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:inputText value="{!fwObject.priceRangeEndSelected}" styleClass="slds-input maxprice" onchange="refreshPriceRelatedInventory();" onclick="setPageNumber(1);"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                    </fieldset>
+                </apex:outputPanel>
+                <!-- Floor Plan : Starts -->
+                <apex:outputPanel layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small selectFloor">
+                    <fieldset class="slds-form--compound">
+                        <legend class="slds-form-element__label slds-text-title--caps">Select a Floor</legend>
+                        <div class="slds-form-element__group">
+                            <apex:outputPanel id="selectedFloor" layout="block">
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element slds-size--1-of-1">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-select_container">
+                                                <apex:selectList value="{!fwObject.selectedFloor}" size="1" styleClass="slds-select" onclick="setPageNumber(1);">
+                                                   <apex:actionSupport event="onchange" action="{!refreshFloorList}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                        reRender="selectedProject, selectedBuilding, selectedTypeOfBedroom, 
+                                                                                  selectedPriceRange, selectedPackage, inventoryTable, nopropertiesblock" 
+                                                                        status="status"/>
+                                                   <apex:selectOptions value="{!floorList}"/>
+                                               </apex:selectList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                    </fieldset> 
+                </apex:outputPanel>
+                <!-- Floor Plan : Ends -->
+                <!-- Package Plan : Starts -->
+                <apex:outputPanel layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small selectPackage">
+                    <fieldset class="slds-form--compound">
+                        <legend class="slds-form-element__label slds-text-title--caps">Select a Package</legend>
+                        <div class="slds-form-element__group">
+                            <apex:outputPanel id="selectedPackage" layout="block">
+                                <div class="slds-form-element__row">
+                                    <div class="slds-form-element slds-size--1-of-1">
+                                        <div class="slds-form-element__control">
+                                            <div class="slds-select_container">
+                                                <apex:selectList value="{!fwObject.selectedPackage}" size="1" styleClass="slds-select" onclick="setPageNumber(1);">
+                                                   <apex:actionSupport event="onchange" action="{!refreshPackageList}" oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" 
+                                                                        reRender="selectedProject, selectedBuilding, selectedTypeOfBedroom,
+                                                                                  selectedPriceRange, selectedFloor, inventoryTable, nopropertiesblock" 
+                                                                        status="status"/>
+                                                   <apex:selectOptions value="{!packageList}"/>
+                                               </apex:selectList>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                        </div>
+                    </fieldset> 
+                </apex:outputPanel>
+                <!-- Package Plan : Ends -->
+                <!-- Agency Lookup -->
+                <apex:outputPanel id="agencyBlock" layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small">
+                    <fieldset class="slds-form--compound slds-size--1-of-1">
+                        <legend class="slds-form-element__label slds-text-title--caps">
+                            Search an Agency / Agent
+                        </legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-input-has-icon slds-input-has-icon--right">
+                                            <svg aria-hidden="true" class="slds-input__icon">
+                                                <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#search')}"></use>
+                                            </svg>
+                                            <apex:inputText styleClass="slds-input agencySearchInput" value="{!agencyName}" 
+                                                            html-placeholder="Search an Agency" html-aria-autocomplete="list" 
+                                                            html-role="combobox" html-aria-expanded="true" html-aria-activedescendant="agencySearchSection"
+                                                            onkeyup="searchAgency(j$(this));" onclick="setPageNumber(1);"/>
+                                            <div class="slds-lookup__menu" role="listbox" id="agencySearchSection" style="display: none;">
+                                                <div class="slds-lookup__item">
+                                                    <span id="searchTextAccount"></span>
+                                                </div>
+                                                <span id="searchResultsAccount"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-form-element__row">
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <div class="slds-form-element__control">
+                                        <div class="slds-input-has-icon slds-input-has-icon--right">
+                                            <apex:inputText styleClass="slds-input agentsInput" value="{!agentName}" 
+                                                            html-placeholder="Select an Agent" html-aria-autocomplete="list" 
+                                                            html-role="combobox" html-aria-expanded="true" 
+                                                            html-aria-activedescendant="agentSection"/>
+                                            <div class="slds-lookup__menu" role="listbox" id="agentSection" style="display: none;">
+                                                <div class="slds-lookup__item">
+                                                    <span>Select an agent</span>
+                                                </div>
+                                                <span id="agentsResult"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <apex:inputText styleClass="selectedAgencyId" value="{!availableInventoryList.dealRecord.Agency__c}" style="display: none;"/>   
+                        <apex:inputText styleClass="selectedAgentId" value="{!availableInventoryList.dealRecord.Agent_Name__c}" style="display: none;"/> 
+                    </fieldset>
+                </apex:outputPanel>
+                <!-- Agency Lookup : Ends -->
+                <!-- SPA Method : Starts -->
+                <apex:outputPanel id="spaMethodBlock" layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small">
+                    <fieldset class="slds-form--compound">
+                        <legend class="slds-form-element__label slds-text-title--caps">
+                            <abbr class="slds-required" title="required">*</abbr>Select a Delivery Method
+                        </legend>
+                        <div class="slds-form-element__group">
+                            <div class="slds-form-element__row"> 
+                                <div class="slds-form-element slds-size--1-of-1">
+                                    <!-- <label class="slds-form-element__label" for="selectedTypeOfBedroom">Type of Bedroom</label> -->
+                                    <div class="slds-form-element__control">
+                                        <apex:selectList id="spaMethod" value="{!availableInventoryList.dealRecord.Delivery_Mode__c}" size="1" styleClass="slds-select spaMethod">
+                                            <apex:selectOptions value="{!spaMethods}" />
+                                        </apex:selectList>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </fieldset>
+                </apex:outputPanel>
+                <!-- SPA Method : Ends -->
+                <!-- Selected Inventory : Starts -->
+                <apex:outputPanel id="selectedinventoryblock" layout="block" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-right--xx-small slds-m-bottom--xx-small">
+                    
+                        <label></label>
+                    <div xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <legend class="slds-form-element__label slds-text-title--caps">
+                                Selected Inventory ({!availableInventoryList.ibwList.size})
+                            </legend>
+                            <apex:repeat value="{!availableInventoryList.ibwList}" var="thisInventory">  
+                                <span class="slds-pill slds-m-top--xx-small slds-size--2-of-5">
+                                    <a href="javascript:void(0);" class="slds-pill__label" title="selected inventory">{!thisInventory.selectedInventory.Unit__c}</a>
+                                    <a href="javascript:void(0);" class="slds-button slds-button--icon slds-pill__remove" title="Remove" onclick="deleteInventory('{!thisInventory.selectedInventory.Id}');">
+                                        <svg class="slds-button__icon" aria-hidden="true">
+                                            <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                        </svg>
+                                        <span class="slds-assistive-text">Remove</span>
+                                    </a>
+                                </span> 
+                            </apex:repeat>  
+                    </div>
+                </apex:outputPanel>
+                <!-- Selected Inventory : Ends -->
+            </div>
+            <!--Campaign and promotion tree-->
+            <!--Inventory Table Section-->
+            <div class="slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--3-of-4">
+                <apex:outputPanel id="inventoryTable">
+                    <apex:outputPanel styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-m-bottom--xx-small slds-scrollable--x " layout="block" rendered="{!showProperties && inventoryWrapperPerPage != null && inventoryWrapperPerPage.size > 0}" id="tableBlock">
+                        <table class="slds-table slds-table--bordered slds-table--striped slds-border--left slds-border--right" role="grid" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                            <caption><apex:outputText value="Available Inventories" styleClass="slds-text-heading--medium"></apex:outputText></caption>
+                            <thead>
+                                <tr class="slds-line-height--reset">
+                                    <th scope="col" class="slds-align--absolute-center">
+                                        <div class="slds-th__action">
+                                            <!--  <input type="checkbox" name="options" id="checkbox-All" /> -->
+                                            <label class="slds-checkbox">
+                                                <apex:inputCheckbox id="allSelect" onchange="toggleSelectAll(this);" styleClass="allSelect" value="{!selectAll}" />
+                                                <span class="slds-checkbox--faux allselect"></span>
+                                                <span class="slds-form-element__label slds-assistive-text">Select All</span>
+                                            </label>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title--caps"> 
+                                        <div class="slds-truncate" title="Inventory Id">Unit</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title--caps"> 
+                                        <div class="slds-truncate" title="Type of inventory">Unit Type</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title--caps">
+                                        <div class="slds-truncate" title="Number of Bedrooms in the inventory">Bedrooms</div> 
+                                    </th>
+                                    <th scope="col" class="slds-text-title--caps">
+                                        <div class="slds-truncate" title="Area of the inventory">Area</div>
+                                    </th>
+                                    <th scope="col" onclick="toggleSortDirection(this, 'sellingprice');" class="slds-is-sortable slds-text-title--caps slds-is-sorted slds-is-sorted--{!IF(sortField != null && sortField == 'sellingprice', IF(sortDirection='ascending','asc','desc'), 'asc')}" aria-sort="{!sortDirection}" >
+                                        <a href="javascript:void(0);" class="slds-text-link--reset">
+                                            <div class="slds-icon_container">
+                                                <span class="slds-assistive-text">Sort</span>
+                                                <span class="slds-truncate" title="List Price for Inventory">List Price</span>
+                                                <svg class="slds-icon slds-icon--x-small slds-icon-text-default slds-is-sortable__icon">
+                                                    <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use> 
+                                                </svg>
+                                            </div>
+                                            <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                                        </a>
+                                    </th>
+                                    <th scope="col" onclick="toggleSortDirection(this, 'specialprice');" class="slds-is-sortable slds-text-title--caps slds-is-sorted slds-is-sorted--{!IF(sortField != null && sortField == 'specialprice', IF(sortDirection='ascending','asc','desc'), 'asc')}" aria-sort="{!sortDirection}">
+                                        <a href="javascript:void(0);" class="slds-text-link--reset">
+                                            <div class="slds-icon_container">
+                                                <span class="slds-assistive-text">Sort</span>
+                                                <span class="slds-truncate" title="Special Price for Inventory">Special Price</span>
+                                                <svg class="slds-icon slds-icon--x-small slds-icon-text-default slds-is-sortable__icon" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                                    <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#arrowdown')}"></use>
+                                                </svg>
+                                            </div>
+                                            <span class="slds-assistive-text" aria-live="assertive" aria-atomic="true"></span>
+                                        </a>
+                                    </th>
+                                    <!-- <th scope="col" class="slds-text-title--caps">
+                                        <div class="slds-truncate" title="Project Name">Project Name</div>
+                                    </th>
+                                    <th scope="col" class="slds-text-title--caps">
+                                        <div class="slds-truncate" title="Project Country">Project Country</div>
+                                    </th> -->
+                                    <th scope="col" class="slds-text-title--caps">
+                                        <div class="slds-truncate" title="Inventory Status">Property Status</div> 
+                                    </th>
+                                </tr>
+                            </thead>  
+                            <tbody>
+                                <apex:variable var="selectedCampaign" value="{!fwObject.selectedCampaign}" />
+                                <apex:repeat value="{!inventoryWrapperPerPage}" var="thisInventory">  
+                                    <tr>
+                                        <td data-label="select" class="slds-align--absolute-center">    
+                                            <span class="slds-checkbox">
+                                                <label class="slds-checkbox">
+                                                    <apex:inputCheckbox styleClass="chkbxClass {!thisInventory.selectedInventory.Id}" 
+                                                                        value="{!thisInventory.isSelected}" 
+                                                                        onchange="toggleSingleSelect(this, '{!thisInventory.selectedInventory.Id}');">
+                                                    </apex:inputCheckbox>
+                                                    <span class="slds-checkbox--faux"></span>
+                                                    <span class="slds-form-element__label"></span>
+                                                </label>
+                                            </span>
+                                        </td>
+                                        <td data-label="Unit">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Unit__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Unit__c),'N/A',thisInventory.selectedInventory.Unit__c)}
+                                            </div>
+                                        </td>
+                                        <td data-label="Unit Type">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Unit_Type__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Unit_Type__c),'N/A',thisInventory.selectedInventory.Unit_Type__c)}
+                                            </div>
+                                        </td>
+                                        <td data-label="Bedrooms">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.IPMS_Bedrooms__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.IPMS_Bedrooms__c),'N/A',thisInventory.selectedInventory.IPMS_Bedrooms__c)}
+                                            </div>
+                                        </td>
+                                        <td data-label="Area">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Area__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Area__c),'N/A',thisInventory.selectedInventory.Area__c)}
+                                            </div>
+                                        </td>
+                                        <td data-label="List Price">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.List_Price_calc__c}">
+                                                <apex:outputText value="{!thisInventory.selectedInventory.CurrencyIsoCode}{0, number, 000,000}">
+                                                    <apex:param value="{!IF(ISBLANK(thisInventory.selectedInventory.List_Price_calc__c), 0.00,thisInventory.selectedInventory.List_Price_calc__c)}"/>
+                                                </apex:outputText>
+                                            </div>
+                                        </td>
+                                        <td data-label="Special Price">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Special_Price_calc__c}">
+                                                <apex:outputText value="{!thisInventory.selectedInventory.CurrencyIsoCode}{0, number, 000,000}">
+                                                    <apex:param value="{!IF(ISBLANK(thisInventory.selectedInventory.Special_Price_calc__c), 0.00,thisInventory.selectedInventory.Special_Price_calc__c)}"/>
+                                                </apex:outputText>
+                                            </div>
+                                        </td>
+                                        <!-- <td data-label="Project Name">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Property_Name__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Property__r.Name),'N/A',thisInventory.selectedInventory.Property_Name__c)}
+                                            </div>
+                                        </td>
+                                        <td data-label="Project Country">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Property_Name__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Property__r.Name),'N/A',thisInventory.selectedInventory.Property_Name__c)}
+                                            </div>
+                                        </td> -->
+                                        <td data-label="Property Status">
+                                            <div class="slds-truncate" title="{!thisInventory.selectedInventory.Property_Status__c}">
+                                                {!IF(ISBLANK(thisInventory.selectedInventory.Property_Status__c),'N/A',thisInventory.selectedInventory.Property_Status__c)}
+                                            </div>
+                                        </td>
+                                    </tr>   
+                                </apex:repeat>  
+                            </tbody>
+                        </table>
+                    </apex:outputPanel>
+                    <apex:outputPanel layout="block" styleClass="slds-align--absolute-center" rendered="{!showProperties}">
+                        <!-- Pagination start -->
+                        <div class="pagination-booking-container">
+                            <ul id="pagination-demo" class="pagination-sm"></ul>
+                        </div>
+                        <!-- Pagination end -->
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <apex:outputPanel layout="block" id="nopropertiesblock" styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-align--absolute-center" rendered="{!NOT(showProperties)}">
+                    <apex:outputText value="No units are available."/>
+                </apex:outputPanel>
+            </div>
+            <!--Inventory Table Section : Ends-->
+        </apex:outputPanel>
+        <!-- <apex:outputPanel rendered="{!campaignIdsList == null || (campaignIdsList != null && campaignIdsList.size == 0)}" layout="block" styleClass="slds-grid slds-wrap slds-m-top--xx-small slds-grid--align-center">
+            <apex:outputPanel styleClass="slds-box slds-theme--shade slds-m-top--xx-small slds-size--12-of-12 slds-align--absolute-center" >
+                <apex:outputText value="No associated campaign found." styleClass="slds-text-color--error"/>
+            </apex:outputPanel>
+        </apex:outputPanel> -->
+    </apex:outputPanel> 
+    <!-- Action Functions : Start -->
+    <apex:actionfunction name="getRelatedInventories" action="{!getRelatedInventories}" status="status" 
+                         rerender="selectedCampaign, selectedProject, selectedBuilding, 
+                                   selectedTypeOfBedroom, selectedPriceRange, selectedFloor, 
+                                   selectedPackage, inventoryTable, nopropertiesblock" 
+                        oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');">
+        <apex:param name="selectedInventory" value="" assignto="{!selectedInventory}" />
+    </apex:actionfunction>
+    <apex:actionfunction name="selectInventory" action="{!selectInventory}" status="status" 
+                         rerender="selectedinventoryblock,selectedinventoryblock2, inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');"> 
+        <apex:param name="selectedInventory" value="" assignto="{!selectedInventory}" />
+    </apex:actionfunction>
+    <apex:actionfunction name="deleteInventory" action="{!deleteInventory}" status="status"
+                         rerender="selectedinventoryblock,selectedinventoryblock2, inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');"> 
+        <apex:param name="selectedInventory" value="" assignto="{!selectedInventory}" />
+    </apex:actionfunction>
+    <apex:actionfunction name="getAgencyRelatedInventories" action="{!getAgencyRelatedInventories}" status="status" 
+                         rerender="selectedCampaign, selectedProject, selectedBuilding, selectedTypeOfBedroom, selectedFloor, 
+                                   selectedPackage, inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" />
+    <apex:actionfunction name="getSortedList" action="{!sortToggle}" status="status" 
+                         reRender="inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');">
+        <apex:param name="sortField" value="" assignto="{!sortField}" />
+        <apex:param name="sortDirection" value="" assignto="{!sortDirection}" />
+    </apex:actionfunction>
+    <apex:actionFunction name="refreshPriceRelatedInventory" action="{!getPriceRelatedProperties}" status="status" 
+                         reRender="selectedCampaign, selectedProject, selectedBuilding, selectedTypeOfBedroom, selectedFloor, 
+                                   selectedPackage, inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0); error('{!errorMessage}');" />
+    <apex:actionFunction name="refreshCampaignRelatedInventory" action="{!getProperties}" status="status" 
+                         reRender="inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 1); error('{!errorMessage}');"/>
+    <apex:actionFunction name="refreshTheInventoryList" action="{!getProperties}" status="status" 
+                         reRender="selectedProject, selectedBuilding, selectedTypeOfBedroom, electedFloor, 
+                                   selectedPackage, inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 1); error('{!errorMessage}');" />
+    <apex:actionfunction name="Invoke_Goto_Page" action="{!getNextRecords}" status="status" 
+                         rerender="inventoryTable, nopropertiesblock" 
+                         oncomplete="invokePagination('{!totalPageNumber}', 0);">
+        <apex:param name="pageNumber" value="" assignto="{!pageNumber}" />
+        <apex:param name="resetPageNumber" value="" assignto="{!resetPageNumber}"/>
+    </apex:actionfunction>
+    <!-- Action Functions : Ends -->
+    <script type="text/javascript">
+        j$( document ).ready(function() {
+            j$(window).scrollTop(0); 
+            j$('#availableUnitsCustomStatus').hide(); 
+            invokePagination('{!totalPageNumber}', 0);
+        });
+        
+        function error(message){
+            if(message){
+                document.getElementById('unitErrorBox').style.display = "block";
+                document.getElementById('unitErrorMessage').innerHTML = message;    
+            }else{
+                document.getElementById('unitErrorBox').style.display = "none";       
+            }
+        }
+        
+        function setPageNumber(pageNumber){
+            document.location.hash = 'page='+pageNumber;
+        }
+       
+        function invokePagination(totalPages, reset){
+            if(reset == 1){
+                j$('#pagination-demo').twbsPagination('destroy');
+            }
+            totalPages = totalPages != null && totalPages != '' ? totalPages : 10;
+            j$('#pagination-demo').twbsPagination({
+                totalPages: totalPages,
+                visiblePages: totalPages > 5 ? 5 : totalPages,
+                href: '#page={{pageNumber}}',
+                hrefVariable: '{{pageNumber}}',
+                first: '<<',
+                prev: '<i class="icon icon-Back"></i> Back',
+                last: '>>',
+                next: 'Next <i class="icon icon-Next"></i>',
+                initiateStartPageClick: false,
+                onPageClick: function (event, page) {
+                    Invoke_Goto_Page(page, false);
+                }
+            });
+        }
+        
+        function toggleSortDirection(thisColumn, fieldName){
+            var currentState = thisColumn.getAttribute('aria-sort');
+            if(currentState == 'ascending'){
+                j$(thisColumn).attr('aria-sort', 'descending');    
+            }else{
+                j$(thisColumn).attr('aria-sort', 'ascending'); 
+            }
+            getSortedList(fieldName, currentState);
+        }
+                
+        function toggleSelectAll(checkbox){
+            if(checkbox.checked){
+                j$(".chkbxClass").each(function() {
+                    j$(this).prop('checked', true);
+                });
+                selectInventory('All');
+            }else{
+                j$(".chkbxClass").each(function() {
+                    j$(this).prop('checked', false);
+                });
+                deleteInventory('All');
+            }
+        }
+        
+        function toggleSingleSelect(checkbox, inventoryId){
+            if(checkbox.checked){
+                selectInventory(inventoryId);
+            }else{
+                deleteInventory(inventoryId);
+            }
+        }
+        
+        function validateInventorySelection(){
+            var validated = true;
+            var numberOfChecked = 0;
+            var selectedUnits = [];
+            j$('#availableUnitsCustomStatus').show(); 
+            if(j$('.spaMethod').val()){
+                //if(j$('.selectedAgencyId').val() && j$('.selectedAgentType').val() == 'Corporate Agency'){ 
+                    //if(j$('.agentsInput').val()){
+                    //  validated = true;       
+                    //}else{
+                    //  document.getElementById('unitErrorBox').style.display = "block";
+                    //  document.getElementById('unitErrorMessage').innerHTML = 'Please select an agent for the selected agency.';
+                    //  validated = false;
+                    //}
+                //}
+                j$(".chkbxClass").each(function() {
+                    if(j$(this).prop('checked')){
+                        numberOfChecked++;
+                        selectedUnits.push(j$('.chkbxClass').attr('class').split("chkbxClass ").pop());
+                    }
+                });
+            }else{
+                document.getElementById('unitErrorBox').style.display = "block";
+                document.getElementById('unitErrorMessage').innerHTML = 'Please select a valid SPA Method to proceed.';
+                validated = false;
+            }   
+            if(validated){
+                // j$('.selectedAgencyId').val()
+                if(false){
+                    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.AvailableUnitsController.validateSelectedUnits}', 
+                                                                j$('.selectedAgencyId').val(), 
+                                                                selectedUnits.toString(),
+                        function(result, event){
+                            if(event.status) {
+                                if(result){
+                                    /* Proceed to creating portfolio. */
+                                    createPortfolio();
+                                }else{
+                                    document.getElementById('unitErrorBox').style.display = "block";
+                                    document.getElementById('unitErrorMessage').innerHTML = 'The selected inventories are not eligible to be sold by the selected agency.';
+                                    /* Calling action function to fetch selected agency related inventories. */
+                                    //getAgencyRelatedInventories();
+                                }
+                            }
+                            j$('#availableUnitsCustomStatus').hide();   
+                        }
+                    );
+                }else{
+                    /* Proceed to creating portfolio. */
+                    createPortfolio();
+                }   
+            }
+            j$('#availableUnitsCustomStatus').hide();   
+        }
+        
+        function searchInventory(key){
+            Visualforce.remoting.timeout = 120000;
+            j$('#inventorySection').hide();
+            searchKey = j$(key).val();
+            if(searchKey == ''){
+                j$('#'+j$(key).attr('aria-activedescendant')).hide();
+                getRelatedInventories(searchKey);
+            }else if(searchKey && searchKey.length >= 3){
+                j$('#availableUnitsCustomStatus').show();
+                j$('availableUnitsCustomStatusMessage').html('Searching inventory in the system..');
+                j$('#'+j$(key).attr('aria-activedescendant')).show();
+            }
+            if(searchKey && searchKey.length >= 3){
+                var searchList = "<ul class=\"slds-lookup__list\" role=\"listbox\" style=\"max-height: 240px;\">";  
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.AvailableUnitsController.getInventoryDetails}', searchKey, 
+                    function(result, event){
+                        if (event.status) {
+                            for(var i=0; i<result.length; i++){
+                                searchList = searchList + '<li role="presentation" onclick="populateInventoryValues(\''+result[i].Id+'\', \''+result[i].Location_Code__c+'\');">'+ 
+                                                              '<span class="slds-lookup__item-action slds-media slds-media--center" role="option">'+
+                                                                  '<svg aria-hidden="true" class="slds-icon slds-icon-standard-home slds-icon--small">'+
+                                                                      '<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/standard-sprite/svg/symbols.svg#home"></use>'+
+                                                                  '</svg>'+result[i].Location_Code__c+
+                                                              '</span>'+
+                                                          '</li>';
+                            }
+                            searchList += '</ul>';
+                        }else{
+                            searchList += '<li role="presentation" class="slds-lookup__item" style="margin-left: 10px;">No Inventory Records Found</li></ul>';
+                        }
+                        j$('#availableUnitsCustomStatus').hide();   
+                        j$('#searchTextInventory').text('Searching inventories as "'+searchKey+'".');
+                        j$('#searchResultsInventory').html(searchList);
+                    }
+                );
+            }
+        }
+        
+        function populateInventoryValues(recordId, recordName){
+            j$('#inventorySearchSection').fadeOut();
+            j$('.inventorySearchInput').val(recordName);
+            getRelatedInventories(recordId);
+        }
+        
+        function searchAgency(key){
+            Visualforce.remoting.timeout = 120000;
+            j$('#agentSection').hide();
+            searchKey = key.val();
+            if(searchKey == ''){
+                j$('#'+key.attr('aria-activedescendant')).hide();
+                j$('.agentsInput').val('');
+                j$('.agencySearchInput').val('');
+                j$('.selectedAgencyId').val('');
+                j$('.selectedAgentType').val(''); 
+                getRelatedInventories(searchKey);
+            }else if(searchKey && searchKey.length >= 3){
+                j$('#availableUnitsCustomStatus').show();
+                j$('availableUnitsCustomStatusMessage').html('Searching agencies in the system..');
+                j$('#'+key.attr('aria-activedescendant')).show();
+            }
+            if(searchKey && searchKey.length >= 3){
+                var searchList = "<ul class=\"slds-lookup__list\" role=\"listbox\" style=\"max-height: 240px;\">";  
+                Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.AvailableUnitsController.getAgencyDetails}', searchKey, 
+                    function(result, event){
+                        if (event.status) {
+                            for(var i=0; i<result.length; i++){
+                                searchList = searchList + '<li role="presentation" onclick="populateAgencyValues(\''+result[i].Id+'\', \''+result[i].Name+'\', \''+result[i].RecordType.Name+'\');">'+ 
+                                                              '<span class="slds-lookup__item-action slds-media slds-media--center" role="option">'+
+                                                                  '<svg aria-hidden="true" class="slds-icon slds-icon-standard-account slds-icon--small">'+
+                                                                      '<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/standard-sprite/svg/symbols.svg#account"></use>'+
+                                                                  '</svg>'+result[i].Name+
+                                                              '</span>'+
+                                                          '</li>';
+                            }
+                            searchList += '</ul>';
+                        }else{
+                            searchList += '<li role="presentation" class="slds-lookup__item" style="margin-left: 10px;">No Agency Records Found</li></ul>';
+                        }
+                        j$('#availableUnitsCustomStatus').hide();   
+                        j$('#searchTextAccount').text('Searching agencies as "'+searchKey+'".');
+                        j$('#searchResultsAccount').html(searchList);
+                    }
+                );
+            }
+        }
+        
+        function populateAgencyValues(recordId, recordName, agencyType){
+            j$('#agencySearchSection').fadeOut();
+            j$('.agencySearchInput').val(recordName);
+            j$('.selectedAgencyId').val(recordId);
+            j$('.selectedAgentType').val(agencyType); 
+            if(recordId){
+                getCorporateAgents(recordId)
+            }
+            /* Calling action function to fetch selected agency related inventories. */
+            getAgencyRelatedInventories();
+        }
+        
+        function getCorporateAgents(recordId){
+            Visualforce.remoting.timeout = 120000;
+            j$('#availableUnitsCustomStatus').show(); 
+            document.getElementById('availableUnitsCustomStatusMessage').innerHTML = 'Searching agents associated to the selected agency in the system..'
+            var searchList = "<ul class=\"slds-lookup__list\" role=\"listbox\" style=\"max-height: 240px;\">";  
+            Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.AvailableUnitsController.getCorporateAgents}', recordId,
+                function(result, event){
+                    if (event.status) {
+                        for(var i=0; i<result.length; i++){
+                            searchList = searchList + '<li role="presentation" onclick="populateAgentsValues(\''+result[i].Id+'\', \''+result[i].Name+'\');">'+ 
+                                                          '<span class="slds-lookup__item-action slds-media slds-media--center" role="option">'+
+                                                              '<svg aria-hidden="true" class="slds-icon slds-icon-standard-user slds-icon--small">'+
+                                                                  '<use xlink:href="{!$Resource.SLDS_VF214}/assets/icons/standard-sprite/svg/symbols.svg#user"></use>'+
+                                                              '</svg>'+result[i].Name+
+                                                          '</span>'+
+                                                      '</li>';
+                        }
+                        searchList += '</ul>';
+                        if(result.length > 0){
+                            j$('#agentSection').show();
+                            j$('.agentsInput').removeAttr('disabled');
+                            j$('#agentsResult').html(searchList);
+                        }
+                        j$('#availableUnitsCustomStatus').hide();    
+                    }
+                }
+            );
+        }
+        
+        function populateAgentsValues(recordId, recordName){
+            j$('#agentSection').fadeOut();
+            j$('.agentsInput').val(recordName);
+            j$('.selectedAgentId').val(recordId);
+        }
+    </script>
+</apex:component>

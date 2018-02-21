@@ -1,0 +1,1041 @@
+<apex:component controller="PaymentPlanController" allowDML="true">
+
+    <apex:attribute type="UtilityWrapperManager"
+        name="availableInventories" description="The string to update"
+        assignTo="{!uwmObject}" />
+    <apex:attribute type="DH_PromotionsWrapper[]"
+        name="promotionsWrapperList" description="The list to update options"
+        assignTo="{!promList}" />
+    <!-- Status Block : Starts -->
+
+    <apex:actionfunction name="Promofunction"
+        action="{!SelectedPromotionMethod}"
+        rerender="selectedPromotion, errorBlock" status="status">
+        <apex:param name="AllOption" value="" assignTo="{!AllOption}" />
+
+
+    </apex:actionfunction>
+
+    <div class="slds-spinner_container"
+        style="position: fixed; display: none;" id="ppcustomstatus">
+        <div role="status"
+            class="slds-spinner slds-spinner--large slds-spinner--brand">
+            <span class="slds-assistive-text">Loading</span>
+            <div class="slds-spinner__dot-a"></div>
+            <div class="slds-spinner__dot-b"></div>
+        </div>
+        <div class="slds-container--fluid" style="margin-top: 15%">
+            <div
+                class="slds-grid slds-grid--align-center slds-text-heading--small"
+                id="ppcustomstatusmessage"></div>
+        </div>
+    </div>
+    <!-- Status Block : Ends -->
+    <!-- Error Block : Starts -->
+    <div class="slds-notify_container {!IF($User.UIThemeDisplayed == 'Theme4t','slds-region_narrow','')}" id="paymentErrorBox"
+        style="display: none;">
+        <div class="slds-notify slds-notify--toast slds-theme--error"
+            role="alert" xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink">
+            <span class="slds-assistive-text">Error</span> <a
+                href="javascript:void(0);"
+                class="slds-button slds-notify__close slds-button--icon-inverse"
+                title="Close" onclick="j$('#paymentErrorBox').hide();"> <svg
+                    class="slds-button__icon slds-button__icon--large"
+                    aria-hidden="true">
+                    <use
+                        xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                </svg> <span class="slds-assistive-text">Close</span>
+            </a>
+            <div class="slds-notify__content slds-media">
+                <div class="slds-media__figure">
+                    <svg
+                        class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex"
+                        aria-hidden="true">
+                        <use
+                            xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                    </svg>
+                </div>
+                <div class="slds-media__body">
+                    <h2 class="slds-text-heading--small" id="paymentErrorPrefix">
+                        <apex:outputText value="{!$Label.Error_Prefix}" escape="false" />
+                    </h2>
+                    <span id="paymentErrorMessage"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Error Block : Ends -->
+    <div id="page3" xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink">
+        <apex:outputPanel layout="block"
+            styleClass="slds-grid slds-wrap slds-m-bottom--xx-small">
+            <apex:variable var="inventoryCount" value="{!0}" />
+            <apex:repeat value="{!inventoryIdsList}" var="thisKey">
+                <apex:outputPanel styleClass="slds-container--fluid slds-size--1-of-1 slds-medium-size--1-of-2 slds-large-size--1-of-3 pp_selected_units">
+                    <article
+                        class="slds-card slds-m-top--xx-small slds-m-left--xx-small">
+                        <div class="slds-card__header slds-grid">
+                            <header
+                                class="slds-media slds-media--center slds-has-flexi-truncate">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container slds-icon-standard-note"
+                                        title="if needed"> <svg
+                                            class="slds-icon slds-icon--small" aria-hidden="true">
+                                            <use
+                                                xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/standard-sprite/svg/symbols.svg#note')}"></use>  
+                                        </svg>
+                                    </span>
+                                </div>
+                                <div class="slds-media__body">
+                                    <h2>
+                                        <a href="javascript:void(0);"
+                                            class="slds-card__header-link slds-truncate"> <span
+                                            class="slds-text-heading--small">Payment Plan for -
+                                                {!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}</span>
+                                        </a>
+                                    </h2>
+                                </div>
+                            </header>
+                        </div>
+                        <div
+                            class="slds-card__body slds-card__body--inner slds-theme--default">
+                            <div
+                                class="slds-card__body--inner slds-grid slds-wrap slds-grid--pull-padded">
+                                <div
+                                    class="slds-form--horizontal slds-p-horizontal--small slds-m-around--large">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Payment
+                                            Plans</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:variable var="thisBuildingId"
+                                                value="{!''}{!buildingIdsSet}" />
+                                            <apex:outputPanel rendered="{!IF(NOT(ISBLANK(buildingPaymentPlansListMap)) && 
+                                                                             NOT(ISBLANK(inventoryBuyerWrapperMap[thisKey].selectedInventory.Building_Location__c)) && 
+                                                                             CONTAINS(thisBuildingId, inventoryBuyerWrapperMap[thisKey].selectedInventory.Building_Location__c), true, false)}"
+                                                layout="block">
+                                                <div class="slds-select_container">
+                                                    <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].selectedPaymentPlan}"
+                                                        size="1" styleClass="slds-select paymentPlan"
+                                                        onchange="getAssociatedPaymentTerms('{!thisKey}', this);"
+                                                        disabled="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}">
+
+                                                        <apex:selectOptions value="{!buildingPaymentPlansListMap[inventoryBuyerWrapperMap[thisKey].selectedInventory.Building_Location__c]}" />
+                                                    </apex:selectList>
+                                                </div>
+                                            </apex:outputPanel>
+
+                                            <apex:outputPanel rendered="{!IF(ISBLANK(buildingPaymentPlansListMap) || 
+                                                                             (NOT(ISBLANK(inventoryBuyerWrapperMap[thisKey].selectedInventory.Building_Location__c)) && 
+                                                                             NOT(CONTAINS(thisBuildingId, inventoryBuyerWrapperMap[thisKey].selectedInventory.Building_Location__c))), true, false)}"
+                                                layout="block">
+                                                <input type="text" class="slds-input" value="N/A"
+                                                    disabled="true" />
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+<!--                                     <apex:repeat value="{!mapBooking[thisKey]}" var="fy"> -->
+                                    <!-- Promotion List From Drool -->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Promotion</label>
+                                        <div class="slds-form-element__control">
+
+                                            <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].selectedPromotion}"
+                                                size="1" 
+                                                styleClass="slds-select promotion promotionPrice{!inventoryCount}"
+                                                onchange="PromoValues(this,'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}',{!inventoryCount},'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}');"
+                                                disabled="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}">
+                                                <apex:selectOptions value="{!promMap[thisKey].promotionOptions}" />
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                    <!-- Campaign List From Drool -->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Campaign</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].selectedPromotion}"
+                                                size="1" 
+                                                styleClass="slds-select promotion campaignPrice{!inventoryCount}"
+                                                onchange="CampValues(this,'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}',{!inventoryCount},'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}');"
+                                                disabled="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}">
+                                                <apex:selectOptions value="{!promMap[thisKey].campaignOptions}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                    <!-- Options List From Drool -->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Options</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].selectedPromotion}"
+                                                size="1" 
+                                                styleClass="slds-select promotion optionsPrice{!inventoryCount}"
+                                                onchange="OptValues(this,'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}',{!inventoryCount},'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}');"
+                                                disabled="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}">
+                                                <apex:selectOptions value="{!optMap[thisKey]}" />
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Scheme List From Drool -->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Scheme</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:selectList value="{!inventoryBuyerWrapperMap[thisKey].selectedPromotion}"
+                                                size="1" 
+                                                styleClass="slds-select promotion schemePrice{!inventoryCount}"
+                                                onchange="SchemValues(this,'{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}',{!inventoryCount}, '{!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}');"
+                                                disabled="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}">
+                                                <apex:selectOptions value="{!promMap[thisKey].schemeOptions}" />
+                                            </apex:selectList>
+
+                                        </div>
+                                    </div>
+<!-- </apex:repeat> -->
+
+                                <div class="slds-form-element__control">
+                                    
+                                    
+                                    <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-promotionID"
+                                        value="0" /> <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-campaignID"
+                                        value="0" /> <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-optionsID"
+                                        value="0" /> <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-schemeID"
+                                        value="0" /> <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-area"
+                                        value="{!(inventoryBuyerWrapperMap[thisKey].selectedInventory.Area__c )}" />
+                                    <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-area_sft"
+                                        value="{!(inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit_Area_sft__c )}" />
+                                    <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-Price_Per_Sqft"
+                                        value="{!(inventoryBuyerWrapperMap[thisKey].selectedInventory.Price_Per_Sqft__c )}" />
+                                    <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-CM_Price_Per_Sqft"
+                                        value="{!(inventoryBuyerWrapperMap[thisKey].selectedInventory.CM_Price_Per_Sqft__c )}" />
+                                    <input type="hidden"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-CM_Price" class="CM_Price{!inventoryCount}"
+                                        value="0" name="CM_Price" /> <input type="hidden"
+                                        class="CMPricePerSqftAfter{!inventoryCount}"
+                                        id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-CM_Price_Per_Sqft_After"
+                                        value="" name="CM_Price_Per_Sqft" /> <input type="hidden"
+                                        class="unitidref{!inventoryCount}"
+                                        value='{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}' />
+                                        <!--For DevPro-->
+                                        <!--<input type="hidden"
+                                        class="dealsr{!inventoryCount}"
+                                        value="{!inventoryBuyerWrapperMap[thisKey].bookingUnit.Deal__c}" />-->
+                                        <!--For Full Copy-->
+                                        <input type="hidden"
+                                        class="dealsr{!inventoryCount}"
+                                        value="{!inventoryBuyerWrapperMap[thisKey].bookingUnit.Booking__r.Deal_SR__r.Name}" />
+                                    <input type="hidden"
+                                        class="TokenAmountApprovalStatus{!inventoryCount}"
+                                        value='{!uwmObject.dealRecord.Token_Amount_Approval_Status__c}' />  
+                                    <input type="hidden"
+                                        class="currencyCode{!inventoryCount}"
+                                        value='{!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}' /> 
+
+
+                                                                        <input type ="hidden" Class="templateIdSN{!inventoryCount}" value="{!promMap[thisKey].templateIdSN}"/>
+                                                                        <input type="hidden" Class="templateIdCN{!inventoryCount}" value="{!promMap[thisKey].templateIdCN}" />
+                                                                        <input type="hidden" Class="templateIdPN{!inventoryCount}" value="{!promMap[thisKey].templateIdPN}" />
+                                                                        <input type="hidden" Class="templateIdOP{!inventoryCount}" value="{!promMap[thisKey].templateIdOP}" />
+
+                                                                        <input type="hidden" Class="templateIdOP1{!inventoryCount}" value="{!promMap[thisKey].templateIdOP1}" />
+                                                                        <input type="hidden" Class="templateIdOP2{!inventoryCount}" value="{!promMap[thisKey].templateIdOP2}" />
+                                                                        <input type="hidden" Class="templateIdOP3{!inventoryCount}" value="{!promMap[thisKey].templateIdOP3}" />
+                                                                        <input type="hidden" Class="templateIdOP4{!inventoryCount}" value="{!promMap[thisKey].templateIdOP4}" />
+                                                                        <input type="hidden" Class="templateIdOP5{!inventoryCount}" value="{!promMap[thisKey].templateIdOP5}" />
+                                        </div>
+
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Selling
+                                            Price
+                                            ({!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode})
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <input type="text"
+                                                class="slds-input sellingPrice{!inventoryCount}"
+                                                value="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.List_Price_calc__c}"
+                                                disabled="true" />
+                                        </div>
+                                    </div>
+
+
+                                    <!--  
+                                  This is Commented as Per Requirments 
+                                  <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Variation</label>
+                                        <div class="slds-form-element__control">
+                                            <input type="text" value="" class="slds-input" disabled="true"/>
+                                        </div>
+                                    </div>
+                                    
+                                  -->
+                                    <!--Special Price -->
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Special
+                                            Price
+                                            ({!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode})
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <input type="text"
+                                                id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-specialPriceID"
+                                                class="slds-input specialPrice{!inventoryCount}"
+                                                value="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Special_Price_calc__c}"
+                                                disabled="true" />
+                                        </div>
+                                    </div>
+                                    <!--Net Price is added  -->
+
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Net
+                                            Price
+                                            ({!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode})
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <!-- <input type="text" class="slds-input" 
+                                                   value="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Special_Price_calc__c}" disabled="true"/>  -->
+                                            <input
+                                                id="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}-netPriceID"
+                                                type="text" class="slds-input netPrice{!inventoryCount}"
+                                                value="{!inventoryBuyerWrapperMap[thisKey].selectedInventory.Special_Price_calc__c}"
+                                                disabled="true" />
+
+                                        </div>
+                                    </div>
+
+
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Requested
+                                            Price
+                                            ({!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode})
+                                        </label>
+                                        <div class="slds-form-element__control">
+                                            <apex:inputText value="{!inventoryBuyerWrapperMap[thisKey].requestedPrice}"
+                                                styleClass="slds-input requestedPrice{!inventoryCount}"
+                                                rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c != 'Approved' && NOT(uwmObject.dealRecord.Is_Submitted_For_Approval__c)}" />
+                                            <apex:outputText value="{!inventoryBuyerWrapperMap[thisKey].requestedPrice}"
+                                                styleClass="slds-input"
+                                                style="background-color: #e0e5ee; border-color: #a8b7c7;"
+                                                rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}" />
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Token
+                                            Amount ({!inventoryBuyerWrapperMap[thisKey].selectedInventory.CurrencyIsoCode}) </label>
+                                        <div class="slds-form-element__control">
+                                            <apex:inputText value="{!inventoryBuyerWrapperMap[thisKey].requestedTokenAmount}"
+                                                styleClass="slds-input requestedTokenAmount"
+                                                rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c != 'Approved' && NOT(uwmObject.dealRecord.Is_Submitted_For_Approval__c)}" />
+                                            <apex:outputText value="{!inventoryBuyerWrapperMap[thisKey].requestedTokenAmount}"
+                                                styleClass="slds-input"
+                                                style="background-color: #e0e5ee; border-color: #a8b7c7;"
+                                                rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}" />
+                                        </div>
+                                    </div>
+                                    <!-- <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Number of Parking</label>
+                                        <div class="slds-form-element__control">
+                                            <apex:inputText value="{!inventoryBuyerWrapperMap[thisKey].numberOfParking}" 
+                                                            styleClass="slds-input numberOfParking" 
+                                                            rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c != 'Approved' && NOT(uwmObject.dealRecord.Is_Submitted_For_Approval__c)}"/>
+                                            <apex:outputText value="{!inventoryBuyerWrapperMap[thisKey].numberOfParking}" 
+                                                            styleClass="slds-input"
+                                                            style="background-color: #e0e5ee; border-color: #a8b7c7;" 
+                                                            rendered="{!uwmObject.dealRecord.Token_Amount_Approval_Status__c == 'Approved' || uwmObject.dealRecord.Is_Submitted_For_Approval__c}"/>
+                                        </div>
+                                    </div> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="slds-card__footer"></div>
+                    </article>
+                    <article
+                        class="slds-card slds-m-top--xx-small slds-m-left--xx-small">
+                        <!--  <div class="slds-card__header slds-grid">
+                            <header class="slds-media slds-media--center slds-has-flexi-truncate">
+                                <div class="slds-media__figure">
+                                    <span class="slds-icon_container slds-icon-standard-note" title="if needed">
+                                        <svg class="slds-icon slds-icon--small" aria-hidden="true">
+                                            <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/standard-sprite/svg/symbols.svg#note')}"></use>  
+                                        </svg>
+                                    </span>
+                                </div>
+                               <div class="slds-media__body">
+                                    <h2>
+                                        <a href="javascript:void(0);" class="slds-card__header-link slds-truncate">
+                                            <span class="slds-text-heading--small">Scheme Plan for - {!inventoryBuyerWrapperMap[thisKey].selectedInventory.Unit__c}</span>
+                                        </a>
+                                    </h2> 
+                                </div> 
+                            </header> 
+                        </div> 
+                        
+                        <div class="slds-card__body slds-card__body--inner slds-theme--default">
+                            <div class="slds-card__body--inner slds-grid slds-wrap slds-grid--pull-padded">
+                                <div class="slds-form--horizontal slds-p-horizontal--small slds-m-around--large">
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Total Selling Price</label> 
+                                        <div class="slds-form-element__control">
+                                            <input type="text" value="" class="slds-input"  disabled="true"/>
+                                        </div>
+                                    </div>
+                                   
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Total Deal Price</label> 
+                                        <div class="slds-form-element__control">
+                                            <input type="text" value="" class="slds-input"  disabled="true"/>
+                                        </div>
+                                    </div>
+                                    <div class="slds-form-element">
+                                        <label class="slds-form-element__label slds-p-right--small">Requested Price</label> 
+                                        <div class="slds-form-element__control">
+                                            <input type="text" value="" class="slds-input" disabled="true"/>
+                                        </div>
+                                    </div>
+                                    
+                                    
+                                </div>
+                            </div>
+                        </div>  -->
+                        <div class="slds-card__footer"></div>
+                    </article>
+                </apex:outputPanel>
+                <apex:variable var="inventoryCount" value="{!inventoryCount+1}" />
+            </apex:repeat>
+        </apex:outputPanel>
+        <!-- Modal Section -->
+        <apex:outputPanel id="paymentPlanSection" layout="block">
+            <apex:outputPanel rendered="{!showPaymentTerms}">
+                <div role="dialog" tabindex="-1"
+                    aria-labelledby="paymentTermsHeader"
+                    class="slds-modal {!if($User.UIThemeDisplayed == 'Theme4t','slds-modal--large','')} slds-fade-in-open">
+                    <div class="slds-modal__container">
+                        <div class="slds-modal__header">
+                            <a href="javascript:void(0);"
+                                class="slds-button slds-modal__close slds-button--icon-inverse"
+                                title="Close" onClick="closePaymentTerms();"> <svg
+                                    class="slds-button__icon slds-button__icon--large"
+                                    aria-hidden="true">
+                                    <use
+                                        xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                </svg> <span class="slds-assistive-text">Close</span>
+                            </a>
+                            <h2 id="paymentTermsHeader" class="slds-text-heading--medium">Payment
+                                Terms</h2>
+                        </div>
+                        <div class="slds-modal__content slds-p-around--medium">
+                            <div
+                                class="slds-grid slds-grid--align-spread slds-p-bottom--small">
+                                <span
+                                    class="slds-form-element__label slds-p-right--small slds-text-title--caps slds-badge">Effective
+                                    From : <apex:outputText value=" {0,date,dd/MM/yyyy}">
+                                        <apex:param value="{!effectiveFrom}" />
+                                    </apex:outputText>
+                                </span> <span
+                                    class="slds-form-element__label slds-p-right--small slds-text-title--caps slds-badge">Effective
+                                    To : <apex:outputText value=" {0,date,dd/MM/yyyy}">
+                                        <apex:param value="{!effectiveTo}" />
+                                    </apex:outputText>
+                                </span>
+                            </div>
+                            <div class="slds-table--edit_container slds-is-relative">
+                                <table
+                                    class="slds-table slds-table--edit slds-table--bordered slds-table--fixed-layout slds-border--left slds-border--right slds-table--striped"
+                                    role="grid">
+                                    <thead>
+                                        <tr class="slds-line-height--reset">
+                                            <th style="width: 5rem;" class="slds-text-title--caps"
+                                                scope="col"><a href="javascript:void(0);"
+                                                class="slds-th__action slds-text-link--reset" tabindex="-1">
+                                                    <span class="slds-truncate" title="Description">Description</span>
+                                                    <span class="slds-assistive-text" aria-live="assertive"
+                                                    aria-atomic="true">Description</span>
+                                            </a></th>
+                                            <th style="width: 9rem;" class="slds-text-title--caps"
+                                                scope="col"><a href="javascript:void(0);"
+                                                class="slds-th__action slds-text-link--reset" tabindex="-1">
+                                                    <span class="slds-truncate" title="Milestone Event">Milestone
+                                                        Event</span> <span class="slds-assistive-text"
+                                                    aria-live="assertive" aria-atomic="true">Milestone
+                                                        Event</span>
+                                            </a></th>
+                                            <th style="width: 4rem;" class="slds-text-title--caps"
+                                                scope="col"><a href="javascript:void(0);"
+                                                class="slds-th__action slds-text-link--reset" tabindex="-1">
+                                                    <span class="slds-truncate" title="Value">Value (%)</span>
+                                                    <span class="slds-assistive-text" aria-live="assertive"
+                                                    aria-atomic="true">Value</span>
+                                            </a></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <apex:variable var="counter" value="{!0}" />
+                                        <apex:repeat value="{!tempPaymentTerms}" var="thisPaymentTerm">
+                                            <tr>
+                                                <td role="gridcell"><span
+                                                    class="slds-grid slds-grid--align-spread"> <span
+                                                        class="slds-truncate"
+                                                        title="{!thisPaymentTerm.Description__c}">{!thisPaymentTerm.Description__c}</span>
+                                                </span></td>
+                                                <td role="gridcell"><span
+                                                    class="slds-grid slds-grid--align-spread"> <span
+                                                        class="slds-truncate"
+                                                        title="{!thisPaymentTerm.Milestone_Event__c}">{!thisPaymentTerm.Milestone_Event__c}</span>
+                                                </span></td>
+                                                <td role="gridcell"><apex:outputPanel styleClass="slds-grid slds-grid--align-spread"
+                                                        rendered="{!totalDealValue < 15000000.00}">
+                                                        <span class="slds-truncate" title="">{!thisPaymentTerm.Percent_Value__c}</span>
+                                                    </apex:outputPanel> <apex:outputPanel styleClass="slds-grid slds-grid--align-spread"
+                                                        rendered="{!totalDealValue > 15000000.00}">
+                                                        <a href="javascript:void(0);"
+                                                            class="slds-button slds-button--icon slds-cell-edit__button percentValueOutput{!counter}"
+                                                            tabindex="-1" onclick="openEdit('{!counter}');"
+                                                            style="width: 55px;"> <span class="slds-truncate"
+                                                            title="{!thisPaymentTerm.Percent_Value__c}"> <apex:outputText styleClass="valueOutput{!counter}"
+                                                                    value="{!thisPaymentTerm.Percent_Value__c}" />
+                                                        </span> <span class="slds-assistive-text">Edit
+                                                                {!thisPaymentTerm.Percent_Value__c}</span> <svg
+                                                                class="slds-button__icon slds-button__icon--hint slds-button__icon--edit"
+                                                                aria-hidden="true">
+                                                                <use
+                                                                    xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#edit')}"></use>
+                                                            </svg>
+                                                        </a>
+                                                        <span
+                                                            class="slds-grid slds-grid--align-spread percentValueInput{!counter}"
+                                                            style="display: none; width: 50%;"> <apex:inputText styleClass="slds-input valueInput{!counter} percentValue"
+                                                                value="{!thisPaymentTerm.Modified_Percent_Value__c}" />
+                                                        </span>
+                                                    </apex:outputPanel></td>
+                                            </tr>
+                                            <apex:variable var="counter" value="{!counter+1}" />
+                                        </apex:repeat>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <apex:outputPanel styleClass="slds-modal__footer"
+                            rendered="{!totalDealValue > 15000000.00}" layout="block">
+                            <a href="javascript:void(0);"
+                                class="slds-button slds-button--neutral" title="Cancel"
+                                onClick="closePaymentTerms();">Cancel</a>
+                            <a href="javascript:void(0);"
+                                class="slds-button slds-button--brand" title="Save"
+                                onClick="validatePaymentTerms();">Save</a>
+                        </apex:outputPanel>
+                    </div>
+                </div>
+                <div class="slds-backdrop slds-backdrop--open"></div>
+            </apex:outputPanel>
+        </apex:outputPanel>
+        <!-- Action Functions : Start -->
+        
+        <apex:actionfunction name="getPaymentTerms"
+            action="{!getPaymentTerms}" rerender="paymentPlanSection, errorBlock"
+            status="status">
+            <apex:param name="selectedInventory" value=""
+                assignto="{!selectedInventory}" />
+        </apex:actionfunction>
+        
+        
+        <apex:actionfunction name="closePaymentTerms"
+            rerender="paymentPlanSection, errorBlock" status="status"
+            action="{!closePaymentTerms}">
+            <apex:param name="showPaymentTerms" value="false"
+                assignto="{!showPaymentTerms}" />
+        </apex:actionfunction>
+        <!-- Action Functions : Ends -->
+    </div>
+    <script type="text/javascript">
+        var PromoValue ;
+        var CampValue ;
+        var OptValue ;
+        var SchemValue ;
+        var specialPrice ;
+        var netPrice;
+        var CM_netPrice;
+        
+        var VarPromoValue ;
+        var VarCampValue ;
+        var VarOptValue ;
+        var VarSchemValue ;
+        var optionFlag = 0;
+        var PromoPSFlag = 0;
+        var CampPSFlag = 0;
+        var OptPSFlag = 0;
+        var SchemPSFlag = 0;
+
+        
+         function PromoValues (selectedDom,unitID,iteration, currency){
+
+            var psFlag = 0;
+             
+             specialPrice = document.getElementById(unitID+"-specialPriceID").value;
+             // index 1 for %, index 2 for area/sqrtft and index 3 for flat discount.
+             var Price_Per_Sqft = document.getElementById(unitID+"-area_sft").value;
+             var selectedText = selectedDom.options[selectedDom.selectedIndex].text;
+             
+             if(selectedDom.selectedIndex == 0){
+                document.getElementById(unitID+"-promotionID").value = selectedDom.value;
+                PromoPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("%")){
+                document.getElementById(unitID+"-promotionID").value = ((specialPrice*selectedDom.value)/100);
+                PromoPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("psf "+currency)){
+                document.getElementById(unitID+"-promotionID").value = ((parseFloat(Price_Per_Sqft))*selectedDom.value);
+                PromoPSFlag = 1;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("flat "+currency)){
+                document.getElementById(unitID+"-promotionID").value = selectedDom.value;
+                PromoPSFlag = 0;
+             }else {
+                document.getElementById(unitID+"-promotionID").value = 0;
+                PromoPSFlag = 0;
+             }
+
+             
+             NetValue(unitID,iteration,psFlag);
+         }
+         function CampValues (selectedDom,unitID,iteration, currency){ 
+
+            var psFlag = 0;
+             specialPrice = document.getElementById(unitID+"-specialPriceID").value;
+             // index 1 for %, index 2 for area/sqrtft and index 3 for flat discount.
+             var Price_Per_Sqft = document.getElementById(unitID+"-area_sft").value;
+             var selectedText = selectedDom.options[selectedDom.selectedIndex].text;
+             
+             if(selectedDom.selectedIndex == 0 ){
+                document.getElementById(unitID+"-campaignID").value = selectedDom.value;
+                CampPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("%")){
+                document.getElementById(unitID+"-campaignID").value = ((specialPrice*selectedDom.value)/100);
+                CampPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("psf "+currency)){
+                document.getElementById(unitID+"-campaignID").value = ((parseFloat(Price_Per_Sqft))*selectedDom.value);
+                CampPSFlag = 1;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("flat "+currency)){
+                document.getElementById(unitID+"-campaignID").value = selectedDom.value;
+                CampPSFlag = 0;
+             }else {
+                document.getElementById(unitID+"-campaignID").value = 0;
+                CampPSFlag = 0;
+             }
+             NetValue(unitID,iteration,psFlag);
+         }
+         function OptValues (selectedDom,unitID,iteration, currency){
+             var psFlag = 0;
+             optionFlag = 0;
+             specialPrice = document.getElementById(unitID+"-specialPriceID").value;
+             //OptValue =  selectedDom;
+             //OptValue = selectedDom.split("###");
+             //On 11/7/2017 By Vikash TemplateIdOP
+             var count = selectedDom.selectedIndex;
+             
+             var TempTemplateIdOP = j$('.templateIdOP'+count+''+iteration).val();
+             j$('.templateIdOP'+iteration).val(TempTemplateIdOP);
+             
+             //Old Code
+             //document.getElementById(unitID+"-optionsID").value = selectedDom.value;
+             
+             //New Implimentation on 12/07/2017
+             
+             // index 1 for %, index 2 for area/sqrtft and index 3 for flat discount.
+             var Price_Per_Sqft = document.getElementById(unitID+"-area_sft").value;
+             var selectedText = selectedDom.options[selectedDom.selectedIndex].text;
+             
+             if(selectedDom.selectedIndex == 0){
+                document.getElementById(unitID+"-optionsID").value = selectedDom.value;
+                OptPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("%")){
+                document.getElementById(unitID+"-optionsID").value = ((specialPrice*selectedDom.value)/100);
+                optionFlag = 1;
+                OptPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("psf "+currency)){
+                document.getElementById(unitID+"-optionsID").value = ((parseFloat(Price_Per_Sqft))*selectedDom.value);
+                OptPSFlag = 1;
+                optionFlag = 1;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("flat "+currency)){
+                document.getElementById(unitID+"-optionsID").value = selectedDom.value;
+                optionFlag = 1;
+                OptPSFlag = 0;
+             }else if(selectedText.includes(selectedDom.value) && selectedText.endsWith(currency)){
+                document.getElementById(unitID+"-optionsID").value = selectedDom.value;
+                OptPSFlag = 0;
+             }else {
+                document.getElementById(unitID+"-optionsID").value = 0;
+                OptPSFlag = 0;
+             }
+             
+             
+             NetValue(unitID,iteration,psFlag);
+         }
+        
+         function SchemValues (selectedDom,unitID,iteration, currency){
+             var psFlag = 0;
+             specialPrice = document.getElementById(unitID+"-specialPriceID").value;
+             
+             // index 1 for %, index 2 for area/sqrtft and index 3 for flat discount.
+             var Price_Per_Sqft = document.getElementById(unitID+"-area_sft").value;
+             var selectedText = selectedDom.options[selectedDom.selectedIndex].text;
+             
+             if(selectedDom.selectedIndex == 0){
+                document.getElementById(unitID+"-schemeID").value = selectedDom.value;
+                SchemPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("%")){
+                document.getElementById(unitID+"-schemeID").value = ((specialPrice*selectedDom.value)/100);
+                SchemPSFlag = 0;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("psf "+currency)){
+                document.getElementById(unitID+"-schemeID").value = ((parseFloat(Price_Per_Sqft))*selectedDom.value);;
+                SchemPSFlag = 1;
+             }else if(selectedText.includes("Discount") && selectedText.endsWith("flat "+currency)){
+                document.getElementById(unitID+"-schemeID").value = selectedDom.value;
+                SchemPSFlag = 0;
+             }else {
+                document.getElementById(unitID+"-schemeID").value = 0;
+                SchemPSFlag = 0;
+             }
+             NetValue(unitID,iteration,psFlag);
+         }
+         
+         function  NetValue(unitID,iteration,psFlag){
+            netPrice = parseFloat(specialPrice);
+            PromoValue = document.getElementById(unitID+"-promotionID").value;
+            CampValue = document.getElementById(unitID+"-campaignID").value;
+            OptValue = document.getElementById(unitID+"-optionsID").value;
+            SchemValue = document.getElementById(unitID+"-schemeID").value;
+            
+            //var area = document.getElementById(unitID+"-area").value;
+            var area = document.getElementById(unitID+"-area_sft").value;
+            
+            var CM_Price_Per_Sqft = document.getElementById(unitID+"-CM_Price_Per_Sqft").value;
+            CM_netPrice = (parseFloat(area))*(parseFloat(CM_Price_Per_Sqft));
+            
+            if(PromoValue != undefined && PromoValue != '' && (!isNaN(PromoValue))){
+                netPrice = netPrice - (parseFloat(PromoValue));
+                CM_netPrice = CM_netPrice - (parseFloat(PromoValue));
+            }
+            if(CampValue != undefined && CampValue != '' && (!isNaN(CampValue))){
+                netPrice = netPrice - (parseFloat(CampValue));
+                CM_netPrice = CM_netPrice - (parseFloat(CampValue));
+            }
+            if(OptValue != undefined && OptValue != '' && (!isNaN(OptValue))){
+                if(optionFlag == 0){
+                    netPrice = netPrice + (parseFloat(OptValue));
+                    CM_netPrice = CM_netPrice + (parseFloat(OptValue));
+                }else if(optionFlag == 1){
+                    netPrice = netPrice - (parseFloat(OptValue));
+                    CM_netPrice = CM_netPrice - (parseFloat(OptValue));
+                }
+            }
+            if(SchemValue != undefined && SchemValue != '' && (!isNaN(SchemValue))){
+                netPrice = netPrice - (parseFloat(SchemValue));
+                CM_netPrice = CM_netPrice - (parseFloat(SchemValue));
+            }
+            
+            
+            //New Implimentation on 12/07/2017 Net And Requested Ceiling Price
+            if(PromoPSFlag == 0 && CampPSFlag ==0 && OptPSFlag ==0 && SchemPSFlag ==0){
+                netPrice = parseFloat(netPrice).toFixed(2);
+                j$('.requestedPrice'+iteration).val(netPrice);
+                document.getElementById(unitID+"-netPriceID").value = netPrice;
+            }else{
+                var ceilingValueNetPrice = Math.ceil(netPrice/1000);
+                ceilingValueNetPrice = ceilingValueNetPrice*1000;
+                ceilingValueNetPrice = parseFloat(ceilingValueNetPrice).toFixed(2);
+                j$('.requestedPrice'+iteration).val(ceilingValueNetPrice);
+                document.getElementById(unitID+"-netPriceID").value = ceilingValueNetPrice;
+            }
+            //j$('.requestedPrice'+iteration).val(netPrice);
+            //document.getElementById(unitID+"-netPriceID").value = netPrice;
+            ////////////////////////////////////////////////////////////////
+            
+            document.getElementById(unitID+"-CM_Price").value = CM_netPrice;
+            
+            var CM_Price_Per_Sqft_After = (parseFloat(CM_netPrice)/parseFloat(area));
+            
+            document.getElementById(unitID+"-CM_Price_Per_Sqft_After").value = CM_Price_Per_Sqft_After;
+         }
+        
+        j$( document ).ready(function() {
+            j$(window).scrollTop(0);
+            j$('#ppcustomstatus').hide();
+            //CM Price Default
+            var totalInventoryCount = j$('.pp_selected_units').length;
+            for(var i = 0; i < totalInventoryCount; i++){
+                var unitIDR= j$('.unitidref'+i).val();
+                var TokenAmountApprovalStatus = j$('.TokenAmountApprovalStatus'+i).val();
+                if(TokenAmountApprovalStatus == 'Approved'){
+                    var promotionPriceVal = j$('.promotionPrice'+i+' option:selected').val();
+                    document.getElementById(unitIDR+"-netPriceID").value = promotionPriceVal;
+                }
+                
+                //NetValue(unitIDR, i);
+                //var area = document.getElementById(unitIDR+"-area").value; 
+                
+                var area = document.getElementById(unitIDR+"-area_sft").value;
+                var CM_Price_Per_Sqft = document.getElementById(unitIDR+"-CM_Price_Per_Sqft").value;
+                CM_netPrice = (parseFloat(area))*(parseFloat(CM_Price_Per_Sqft));
+                document.getElementById(unitIDR+"-CM_Price").value = CM_netPrice; 
+            }
+            
+            var DroolException = j$('.promotionPrice0 option:selected').val();
+            if(DroolException == 'Drool Exception'){
+                document.getElementById('paymentErrorBox').style.display = "block";
+                document.getElementById('paymentErrorMessage').innerHTML = 'Drool Web Service Call Out Exception.';
+            }
+        });
+        
+        function openEdit(rowNumber){
+            j$('.valueInput'+rowNumber).val(j$('.valueOutput'+rowNumber).html());
+            j$('.percentValueInput'+rowNumber).show();
+            j$('.percentValueOutput'+rowNumber).hide();
+        }
+        
+        function getAssociatedPaymentTerms(selectedInventory, selectedDom){
+            var selectedPaymentPlan = selectedDom.value;
+            getPaymentTerms(selectedInventory);
+        }
+        
+        function validatePaymentTerms(){
+            var validated = true;
+            var totalChangedValue = 0;
+            var totalOriginalValue = '{!tempTotalPaymentTerms}';
+            var numberOfPaymentTerms = '{!tempPaymentTerms.size}';
+            for(var i = 0; i < numberOfPaymentTerms; i++){
+                if(j$('.valueInput'+i).val() &&  !isNaN(parseInt(j$('.valueInput'+i).val(), 10))){
+                    totalChangedValue = totalChangedValue + parseInt(j$('.valueInput'+i).val(), 10);
+                }else if(j$('.valueOutput'+i).text() && !isNaN(parseInt(j$('.valueOutput'+i).text(), 10))){
+                    totalChangedValue = totalChangedValue + parseInt(j$('.valueOutput'+i).text(), 10);  
+                }
+                if(j$('.valueInput'+i).val() && j$('.valueInput'+i).val() < 5){
+                    document.getElementById('paymentErrorBox').style.display = "block";
+                    document.getElementById('paymentErrorMessage').innerHTML = 'Value can\'t be less than 5%.';
+                    validated = false;
+                    break;
+                }
+                if(j$('.valueInput'+i).val() && j$('.valueInput'+i).val() > 104){
+                    document.getElementById('paymentErrorBox').style.display = "block";
+                    document.getElementById('paymentErrorMessage').innerHTML = 'Value can\'t be greater than 104%.';
+                    validated = false;
+                    break;
+                }
+            }
+            if(totalChangedValue != totalOriginalValue && validated){
+                document.getElementById('paymentErrorBox').style.display = "block";
+                document.getElementById('paymentErrorMessage').innerHTML = 'Total of modified values should be equal to '+totalOriginalValue;
+                validated = false;
+            }
+            if(validated){
+                closePaymentTerms();
+            }   
+        }
+        
+        function validatePaymentSelected(mode){
+            var numberOfUnitSelected = j$(".pp_selected_units").length;
+            var totalDealValue = '{!totalDealValue}';
+            var validated = true;
+            if(j$('.paymentPlan') != null){
+                var numberOfPaymentPlansSelected = 0;
+                j$(".paymentPlan").each(function() {
+                    if(j$(this).val()){
+                        numberOfPaymentPlansSelected++;
+                    }
+                });
+                if(numberOfPaymentPlansSelected != numberOfUnitSelected){
+                    validated = false;
+                    document.getElementById('paymentErrorBox').style.display = "block";
+                    document.getElementById('paymentErrorMessage').innerHTML = 'Payment plan not selected for one or more units. Please select a payment plan for each unit before proceeeding.';   
+                    return;
+                }
+                j$(".numberOfParking").each(function() {
+                    if(j$(this).val()){
+                        if(isNaN(j$(this).val())){
+                            validated = false;
+                            document.getElementById('paymentErrorBox').style.display = "block";
+                            document.getElementById('paymentErrorMessage').innerHTML = 'Invalid number entered for parking.';
+                        }
+                    }
+                });
+                var totalInventoryCount = j$('.pp_selected_units').length;
+                for(var i = 0; i < totalInventoryCount; i++){
+                    var requestedPrice = j$('.requestedPrice'+i).val();
+                    var sellingPrice = j$('.sellingPrice'+i).val();
+                    var specialPrice = j$('.specialPrice'+i).val();
+                    var netPrice = j$('.netPrice'+i).val();
+                    if(requestedPrice < (netPrice * 0.1)){
+                        validated = false;
+                        document.getElementById('paymentErrorBox').style.display = "block";
+                        document.getElementById('paymentErrorMessage').innerHTML = 'Requested price cannot be less than the 10% or net price.';
+                        break;
+                    }
+                }
+                //Promotion Dropdown Validation.
+                if(mode!='draft'){
+                var totalInventoryCount = j$('.pp_selected_units').length;
+                    for(var i = 0; i < totalInventoryCount; i++){
+                        if(j$('.promotionPrice'+i).children('option').length> 1 && j$('.promotionPrice'+i+' option:selected').index()==0){
+                            validated = false;
+                            document.getElementById('paymentErrorBox').style.display = "block";
+                            document.getElementById('paymentErrorMessage').innerHTML = 'Promotion are available!!! Please select.';
+                            j$('.promotionPrice'+i).focus();
+                            break;
+                        }
+                        
+                        if(j$('.campaignPrice'+i).children('option').length> 1 && j$('.campaignPrice'+i+' option:selected').index()==0){
+                            validated = false;
+                            document.getElementById('paymentErrorBox').style.display = "block";
+                            document.getElementById('paymentErrorMessage').innerHTML = 'Campaign are available!!! Please select.';
+                            j$('.campaignPrice'+i).focus();
+                            break;
+                        }
+                        if(j$('.optionsPrice'+i).children('option').length> 1 && j$('.optionsPrice'+i+' option:selected').index()==0){
+                            validated = false;
+                            document.getElementById('paymentErrorBox').style.display = "block";
+                            document.getElementById('paymentErrorMessage').innerHTML = 'Options are available!!! Please select.';
+                            j$('.optionsPrice'+i).focus();
+                            break;
+                        }
+                        if(j$('.schemePrice'+i).children('option').length> 1 && j$('.schemePrice'+i+' option:selected').index()==0){
+                            validated = false;
+                            document.getElementById('paymentErrorBox').style.display = "block";
+                            document.getElementById('paymentErrorMessage').innerHTML = 'Scheme are available!!! Please select.';
+                            j$('.schemePrice'+i).focus();
+                            break;
+                        }
+                    }
+                }
+            }else{
+                validated = false;
+                document.getElementById('paymentErrorBox').style.display = "block";
+                document.getElementById('paymentErrorMessage').innerHTML = 'Payment plan not selected for one or more units. Please select a payment plan for each unit before proceeeding.';   
+            }
+            
+            if(totalDealValue < 15000000.00){
+                var totalInventoryCount = j$('.pp_selected_units').length;
+                for(var i = 0; i < totalInventoryCount; i++){
+                    var requestedPrice = j$('.requestedPrice'+i).val();
+                    var sellingPrice = j$('.sellingPrice'+i).val();
+                    var specialPrice = j$('.specialPrice'+i).val();
+                    var netPrice = j$('.netPrice'+i).val();
+                    if(requestedPrice < netPrice){
+                        validated = false;
+                        document.getElementById('paymentErrorBox').style.display = "block";
+                        document.getElementById('paymentErrorMessage').innerHTML = 'Requested price cannot be less than the net price.';
+                        break;
+                    }
+                }   
+            }
+            if(validated){
+                //selectPaymentMethod(mode);  
+                
+                if(mode!='draft'){
+                var promotionList = '{"items": [';
+                var totalInventoryCount = j$('.pp_selected_units').length;
+                    for(var i = 0; i < totalInventoryCount; i++){
+                        var promotionPrice = j$('.promotionPrice'+i+' option:selected').text();
+                        var campaignPrice = j$('.campaignPrice'+i+' option:selected').text();
+                        var optionsPrice = j$('.optionsPrice'+i+' option:selected').text();
+                        var schemePrice = j$('.schemePrice'+i+' option:selected').text();
+                        var unitIDRef = j$('.unitidref'+i).val();
+                        var dealsr = j$('.dealsr'+i).val();
+                        
+                        var templateIdSN = j$('.templateIdSN'+i).val();
+                        var templateIdCN = j$('.templateIdCN'+i).val();
+                        var templateIdPN = j$('.templateIdPN'+i).val();
+                        var templateIdOP = j$('.templateIdOP'+i).val();
+                        
+                        var templateIdOP1 = j$('.templateIdOP1'+i).val();
+                        var templateIdOP2 = j$('.templateIdOP2'+i).val();
+                        var templateIdOP3 = j$('.templateIdOP3'+i).val();
+                        var templateIdOP4 = j$('.templateIdOP4'+i).val();
+                        var templateIdOP5 = j$('.templateIdOP5'+i).val();
+                        var currencyCode = j$('.currencyCode'+i).val();
+                        var TokenAmountApprovalStatus = j$('.TokenAmountApprovalStatus'+i).val();
+                        
+                        
+                        
+                        var netPriceVal = j$('.netPrice'+i).val();
+                        //var CMPricePerSqftAfter = j$('.CMPricePerSqftAfter'+i).val();
+                        var CMPricePerSqftAfter = j$('.CM_Price'+i).val();
+                        var CMPricePerSqftAfterUpdated = 0.0;
+                        
+                        if(CMPricePerSqftAfter != undefined && CMPricePerSqftAfter != '' && (!isNaN(CMPricePerSqftAfter))){
+                            if(CMPricePerSqftAfter > 0.0){
+                                CMPricePerSqftAfterUpdated = CMPricePerSqftAfter;
+                            }else{
+                                CMPricePerSqftAfterUpdated = 0.0;
+                            }
+                        }
+                        
+                        
+                        if(promotionPrice == '-- Select Promotion --'){
+                            promotionPrice = ' - ';
+                        }
+                        if(campaignPrice == '-- Select Campaign --'){
+                            campaignPrice = ' - ';
+                        }
+                        if(optionsPrice == '-- Select Option --'){
+                            optionsPrice = ' - ';
+                        }
+                        if(schemePrice == '-- Select Scheme --'){
+                            schemePrice = ' - ';
+                        }
+                       
+                        promotionList = promotionList + '{'
+                            +'"currencyCode": "'+currencyCode+'",'
+                            +'"dealSR": "'+dealsr+'",'
+                            +'"TokenAmountApprovalStatus": "'+TokenAmountApprovalStatus+'",'
+                            +'"unitIDRef": "'+unitIDRef+'",'
+                            +'"promotionName": "'+promotionPrice.split(/-(.+)/)[0]+'",'
+                            +'"promotionValue": "'+promotionPrice.split(/-(.+)/)[1]+'",'
+                            +'"campaignName": "'+campaignPrice.split(/-(.+)/)[0]+'",'
+                            +'"campaignValue": "'+campaignPrice.split(/-(.+)/)[1]+'",'
+                            +'"optionsName": "'+optionsPrice.split(/-(.+)/)[0]+'",'
+                            +'"optionsValue": "'+optionsPrice.split(/-(.+)/)[1]+'",'
+                            +'"schemeName": "'+schemePrice.split(/-(.+)/)[0]+'",'
+                            +'"schemeValue": "'+schemePrice.split(/-(.+)/)[1]+'",'
+                            +'"templateIdSN": "'+templateIdSN+'",'
+                            +'"templateIdCN": "'+templateIdCN+'",'
+                            +'"templateIdPN": "'+templateIdPN+'",'
+                            +'"templateIdOP": "'+templateIdOP+'",'
+                            
+                            +'"templateIdOP1": "'+templateIdOP1+'",'
+                            +'"templateIdOP2": "'+templateIdOP2+'",'
+                            +'"templateIdOP3": "'+templateIdOP3+'",'
+                            +'"templateIdOP4": "'+templateIdOP4+'",'
+                            +'"templateIdOP5": "'+templateIdOP5+'",'
+                            
+                            +'"netPriceVal": "'+netPriceVal+'",'
+                            +'"CMPricePerSqftAfter": "'+CMPricePerSqftAfterUpdated+'"'
+                        +'},';  
+                        
+                    }
+                    
+                    promotionList = promotionList.replace(/,\s*$/, "");
+                    promotionList = promotionList + ']}';
+                    
+                        Promofunction(promotionList);
+
+                    
+                } //draft if
+                
+                setTimeout(function(){
+                    selectPaymentMethod(mode);
+                }, 2000);
+            }
+            
+            /* If validated then call the payment method selection.*/
+                /*
+                if(validated){
+                        selectPaymentMethod(mode);
+                }
+                */
+            }
+            
+    </script>
+</apex:component>

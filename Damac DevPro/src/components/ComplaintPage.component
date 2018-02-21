@@ -1,0 +1,585 @@
+<apex:component controller="ComplaintController" allowDML="true">
+	<apex:attribute name="accountId" description="This is the customer's(account) Id" type="String" required="true" assignTo="{!selectedAcc}"/>
+	<section class="main-content-section">
+		<apex:inputHidden value="{!crfAttachmentBody}" id="ComplaintCRFAttachBody"/>
+		<apex:inputHidden value="{!crfAttachmentName}" id="ComplaintCRFAttachName"/>
+		<apex:inputHidden value="{!attachment1Body}" id="ComplaintAttachment1Body"/>
+		<apex:inputHidden value="{!attachment1Name}" id="ComplaintAttachment1Name"/>
+		<apex:inputHidden value="{!attachment2Body}" id="ComplainAttachment2Body"/>
+		<apex:inputHidden value="{!attachment2Name}" id="ComplaintAttachment2Name"/>
+		<!--div class="wrapper"-->
+            <!--div class="row"-->
+				<div>
+                    <section id="">
+                        <div class="well">
+                            <h4>
+                                Complaints
+                            </h4>
+                            <!--div class="row">
+				                <div class="col-lg-6">
+				                    <div class="form-group">
+				                        <label>Select Customer</label>
+				                        <select class="form-control complaintInputfield" id="selectprimaryCustomerComplaint" onchange="return updateComplaintUnitList(this);">
+				                            <option value="none">--Select Customer--</option>
+				                            <apex:repeat value="{!accountsList}" var="a">
+				                                <option value="{!a.Id}">{!a.Name}</option>
+				                            </apex:repeat>
+				                        </select>
+				                    </div>
+				                </div>
+				            </div-->
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <apex:outputPanel id="ComplaintUnitPanel">
+		                                <div class="form-group">
+		                                	<label>Select Unit for complaint</label>
+									                    <select class="form-control" id="complaintSelectedBookingUnit" onchange="displayUnitDetails(this);">
+									                        <option value="none">--Select Unit--</option>
+									                        <apex:repeat value="{!bookingUnitList}" var="unit">
+									                            <option value="{!unit.Id}">{!unit.Unit_Details__c}</option>
+									                        </apex:repeat>
+									                    </select>
+					                    </div>
+					                </apex:outputPanel>
+                                </div>
+                                <!--div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Mode of Request</label>
+                                        <apex:inputField value="{!complaintCaseObj.Origin}" styleClass="form-control"/>
+                                    </div>
+                                </div-->
+                            </div>
+                            <br/>
+                            <div class="row" id="complaintUnitDetailDisplayPanel" style="display:none;">
+			                			<apex:outputPanel id="complaintUnitDetailPanel">
+				                    <div class="col-lg-8">
+				                        <ul class="nav nav-pills">
+				                            <li role="presentation" class="active"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a></li>
+				                            <li role="presentation"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a></li>
+				                            <li role="presentation"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a></li>
+				                            <li role="presentation"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a></li>
+				                        </ul>
+
+
+
+				                        <div class="tab-content">
+				                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+				                                <div class="row">
+				                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+				                                        <table class="paymentDue table" cellpadding="10" width="100%">
+				                                            <col width="40%"/>
+				                                            <col width="60%"/>
+
+				                                            <tbody>
+				                                                <tr>
+				                                                    <td><b>Project</b></td>
+				                                                    <td>{!bookingUnitDetails.Inventory__r.Property__r.Name}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Project City</b></td>
+				                                                    <td>{!bookingUnitDetails.Inventory__r.Property_City__c}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Bedroom Type</b></td>
+				                                                    <td>{!bookingUnitDetails.Bedroom_Type__c}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+				                                                    <td>{!bookingUnitDetails.Unit_Type__c}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Permitted Use</b></td>
+				                                                    <td>{!bookingUnitDetails.Permitted_Use__c}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Ready/Off-plan</b></td>
+				                                                    <td>{!bookingUnitDetails.Unit_s_Current_Status__c}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Rental Pool</b></td>
+				                                                    <td>{!bookingUnitDetails.Rental_Pool_Status__c}</td>
+				                                                </tr>
+				                                            </tbody>
+				                                        </table>
+				                                    </div>
+
+				                                </div>
+				                            </div>
+				                            <div class="tab-pane fade in" role="tabpanel" id="plan2">
+				                                <div class="row">
+				                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+				                                        <table class="paymentDue table" cellpadding="10" width="100%">
+				                                            <col width="40%"/>
+				                                            <col width="60%"/>
+				                                            <tbody>
+				                                                <tr>
+				                                                    <td><b>Dispute</b></td>
+				                                                    <td>Yes</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Enforcement</b></td>
+				                                                    <td>Yes</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Litigation</b></td>
+				                                                    <td>No</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Mortgage</b></td>
+				                                                    <td>No</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Court Case</b></td>
+				                                                    <td>No</td>
+				                                                </tr>
+				                                            </tbody>
+
+
+				                                        </table>
+				                                    </div>
+
+				                                </div>
+				                            </div>
+				                            <div class="tab-pane fade in" role="tabpanel" id="plan3">
+				                                <div class="row">
+				                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+				                                        <table class="paymentDue table" cellpadding="10" width="100%">
+				                                            <col width="40%"/>
+				                                            <col width="60%"/>
+
+				                                            <tbody>
+				                                                <tr>
+				                                                    <td><b>OQOOD Registered</b></td>
+				                                                    <td>{!IF(bookingUnitDetails.OQOOD_Reg_Flag__c = TRUE, 'Yes', 'No')}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Agreement Status</b></td>
+				                                                    <td>Output Text</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>Under Termination</b></td>
+				                                                    <td>Output Text</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>FTL sent</b></td>
+				                                                    <td>Output Text</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>EHO flag</b></td>
+				                                                    <td>{!IF(bookingUnitDetails.Early_Handover__c = TRUE, 'Yes', 'No')}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>HO flag</b></td>
+				                                                    <td>{!IF(bookingUnitDetails.Handover_Complete__c = TRUE, 'Yes', 'No')}</td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>PCC</b></td>
+				                                                    <td>Output Text</td>
+				                                                </tr>
+
+				                                            </tbody>
+				                                        </table>
+				                                    </div>
+
+				                                </div>
+				                            </div>
+				                            <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+				                                <div class="row">
+				                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+				                                        <table class="paymentDue table" cellpadding="10" width="100%">
+				                                            <col width="40%"/>
+				                                            <col width="60%"/>
+
+				                                            <tbody>
+				                                                <tr>
+				                                                    <td><b>SR1</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>SR2</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>SR3</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+
+
+				                                            </tbody>
+				                                        </table>
+
+				                                        <br />
+				                                        <table class="paymentDue table" cellpadding="10" width="100%">
+				                                            <col width="40%"/>
+				                                            <col width="60%"/>
+				                                            <thead>
+				                                                <th colspan="2">Closed SRs</th>
+				                                            </thead>
+				                                            <tbody>
+				                                                <tr>
+				                                                    <td><b>SR1</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>SR2</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+				                                                <tr>
+				                                                    <td><b>SR3</b></td>
+				                                                    <td><a href="">View SR</a></td>
+				                                                </tr>
+
+
+				                                            </tbody>
+				                                        </table>
+				                                    </div>
+
+				                                </div>
+				                            </div>
+				                        </div>
+				                    </div>
+				                    <div class="col-lg-4">
+				                        <h5>Additional Information</h5>
+				                        <div class="details">
+				                            <div class="row detailHeading">
+				                                <div class="col-lg-6 col-md-12">
+				                                    <h6>Unit Price (AED)</h6>
+				                                    <h4>1500000</h4>
+				                                </div>
+				                                <div class="col-lg-6 col-md-12">
+				                                    <h6>% Received</h6>
+				                                    <h4>24%</h4>
+				                                </div>
+				                            </div>
+				                            <div class="row">
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Outstanding</h6>
+				                                        <h5></h5>
+				                                    </div>
+				                                </div>
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>No. of times customer defaulted</h6>
+				                                        <h5></h5>
+				                                    </div>
+				                                </div>
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Portfolio Value</h6>
+				                                        <h5></h5>
+				                                    </div>
+				                                </div>
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Earlier Complaints</h6>
+				                                        <h5></h5>
+				                                    </div>
+				                                </div>
+
+				                            </div>
+				                        </div>
+				                        <!--div class="details">
+				                            <div class="row detailHeading">
+				                                <div class="col-lg-6 col-md-12">
+				                                    <h6>Unit Price (AED)</h6>
+				                                    <h4>{!bookingUnitDetails.Unit_Selling_Price_AED__c}</h4>
+				                                </div>
+				                                <div class="col-lg-6 col-md-12">
+				                                    <h6>% Received</h6>
+				                                    <h4>24%</h4>
+				                                </div>
+				                            </div>
+				                            <div class="row">
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Overdue</h6>
+				                                        <h5>{!bookingUnitDetails.DP_Overdue__c}</h5>
+				                                    </div>
+				                                </div>
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Under Assignment?</h6>
+				                                        <h5>500000</h5>
+				                                    </div>
+				                                </div>
+				                                <div class="col-lg-6 col-sm-6 col-xs-6">
+				                                    <div class="infoBoxes">
+				                                        <h6>Default?</h6>
+				                                        <h5>Yes</h5>
+				                                    </div>
+				                                </div>
+
+				                            </div>
+				                        </div-->
+				                    </div>
+				                </apex:outputPanel>
+				            </div>
+                        </div>
+                    </section>
+
+
+                    <section id="">
+                        <div class="well">
+                            <h4>Enter Details
+                                <span class="btn-group">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="fa fa-download"></i> Documents
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="#">View CRF</a></li>
+                                        <li><a href="#">Download CRF</a></li>
+                                        <li role="separator" class="divider"></li>
+                                        <li><a href="#">Download Statement of Account</a></li>
+                                    </ul>
+                                </span>
+                            </h4>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Complaint Type</label>
+                                        <apex:inputField value="{!complaintCaseObj.Complaint_Type__c}" id="complaintType" onchange="isComplaintFormComplete();" styleClass="form-control complaintInputfield"/>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        <apex:inputField value="{!complaintCaseObj.Description}" id="complaintDescription" onchange="isComplaintFormComplete();" styleClass="form-control complaintInputfield"/>
+                                    </div>
+                                </div>
+                            </div>
+
+														<div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Complaint Sub-Type</label>
+                                        <apex:inputField value="{!complaintCaseObj.Complaint_Sub_Type__c}" id="complaintSubType" onchange="isComplaintFormComplete();" styleClass="form-control complaintInputfield"/>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                        <span class="btn btn-primary btn-file">
+                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="complaintAttach1File" onchange="attachComplaintFile1(this);"/>
+                                        </span>
+                                        <div>
+                                            <span class="fileupload-preview"></span>
+                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                        </div>
+                                    </div>
+                                    <label>Attachment 1</label>
+                                </div>
+                                <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                        <span class="btn btn-primary btn-file">
+                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="complaintAttach2File" onchange="attachComplaintFile2(this);"/>
+                                        </span>
+                                        <div>
+                                            <span class="fileupload-preview"></span>
+                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                        </div>
+                                    </div>
+                                    <label>Attachment 2</label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+
+                    <section id="">
+                        <div class="well">
+                            <h4>Upload CRF</h4>
+
+
+                            <div class="row">
+                                <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                    <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                        <span class="btn btn-primary btn-file">
+                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file" id="complaintCRFFile" onchange="attachComplaintCRFFile(this);"/>
+                                        </span>
+                                        <div>
+                                            <span class="fileupload-preview"></span>
+                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                        </div>
+                                    </div>
+                                    <label>Upload Signed CRF</label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <span class="pull-right">
+										<button class="btn btn-sm btn-success" id="submitComplaintSRButton" onclick="submitComplaintCase(event);" disabled="disabled">Submit SR</button>
+                                    </span>
+									<span class="pull-right">
+                                        <button class="btn btn-sm btn-success" onclick="saveComplaintCaseDraft(event);">Save Draft</button>
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+                </div>
+            <!--/div-->
+
+        <!--/div-->
+
+    </section>
+
+    <apex:actionFunction action="{!getUpdatedUnitDetails}" status="blockUI" name="getUpdatedUnitDetails" reRender="complaintUnitDetailPanel">
+				<apex:param name="bookingUnitId" value="" assignTo="{!selectedBookingUnitId}" />
+    </apex:actionFunction>
+    <apex:actionFunction action="{!getUnitList}" status="blockUI" name="getUnitList" reRender="ComplaintUnitPanel">
+    </apex:actionFunction>
+
+		<apex:actionFunction action="{!saveComplaintCase}" status="blockUI"  name="saveComplaintCase"  reRender="complaintUnitDetailPanel"/>
+		<apex:actionFunction action="{!complaintSubmitCase}" status="blockUI" name="complaintSubmitCase" reRender="complaintUnitDetailPanel"/>
+
+    <script>
+
+    	
+    	$(document).ready(function(){
+			getUnitList();
+		});
+
+    	function displayUnitDetails(e){
+		    	if(e.value == 'none'){
+		            $('#complaintUnitDetailDisplayPanel').hide(900);
+		        }
+		        else{
+		            $('#complaintUnitDetailDisplayPanel').show(900);
+		            getUpdatedUnitDetails(e.value);
+		        }
+						isComplaintFormComplete();
+			}
+
+	    /*function updateComplaintUnitList(e){
+        	getUnitList(e.value);
+        	isComplaintFormComplete();
+					return false;
+   		}*/
+
+
+			function attachComplaintCRFFile(e){
+				var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=ComplaintCRFAttachName]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attachCRFFile');
+                console.log(blobfile);
+                $('[id$=ComplaintCRFAttachBody]').val(blobfile);
+            }
+        }
+
+				isComplaintFormComplete();
+			}
+
+			function attachComplaintFile1(e){
+				var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=ComplaintAttachment1Name]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attach1File');
+                console.log(blobfile);
+                $('[id$=ComplaintAttachment1Body]').val(blobfile);
+            }
+        }
+			}
+
+			function attachComplaintFile2(e){
+				var filename = e.value;
+        if( filename != '' ) {
+            $('[id$=ComplaintAttachment2Name]').val(filename);
+            var fbody = e.files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(ev) {
+                var blobfile = window.btoa(this.result);
+                console.log('attach2File');
+                console.log(blobfile);
+                $('[id$=ComplainAttachment2Body]').val(blobfile);
+            }
+        }
+			}
+
+			function saveComplaintCaseDraft(event){
+				event.preventDefault();
+				if(validateComplaintCase()){
+					saveComplaintCase();
+				}
+			}
+
+			function submitComplaintCase(event){
+				event.preventDefault();
+				if(validateComplaintCase()){
+					complaintSubmitCase();
+				}
+			}
+
+			function validateComplaintCase(){
+
+				/*if($('#selectprimaryCustomerComplaint').val() == 'none' || $('#selectprimaryCustomerComplaint').val() == ''){
+					alert('Please select a customer');
+					return false;
+				}*/
+
+				if($('#complaintSelectedBookingUnit').val() == 'none' || $('#complaintSelectedBookingUnit').val() == ''){
+					alert('Please select a unit');
+					return false;
+				}
+
+				if( $('[id$=complaintType]').val() == '--None--' || $('[id$=complaintType]').val() == '' ){
+					alert('Please select a complaint type');
+					return false;
+				}
+
+				if( $('[id$=complaintDescription]').val() == '' ){
+					alert('Please enter a description');
+					return false;
+				}
+
+				return true;
+			}
+
+			function isComplaintFormComplete(){
+					var formComplete = true;
+					$('.complaintInputfield').each(function(n, obj){
+						console.log(obj.value);
+						if( obj.type == 'select-one' && ( obj.value == 'none' || obj.value == '--None--' || obj.value == '') ){
+							formComplete = false;
+						}
+
+						if( obj.type == 'textarea' && isEmptyOrSpaces( obj.value ) ){
+							formComplete = false;
+						}
+
+					});
+
+					if( formComplete  ){
+						$('#submitComplaintSRButton').removeAttr('disabled');
+					} else {
+						$('#submitComplaintSRButton').attr('disabled', 'disabled');
+					}
+			}
+
+			function isEmptyOrSpaces(str){
+			    return $.trim( str ) == '' || str === null;
+			}
+
+    </script>
+</apex:component>

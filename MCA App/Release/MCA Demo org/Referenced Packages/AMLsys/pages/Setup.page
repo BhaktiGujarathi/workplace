@@ -1,0 +1,60 @@
+<apex:page controller="aml.SetupController" action="{!init}" tabStyle="Setup__tab">
+	
+	<apex:sectionHeader subtitle="Setup and Settings" title="Anti Money Laundering"/>
+  
+	<apex:outputpanel id="MessagesContainer">
+		<apex:pageMessages />
+	</apex:outputpanel>
+	
+	<p>    
+    {!$Label.Setup_Instructions}
+  </p>
+
+	<apex:form >
+		
+		<!-- License Type -->
+		<apex:pageBlock title="License Type">
+			<apex:pageBlockSection columns="4" title="Installed License">
+				<apex:outputLabel value="Installed license:" for="licenseName" styleclass="labelCol" /> <apex:outputText id="licenseName" value="{!LicenseName}"/>			
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+
+		<!-- EXISTING SETUP -->
+		<apex:pageBlock title="Business Profile" rendered="{!NOT(ISBLANK(app_setup.aml__Selected_IndustryID__c))}">
+			<apex:pageBlockButtons location="bottom">
+	      <apex:commandButton value="Request rules definition update" action="{!request_update}"/>
+	      <apex:commandButton value="Reset all settings" action="{!reset_confirmation}"/>
+	    </apex:pageBlockButtons>
+			<apex:pageBlockSection columns="1" title="Hierarchy Rules Definitions">
+				<apex:outputField value="{!app_setup.aml__Selected_Industry__c}"/>			
+				<apex:outputField value="{!app_setup.aml__Selected_Jurisdiction__c}"/>			
+				<apex:outputField value="{!app_setup.aml__Last_API_update__c}"/>			
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+
+		<!-- INDUSTRY/JURISDICTION NOT DEFINED -->
+		<apex:pageBlock title="Business Profile" rendered="{!ISBLANK(app_setup.aml__Selected_IndustryID__c)}">
+			<apex:pageBlockButtons location="bottom">
+	      <apex:commandButton value="Configure a business profile" action="{!fetchDefinitions}" rendered="{!NOT(ISBLANK(app_setup.aml__LicenseHash__c))}"/>	      
+	    </apex:pageBlockButtons>
+			<apex:pageBlockSection columns="2" title="Hierarchy Rules Definitions">
+				<apex:outputpanel rendered="{!NOT(ISBLANK(app_setup.aml__LicenseHash__c))}">Oops... looks like there is no Business Profile defined yet. Try to configure one!</apex:outputpanel>
+
+				<apex:outputpanel rendered="{!ISBLANK(app_setup.aml__LicenseHash__c)}">No license detected</apex:outputpanel>
+
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+
+		<!-- AUDIT TRACE -->
+		<apex:pageBlock title="Audit Trace">
+			<apex:pageBlockButtons location="bottom">
+	      <apex:commandButton value="Activate" action="{!save_logger_on}" rendered="{!NOT(logger_setup.aml__Logger_Enabled__c)}"/>
+	      <apex:commandButton value="De-Activate" action="{!save_logger_off}" rendered="{!logger_setup.aml__Logger_Enabled__c}"/>
+	    </apex:pageBlockButtons>
+			<apex:pageBlockSection columns="1">
+				<apex:outputField value="{!logger_setup.aml__Logger_Enabled__c}"/>			
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+	</apex:form>
+	
+</apex:page>

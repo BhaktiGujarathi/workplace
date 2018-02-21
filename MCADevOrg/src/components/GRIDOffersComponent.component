@@ -1,0 +1,344 @@
+<apex:component controller="GRIDOffersController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!offrEditAllFlag}"/>
+    <apex:includeScript value="/support/console/26.0/integration.js"/>    
+    <apex:includeScript value="/soap/ajax/29.0/connection.js"/>
+    
+    <apex:form id="Offersform" styleClass="records">
+        <apex:outputLabel rendered="{!offerIsRefrenceField}">Please remove '{!offerRefrenceFieldLabel}' field from the 'GRIDOfferFieldSet' field set, as referenced fields are not allowed.</apex:outputLabel>
+        <apex:outputPanel id="offrtable" title="Offer" rendered="{!NOT(offerIsRefrenceField)}">
+        <script type="text/javascript">
+             
+            t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='offerTab_lbl']").text( 'Offers'+' ({!offrRecordCount})');
+                    
+                    t$('#offersTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                  initCallOffer();
+                }
+                
+                );
+            //save functionality
+          
+            
+        </script> 
+        <apex:pageBlock mode="inlineEdit">
+            
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Offer__c.createable}">
+                    <input type="button" onclick="runNewOffer()" class="{!if(offerisDisable,'btnDisabled disBtn','btn')}" value="New Offer" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!AND($ObjectType.Offer__c.updateable, NOT(offrEditAllFlag))}"> 
+                    <apex:CommandButton action="{!editAllOffers}" value="Edit All" disabled="{!offerisDisable}" rerender="offrtable" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Offer__c.updateable,$ObjectType.Offer__c.createable)}">
+                    <input type="button" onclick="runSaveOffers()" class="{!if(offerisDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+                </apex:outputpanel>
+                <apex:CommandButton action="{!refreshOffers}" value="Refresh" disabled="{!offerisDisable}" rerender="offrtable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshOffers}" value="Cancel" disabled="{!offerisDisable}" rerender="offrtable" status="loadingPanel" immediate="true" />
+
+                <apex:CommandButton action="{!refreshOffers}" onclick="sendOffers()" value="Email Offers" disabled="{!offerisDisable}" rerender="offrtable" status="loadingPanel" immediate="true"/>
+                <apex:CommandButton action="{!refreshOffers}" onclick="dewPage()" value="Deal Entry Wizard" disabled="{!offerisDisable}" rerender="offrtable" status="loadingPanel" immediate="true"/>
+            </apex:pageBlockButtons>
+           
+            <apex:pageMessages id="offrgMsgId" escape="false" />
+              
+               
+                <table  class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="offersTableInner">
+                    <tbody>
+                        <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <th>Submission</th>
+                            <apex:repeat value="{!offrFieldsetList}" var="offrField">
+                            <th>
+                                <div>
+                                    <apex:outputLabel value="{!offrField.label}"/>
+                                    <apex:OutputPanel rendered="{!AND(offrField.type != 'textarea', offrField.type != 'multipicklist', offrField.type != 'phone')}"> 
+                                        <img src="{!IF(offrSortExprFieldApi==offrField.fieldPath,IF(offrSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="{!offrField.fieldPath}" class="sorting" onclick="sortCallOffers('{!offrField.type}');" />
+                                    </apex:OutputPanel>
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        <apex:repeat value="{!offrWrapperLst}" var="offrWraper">
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!offrWraper.offrIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!offrWraper.offr.Id}" target="blank" rendered="{!NOT(ISBLANK(offrWraper.offr.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!AND(NOT(ISBLANK(offrWraper.offr.Id)), $ObjectType.Offer__c.deletable)}"/>
+                                <apex:commandLink action="{!deleteOffer}" value="Del" rerender="offrtable" rendered="{!AND(NOT(ISBLANK(offrWraper.offr.Id)), $ObjectType.Offer__c.deletable)}" status="loadingPanel">
+                                    <apex:param name="offrIndexToRemove" value="{!offrWraper.offrIndex}" assignTo="{!offrIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            <apex:commandLink action="{!deleteOffer}" value="Remove" rerender="offrtable" rendered="{!(ISBLANK(offrWraper.offr.Id))}"  styleClass="removeRow" status="loadingPanel" immediate="true">
+                                <apex:param name="offrIndexToRemove" value="{!offrWraper.offrIndex}" assignTo="{!offrIndexToRemove}"></apex:param>
+                            </apex:commandLink>
+                       </td>
+                       <!-- Picklist for FO-1387 -->
+                      <td> 
+                           
+                          <apex:selectList size="1" value="{!offrWraper.offrSubmissionValue}" rendered="{!OR(IF(offrWraper.offrEdit = true, true, false),ISBLANK(offrWraper.offr.Id))}"> 
+                               <apex:selectoptions value="{!offrSubmissionOptions}"/>
+                           </apex:selectList>
+                           <apex:outputPanel rendered="{!IF(offrWraper.offrEdit = false, true, false)}" >
+                           <apex:outputField value="{!offrWraper.offr.Submission__c}"  rendered="{!AND(IF(offrWraper.offrEdit = false, true, false),NOT(ISBLANK(offrWraper.offr.Id)))}"> 
+                           </apex:outputField>
+                           </apex:outputPanel>
+                       </td> 
+                       
+                                              
+                       <!--End of FO-1387 -->
+                       <td  style="display: none">
+                           <apex:inputField value="{!offrWraper.offr['Opportunity__c']}" />                               
+                       </td>                   
+                            <apex:repeat value="{!offrFieldsetList}" var="offrfield">
+                                <td>
+                                    <apex:outputField value="{!offrWraper.offr[offrfield]}" rendered="{!AND(IF(offrWraper.offrEdit = false, true, false),NOT(ISBLANK(offrWraper.offr.Id)))}" />
+                                    <apex:inputField value="{!offrWraper.offr[offrfield]}" rendered="{!OR(IF(offrWraper.offrEdit = true, true, false),ISBLANK(offrWraper.offr.Id))}"/>
+                                </td>
+                            </apex:repeat>  
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    
+                    <tfoot>
+                        <tr class = "headerRow">
+                            <td><b>Max</b>
+                            <br />
+                            <b>Min</b></td>
+                            <td></td>
+                            <td></td>
+                            <apex:repeat value="{!offrFieldsetList}" var="offrfield">
+                                <td>
+                                    <!-- apex:outputText value="{!offrFieldToMaxMap[offrfield.fieldPath]}" rendered="{!offrFieldToMaxMap[offrfield.fieldPath] != -999.999}" / -->
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}" rendered="{!AND(offrFieldToMaxMap[offrfield.fieldPath] != -999.999,offrfield.type=='currency')}" >
+                                     <apex:param value="{!offrFieldToMaxMap[offrfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" rendered="{!AND(offrFieldToMaxMap[offrfield.fieldPath] != -999.999,offrfield.type!= 'currency')}" >
+                                     <apex:param value="{!offrFieldToMaxMap[offrfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                    <br />
+                                    <!-- apex:outputText value="{!offrFieldToMinMap[offrfield.fieldPath]}" rendered="{!offrFieldToMinMap[offrfield.fieldPath] != -999.999}" / -->
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}" rendered="{!AND(offrFieldToMinMap[offrfield.fieldPath] != -999.999,offrfield.type== 'currency')}" >
+                                     <apex:param value="{!offrFieldToMinMap[offrfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" rendered="{!AND(offrFieldToMinMap[offrfield.fieldPath] != -999.999,offrfield.type!= 'currency')}" >
+                                     <apex:param value="{!offrFieldToMinMap[offrfield.fieldPath]}" />
+                                    </apex:outputText>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                {!IF((offrOffsetsize + 1) > offrRecordCount, IF(offrRecordCount - offrBlockSize <= 0, 0, offrRecordCount - offrBlockSize), offrOffsetsize + 1)} - {!offrWrapperLst.size + offrOffsetsize} of {!offrRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+                    <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="offrtable" action="{!beginningOffers}" status="loadingPanel" rendered="{!IF(offrOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="offrtable" action="{!previousOffers}"  status="loadingPanel" rendered="{!IF(offrOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="offrtable" action="{!nextOffers}" status="loadingPanel" rendered="{!IF(offrWrapperLst.size + offrOffsetsize < offrRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="offrtable" action="{!endOffers}" status="loadingPanel" rendered="{!IF(offrWrapperLst.size + offrOffsetsize < offrRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+        </apex:pageBlock>
+                      
+            <apex:inputHidden value="{!offrSortExpression}" id="offrSortHiddencriterian"/>
+            <apex:inputHidden value="{!offrSortDirection}" id="offrSortHiddenOrder"/>
+            <apex:inputHidden value="{!offrSortExprFieldApi}" id="offrSortFieldApi"/>
+        </apex:outputPanel>
+        
+        <apex:actionFunction action="{!newOffer}" name="newOffer" rerender="offrtable" status="loadingPanel"/>
+        <apex:actionFunction action="{!saveOffers}" name="saveOffers" rerender="offrtable" status="loadingPanel"/>
+        <apex:actionFunction action="{!sortOffers}" name="sortAllOffers" rerender="offrtable" status="loadingPanel" >
+            <apex:param name="offrTypeParam" value="" /> 
+        </apex:actionFunction>
+        
+    </apex:form>
+        <script>
+        var mcaNamePrefixValueOffer = (('{!$Label.MCANamePrefix}' == 'McaApp__')? '{!$Label.MCANamePrefix}': '');
+        var isInConsoleOffer = false;
+        var tabIdOffer;
+        
+        function runNewOffer() 
+        {
+            setTimeout(function() 
+            {               
+                newOffer();
+            }, 100);
+        }
+        
+        function runSaveOffers() 
+        {
+            setTimeout(function() 
+            {               
+                saveOffers();
+            }, 100);
+        }
+
+        function initCallOffer()
+        {
+            setIsConsoleOffer();
+            getFocusedPrimaryTabIdOffer();
+            
+        }
+        
+        function setIsConsoleOffer() {
+            isInConsoleOffer = sforce.console.isInConsole();
+        }
+        
+        function getFocusedPrimaryTabIdOffer() {
+            sforce.console.getFocusedPrimaryTabId(showTabIdOffer);
+        }
+                
+        var showTabIdOffer = function showTabIdOffer(result) {
+            //Display the tab ID
+            tabIdOffer = result.id;
+        };
+        
+        function openConsoleTabOffer(url, tabLabel) {
+            sforce.console.openPrimaryTab(tabIdOffer, url, true, tabLabel, function(r){});
+            sforce.console.closeTab(tabIdOffer);
+        }
+        
+        
+        
+        function sortCallOffers(offrFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                 var offrElement= event.target;                 
+                 var newoffrSortCol = t$(offrElement).attr("Name"); // new sort field
+                 t$("input[id$='offrSortFieldApi']").val(newoffrSortCol);
+                 var oldoffrSortCol = t$("input[id$='offrSortHiddencriterian']").val();
+                 var indexOffr;
+                 var offrTempSortExpr;
+                 if(newoffrSortCol.endsWith('__c')) 
+                 {
+                     indexOffr = newoffrSortCol.indexOf('__');
+                 }
+                 else if(newoffrSortCol.endsWith('Id'))
+                 {
+                     indexOffr = newoffrSortCol.indexOf('Id');
+                 }
+
+                if(indexOffr != null) {
+                    offrTempSortExpr = newoffrSortCol.substring(0, indexOffr);
+                }
+                else 
+                {
+                    offrTempSortExpr = newoffrSortCol;
+                }
+                 
+               //if(String(newoffrSortCol) == String(oldoffrSortCol))
+               if(oldoffrSortCol.indexOf(offrTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='offrSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='offrSortHiddenOrder']").val("DESC");
+                      t$(offrElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='offrSortHiddenOrder']").val("ASC");
+                      t$(offrElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='offrSortHiddencriterian']").val(newoffrSortCol);                   
+                    sortAllOffers(offrFieldDataType);
+                
+                }
+                else 
+                {
+                    t$("input[id$='offrSortHiddencriterian']").val(newoffrSortCol);
+                    t$("input[id$='offrSortHiddenOrder']").val("ASC");
+                    t$(offrElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllOffers(offrFieldDataType);
+                }
+        }
+        
+       function sendOffers()
+        {           
+            
+            var offers;
+            var url = '{!sendOfferButtonURL}';
+            var result = sforce.connection.query("Select Name, Id, (Select Id, "+mcaNamePrefixValueOffer+"Send__c, "+mcaNamePrefixValueOffer+"Status__c From "+mcaNamePrefixValueOffer+"Offers__r where "+mcaNamePrefixValueOffer+"Send__c = true) From Opportunity o where Id ='{!offrOppId}'");
+            offers = result.getArray("records"); 
+            if(offers.length > 0)
+            {
+                for(var i=0; i<offers.length; i++)
+                {
+                    if(offers[i].get(mcaNamePrefixValueOffer+'Offers__r') != null)
+                    {
+                        if(isInConsoleOffer)
+                        {
+                            url += '&isConsole=1';
+                            openConsoleTabOffer(url, 'OfferWizard');
+                        }
+                        else
+                        {
+                            url += '&isConsole=0';
+                            window.open(url, '_parent');
+                        }
+                    }
+                    else
+                    {
+                        alert('{!$Label.OfferWizard_ErrorMsg}');
+                    }   
+                }
+           }  
+       }
+       function dewPage()
+       {           
+           var submission;
+           var dewURL = '{!dewButtonURL}';
+           var result = sforce.connection.query( 
+           "Select Name, Id from "+mcaNamePrefixValueOffer+"Submission__c where "+mcaNamePrefixValueOffer+"Opportunity__c ='{!offrOppId}'"); 
+           submission = result.getArray("records"); 
+           if('{!offrAccountId}' == '')
+           {      
+               alert('Please associate Opportunity with Account to create Contract');
+           }
+           else 
+           if(submission.size() == 0)
+           {
+               alert('No Submissions or Offers are present for this Opportunity. Please Create Submissions or Offer to enter the Deal Entry Wizard');
+           }
+           else
+           {
+               if(isInConsoleOffer)
+                {
+                    dewURL += '&isConsole=1';
+                    openConsoleTabSubmission(dewURL, 'DealEntryWizard');
+                }
+                else
+                {
+                    dewURL += '&isConsole=0';
+                    window.open(dewURL, '_parent');
+                }
+                             
+           }
+       }
+       </script>
+</apex:component>

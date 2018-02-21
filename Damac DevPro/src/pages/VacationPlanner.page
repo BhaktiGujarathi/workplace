@@ -1,0 +1,131 @@
+<!-------------------------------------------------------------------------------------------------
+* Name               : VacationPlanner.                                                           *
+* Description        : Page used to manage vacation for reporting users.                          *
+* Created Date       : NSI - Vineet                                                               *
+* Created By         : 17/01/2017                                                                 *
+* Last Modified Date :                                                                            *
+* Last Modified By   :                                                                            *
+* ----------------------------------------------------------------------------------------------- *
+* VERSION     AUTHOR      		DATE                                                              *
+* 1.0         NSI - Vineet      17/01/2017                                                        *
+--------------------------------------------------------------------------------------------------> 
+<apex:page controller="VacationPlannerController" title="Vacation Planner" tabStyle="Vacation_Planner__tab"> 
+	<apex:pageMessages id="errorBlock" />
+	<div id="hiddenElementId"></div>
+	<style>
+        .reqErrorMsg{
+            background-color: #ffc;
+            border-style: solid;
+            border-width: 1px;
+            color: #000;
+            padding: 10px 6px 10px 6px;
+            margin: 4px 20px;   
+            border-color: #c00;
+            border-radius: 4px;
+        }
+        .message errorM3{
+            width: 95% !important; 
+        }
+        .message .messageText h4 {
+            font-size: 14px;
+            margin: 0px;
+        }
+        .bPageBlock .detailList .dataCol{
+            width: 55% !important;
+        }
+        /* This is for the full screen DIV */
+        .overlay {
+            background-color: black;
+            cursor: wait;
+            opacity: 0.6;
+            /* Generic for Major browsers */
+            -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=60)";
+            /* IE 5-7 */
+            filter: alpha(opacity = 60);
+            /* Netscape */
+            -moz-opacity: 0.6;
+            /* Safari 1.x */
+            -khtml-opacity: 0.6;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 101;
+            zIndex: 101;
+        }
+        
+        /* This is for the message DIV */
+        .contentDiv {
+            position: fixed;
+            z-index: 102;
+            top: 40%;
+            right: 15%;
+            left: 15%;
+        }
+    </style>
+	<div class="waitingSearchDiv" id="page_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 105; zIndex: 105;"> 
+        <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+            <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+            <span class="waitingDescription">Please Wait...</span>
+        </div>
+    </div>
+    <apex:actionstatus id="status">
+        <apex:facet name="start">
+            <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                    <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                    <span class="waitingDescription">Please Wait...</span>
+                </div>
+            </div>
+        </apex:facet> 
+    </apex:actionstatus>
+    <apex:sectionHeader title="Vacation Planner" subtitle="{!$User.FirstName}'s Team"/>
+	<apex:form >
+		<apex:actionFunction name="searchUsers" action="{!searchUsers}" reRender="errorBlock, leaveDetailsSection" status="status" />
+		<apex:pageBlock tabStyle="Vacation_Planner__tab" id="leaveBlock">
+			<!-- <apex:pageBlockSection rendered="{!userList != NULL && userList.size > 0}" columns="2"> -->
+			<apex:pageBlockSection columns="2" id="leaveSearchSection">
+				<apex:pageBlockSectionItem >
+					<apex:outputLabel value="Search User" for="search_user" />
+					<apex:inputText value="{!userSearchString}" id="search_user" onkeyup="searchUsers();"/>
+				</apex:pageBlockSectionItem>
+				<apex:pageBlockSectionItem >
+					<apex:commandButton value="Search" action="{!searchUsers}" reRender="errorBlock, leaveDetailsSection" status="status" style="margin-left: -125%;"/>
+				</apex:pageBlockSectionItem>
+			</apex:pageBlockSection>
+			<apex:outputPanel id="leaveDetailsSection">
+				<apex:pageBlockSection rendered="{!userList != NULL && userList.size > 0}" columns="1" title="Reporting Users ({!userList.size})" collapsible="false"> 
+					<apex:pageBlockTable value="{!userList}" var="thisUser">
+						<apex:column value="{!thisUser.Name}" />
+						<apex:column headerValue="Leave Start Date">
+							<apex:inputField value="{!thisUser.Leave_Start_Date__c}" /> 
+						</apex:column>
+						<apex:column headerValue="Leave End Date">
+							<apex:inputField value="{!thisUser.Leave_End_Date__c}" />
+						</apex:column>
+						<apex:column headerValue="Leave Type">
+							<apex:inputField value="{!thisUser.Leave_Type__c}" />
+						</apex:column>
+						<apex:column headerValue="Leave Reason">
+							<apex:inputField value="{!thisUser.Leave_Reason__c}" />
+						</apex:column>
+					</apex:pageBlockTable>
+				</apex:pageBlockSection> 
+				<apex:pageBlockSection rendered="{!userList == NULL || (userList != NULL && userList.size == 0)}" columns="1" title="Reporting Users (0)" collapsible="false"> 
+					<apex:pageBlockSectionItem >
+						<apex:outputText value="{!errorMessage}" styleClass="labelCol"/>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+			</apex:outputPanel>
+			<apex:pageBlockButtons location="bottom">
+				<apex:commandButton value="Save" action="{!saveDetails}" reRender="errorBlock, leaveDetailsSection" status="status" rendered="{!userList != NULL && userList.size > 0}"/>
+			</apex:pageBlockButtons>
+		</apex:pageBlock>
+	</apex:form>
+	<script>
+        window.onload = function setFocus(){
+            document.getElementById("page_loading").style.display = 'none';
+        }   
+	</script>
+</apex:page>

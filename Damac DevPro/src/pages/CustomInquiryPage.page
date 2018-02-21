@@ -1,0 +1,179 @@
+<apex:page standardcontroller="Inquiry__c" extensions="CustomInquiryPageController" sidebar="false" showHeader="false">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="/soap/ajax/38.0/connection.js"></script>
+<!-- <script src="/soap/ajax/38.0/apex.js"/> -->
+<script type="text/javascript">
+    /*
+    init();
+    function init(){
+        populateMobile(getParameterByName('epn')); 
+    }
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+    var j$ = jQuery.noConflict();
+    sforce.connection.sessionId= '{!$Api.Session_ID}';
+    j$(document).ready(function(){
+        var epn = getParameterByName('epn');
+        var pext = getParameterByName('pext__c');
+        
+        if(pext != '' && pext != null)
+            j$('.userextNo').val(pext);//[id$=ADRESTextBox]
+        if(epn != '' && epn != null){
+            j$('.mobilePhone').val(epn);//[id$=ADRESTextBox]
+            var objectDefinition = sforce.connection.describeSObject("Inquiry__c");
+            splitandPooulateCountryCode(objectDefinition.fields,'Mobile_CountryCode__c',epn);
+        }
+        
+    });
+
+    function getParameterByName(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+            results = regex.exec(location.search);
+        return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+    }
+
+    //Method takes the all fileds and matching field
+    function splitandPooulateCountryCode(objectFields,countrycodeField,mobile){
+        j$.each( objectFields, function( i, fieldName ) {
+            var flag = false;
+            console.log('mobile '+mobile);
+            //picklist field name is matched
+            if(fieldName.name == countrycodeField)
+                j$.each( fieldName.picklistValues, function( i, conuntryCodeVal ) { // field.picklistValues to get the picklist values of field
+                    var countryCodePicklist = conuntryCodeVal.value;
+                    var countryCode = countryCodePicklist.split(': ');//split the picklist value
+                    console.log('countryCodePicklist '+countryCodePicklist);
+                    console.log('countryCode '+countryCode);
+                    if(countryCode.length == 2 && mobile.startsWith(countryCode[1])){//if the list is having size 2
+                        console.log('conuntryCodeVal 1 = '+conuntryCodeVal);
+                        j$('.countryCode').val(countryCodePicklist);//assign country code to mobile
+                        flag = true;
+                        return false;//break inner for loop
+                    }
+                });
+            //break outer for loop
+            if(flag)
+                return false;
+        });
+    }*/
+        
+</script>
+<apex:messages />
+    <apex:sectionheader title="{!$ObjectType.Inquiry__c.label} Edit" subtitle="{!IF(ISNULL(Inquiry__c.Name), 'New Inquiry',Inquiry__c.Name)}"/>
+    <apex:form id="myform">
+        <!-- <apex:actionFunction name="populateMobile" action="{!populateMobile}" reRender="myform" status="myStatus">
+            <apex:param name="encryptedMobile" value="" assignTo="{!encryptedMobile}"/>   
+        </apex:actionFunction> -->
+        <apex:actionStatus id="myStatus">
+            <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                    <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:pageblock mode="edit" title="{!$ObjectType.Inquiry__c.label} Edit">
+            <apex:pageblockbuttons >
+                
+                <apex:commandbutton value="Save" action="{!SaveInquiry}" status="myStatus" reRender="myform,msgBlock" rendered="{!!hideSavebtn}"/>
+                
+                <!--<apex:commandbutton value="Cancel" action="{!Cancel}"/>-->
+            </apex:pageblockbuttons>
+            <apex:pageMessages id="msgBlock"/>
+           
+            <!-- {!encryptedMobile} -->
+            <!-- **********   [Record Type : Inquiry ]   **********  -->
+            
+                <apex:pageblocksection title="Information" showheader="true" columns="2">
+                    <apex:inputfield value="{!inquiry.Title__c}" required="false"/>
+                    <apex:outputfield value="{!inquiry.Assigned_Date__c}" />
+                    <apex:inputfield value="{!inquiry.First_Name__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.Title_Arabic__c}"/>
+                    <apex:inputfield value="{!inquiry.Last_Name__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.First_Name_Arabic__c}" />
+                    <apex:inputfield value="{!inquiry.Nationality__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Last_Name_Arabic__c}" />
+                    <apex:inputfield value="{!inquiry.Preferred_Language__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.Nationality_Arabic__c}" />
+                    <apex:inputfield value="{!inquiry.Passport_Number__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Date_of_Birth__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Passport_Place_of_Issue__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Passport_Expiry_Date__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Company__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Passport_Place_of_Issue_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.All_Activities_Counter__c}"/>
+                    <apex:inputfield value="{!inquiry.Job_Title__c}" required="false"/>
+                </apex:pageblocksection>
+                <apex:pageblocksection title="Organization Details" showheader="true" columns="2">    
+                    <apex:inputfield value="{!inquiry.Organisation_Name__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Organisation_Name_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.CR_Number__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.CR_Registration_Place__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.CR_Registration_Expiry_Date__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.CR_Registration_Place_Arabic__c}" required="false"/>
+                </apex:pageblocksection>
+                <apex:pageblocksection title="Inquiry Status" showheader="true" columns="2">
+                    <apex:inputfield value="{!inquiry.Inquiry_Source__c}" />
+                    <apex:outputfield value="{!inquiry.Inquiry_Channel__c}" />
+                    <apex:outputfield value="{!inquiry.Inquiry_Score__c}" />
+                    <apex:inputfield value="{!inquiry.Campaign__c}" />
+                    <apex:inputfield value="{!inquiry.Comments__c}" />
+                    <apex:inputfield value="{!inquiry.Inquiry_Status__c}" />
+                    <apex:inputfield value="{!inquiry.Property__c}" />
+                    <apex:inputfield value="{!inquiry.Inquiry_Sub_Status__c}" />
+                    <apex:inputfield value="{!inquiry.Type_of_Property_Interested_in__c}" />
+                    <apex:inputfield value="{!inquiry.Budget__c}" />
+                    <apex:inputfield value="{!inquiry.Project__c}" />
+                    <apex:inputfield value="{!inquiry.No_of_Bedrooms__c}" />
+                </apex:pageblocksection>
+                <apex:pageblocksection title="Contact Details" showheader="true" columns="2"> 
+                    <apex:inputfield value="{!inquiry.Mobile_CountryCode__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Phone_Encrypt__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Country_Code_2__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Phone_Encrypt_2__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Country_Code_3__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Phone_Encrypt_3__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Country_Code_4__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Phone_Encrypt_4__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Country_Code_5__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Mobile_Phone_Encrypt_5__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Email__c}" required="true"/>
+                    <apex:inputfield value="{!inquiry.Email_2__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Email_4__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Email_3__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Email_5__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Primary_Contacts__c}" required="true"/>
+                </apex:pageblocksection> 
+                <apex:pageblocksection title="Agent Information" showheader="true" columns="2"> 
+                    <apex:inputfield value="{!inquiry.Agency_Name__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Agent_Email__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Agent_Name__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Agent_Phone__c}" required="false"/>
+                </apex:pageblocksection>
+                <apex:pageblocksection title="Address Details" showheader="true" columns="2">
+                    <apex:inputfield value="{!inquiry.Address_Line_1__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_1_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_2__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_2_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_3__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_3_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_4__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Address_Line_4_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Country__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.Country_Arabic__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.City_new__c}" required="false"/>
+                    <apex:inputfield value="{!inquiry.City_Arabic__c}" required="false"/>
+                </apex:pageblocksection>
+        </apex:pageblock>
+    </apex:form>
+    <!--<center><br/>
+        <i style="font-size:10px;color:#aaa;">Generated By LAYOUT PAGE <a href="http://www.clerisoft.com" target="_blank">[http://www.clerisoft.com]</a> (2008-2014) : Sat Mar 11 2017 02:56:36 GMT+0400 (Arabian Standard Time)</i>
+    </center><br/>-->
+</apex:page>

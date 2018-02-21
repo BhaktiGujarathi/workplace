@@ -1,0 +1,114 @@
+<apex:page controller="PaymentsProcessFieldMappingController" action="{!init}" tabStyle="Processor_Integration__c">
+    <style>
+        .message {
+            margin: 4px 0px !important;
+        }
+        
+        .hidden {
+            display:none;
+        }
+    </style>
+    
+    <script>
+        function enableDisableButtons() {
+            if (document.getElementsByClassName("select-mapping").length > 0) {
+                var checks = document.getElementsByClassName("select-mapping");
+                
+                for (var i = 0; i < checks.length; i++) {
+                    if (checks[i].checked) {
+                        document.getElementsByClassName("delete-mapping")[0].className = document.getElementsByClassName("delete-mapping")[0].className.replace("hidden", "btn");
+                        document.getElementsByClassName("edit-mapping")[0].className = document.getElementsByClassName("edit-mapping")[0].className.replace("btn", "hidden");
+
+                        return;
+                    }
+                }
+
+                document.getElementsByClassName("delete-mapping")[0].className = document.getElementsByClassName("delete-mapping")[0].className.replace("btn", "hidden");
+                document.getElementsByClassName("edit-mapping")[0].className = document.getElementsByClassName("edit-mapping")[0].className.replace("hidden", "btn");
+            }
+        } 
+    </script>
+
+    <apex:sectionHeader title="Processor Field Mappings" />
+    
+    <div class="ptBreadcrumb">
+        &nbsp;«&nbsp;<a href="{!URLFOR($Action.Processor_Integration__c.View, processorIntegration.Id, null,true)}">Back to: {!processorIntegration.Name}</a>
+    </div>
+    <br/>
+    
+    <apex:pageMessages />
+     <apex:form >
+        <apex:actionFunction name="newFieldMapping" action="{!addNewFieldMapping}" rerender="mappingSelection" />  
+        
+        <apex:outputPanel id="mappingSelection" layout="block" >
+            <script>
+                enableDisableButtons(); 
+            </script>
+            <apex:pageBlock title="{!processorIntegration.Name}">
+                <apex:pageBlockButtons location="top">
+                    <apex:commandButton value="Save" action="{!save}" rendered="{!editMode}"/>
+                    <apex:commandButton value="Edit" action="{!editFieldMapping}" styleClass="edit-mapping" rendered="{!NOT(editMode)}"/>
+                    <apex:commandButton value="Delete" action="{!deleteFieldMapping}" styleClass="delete-mapping hidden" />
+                    <apex:commandButton value="Cancel" action="{!cancel}" rendered="{!editMode}"/>
+                </apex:pageBlockButtons>
+                
+                <apex:pageBlockSection columns="1" id="entitiesFields" >
+                    <apex:pageBlockTable id="entities" value="{!mappings}" var="e" >
+                        <apex:column headerValue="" width="20px">
+	                        <apex:commandLink action="{!deleteFieldMapping}" value="Del" id="theCommandLink" onclick="return confirm('Are you sure?');" style="font-size:12px">
+	                            <apex:param name="contIdParam" value="{!e.mapping.Id}" assignTo="{!idDeleteMapping}"/> 
+	                        </apex:commandLink>
+                        </apex:column>
+                        
+                        <apex:column headerValue="CSV Column (Position)" width="40%" style="{!if(e.error, 'border-color: #FF6E6E; border-top-width: thin; border-bottom-width: thin; font-weight: bold; ', '')}">
+                            <apex:selectList value="{!e.columnIndex}" rendered="{!e.edit}" multiselect="false" size="1">
+                                <apex:selectOption itemLabel="-Select-" itemValue="" /> 
+                                <apex:selectOption itemLabel="A" itemValue="1" />   
+                                <apex:selectOption itemLabel="B" itemValue="2" />   
+                                <apex:selectOption itemLabel="C" itemValue="3" />   
+                                <apex:selectOption itemLabel="D" itemValue="4" />   
+                                <apex:selectOption itemLabel="E" itemValue="5" />   
+                                <apex:selectOption itemLabel="F" itemValue="6" />   
+                                <apex:selectOption itemLabel="G" itemValue="7" />
+                                <apex:selectOption itemLabel="H" itemValue="8" />   
+                                <apex:selectOption itemLabel="I" itemValue="9" />   
+                                <apex:selectOption itemLabel="J" itemValue="10" />
+                                <apex:selectOption itemLabel="K" itemValue="11" />  
+                                <apex:selectOption itemLabel="L" itemValue="12" />  
+                                <apex:selectOption itemLabel="M" itemValue="13" />  
+                                <apex:selectOption itemLabel="N" itemValue="14" />  
+                                <apex:selectOption itemLabel="O" itemValue="15" />  
+                                <apex:selectOption itemLabel="P" itemValue="16" />
+                                <apex:selectOption itemLabel="Q" itemValue="17" />  
+                                <apex:selectOption itemLabel="R" itemValue="18" />
+                                <apex:selectOption itemLabel="S" itemValue="19" />
+                                <apex:selectOption itemLabel="T" itemValue="20" />
+                                <apex:selectOption itemLabel="U" itemValue="21" />
+                                <apex:selectOption itemLabel="V" itemValue="22" />
+                                <apex:selectOption itemLabel="X" itemValue="23" />
+                                <apex:selectOption itemLabel="Y" itemValue="24" />
+                                <apex:selectOption itemLabel="Z" itemValue="25" />
+                            </apex:selectList> 
+                            
+                            <apex:outputText value="{!e.columnIndexLetter}" rendered="{!NOT(e.edit)}"/> 
+
+                        </apex:column>
+                        
+                        <apex:column headerValue="Salesforce Field (Payment)" width="500px" style="{!if(e.error, 'border-color: #FF6E6E; border-top-width: thin; border-bottom-width: thin; font-weight: bold; border-right-width: thin;', '')}">
+                            <apex:selectList value="{!e.fieldName}" size="1" multiselect="false" rendered="{!e.edit}">
+                                <apex:selectOptions value="{!e.ObjectFields}" />
+                            </apex:selectList>
+                            <apex:outputText value="{!e.fieldLabel}" rendered="{!NOT(e.edit)}"/> 
+                        </apex:column>
+                    </apex:pageBlockTable>
+                    
+                    <apex:outputPanel rendered="{!editMode}">
+                    	<a href="javascript:;" onclick="newFieldMapping()">Add New Field Mapping</a>
+                    </apex:outputPanel>
+
+                </apex:pageBlockSection>
+            </apex:pageBlock>
+        </apex:outputPanel>
+        
+    </apex:form>
+</apex:page>

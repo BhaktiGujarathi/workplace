@@ -1,0 +1,371 @@
+<apex:page controller="RefundProcessController" tabStyle="Account" sidebar="false">
+ <apex:stylesheet value="{!URLFOR($Resource.SLDS_VF214, 'assets/styles/salesforce-lightning-design-system-vf.css')}" /> 
+ <apex:includeScript value="{!$Resource.jquery191min}"/> 
+    <apex:includeScript value="{!$Resource.jquery191ui}"/> 
+    <apex:includeScript value="{!$Resource.jquery191blockui}"/>
+
+  <script>
+        //$j = jQuery.noConflict();
+        
+        //function to block the whole page
+        function blockPage(){ 
+       
+        // salesforce standard image src="/img/loading32.gif" </br></br><h1>Processing...</h1>
+        $.blockUI({ message: '<div class="slds"><img height="42" width="42" src="{!URLFOR($Resource.SLDS_VF214, 'assets/images/spinners/slds_spinner_brand.gif')}"}"}"  /></br><h1>please wait...</h1></div>', 
+        css: { 
+        border: 'none', 
+        padding: '15px', 
+        backgroundColor:'white',
+        
+        '-webkit-border-radius': '10px', 
+        '-moz-border-radius': '10px', 
+        opacity: 9
+        } 
+        }); 
+        return false;
+        }
+        
+        
+        //function to unblock the page
+        function unblockPage(){
+        $.unblockUI();
+        }
+    </script>
+   
+ <apex:form id="frm">
+ 
+ <style>
+    input[type=radio] {margin-top:0px; width:22px; height:22px; vertical-align:middle;}
+    .radioClass {margin-left:0;}
+    
+    input[type=checkbox] {width:18px; height:18px; vertical-align:middle;}
+    .checkClass {margin-left:0;}
+    
+    table.head {border-collapse:collapse;}
+    table.head td {border-bottom:1px solid #ccc;}
+    
+    table.datatab {border-collapse:collapse; border:1px solid #ececec;}
+    table.datatab th {padding:4px; background:#f2f3f3;  color:#222222; border:1px solid #ececec; text-align:left; font-weight:bold; font-family:Arial;font-size:11px;}
+    table.datatab th.centhd {padding:4px; text-align:center; color:#222222; background:#f2f3f3; border:1px solid #e0e3e5; font-weight:bold; font-family:Arial;font-size:11px;}
+    table.datatab th.righd {padding:4px; text-align:right; color:#222222; background:#f2f3f3; border:1px solid #e0e3e5; font-weight:bold; font-family:Arial;font-size:11px;}
+    table.datatab td {padding:4px; border-bottom:1px solid #ececec; font-color:#222222; background:#f2f3f3; text-align:left; font-weight:normal; font-family:Arial;font-size:12px;}
+    table.datatab td.centdval {text-align:center; padding:4px; color:#222222; border-bottom:1px solid #ececec; font-weight:normal; font-family:Arial;font-size:12px;}
+    table.datatab td.righdval {text-align:right; padding:4px; color:#222222; border-bottom:1px solid #ececec; font-weight:normal; font-family:Arial;font-size:12px;}
+    
+    table.padhead {border-collapse:collapse; color:#222222; font-family:Arial;border:0px solid #ececec;}
+    table.padhead th {padding:4px; background:none;  color:#222222; border-bottom:1px solid #ececec; text-align:right; font-weight:bold; font-family:Arial;font-size:11px;}
+    table.padhead td {padding:4px; text-align:left; color:#222222;  font-family:Arial; font-weight:normal; font-size:12px; text-align:left; vertical-align:middle; border-bottom:1px solid #ececec;}
+    table.padhead td.boldtxt {padding:8px;  color:#222222;  font-family:Arial; font-weight:bold; font-size:12px; text-align:left; vertical-align:middle; border-bottom:1px solid #ececec;}
+    table.padhead td.colright {padding:8px; text-align:right; color:#222222; font-family:Arial; font-weight:bold; font-size:11px; vertical-align:middle; border-bottom:1px solid #ececec;}
+        
+    </style>
+    
+    <div class="slds">
+    
+    <apex:actionStatus onstart="blockPage()" onstop="unblockPage()" id="blockUI" />
+    <apex:actionFunction name="showBookingUnitInfo" action="{!showBookingUnitInfo}" reRender="frm" status="blockUI"/>
+    
+    <apex:pageMessages ></apex:pageMessages>
+    <div style="background:#3e8cc0; font-family:Arial; font-weight:bold; font-size:13px; color:#fff; padding:4px 0 6px 5px; border-top:10px solid ;">
+        Customer Details
+    </div>
+    <div style="height:6px;"/>
+    <table width="100%"  cellspacing="0" cellpadding="0" class="padhead">
+        <tr>
+             <th>Account Name</th>
+             <td><apex:outputText value="{!objAcc.Name}"  style="width:150px;font-color:#222222;"/></td>
+             
+             <th>Email </th>
+             <td>
+               <apex:outputText value="{!objAcc.PersonEmail}"  style="width:150px;font-color:#222222;" />
+             </td>    
+             
+             <th>Mobile </th>
+             <td>
+               <apex:outputText value="{!objAcc.PersonMobilePhone}" style="width:150px;font-color:#222222;" />
+             </td>         
+             
+         </tr>
+        
+         <tr>
+           <th>Phone</th>
+             <td><apex:outputText value="{!objAcc.phone}" style="border-radius:10px; padding:10px; margin-right:1px; width:150px; font-family:Arial; Font-size:12px; Color:#222222;" /></td>
+             <th></th>
+             <td></td>            
+         </tr>       
+                            
+    </table>
+    
+    <div style="height:6px;"/>
+   
+   
+    <apex:outputPanel rendered="{!blnShowTypeOfRefund}">
+    <div style="background:#3e8cc0; font-family:Arial; font-weight:bold; font-size:13px; color:#fff; padding:4px 0 6px 5px; border-top:10px solid ;">
+        Type of Refund and Booking Units
+    </div>
+    
+     <div style="height:6px;"/>
+     
+      
+      <b>Type of Refund</b> &nbsp; &nbsp;
+                <apex:selectList styleClass="slds-input textfield" style="width:160px; font-family:Arial; font-weight:normal; color:#222222;"  value="{!strSelectedRefundProcess}" size="1"  >
+                <apex:selectOption itemValue="" itemLabel="--None--"/>
+                <apex:selectOption itemValue="Token Refund" itemLabel="Token Refund"/>
+                <apex:selectOption itemValue="Customer Refund" itemLabel="Customer Refund"/>
+                </apex:selectList> 
+                
+                 <br/>
+     <div style="height:6px;"/>
+ 
+    <table class="datatab" width="100%">
+        <tr>
+            <th>Select</th>
+            <th>Unit</th>
+            <th>Property Name</th>
+            <th>Booking Unit</th>
+            <th>Unit Selling Price</th>
+            <th>Booking Unit Type</th>
+            <th>Property Status</th>
+            
+        </tr>
+        
+        <apex:repeat value="{!lstWrapper}" var="l">
+        <tr>
+            <td>
+                <apex:inputCheckbox value="{!l.Wselected}"/>
+            </td> 
+             <td>
+               <apex:outputText value="{!l.WBU.Inventory__r.Unit__c}"  style="width:150px;font-color:#222222;"/>
+            </td> 
+             <td>
+                <apex:outputText value="{!l.WBU.Inventory__r.Property__r.Name}"  style="width:150px;font-color:#222222;"/>
+            </td> 
+             <td>
+                <apex:outputText value="{!l.WBU.Name}" style="width:150px;font-color:#222222;"/>
+            </td> 
+             <td>
+                <apex:outputText value="{!l.WBU.Unit_Selling_Price__c}"  style="width:150px;font-color:#222222;"/>
+            </td> 
+             <td>
+                <apex:outputText value="{!l.WBU.Booking_Unit_Type__c}" style="width:150px;font-color:#222222;"/>
+            </td> 
+             <td>
+               <apex:outputText value="{!l.WBU.Inventory__r.Property_Status__c}" style="width:150px;font-color:#222222;"/>
+            </td> 
+            
+        </tr>
+        
+        </apex:repeat>  
+        
+     </table>
+                                
+        </apex:outputPanel><br/>
+                
+    <div align="center">
+        <apex:commandButton status="blockUI" rendered="{!blnShowTypeOfRefund}" action="{!bookingUnitDetails}" styleClass="slds-button slds-button--brand" value="Get Additional Details" reRender="frm" />&nbsp;&nbsp;&nbsp;
+        <apex:commandButton value="Cancel" styleClass="slds-button slds-button--neutral" status="blockUI" reRender="frm"/>
+    </div>
+    
+    <apex:outputPanel rendered="{!blnShowBookingUnit}">
+    <div style="background:#3e8cc0; font-family:Arial; font-weight:bold; font-size:13px; color:#fff; padding:4px 0 6px 5px; border-top:10px solid ;">
+        Booking Unit Details
+    </div>
+    
+     <div style="height:6px;"/>
+     
+     <b>Booking Unit </b> &nbsp; &nbsp;
+                <apex:selectList onchange="showBookingUnitInfo()" styleClass="slds-input textfield" style="width:160px; font-family:Arial; font-weight:normal; color:#222222;"  value="{!strSelectedBookingUnit}" size="1"  multiselect="false" >
+                <apex:selectOptions value="{!lstBookingUnitOptions}"/>
+                </apex:selectList> 
+                
+                 <br/>
+     <div style="height:6px;"/>
+     
+     
+<table width="100%"  class="datatab">
+<tr>
+
+
+<td align="left" > <b><font size='2.8'>Unit Details</font></b></td>
+<th></th>
+
+<!-- <th>Flags</th> --> <td align="left" > <b><font size='2.8'>Flags</font></b></td>
+<th></th>
+
+
+<!-- <th>Unit Status</th> --> <td align="left" > <b><font size='2.8'>Unit Status</font></b></td>
+<th></th>
+
+</tr>
+<tr>
+
+<td align="left" > Project </td>
+<td align="left" > {!objWrapperBookingUnit.strProject}</td>
+
+<td align="left"> Dispute</td>
+<td align="left" >
+ <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnDispute == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnDispute == true,true,false)}" />
+
+ </td>
+
+<td align="left"> OQOOD registered</td>
+<td align="left" >  Yes   </td>
+
+
+</tr>
+
+<tr>
+
+<td align="left" > Project City </td>
+<td align="left" > {!objWrapperBookingUnit.strProjectCity }</td>
+
+<td align="left"> Enforcement </td>
+<td align="left" > 
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEnforcement  == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEnforcement  == true,true,false)}" />
+
+</td>
+
+<td align="left"> Agreement Status</td>
+<td align="left" >  {!objWrapperBookingUnit.strAgreementStatus } </td>
+
+
+</tr> 
+
+
+<tr>
+
+<td align="left" >Bedroom Type </td>
+<td align="left" > {!objWrapperBookingUnit.strBedroomType}</td>
+
+<td align="left"> Litigation </td>
+<td align="left" > 
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnLitigation == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnLitigation == true,true,false)}" />
+
+</td>
+
+<td align="left"> Under Termination </td>
+<td align="left" >  {!objWrapperBookingUnit.strUnderTermination } </td>
+
+
+</tr> 
+
+<tr>
+
+<td align="left" >Unit Type </td>
+<td align="left" > {!objWrapperBookingUnit.strUnitType }</td>
+
+<td align="left"> Mortage </td>
+<td align="left" > 
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnMortage == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnMortage == true,true,false)}" />
+
+</td>
+
+<td align="left">FTL Sent</td>
+<td align="left" >  
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnFTLsent == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnFTLsent == true,true,false)}" />
+
+ </td>
+
+
+</tr> 
+
+<tr>
+
+<td align="left" >Permitted Use </td>
+<td align="left" > {!objWrapperBookingUnit.strPermittedUse }</td>
+
+<td align="left"> Court Case </td>
+<td align="left" > 
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnCourtCase == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnCourtCase == true,true,false)}" />
+
+</td>
+
+<td align="left">EHO</td>
+<td align="left" >  
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEHO == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEHO == true,true,false)}" />
+
+ </td>
+
+
+</tr> 
+
+<tr>
+
+<td align="left" >Ready/Off Plan </td>
+<td align="left" > {!objWrapperBookingUnit.strReady_OffPlan}</td>
+
+<td align="left"> </td>
+<td align="left" > 
+</td>
+
+<td align="left">HO</td>
+<td align="left" >  
+<apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnHO == false,true,false)}" />
+    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnHO == true,true,false)}" />
+
+ </td>
+
+
+</tr> 
+
+<tr>
+
+<td align="left" >Rental Pool </td>
+<td align="left" > {!objWrapperBookingUnit.strRentalPool }</td>
+
+<td align="left"> </td>
+<td align="left" > 
+</td>
+
+<td align="left">PCC</td>
+<td align="left" >  Test
+ </td>
+
+
+</tr> 
+
+     
+     </table>
+      </apex:outputPanel>
+        <div style="height:6px;"/>
+      
+       <div align="center">
+        <apex:commandButton status="blockUI" rendered="{!blnShowBookingUnit}" action="{!showRefundDetails}" styleClass="slds-button slds-button--brand" value="Refund Details" reRender="frm" />&nbsp;&nbsp;&nbsp;
+        
+      </div>
+      
+      <apex:outputPanel rendered="{!blnShowRefundDetails}">
+    <div style="background:#3e8cc0; font-family:Arial; font-weight:bold; font-size:13px; color:#fff; padding:4px 0 6px 5px; border-top:10px solid ;">
+        Refund Details
+    </div>
+    
+     <div style="height:6px;"/>
+     
+     <apex:outputPanel rendered="{!IF(strSelectedRefundProcess == 'Token Refund',true,false)}">
+     <b>Token Refund (AED)</b> :<apex:inputText value="{!decTokenRefundAmount}" styleClass="slds-input textfield" style="border-radius:10px; border:1px solid #D8DDE6; padding:10px; margin-right:1px; width:80px; font-family:Arial; Font-size:12px; Color:#222222;" />
+     <br/>
+     </apex:outputPanel> 
+     
+     <apex:outputPanel rendered="{!IF(strSelectedRefundProcess == 'Customer Refund',true,false)}">
+     <b>Excess Amount (AED)</b> :<apex:inputText value="{!decCustomerRefundAmount}" styleClass="slds-input textfield" style="border-radius:10px; border:1px solid #D8DDE6; padding:10px; margin-right:1px; width:80px; font-family:Arial; Font-size:12px; Color:#222222;" />
+     </apex:outputPanel><br/>
+     
+      <apex:outputPanel >
+      <b>Refund Amount (AED)</b> : <apex:inputText value="{!decRefundAmount}" styleClass="slds-input textfield" style="border-radius:10px; border:1px solid #D8DDE6; padding:10px; margin-right:1px; width:80px; font-family:Arial; Font-size:12px; Color:#222222;" /> 
+     </apex:outputPanel>
+     
+     
+     </apex:outputPanel>
+    
+    </div>
+ 
+</apex:form>
+
+</apex:page>

@@ -1,0 +1,1534 @@
+<apex:page showHeader="false" standardStylesheets="false" sidebar="false" applyHtmlTag="false" applyBodyTag="false" docType="html-5.0" standardController="Inquiry__c" extensions="GuidedSalesProcessController" id="gspPage">
+    <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/>
+    <apex:includeLightning />
+    <apex:includeScript value="/lightning/lightning.out.js" />
+    <html
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:xlink="http://www.w3.org/1999/xlink" lang="en">
+        <head>
+            <title>Guided Sales Process</title> 
+            <meta charset="utf-8" />
+            <meta http-equiv="x-ua-compatible" content="ie=edge" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <apex:stylesheet value="{!URLFOR($Resource.SLDS_VF214, 'assets/styles/salesforce-lightning-design-system-vf.min.css')}"/>
+            <apex:stylesheet value="{!URLFOR($Resource.Damac_Booking_Resource, '/pagination-booking.css')}" />
+            <link href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/nouislider.min.css')}" rel="stylesheet" type="text/css"/>
+            <link href="{!URLFOR($Resource.AgentPortal_Resources,'assets/css/nouislider.override.min.css')}" rel="stylesheet" type="text/css"/>
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
+            <!--Style Class height:10px !important;-->
+            <style type="text/css">
+                .slds-vertical--top{
+                    vertical-align: top !important;
+                }
+                /* .slds-navigation-list--vertical__action{
+                    border-left: 0rem solid transparent !important;
+                    border-top: 0px solid transparent !important;
+                    border-bottom: 0px solid transparent !important;
+                    padding: 1px !important;
+                } */
+                .sldspage-header{
+                    background-color: #0070d2 !important;
+                    border-radius: 15px !important;
+                }
+                .slds-text-color--default{
+                    color: #FFFFFF !important;
+                }
+                .slds-button--neutral-cancel{
+                    padding-left:25px !important;
+                    padding-right:25px !important;
+                }
+                .slds-button--brand-next{
+                    padding-left:26px !important;
+                    padding-right:26px !important;
+                }
+                .slds-box{
+                    background-color: #FFFFFF !important;
+                    padding: 1rem 0rem !important;
+                    padding-top: 0rem !important;
+                }
+                .slds-input{
+                    padding: 0rem 0rem !important;
+                }
+                .slds-has-divider--bottom{
+                    
+                }
+                .divbackgroundColor{
+                    background-color:#f4f6f9 !important;
+                }
+                .slds-hr{
+                    background-color: #0070d2 !important;
+                    height: 2px !important;
+                    width:100% !important;
+                }
+                .hide {
+                    display: none;
+                }
+                
+                .show{
+                    display:block;
+                }
+                .titleColor{
+                    color:#0070d2 !important;
+                    font-weight:bold !important;
+                }
+                .sldsformelement-width{
+                    width:32% !important;
+                }
+
+                .slds-th{
+                    background-color: #0070d2 !important;
+                    color:#ffffff !important;
+                    font-weight:bold !important;
+                }
+                .projectImage{
+                    cursor: pointer;
+                    position:relative;
+                    display: inline-block;
+                    background-size: cover;
+                    width: 150px;
+                    height: 150px;
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    font-size: 0.9rem;
+                    color: #EEEEEE;
+                }
+                .pagination > .active > a{
+                    background-color:#0070d2!important;
+                    border-color:#0070d2!important;
+                }
+                /*.projectImageTitle {
+                    cursor: pointer;
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    color: #FFFFFF;
+                    background-color: rgba(0, 0, 0, .4);
+                    padding: 8px;
+                }
+                */
+                /* .noUi-horizontal .noUi-tooltip,.noUi-connect,.noUi-handle:before{
+                    background:#1589ee !important;
+                } */
+
+                .slds-wrap-override{-webkit-box-align:inherit !important;-webkit-align-items: inherit !important;-ms-flex-align:inherit !important;align-items: inherit !important}
+
+                /* .noUi-tooltip{
+                    padding:0px 0px !important;
+                    bottom: 98% !important;
+                    background: none !important;
+                    color: #666666 !important;
+                }
+                .noUi-handle:before{
+                    top: 0px !important;
+                    transform: rotate(0deg)!important;
+                    border-radius: 10px !important;
+                }
+                .noUi-marker-horizontal.noUi-marker-large{
+                    display: none !important;
+                }
+                .noUi-value{
+                    display: none !important;
+                } */
+                .aspect-ratio{
+                  display:block !important;
+                }
+            </style>
+            <!--Style End -->
+        </head>
+        <body style="background-color:#F7F9FB;">
+            <div class="slds divbackgroundColor">
+                <!--Spinner Start-->
+                <apex:actionStatus id="status">
+                    <apex:facet name="start">
+                        <div>
+                            <div class="slds-spinner_container" style="position:fixed">
+                                <div  class="slds-spinner slds-spinner--medium slds-spinner--brand" role="alert">
+                                    <span class="slds-assistive-text">Loading</span>
+                                    <div class="slds-spinner__dot-a"></div>
+                                    <div class="slds-spinner__dot-b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <!--Spinner End-->
+                <!--HEADER-->
+                <div class="slds-container slds-p-left--small slds-p-right--small" role="banner" style="margin-top:0.75rem;">
+                    <h1 class="slds-page-header__title slds-text-color--default slds-p-around--small" title="Guided Sales Process" style="background-color:#0070d2;">Guided Sales Process</h1>
+                </div>
+                <!--HEADER Complete-->
+                <!-- Error Block-->
+                <div class="slds-container slds-p-around--small">
+                    <!--Error Block Start-->
+                    <apex:outputPanel layout="block" id="errorBlock">
+                        <apex:outputPanel layout="block" styleClass="slds-notify_container" rendered="{!NOT(ISBLANK(errorMessage))}">
+                            <div class="slds-notify slds-notify--toast {!IF(isError,'slds-theme--error',IF(isWarning,'slds-theme--warning',IF(isSuccess,'slds-theme--success','')))} " role="alert" id="errorBox"
+                                xmlns="http://www.w3.org/2000/svg"
+                                xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <span class="slds-assistive-text">Error</span>
+                                <button class="slds-button slds-notify__close slds-button--icon-inverse" title="Close" onclick="j$('[id$=errorBox]').hide();">
+                                    <svg class="slds-button__icon slds-button__icon--large" aria-hidden="true">
+                                        <use id="errorClose" xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#close')}"></use>
+                                    </svg>
+                                    <span class="slds-assistive-text">Close</span>
+                                </button>
+                                <div class="slds-notify__content slds-grid">
+                                    <svg class="slds-icon slds-icon--small slds-m-right--small slds-col slds-no-flex" aria-hidden="true">
+                                        <use xlink:href="{!URLFOR($Resource.SLDS_VF214, '/assets/icons/utility-sprite/svg/symbols.svg#warning')}"></use>
+                                    </svg>
+                                    <div class="slds-col slds-align-middle">
+                                        <label class="slds-text-heading--small" style="display: {!IF(isError,'block','none')}" id="errorPrefix">Oops, You&#x27;ve encountered some errors.</label>
+                                        <apex:outputText style="color: #FFFFFF" value="{!errorMessage}" escape="false"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                    <!--Error Block End-->
+                    <div class="slds-theme--shade">
+                        <apex:form id="GSPForm">
+                            <!--html-oninput="sizestart.value = document.getElementById('gspPage:GSPForm:sizestartsqft').value;sizeend.value=document.getElementById('gspPage:GSPForm:sizeendsqft').value;-->
+                            <!--Action Functions Section-->
+                            <apex:actionFunction name="goToNextPage" status="status" action="{!navigatePages}" reRender="GSPForm,errorBlock,scriptTag" oncomplete="invokePagination({!pagesToShowList.size});">
+                                <apex:param name="currentPage" assignTo="{!currentPage}" value=""/>
+                                <apex:param name="nextPage" assignTo="{!nextPage}" value="" />
+                                <apex:param name="purposefor" assignTo="{!purposefor}" value="j$('input[name=options]:checked').parent().find('.slds-form-element__label').text()"/>
+                                <apex:param name="selectedProjectID" assignTo="{!selectedProjectID}" value=""/>
+                                <apex:param name="selectedProjectName" assignTo="{!selectedProjectName}" value=""/>
+                                <apex:param name="selectedInventory" assignTo="{!selectedInventory}" value=""/>
+                                <apex:param name="backFromInventory" assignTo="{!backFromInventory}" value=""/>
+                            </apex:actionFunction>
+                            <apex:actionFunction name="inventoryDetail" action="{!inventoryDetailPage}" reRender="inventoryDetails,errorBlock,scriptTag">
+                                <apex:param name="selectedInventory"  assignTo="{!selectedInventory}" value=""/>
+                            </apex:actionFunction>
+                            <!-- <apex:actionFunction name="getPreviousProperties" action="{!getPreviousPropertiesRecords}" status="status" reRender="gspallProperties,errorBlock,scriptTag"/><apex:actionFunction name="getnextProperties" action="{!getnextPropertiesRecords}" status="status" reRender="gspallProperties,errorBlock,scriptTag"/> -->
+                            <apex:actionfunction name="Invoke_Goto_Page" action="{!showRecords}" rerender="relatedInventories,scriptTag" onComplete="invokePagination('{!pagesToShowList.size}');" status="status">
+                                <apex:param name="pgno" value="" assignto="{!pageNumber}" />
+                            </apex:actionfunction>
+                            <apex:actionFunction name="getWalkthroughUrl" action="{!getWalkthroughUrl}" status="status" oncomplete="redirect('{!redirectUrl}');">
+                                <apex:param name="url" value="" assignTo="{!baseUrl}" />
+                            </apex:actionFunction>
+                            <!--Action Functions Section-->
+                            <!--Home Page Start-->
+                            <apex:outputPanel style="width:100%" styleClass="homePage slds-theme--shade slds-grid slds-wrap slds-wrap-override" layout="block" id="gspHome" rendered="{!displayHomePage}">
+                                <div class="slds-size--1-of-5 slds-small-size--1-of-7 slds-medium-size--1-of-9 slds-large-size--1-of-12 slds-box slds-text-align--center">
+                                    <!--slds-grid slds-wrap slds-grid--vertical -->
+                                    <label class="titleColor slds-m-top--small">Guided Sections</label>
+                                    <hr class="slds-hr slds-m-top--none slds-m-bottom--none"/>
+                                    <a href="javascript:void(0);" id="section1" onclick="selectHomeSection(1);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class=""> -->
+                                            <span id="whyDamacHeader" class="show">Why Damac</span>
+                                            <img id="whyDamacHeader_active_icon" class="activeDamac  show" style="display: inline;" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Why_Damac.png')}" />
+                                            <img id="whyDamacHeader_inactive_icon" class="inactiveDamac hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Why_Damac.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="section2" onclick="selectHomeSection(2);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class=""> -->
+                                            <span id="whyDubaiHeader" class="show">Why Dubai</span>
+                                            <img id="whyDubaiHeader_inactive_icon" class="inactiveDubai show" style="display: inline;" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Why_Dubai.png')}"></img>
+                                            <img id="whyDubaiHeader_active_icon" class=" activeDubai hide" style="" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Why_Dubai.png')}"></img>
+                                        <!-- </div> -->
+                                    </a>
+                                </div>
+                                <div class="slds-box slds-size--4-of-5 slds-small-size--6-of-7 slds-medium-size--8-of-9 slds-large-size--11-of-12" style="border-left: 10px solid #f4f6f9">
+                                    <div class="activeDamac slds-p-left--small show slds-p-right--small" >
+                                        <label id="damactitle" class="titleColor   slds-m-top--small inactiveDubai show" style="display:inline;">Why Damac</label>
+                                        <hr class="slds-hr slds-m-bottom--small inactiveDubai slds-m-top--none show"/>
+                                        <div id="damacdetailContainer" class="aspect-ratio" style="overflow-y: scroll; ">
+                                            <img id="damacdetail" class="inactiveDubai show" src="{!$Resource.whydamac}" />
+                                        </div>
+                                    </div>
+                                    <div class="hide activeDubai slds-p-left--small slds-p-right--small" >
+                                        <label id="dubaititle" class="slds-m-top--small titleColor activeDubai">Why Dubai</label>
+                                        <hr class="slds-hr slds-m-bottom--small slds-m-top--none activeDubai"/>
+                                        <!-- slds-form-element__label slds-p-bottom--large titleColor activeDubai-->
+                                        <div id="dubaidetailContainer" class="aspect-ratio" style="overflow-y: scroll;">
+                                            <img id="dubaidetail" class="activeDubai hide" src="{!$Resource.WhyDubai}" />
+                                        </div>
+                                    </div>
+                                    <!--Buttons-->
+                                    <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                        <div class="slds-p-right--small">
+                                            <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                        </div>
+                                        <div>
+                                            <apex:commandButton value="Next" onclick="goToNextPage(1,2,'','','','',false); return false;" styleClass="slds-button slds-button--brand slds-button--brand-next"/>
+                                        </div>
+                                    </div>
+                                    <!--Buttons-->
+                                </div>
+                            </apex:outputPanel>
+                            <!--Home Page End-->
+                            <!--Enquiry Page Start -->
+                            <apex:outputPanel id="gspInquiry" style="width:100%;" styleClass=" inquiryPage slds-theme--shade slds-form-element" layout="block" rendered="{!displayInquiryPage}">
+                                <div class="slds-size--1-of-1 aspect-ratio" style="overflow-y:scroll;">
+                                    <div class="slds-row slds-box slds-p-left--small slds-p-right--small">
+                                        <div class="slds-form-element slds-p-left--small slds-p-right--small">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__legend slds-form-element__label slds-p-right--xx-large slds-p-bottom--x-small">Expected Usage of the Property</label>
+                                            <div class="slds-form-element-control slds-p-left--small slds-p-right--small">
+                                                <span class="slds-checkbox">
+                                                    <label class="slds-checkbox__label" >
+                                                        <apex:inputCheckbox id="Regular" styleClass="sldsCheckbox" value="{!regularReturn}"/>
+                                                        <span class="slds-checkbox--faux"></span>
+                                                        <span class="slds-form-element__label">Regular Return on Investment</span>
+                                                    </label>
+                                                </span>
+                                                <span class="slds-checkbox">
+                                                    <label class="slds-checkbox__label" >
+                                                        <apex:inputCheckbox id="Buy" styleClass="sldsCheckbox" value="{!buyandHold}"/>
+                                                        <span class="slds-checkbox--faux"></span>
+                                                        <span class="slds-form-element__label">Buy and Hold for Investment Growth</span>
+                                                    </label>
+                                                </span>
+                                                <span class="slds-checkbox">
+                                                    <label class="slds-checkbox__label" >
+                                                        <apex:inputCheckbox id="Retirement" styleClass="sldsCheckbox" value="{!retirement}"/>
+                                                        <span class="slds-checkbox--faux"></span>
+                                                        <span class="slds-form-element__label">Retirement Use</span>
+                                                    </label>
+                                                </span>
+                                                <span class="slds-checkbox">
+                                                    <label class="slds-checkbox__label" >
+                                                        <apex:inputCheckbox id="personel" styleClass="sldsCheckbox" value="{!personalUse}"/>
+                                                        <span class="slds-checkbox--faux"></span>
+                                                        <span class="slds-form-element__label">Personal Use</span>
+                                                    </label>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--Location Section Start-->
+                                    <div class="slds-row slds-box slds-m-top--small slds-form--inline slds-p-left--small slds-p-right--small">
+                                        <div class="slds-p-bottom--x-small slds-p-left--small slds-p-right--small">
+                                            <label class="slds-form-element__legend titleColor">Location</label>
+                                            <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                        </div>
+                                        <div class="slds-form-element slds-p-left--small slds-p-right--small slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="city">City</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" size="1" value="{!newGuidedSales.City__c}">
+                                                    <apex:selectOptions value="{!allCities}"/>
+                                                    <!-- <apex:actionSupport event="onchange" action="{!getAllInventoryDistrict}" status="status" reRender="gspInquiry,errorBlock" oncomplete="invokePagination({!pagesToShowList.size});"/> -->
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="city" styleClass="slds-input" value="{!newGuidedSales.City__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!--Location Section End-->
+                                    <!--Project Section Start-->
+                                    <div class="slds-row slds-box slds-m-top--small slds-form--inline slds-p-left--small slds-p-right--small">
+                                        <div class="slds-p-bottom--x-small slds-p-left--small slds-p-right--small">
+                                            <label class="slds-form-element__legend titleColor">Project</label>
+                                            <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                        </div>
+                                        <div class="slds-form-element slds-p-left--small slds-p-right--small slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="district">Master Development</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" id="district" size="1"  value="{!newGuidedSales.Master_Development__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.City__c)}" -->
+                                                    <apex:selectOptions value="{!allPropertyDistricts}"/>
+                                                    <!-- <apex:actionSupport event="onchange" action="{!getAllInventoryProjects}" reRender="gspInquiry,errorBlock" status="status" oncomplete="invokePagination({!pagesToShowList.size});"/> -->
+                                                </apex:selectList>
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="project">Project</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" id="project" size="1"  value="{!newGuidedSales.Project__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Master_Development__c)}" -->
+                                                    <apex:selectOptions value="{!allProjects}"/>
+                                                    <!-- <apex:actionSupport event="onchange" action="{!getAllPicklistValues}" reRender="gspInquiry,errorBlock" status="status" oncomplete="invokePagination({!pagesToShowList.size});"/> -->
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="project" styleClass="slds-input" value="{!newGuidedSales.Project__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <label class="slds-form-element__label" for="projectC">Project Category</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" size="1" id="projectC"  value="{!newGuidedSales.Project_Category__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!allProjectsCategory}"/>
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="projectcategory" styleClass="slds-input" value="{!newGuidedSales.Project_Category__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                        <div class="slds-has-divider--bottom slds-size--1-of-1 slds-m-top--x-small slds-m-bottom--x-small"/>
+                                        <div class="slds-form-element slds-p-left--small slds-p-right--small slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="type">Type</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" size="1" id="type" value="{!newGuidedSales.Type__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!allUnitTypes}"/>
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="type" styleClass="slds-input" value="{!newGuidedSales.Type__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="bType">Bedroom Type</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList styleClass="slds-input" size="1" id="bType"  value="{!newGuidedSales.Bedroom_Type__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!allBedroomTypes}"/>
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="bedroomtype" styleClass="slds-input" value="{!newGuidedSales.Bedroom_Type__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <label class="slds-form-element__label" for="project1">Type of Booking</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:inputField id="typeofbooking" styleClass="slds-input" value="{!newGuidedSales.Type_of_Booking__c}"></apex:inputField>
+                                            </div>
+                                        </div>
+                                        <div class="slds-has-divider--bottom slds-size--1-of-1 slds-m-top--x-small slds-m-bottom--x-small"/>
+                                        
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4 slds-p-left--small slds-p-right--small">
+                                            <label class="slds-form-element__label" for="sizestartsqft" >Size</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:inputField id="areaRange" styleClass="slds-input" value="{!newGuidedSales.Size__c}"></apex:inputField>
+                                            </div>
+                                            <!--style="vertical-align: top;margin-bottom: 25px;" <div id="areaRange" class="rangeSlider" style="vertical-align: bottom;margin-left:10px;margin-right:20px;"></div>
+                                            <apex:inputHidden id="areaSqFtMin" value="{!sizesqftstartValue}"></apex:inputHidden>
+                                            <apex:inputHidden id="areaSqFtMax" value="{!sizesqftendValue}"></apex:inputHidden>-->
+                                        </div>
+
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4" >
+                                            <label class="slds-form-element__label " for="acd">Anticipated Completion Date - Quarter</label>
+                                            <div class="slds-form-element-control">
+                                                 <apex:selectList id="acdQuarter" styleClass="slds-input"  size="1" value="{!acdQuarter}"> 
+                                                     <apex:selectOption itemValue="" itemLabel="--None--"/>
+                                                     <apex:selectOption itemValue="Q1" itemLabel="Q1" />
+                                                     <apex:selectOption itemValue="Q2" itemLabel="Q2" />
+                                                     <apex:selectOption itemValue="Q3" itemLabel="Q3" />
+                                                     <apex:selectOption itemValue="Q4" itemLabel="Q4" />
+                                                 </apex:selectList>
+                                             </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4" >
+                                            <label class="slds-form-element__label " for="acd">Anticipated Completion Date - Year</label>
+                                            <div class="slds-form-element-control">
+                                                 <apex:selectList id="acdYear" styleClass="slds-input"  size="1" value="{!acdYear}"> 
+                                                     <apex:selectOptions value="{!allACDYears}"/>
+                                                 </apex:selectList>
+                                             </div>   
+                                        </div>
+                                        <div class="slds-has-divider--bottom slds-size--1-of-1 slds-m-top--x-small slds-m-bottom--x-small"/>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4 slds-p-left--small slds-p-right--small">
+                                                <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                                <label class="slds-form-element__label" for="readiness">Readiness (RERA Completion %)</label>
+                                                <div class="slds-form-element-control">
+                                                    <apex:selectList id="readiness" styleClass="slds-input" size="1" value="{!newGuidedSales.Readiness__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}"  -->
+                                                        <apex:selectOptions value="{!allReadiness}"/>
+                                                    </apex:selectList>
+                                                <!--<apex:inputField id="readiness" styleClass="slds-input" value="{!newGuidedSales.Readiness__c}"></apex:inputField>-->
+                                            </div> 
+                                        </div>
+                                    </div>
+                                    <!--Project Section Ends-->
+                                    <!--Finance Section Start-->
+                                    <div class="slds-row slds-box slds-m-top--small slds-form--inline slds-p-left--small slds-p-right--small" >
+                                        <div class="slds-p-bottom--x-small slds-p-left--small slds-p-right--small">
+                                            <label class="slds-form-element__legend titleColor">Finance</label>
+                                            <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                        </div>
+                                        <div class="slds-form-element slds-p-left--small slds-p-right--small slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label slds-p-right--xx-large" for="budget">Budget</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:inputField id="budget" styleClass="slds-input" value="{!newGuidedSales.Budget__c}"></apex:inputField>
+                                            </div>
+                                        </div>
+
+                                        <!-- <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4 slds-p-left--small">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="budgetRange" style="vertical-align: top;margin-bottom: 25px;">Budget</label>
+                                            <div id="budgetRange" class="rangeSlider" style="vertical-align: bottom;margin-left:25px;margin-right:30px;"></div>
+                                            <apex:inputHidden id="budgetMin" value="{!newGuidedSales.Budget_Start__c}"></apex:inputHidden>
+                                            <apex:inputHidden id="budgetMax" value="{!newGuidedSales.Budget_End__c}"></apex:inputHidden>
+                                        </div> -->
+
+                                        <!-- <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <label class="slds-form-element__label" for="mDeveloper1">Currency</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:inputField id="currency" styleClass="slds-input" value="{!newGuidedSales.CurrencyIsoCode}"></apex:inputField>
+                                            </div>
+                                        </div> -->
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="project1">Financing</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:inputField id="Finance" styleClass="slds-input" value="{!newGuidedSales.Financing__c}"></apex:inputField>
+                                            </div>
+                                        </div>
+                                        <!-- <div class="slds-has-divider--bottom slds-size--1-of-1 slds-m-top--x-small slds-m-bottom--x-small"/>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4 slds-p-left--small" >
+                                            <label class="slds-form-element__label " for="acd">Anticipated Completion Date</label>
+                                            <div class="slds-form-element-control">
+                                                 <apex:selectList id="acd" styleClass="slds-input"  size="1" value="{!newGuidedSales.ACD__c}"> 
+                                                     <apex:selectOptions value="{!allACDs}"/>
+                                                 </apex:selectList>
+                                             </div>
+                                        </div> -->
+                                    </div>
+                                    
+                                    <!--Finance Section End-->
+                                    <!--Other Section Start-->
+                                    <div class="slds-row slds-box slds-m-top--small slds-form--inline" >
+                                        <div class="slds-p-bottom--x-small slds-p-left--small slds-p-right--small">
+                                            <label class="slds-form-element__legend titleColor">Other Preferences</label>
+                                            <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                        </div>
+                                        <div class="slds-form-element slds-vertical--top slds-p-left--small slds-p-right--small slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label " for="brand">Brand</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList id="brand" styleClass="slds-input"  size="1" value="{!newGuidedSales.Brand__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!allBrands}"/>
+                                                </apex:selectList>
+                                                <!--<apex:inputField id="brand" styleClass="slds-input" value="{!newGuidedSales.Brand__c}"></apex:inputField>-->
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-vertical--top slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="view">Unit View</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList id="view" styleClass="slds-input" size="1"  value="{!newGuidedSales.Views__c}"> <!-- disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!allViews}"/>
+                                                </apex:selectList>
+                                                
+                                            </div>
+                                        </div>
+                                        <div class="slds-form-element slds-size--1-of-1 slds-medium-size--1-of-4">
+                                            <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                            <label class="slds-form-element__label" for="features">Community - Features &amp; Amenities</label>
+                                            <div class="slds-form-element-control">
+                                                <apex:selectList id="features" styleClass="slds-input"  multiselect="true" size="5" value="{!selectedCommunityFeatures}"> <!--newGuidedSales.Community_Features_Amenities__c disabled="{!ISBLANK(newGuidedSales.Project__c)}" -->
+                                                    <apex:selectOptions value="{!properyRelatedFeatures}"/>
+                                                </apex:selectList>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!--Other Section End-->
+                                </div>
+                                <!--Buttons-->
+                                <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center slds-p-left--small slds-p-right--small">
+                                    <div class="slds-p-right--small">
+                                        <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                    </div>
+                                    <div class="slds-p-right--small">
+                                        <apex:commandButton value="Previous" onclick="goToNextPage(2,1,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                    </div>
+                                    <div>
+                                        <apex:commandButton value="Next" onclick="goToNextPage(2,3,j$('input[name=options]:checked').parent().find('.slds-form-element__label').text(),'','','',false);return false;" styleClass="slds-button slds-button--brand slds-button--brand-next" />
+                                    </div>
+                                </div>
+                                <!--Buttons-->
+                            </apex:outputPanel>
+                            <!--Enquiry Page End -->
+                            <!--$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Page # 3 All Projects Page $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$-->
+                            <!--All Projects Page-->
+                            <apex:outputPanel id="gspallProperties" style="width:100%" styleClass=" slds-theme--shade slds-form-element slds-size--1-of-1" layout="block" rendered="{!displayProjects}">
+                                <div class="">
+                                    <label id="allProjects" class="titleColor">Projects</label>
+                                    <hr class="slds-hr slds-m-top--none slds-m-bottom--none"/>
+                                </div>
+                                
+                                <div class="slds-form--inline slds-p-around--none">
+                                    <!-- slds-p-left--xx-large slds-p-top--large -->
+                                    <apex:repeat value="{!allInventoryProperties}" var="project">
+                                        <!-- <apex:commandLink id="selectProject"> -->
+                                        <!--<div class="projectImage" onclick="goToNextPage(3,4,'','','{!URLENCODE(project['mName'])}','',false);return false;" style="{! 'background-image:url(' + marketingNameLogos[project['mdName']] + '),url('+$Resource.GSP_Default_Icon+');'}">-->
+                                            <div class="projectImage" onclick="goToNextPage(3,4,'','','{!URLENCODE(project['mName'])}','',false);return false;">
+                                                <img src="{!marketingNameLogos[project['mdName']]}" onerror="console.log('test'); this.setAttribute('src','{!$Resource.GSP_Default_Icon}')" />
+                                        </div>
+                                        <!-- </apex:commandLink> -->
+                                    </apex:repeat>
+                                </div>
+                                <!--Buttons-->
+                                <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                    <!-- slds-grid slds-grid--align-center slds-float--right  slds-float--left  -->
+                                    <div class="slds-p-right--small">
+                                        <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                    </div>
+                                    <div class="">
+                                        <apex:commandButton value="Previous" onclick="goToNextPage(3,2,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                    </div>
+                                </div>
+                                <!--Buttons-->
+                            </apex:outputPanel>
+                            <!--All Projects Page-->
+                            <!--$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Page # 4 Project Details Start $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$-->
+                            <!--Project Details Start-->
+                            <apex:outputPanel id="gspProjectDetails" style="width:100%" styleClass="slds-theme--shade slds-grid slds-wrap slds-wrap-override" layout="block" rendered="{!displayProjectDetails}">
+                                <div class="slds-size--1-of-5 slds-small-size--1-of-7 slds-medium-size--1-of-9 slds-large-size--1-of-12 slds-box slds-text-align--center">
+                                    <label class="titleColor">Project Details</label>
+                                    <hr class="slds-hr slds-m-top--none slds-m-bottom--none"/>
+                                    <a href="javascript:void(0);" id="projectsection1" onclick="selectProjectDetailSection(1);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(1);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="show">MD</span>
+                                            <img  id="activeMD" class="MDactive show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/MD.png')}" />
+                                            <img  id="inactiveMD" class=" MDInactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/MD.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection2" onclick="selectProjectDetailSection(2);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(2);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="slds-text-align--center show">Project</span>
+                                            <img id="activeProject" class="ProjectActive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Project.png')}" />
+                                            <img id="inactiveProject" class=" ProjectInActive show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Project.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection3" onclick="selectProjectDetailSection(3);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(3);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="slds-text-align--center show">Building</span>
+                                            <img  id="activebuilding" class="BuildingActive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Building.png')}" />
+                                            <img id="inactivebuilding" class="BuildingInActive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Building.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    
+                                    <a href="javascript:void(0);" id="projectsection4" onclick="selectProjectDetailSection(4);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(4);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="slds-text-align--center show">Building Info</span>
+                                            <img id="activeBuilding_Info" class="Building_InfoActive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Building_info.png')}" />
+                                            <img id="inactiveBuilding_Info" class="Building_InfoInActive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Building_info.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection5" onclick="selectProjectDetailSection(5);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                    <!-- <div class="" onclick="selectProjectDetailSection(5);" style="cursor: pointer;"> -->
+                                        <span id="damactitle" class="slds-text-align--center show">Features &amp; Amenities</span>
+                                        <img  id="activeFeatures_Amenities" class="Features_Amenitiesactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Features_Amenities.png')}" />
+                                        <img id="inactiveFeatures_Amenities" class="Features_AmenitiesInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Features_Amenities.png')}" />
+                                    <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection5" onclick="selectProjectDetailSection(6);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                    <!-- <div class="" onclick="selectProjectDetailSection(6);" style="cursor: pointer;"> -->
+                                        <span id="damactitle" class="slds-text-align--center show">Floor Plan</span>
+                                        <img  id="activeFloor_plan" class="Floor_planactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Floor_plan.png')}" />
+                                        <img id="inactiveFloor_plan" class="Floor_planInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Floor_plan.png')}" />
+                                    <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection5" onclick="selectProjectDetailSection(7);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(7);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="slds-text-align--center show">Marketing Collaterals</span>
+                                            <img  id="activeMarketing_Collaterals" class="Marketing_Collateralsactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Marketing_Collaterals.png')}" />
+                                            <img id="inactiveMarketing_Collaterals" class="Marketing_CollateralsInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Marketing_Collaterals.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="projectsection5" onclick="selectProjectDetailSection(8);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectProjectDetailSection(8);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="slds-text-align--center show">Related Units</span>
+                                            <img  id="activeUnitPlan" class="UnitPlanactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/List_of_Units.png')}" />
+                                            <img id="inactiveUnitPlan" class="UnitPlanInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/List_of_Units.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                            </div>
+                                <div class="slds-box slds-size--4-of-5 slds-small-size--6-of-7 slds-medium-size--8-of-9 slds-large-size--11-of-12 " style="border-left: 10px solid #f4f6f9">
+                                    <div class="slds-p-left--small slds-p-right--small" style="{!IF(isMarketingNamePresent,'margin-top: 17px;','')}" >
+                                        <label id="projectName" class="titleColor">{!IF(ISBLANK(selectedProjectName), 'N/A', selectedProjectName)}</label>
+                                        <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                    </div>
+                                    <div class="slds-p-left--small MDactive show slds-p-right--small">
+                                        <label id="projectDetails" class=" titleColor">Master Development</label>
+                                        <div class="aspect-ratio slds-m-top--small" style="overflow-y: scroll;">
+                                            <img src="{!IF(ISBLANK(marketingDocuments.MD_URL__c), URLFOR($Resource.GSP_Icons, 'GSP_Icons/Images/MD.jpg'), marketingDocuments.MD_URL__c)}" onerror="this.parentNode.style.display='none';"/>
+                                            <!--  -->
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small ProjectActive hide slds-p-right--small">
+                                        <label id="projectDetails" class=" titleColor">Projects</label>
+                                        <div class="aspect-ratio slds-m-top--small" style="overflow-y: scroll;">
+                                            <img style="width:100%;" src="{!IF(ISBLANK(marketingDocuments.Project_URL__c), URLFOR($Resource.GSP_Icons, 'GSP_Icons/Images/Project.jpg'), marketingDocuments.Project_URL__c)}" onerror="this.parentNode.style.display='none';"/>
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small BuildingActive hide slds-p-right--small">
+                                        <label id="buildingUnits" class="titleColor">Building Details</label>
+                                        <div class="aspect-ratio slds-m-top--small" style="overflow-y: scroll;">
+                                            <img src="{!IF(ISBLANK(marketingDocuments.Building_URL__c), URLFOR($Resource.GSP_Icons, 'GSP_Icons/Images/Building.jpg'), marketingDocuments.Building_URL__c)}" onerror="this.parentNode.style.display='none';"/>
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small Building_InfoActive hide slds-p-right--small">
+                                        <label id="buildingInfo" class="Building_InfoActive titleColor">Building Information</label>
+                                        <!-- <div style="overflow-y: scroll; height: 600px;"><img class="slds-m-top--small" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/Images/Building.jpg')}" /></div> -->
+                                        <div class="slds-row slds-m-top--small">
+                                            <table class="slds-table slds-table--bordered slds-max-medium-table--stacked">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">Unit Type</div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">No.of Units</div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">%Mix</div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">
+                                                                Price Min.
+                                                                <!-- <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr> -->
+                                                            </div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">
+                                                                Price Max.
+                                                                <!-- <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr> -->
+                                                            </div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">
+                                                                Area Min.(sqft)**
+                                                                
+                                                                <!-- <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                                                <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr> -->
+                                                            </div>
+                                                        </th>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">
+                                                                Area Max.(sqft)**
+                                                                
+                                                                <!-- <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr>
+                                                                <abbr class="slds-required slds-m-left--none slds-m-right--none" title="required">*</abbr> -->
+                                                            </div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <apex:repeat value="{!mapBuildingInfoTable}" var="unittype">
+                                                        <tr style="background-color:#d8dde6;">
+                                                            <td>{!unittype}</td>
+                                                            <td colspan="6"><apex:outputText Value="{!mapMinMaxFloorOfUnitTypeInfo[unittype]}" rendered="{!(CONTAINS(UPPER(mapUnitTypeOfCategory[unittype]),'RISE'))}"/></td> <!-- :Floors 01 to 50 -->
+                                                        </tr>
+                                                        <apex:repeat value="{!mapBuildingInfoTable[unittype]}" var="relatedUnits">
+                                                            <tr class="slds-hint-parent">
+                                                                <td>
+                                                                    <div class="slds-truncate" >{!relatedUnits.bedRooms}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="slds-truncate" >{!relatedUnits.noOfUnits}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <apex:outputText value="    {0, number, ###.0}">  
+                                                                           <apex:param value="{!relatedUnits.mixPercent}"/>  
+                                                                     </apex:outputText>
+                                                                     <!-- <div class="slds-truncate" >{!relatedUnits.mixPercent}</div> -->
+                                                                </td>
+                                                                <td>
+                                                                    <div class="slds-truncate" >
+                                                                        <apex:outputText value="{!relatedUnits.currencyIsoCode} {0, number, ###,###,###,##0.00}">  
+                                                                            <apex:param value="{!IF(ISBLANK(relatedUnits.minPrice), 0.0, relatedUnits.minPrice)}"/>  
+                                                                        </apex:outputText>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="slds-truncate" >
+                                                                        <apex:outputText value="{!relatedUnits.currencyIsoCode} {0, number, ###,###,###,##0.00}">  
+                                                                            <apex:param value="{!IF(ISBLANK(relatedUnits.minPrice), 0.0, relatedUnits.maxPrice)}"/>  
+                                                                        </apex:outputText>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="slds-truncate" >{!relatedUnits.minAreasqft}</div>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="slds-truncate" >{!relatedUnits.maxAreasqft}</div>
+                                                                </td>
+                                                            </tr>
+                                                        </apex:repeat>
+                                                    </apex:repeat>
+                                                </tbody>
+                                            </table>
+                                            <div class="slds-align--absolute-center" style="background-color: #9faab5; display: {!IF(isBuildingInfoAvailable,'none','inline-grid')};">
+                                                <apex:outputText styleClass="slds-text-align--center" value="Building Information is not available." rendered="{!IF(isBuildingInfoAvailable ,false,true)}"/>
+                                            </div>
+                                        </div>
+                                        <div class="slds-row slds-m-top--small" style="display: {!IF(isBuildingInfoAvailable,'block','none')}">
+                                            <div class="slds-p-right--small slds-float--left">* Prices are subject to change</div>
+                                            <div class="slds-p-right--small slds-float--left">** Typical areas provided but may vary based on floor, unit type.</div>
+                                            <div class="slds-p-right--small"> Units subject to availability</div>
+                                        </div>
+                                        
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small Features_Amenitiesactive hide slds-p-right--small">
+                                        <label id="featureAmenities" class="titleColor">Feature &amp; Amenities</label>
+                                        <div class="aspect-ratio slds-m-top--small" style="overflow-y: scroll;">
+                                            <img src="{!IF(ISBLANK(marketingDocuments.Features_Amenities_URL__c), URLFOR($Resource.GSP_Icons, 'GSP_Icons/Images/FA.jpg'), marketingDocuments.Features_Amenities_URL__c)}" onerror="this.parentNode.style.display='none';"/>
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-float--right  slds-text-align--left slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-float--left slds-text-align--right slds-p-left--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="slds-float--left slds-text-align--right slds-p-left--small">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small Floor_planactive hide slds-p-right--small">
+                                        <label id="floorplan" class=" titleColor">Floor Plan</label>
+                                        <object class="slds-m-top--small" data="{!marketingDocuments.Floor_Plan_URL__c}" type="application/pdf" width="100%" height="865px">
+                                             <p>It appears you don't have a PDF plugin for this browser.
+                                                    <a href="{!marketingDocuments.Floor_Plan_URL__c}">click here to
+                                                  download the PDF file.</a></p> 
+                                        </object><!-- width="100%" height="865px" -->
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small Marketing_Collateralsactive hide slds-p-right--small">
+                                        <label id="marketingcollatral" class=" titleColor">Marketing Collaterals</label>
+                                        <div id="walkThrough" class="slds-m-top--small aspect-ratio">
+                                            <label id="marketingcollatral" class=" titleColor">Walkthrough</label>                                          
+                                            <a href="javascript:void(0);" onclick="jsgetWalkthroughUrl('{!marketingDocuments.Walkthrough_URL__c}');console.log('test');"> View </a>
+                                        </div>
+                                        <div id="master" class="slds-m-top--small aspect-ratio">
+                                            <label id="marketingcollatral" class=" titleColor">Master Development Brochure</label>
+                                            <a href="javascript:void(0);" onclick="window.open('{!IF(ISBLANK(marketingDocuments.Master_Brochure_URL__c), '', marketingDocuments.Master_Brochure_URL__c)}')"> View </a>
+                                            <!-- <embed src="{!marketingDocuments.Master_Brochure_URL__c}" style="overflow-y: scroll;" width="100%" height="865px" onerror="hideonImageError(this);"/> -->
+                                        </div>
+                                        <div id="brochure" class="slds-m-top--small aspect-ratio">
+                                            <label id="marketingcollatral" class=" titleColor">Brochure</label>
+                                            <a href="javascript:void(0);" onclick="window.open('{!IF(ISBLANK(marketingDocuments.Brochure_URL__c), '', marketingDocuments.Brochure_URL__c)}')"> View </a>
+                                            <!-- <embed src="{!marketingDocuments.Brochure_URL__c}"  width="100%" height="865px" onError="j$('#brochure').hide();" style="overflow-y: scroll;"/> -->
+                                        </div>
+                                        
+                                        <div id="factsheet" class="slds-m-top--small aspect-ratio">
+                                            <label id="marketingcollatral" class=" titleColor">Factsheet</label>
+                                            <a href="javascript:void(0);" onclick="window.open('{!IF(ISBLANK(marketingDocuments.Factsheet_URL__c), '', marketingDocuments.Factsheet_URL__c)}')"> View </a>
+                                            <!-- <embed src="{!marketingDocuments.Factsheet_URL__c}" width="100%" height="865px" onerror="alert('Hi Calling the error method');" style="overflow-y: scroll;"/> -->
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small UnitPlanactive hide slds-p-right--small">
+                                        <label id="marketingcollatral" class=" titleColor">Related Units</label>
+                                        <apex:outputPanel id="relatedInventories" layout="block" styleClass="slds-m-top--small slds-box slds-theme--shade slds-form-element" rendered="{!displayprojectInventories}">
+                                            <div class="slds-row">
+                                                <table class="slds-table slds-table--bordered slds-max-medium-table--stacked" >
+                                                    <!--slds-table--fixed-layout role="grid"-->
+                                                    <thead>
+                                                        <tr>
+                                                            <apex:repeat value="{!$ObjectType.Inventory__c.FieldSets.Project_Unit}" var="fieldName">
+                                                                <th scope="col" class="slds-th slds-text-align--left">
+                                                                    <apex:outputPanel rendered="{!IF(fieldName.Label != 'Currency ISO Code', true, false)}" layout="block">
+                                                                        <div class="slds-truncate" title="Inventory">{!fieldName.Label}</div>
+                                                                    </apex:outputPanel>
+                                                                </th>
+                                                            </apex:repeat>
+                                                            <th scope="col" class="slds-th slds-text-align--left"></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <apex:repeat value="{!recordsPerPageList}" var="thisKey">
+                                                            <!-- <apex:repeat value="{!projectrelatedAllInventories}" var="inventory"> -->
+                                                            <tr class="slds-hint-parent">
+                                                                <apex:repeat value="{!$ObjectType.Inventory__c.FieldSets.Project_Unit}" var="fieldName">
+                                                                    <td>
+                                                                        <div class="slds-truncate" >
+                                                                            <apex:outputPanel rendered="{!IF(fieldName.Label != 'Currency ISO Code', true, false)}">
+                                                                                <apex:outputText value="{!mapprojectrelatedAllInventories[thisKey].CurrencyIsoCode} {0, number, ###,###,###,##0.00}" rendered="{!OR(CONTAINS(fieldName,'List_Price_calc__c'),CONTAINS(fieldName,'Special_Price_calc__c'),CONTAINS(fieldName,'Price_Per_Sqft__c'))}">  
+                                                                                    <apex:param value="{!IF(ISBLANK(mapprojectrelatedAllInventories[thisKey][fieldName]), null, mapprojectrelatedAllInventories[thisKey][fieldName])}"/>  
+                                                                                </apex:outputText>
+                                                                                <apex:outputText value="{!IF(ISBLANK(mapprojectrelatedAllInventories[thisKey][fieldName]), 'N/A', mapprojectrelatedAllInventories[thisKey][fieldName])}" rendered="{!NOT(OR(CONTAINS(fieldName,'List_Price_calc__c'),CONTAINS(fieldName,'Special_Price_calc__c'),CONTAINS(fieldName,'Price_Per_Sqft__c')))}"/>
+                                                                            </apex:outputPanel>
+                                                                        </div>
+                                                                    </td>
+                                                                </apex:repeat>
+                                                                <td>
+                                                                    <a href="" onclick="goToNextPage(4,5,'','','','{!mapprojectrelatedAllInventories[thisKey]['Id']}',false);" style="cursor:pointer !important">View</a>
+                                                                    <!-- <a href="" onclick="goToNextPage(4,5,'','','','{!inventory.Id}');" style="cursor:pointer !important">View</a> -->
+                                                                </td>
+                                                            </tr>
+                                                        </apex:repeat>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <!-- Pagination start -->
+                                            <div class="pagination-booking-container slds-align-middle" style="text-align:center">
+                                                <ul id="pagination-demo" class="pagination-sm"></ul>
+                                            </div>
+                                            <!-- Pagination end -->
+                                        </apex:outputPanel>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(4,3,'','','','',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 5,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            <!--Project Details End-->
+                            <!--$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Page # 5 Inventory Details Start $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$-->
+                            <apex:outputPanel id="gspInventoryDetails" style="width:100%" styleClass="slds-theme--shade slds-grid slds-wrap slds-wrap-override" layout="block" rendered="{!displayInventoryDetail}">
+                                <div class="slds-size--1-of-5 slds-small-size--1-of-7 slds-medium-size--1-of-9 slds-large-size--1-of-12 slds-box slds-float--left slds-text-align--left slds-text-align--center ">
+                                    <label class="titleColor">Unit Details</label>
+                                    <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                    <a href="javascript:void(0);" id="unitsection1" onclick="selectUnitDetailSection(1);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                        <!-- <div class="" onclick="selectUnitDetailSection(1);" style="cursor: pointer;"> -->
+                                            <span id="damactitle" class="show">Unit Plan</span>
+                                            <img  id="activeunit_plan" class="unit_planactive  show" style="display: inline;" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Unit_Plan.png')}" />
+                                            <img id="inactiveunit_plan" class="unit_planInactive hide" style="" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Unit_Plan.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="unitsection2" onclick="selectUnitDetailSection(2);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                    <!-- <div class="" onclick="selectUnitDetailSection(2);" style="cursor: pointer;"> -->
+                                        <span id="damactitle" class="slds-m-top--small slds-text-align--center show">Promotions</span>
+                                        <img id="activepromotions" class="promotionsactive hide" style="" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Promotion.png')}" />
+                                        <img id="inactivepromotions" class="promotionsInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Promotion.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="unitsection3" onclick="selectUnitDetailSection(3);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                    <!-- <div class="" onclick="selectUnitDetailSection(3);" style="cursor: pointer;"> -->
+                                        <span id="damactitle" class="slds-m-top--small slds-text-align--center show">Payment Plan</span>
+                                        <img  id="activePayment_Plan" class="payment_planactive hide" style=""  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Payment_Plan.png')}" />
+                                        <img id="inactivePayment_Plan" class="payment_planInactive  show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Payment_Plan.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                    <a href="javascript:void(0);" id="unitsection4" onclick="selectUnitDetailSection(4);" class="slds-navigation-list--vertical__action slds-text-link--reset slds-m-top--small slds-m-bottom--small" >
+                                    <!-- <div class="" onclick="selectUnitDetailSection(4);" style="cursor: pointer;"> -->
+                                        <span id="damactitle" class="slds-m-top--small slds-text-align--center show">Unit Features</span>
+                                        <img id="activeUnit_Features" class="unit_featuresactive hide" style="" src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/selected/Unit_Features.png')}" />
+                                        <img id="inactiveUnit_Features" class="unit_featuresInactive show" style="display: inline;"  src="{!URLFOR($Resource.GSP_Icons, 'GSP_Icons/notselected/Unit_Features.png')}" />
+                                        <!-- </div> -->
+                                    </a>
+                                </div>
+                                <div class="slds-box slds-size--4-of-5 slds-small-size--6-of-7 slds-medium-size--8-of-9 slds-large-size--11-of-12 " style="border-left: 10px solid #f4f6f9">
+                                    <div class="slds-p-left--small slds-p-right--small"  style="{!IF(ISBLANK(selectedInventoryDetails.Unit__c),'margin-top: 17px;','')}">
+                                        <label id="unitName" class="titleColor">{!selectedInventoryDetails.Unit__c}</label>
+                                        <hr class="slds-hr slds-m-top--none slds-m-bottom--small"/>
+                                    </div>
+                                    <div class="slds-p-left--small unit_planactive show slds-p-right--small"><!-- {!IF(AND(NOT(ISBLANK(selectedInventoryDetails.Unit_Plan__c)),CONTAINS(selectedInventoryDetails.Unit_Plan__c,'.pdf')), 'block', 'none')} -->
+                                        
+                                        <label id="promotions" class="titleColor">Unit Plan</label>
+
+                                        <div class="aspect-ratio slds-m-top--small" style="display: {!IF(AND(NOT(ISBLANK(selectedInventoryDetails.Unit_Plan__c)),CONTAINS(selectedInventoryDetails.Unit_Plan__c,'.pdf')), 'block', 'none')}">
+                                            <object data="{!selectedInventoryDetails.Unit_Plan__c}" type="application/pdf" width="100%" height="500px">
+                                                 <p>It appears you don't have a PDF plugin for this browser.
+                                                    <a href="{!selectedInventoryDetails.Unit_Plan__c}">click here to
+                                                  download the PDF file.</a></p> 
+                                            </object>
+                                        </div>
+                                        <!-- {!IF(AND(NOT(ISBLANK(selectedInventoryDetails.Unit_Plan__c)),NOT(CONTAINS(selectedInventoryDetails.Unit_Plan__c,'.pdf'))), 'block', 'none')} -->
+                                        
+                                        <!--<apex:detail id="unitDetails" subject="{!selectedInventory}" relatedList="false" title="true" />-->
+                                        <!--<img id="activeUnit_Features" class="unit_featuresactive hide" src="https://damacsandbox--damacdev.cs88.my.salesforce.com/sfc/p/#9E000000CrrJ/a/9E0000004CRk/MAiOiHrh1pFQR70g1CxF7vFVVSBNs_dtkgFp3BJHuZY" />-->
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(5,4,'','','{!URLENCODE(selectedInventoryDetails.Marketing_Name__c)}','{!selectedInventoryDetails.Id}',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 4,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small promotionsactive hide slds-p-right--small">
+                                        <label id="promotions" class="titleColor">Promotions</label>
+                                        <!-- <div class="slds-row">
+                                            <span id="promotions" class="titleColor">Promotions</span>
+                                        </div> -->
+                                        <!-- <apex:outputPanel styleClass="slds-row" rendered="{!IF(ISBLANK(promotionalCampaigns),false,true)}"> -->
+                                        <div class="slds-row slds-m-top--small">
+                                            <table class="slds-table slds-table--bordered slds-max-medium-table--stacked" >
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col" class="slds-th slds-text-align--left">
+                                                            <div class="slds-truncate" title="Inventory">Campaign Name</div>
+                                                        </th>
+                                                        <apex:repeat value="{!$ObjectType.Promotion__c.FieldSets.GSP_Promotions}" var="fieldName">
+                                                            <th scope="col" class="slds-th slds-text-align--left">
+                                                                <div class="slds-truncate" title="Invnetory">{!fieldName.Label}</div>
+                                                            </th>
+                                                        </apex:repeat>
+                                                        <th scope="col" class="slds-th slds-text-align--left"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <apex:repeat value="{!promotionalCampaigns}" var="promotion">
+                                                        <tr class="slds-hint-parent">
+                                                            <td>
+                                                                <div class="slds-truncate" title="CampaignName">{!IF(ISBLANK(promotion['Campaign__r']['Campaign_Name__c']), 'N/A', promotion['Campaign__r']['Campaign_Name__c'])}</div>
+                                                            </td>
+                                                            <apex:repeat value="{!$ObjectType.Promotion__c.FieldSets.GSP_Promotions}" var="fieldName">
+                                                                <td>
+                                                                    <div class="slds-truncate" title="{!fieldName}">
+                                                                        <apex:outputField value="{!promotion[fieldName]}" rendered="{!CONTAINS(fieldName,'Date')}">
+                                                                        </apex:outputField>
+                                                                        <apex:outputText rendered="{!NOT(CONTAINS(fieldName,'Date'))}">
+                                                                            {!IF(ISBLANK(promotion[fieldName]), 'N/A', promotion[fieldName])}
+                                                                        </apex:outputText>
+                                                                    </div>
+                                                                </td>
+                                                            </apex:repeat>
+                                                        </tr>
+                                                    </apex:repeat>
+                                                </tbody>
+                                            </table>
+                                            <div class="slds-align--absolute-center" style="background-color: #9faab5;)} ">
+                                                <apex:outputText styleClass="slds-text-align--center" value="Unit does not have promotions" rendered="{!IF(promotionalCampaigns.size = 0 ,true,false)}"/>
+                                            </div>
+                                        </div>
+                                        <!-- </apex:outputPanel> -->
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(5,4,'','','{!URLENCODE(selectedInventoryDetails.Marketing_Name__c)}','{!selectedInventoryDetails.Id}',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 4,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small payment_planactive hide slds-p-right--small">
+                                        <label id="paymentPlan" class="titleColor"> Payment Plans</label>
+                                        <!-- <div class="slds-row" style="margin-bottom: 10px !important;">
+                                            <span id="paymentPlan" class="titleColor">Payment Plans</span>
+                                        </div> -->
+                                        <div class="slds-row slds-m-top--small">
+                                            <table class="slds-table slds-table--bordered slds-max-medium-table--stacked" >
+                                                <thead>
+                                                    <tr>
+                                                        <apex:repeat value="{!$ObjectType.Payment_Terms__c.FieldSets.PaymentTerm}" var="fieldName">
+                                                            <th scope="col" class="slds-th slds-text-align--left">
+                                                                <div class="slds-truncate" title="Invnetory">{!fieldName.Label}</div>
+                                                            </th>
+                                                        </apex:repeat>
+                                                        <th scope="col" class="slds-th slds-text-align--left"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <apex:repeat value="{!paymentPlanRec}" var="paymentPlan">
+                                                        <tr class="slds-hint-parent">
+                                                            <apex:repeat value="{!$ObjectType.Payment_Terms__c.FieldSets.PaymentTerm}" var="fieldName">
+                                                                <td>
+                                                                    <div class="slds-truncate" title="{!fieldName}">
+                                                                    {!IF(ISBLANK(paymentPlan[fieldName]), 'N/A', paymentPlan[fieldName])}
+                                                                    </div>
+                                                                </td>
+                                                            </apex:repeat>
+                                                        </tr>
+                                                    </apex:repeat>
+                                                </tbody>
+                                            </table>
+                                            <div class="slds-align--absolute-center" style="background-color: #9faab5;)} ">
+                                                <apex:outputText styleClass="slds-text-align--center" value="Unit does not have payment plans." rendered="{!IF(paymentPlanRec.size = 0 ,true,false)}"/>
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-top--small slds-m-bottom--small slds-align--absolute-center">
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(5,4,'','','{!URLENCODE(selectedInventoryDetails.Marketing_Name__c)}','{!selectedInventoryDetails.Id}',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 4,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                    <div class="slds-p-left--small unit_featuresactive hide slds-p-right--small">
+                                        <label id="unitfeatures" class="titleColor">Unit Features</label>
+                                        <!-- <div class="slds-row" style="margin-bottom: 10px !important;">
+                                            <span id="unitfeatures" class="titleColor">Unit Features</span>
+                                        </div> -->
+                                        <div class="slds-row slds-m--bottom--small slds-m-top--small slds-grid slds-wrap slds-size--1-of-1">
+                                            <div class="slds-card slds-card--narrow slds-size--1-of-1 slds-medium-size--1-of-5 slds-m-right--large" style="margin-top: 0px !important;height: 100px !important;">
+                                                <div class="slds-card__header slds-grid">
+                                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <span class="slds-text-heading--small slds-text-align--center">Anticipated Completion Date</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-card__body slds-text-align--center">{!selectedInventoryDetails.Anticipated_Completion_Date__c}</div>
+                                            </div>
+                                            <div class="slds-card slds-card--narrow slds-size--1-of-1 slds-medium-size--1-of-5 slds-m-right--large" style="margin-top: 0px !important;height: 100px !important;">
+                                                <div class="slds-card__header slds-grid">
+                                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <span class="slds-text-heading--small">Unit View</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-card__body slds-text-align--center">{!selectedInventoryDetails.View_Type__c}</div>
+                                            </div>
+                                            <div class="slds-card slds-card--narrow slds-size--1-of-1 slds-medium-size--1-of-5 slds-m-right--large" style="margin-top: 0px !important;height: 100px !important;">
+                                                <div class="slds-card__header slds-grid">
+                                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <span class="slds-text-heading--small">No. of Free Parking</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-card__body slds-text-align--center">  {!selectedInventoryDetails.Parking__c}
+                                                </div>
+                                            </div>
+                                            <div class="slds-card slds-card--narrow slds-size--1-of-1 slds-medium-size--1-of-5 slds-m-right--large" style="margin-top: 0px !important;height: 100px !important;">
+                                                <div class="slds-card__header slds-grid">
+                                                    <div class="slds-media slds-media--center slds-has-flexi-truncate">
+                                                        <div class="slds-media__body">
+                                                            <span class="slds-text-heading--small">Features, Amenities</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="slds-card__body slds-text-align--center">Specifications: <a href="javascript:void(0);" onclick="window.open('{!IF(ISBLANK(marketingDocuments.Unit_Features_URL__c), '', marketingDocuments.Unit_Features_URL__c)}')"> View
+                                                </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                        <div class="slds-m-bottom--small slds-align--absolute-center slds-m-top--small slds-size--1-of-1" >
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Cancel" immediate="true"  action="{!cancel}" styleClass="slds-button slds-button--neutral slds-button--neutral-cancel" rerender="GSPForm,errorBlock,scriptTag" status="status"/>
+                                            </div>
+                                            <div class="slds-p-right--small">
+                                                <apex:commandButton value="Previous" onclick="goToNextPage(5,4,'','','{!URLENCODE(selectedInventoryDetails.Marketing_Name__c)}','{!selectedInventoryDetails.Id}',false);return false;" styleClass="slds-button slds-button--brand"  />
+                                            </div>
+                                            <div class="">
+                                                <apex:commandButton value="Done" action="{!cancel}" styleClass="slds-button slds-button--brand slds-button--brand-next" rendered="{!IF(currentPage = 4,true,false)}" />
+                                            </div>
+                                        </div>
+                                        <!--Buttons-->
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            <!--$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ Page # 5 Inventory Details End $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$-->
+                        </apex:form>
+                    </div>
+                </div>
+            </div>
+        </body>
+        <!--JavaScript Start-->
+        <apex:outputPanel id="scriptTag">
+            <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+            <script src="{!URLFOR($Resource.Damac_Booking_Resource, '/jquery.twbsPagination.js')}"></script>
+            <!-- <apex:outputPanel id="noUIJS" rendered="true">
+                <script src="{!URLFOR($Resource.AgentPortal_Resources,'assets/js/nouislider.min.js')}"></script>
+            </apex:outputPanel> -->
+            <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>{!renderNoUIJS}
+            <script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-init.min.js')}"></script><script src="{!URLFOR($Resource.ALJS, '/jquery.aljs-datepicker.min.js')}"></script><script src="../../soap/ajax/36.0/connection.js"></script>-->
+            <script type="text/javascript">
+                var j$ = jQuery.noConflict();
+
+                j$(document).ready(function(){
+                  
+                   if(!mobileAndTabletcheck){
+                        var height = $('.aspect-ratio').width()*0.65;
+                        if(height != 0)
+                            $('.aspect-ratio').css('max-height',height);
+                    }else{
+                        var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                        $('.aspect-ratio').css('max-height',h);
+                    }
+                });
+
+                window.mobileAndTabletcheck = function() {
+                  var check = false;
+                  (function(a){if(/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i.test(a)||/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i.test(a.substr(0,4))) check = true;})(navigator.userAgent||navigator.vendor||window.opera);
+                  return check;
+                };
+
+                function invokePagination(totalPages){
+
+                    console.log('entered invokePagination');
+                    var nextPage = {!nextPage};
+                    console.log('Next Page = '+nextPage+','+typeof nextPage);
+                                            
+                    if(nextPage != 4 && nextPage != 5){
+                        var urlStr = location.href;
+                        var pagNum = urlStr.indexOf("#page=");
+                        if(pagNum > 0){
+                            window.history.pushState('','', urlStr.substring(0,pagNum));
+                        }
+                        console.log('Destroy the pagination');
+                        //j$('#pagination-demo').twbsPagination('destroy');
+                    }
+                    
+                    j$('#pagination-demo').twbsPagination({
+                        totalPages: totalPages,
+                        visiblePages: totalPages > 5 ? 5 : totalPages,
+                        href: '#page={{pageNumber}}',
+                        hrefVariable: '{{pageNumber}}',
+                        first: '<<',
+                        prev: '<i class="icon icon-Back"></i> Back',
+                        last: '>>',
+                        next: 'Next<i class="icon icon-Next"></i>',
+                        initiateStartPageClick: false,
+                        onPageClick: function (event, page) {
+                            Invoke_Goto_Page(page);
+                        }
+                    });
+
+                    
+                    console.log('Back to Inventory');
+                    redirectToProjectUnits();  
+                }
+
+                function selectHomeSection(val){
+                    console.log('====?'+val); 
+                    //j$('#sectionL'+val).addClass('slds-is-active');
+                    console.log('val = '+val+', typeof = '+typeof val);
+                    if(val == 1){
+                        console.log('val 1= '+val+', typeof = '+typeof val);
+                        //j$('#sectionL2').toggleClass('slds-is-active');
+                        j$('.activeDubai').hide();
+                        j$('.inactiveDubai').show();
+                        j$('.inactiveDamac').hide();
+                        j$('.activeDamac').show();
+                    }
+                    else{
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        //j$('#sectionL1').toggleClass('slds-is-active');
+                        j$('.activeDubai').show();
+                        j$('.inactiveDubai').hide();
+                        j$('.inactiveDamac').show();
+                        j$('.activeDamac').hide();
+                    }
+                }
+                
+                //Project Detail Sections
+                function selectProjectDetailSection(val) {
+                    console.log('====?'+val);
+                    console.log('val = '+val+', typeof = '+typeof val); 
+                    if(val == 1){
+                        console.log('val 1= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').show();
+                        j$('.MDInactive').hide();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 2){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').show();
+                        j$('.ProjectInActive').hide();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 3){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').show();
+                        j$('.BuildingInActive').hide();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 4){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').show();
+                        j$('.Building_InfoInActive').hide();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 5){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').show();
+                        j$('.Features_AmenitiesInactive').hide();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 6){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').show();
+                        j$('.Floor_planInactive').hide();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }
+                    else if(val == 7){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').show();
+                        j$('.Marketing_CollateralsInactive').hide();
+                        j$('.UnitPlanactive').hide();
+                        j$('.UnitPlanInactive').show();
+                    }else if(val == 8){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.MDactive').hide();
+                        j$('.MDInactive').show();
+                        j$('.ProjectActive').hide();
+                        j$('.ProjectInActive').show();
+                        j$('.BuildingActive').hide();
+                        j$('.BuildingInActive').show();
+                        j$('.Building_InfoActive').hide();
+                        j$('.Building_InfoInActive').show();
+                        j$('.Features_Amenitiesactive').hide();
+                        j$('.Features_AmenitiesInactive').show();
+                        j$('.Floor_planactive').hide();
+                        j$('.Floor_planInactive').show();
+                        j$('.Marketing_Collateralsactive').hide();
+                        j$('.Marketing_CollateralsInactive').show();
+                        j$('.UnitPlanactive').show();
+                        j$('.UnitPlanInactive').hide();
+                    }
+                }
+
+                function redirectToProjectUnits(){
+                    console.log('Back to Inventory');
+                    var backInv = {!backFromInventory};
+                    console.log('backFromInventory = '+backInv+' , typeof = '+typeof backInv);
+                    if(backInv){
+                        j$('.activeMaster').hide();
+                        j$('.inactiveMaster').show();
+                        j$('.activeBuild').show();
+                        j$('.inactiveBuild').hide();
+                        j$('.activeFeatures').hide();
+                        j$('.inactiveFeatures').show();
+                        j$('.activeFloor_plan').hide();
+                        j$('.inactiveFloor_plan').show();
+                        j$('.activeMarketing').hide();
+                        j$('.inactiveMarketing').show();
+                    }
+                }
+
+                function selectUnitDetailSection(val){
+                    if(val == 1){
+                        console.log('val 1= '+val+', typeof = '+typeof val);
+                        j$('.unit_planactive').show();
+                        j$('.unit_planInactive').hide();
+                        j$('.promotionsactive').hide();
+                        j$('.promotionsInactive').show();
+                        j$('.payment_planactive').hide();
+                        j$('.payment_planInactive').show();
+                        j$('.unit_featuresactive').hide();
+                        j$('.unit_featuresInactive').show();
+                        
+                    }
+                    else if(val == 2){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.unit_planactive').hide();
+                        j$('.unit_planInactive').show();
+                        j$('.promotionsactive').show();
+                        j$('.promotionsInactive').hide();
+                        j$('.payment_planactive').hide();
+                        j$('.payment_planInactive').show();
+                        j$('.unit_featuresactive').hide();
+                        j$('.unit_featuresInactive').show();
+                        
+                    }
+                    else if(val == 3){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.unit_planactive').hide();
+                        j$('.unit_planInactive').show();
+                        j$('.promotionsactive').hide();
+                        j$('.promotionsInactive').show();
+                        j$('.payment_planactive').show();
+                        j$('.payment_planInactive').hide();
+                        j$('.unit_featuresactive').hide();
+                        j$('.unit_featuresInactive').show();
+                        
+                    }
+                    else if(val == 4){
+                        console.log('val 2= '+val+', typeof = '+typeof val);
+                        j$('.unit_planactive').hide();
+                        j$('.unit_planInactive').show();
+                        j$('.promotionsactive').hide();
+                        j$('.promotionsInactive').show();
+                        j$('.payment_planactive').hide();
+                        j$('.payment_planInactive').show();
+                        j$('.unit_featuresactive').show();
+                        j$('.unit_featuresInactive').hide();
+                    }
+                }
+                
+                function jsgetWalkthroughUrl(url){
+                    console.log('#### url = '+url);
+                    if(url.length==0){
+                        alert('This property does not have a walkthrough.');
+                    }else{
+                        console.log('url'); 
+                        getWalkthroughUrl(url);
+                    }
+                }
+                
+                function redirect(redirectUrl){
+                    console.log('#### redirectUrl = '+redirectUrl);
+                    if(redirectUrl.length==0){
+                        alert('This property does not contain a walkthrough');
+                    }else{
+                        window.open(redirectUrl,'_blank');
+                    }
+                    
+                }
+            </script>
+        </apex:outputPanel>
+        <!--JavaScript End-->
+    </html>
+</apex:page>

@@ -1,0 +1,97 @@
+global with sharing class MCAAttachmentTabController {
+	
+	 public Attachment[] attachments;
+	 public Container[] containers;
+	 public Id opportunityId;
+	 public Opportunity opportunity{get;set;}
+	 public Boolean editAll {get;set;}
+	 public Id recordToDelete {get;set;}
+	 
+	 public MCAAttachmentTabController(){
+	 	opportunityId = Apexpages.currentPage().getParameters().get('id');
+	 	opportunity = [select Id, Name, AccountId from Opportunity where Id =: opportunityId];
+	 	refresh();
+	 }
+	 
+	 public Container[] getContainers() {
+
+    attachments = new Attachment[] {};
+    containers = new Container[] {};
+
+    //tasks.addAll(newTasks);
+
+    attachments.addAll([Select a.ParentId,
+    						 a.Name,
+    						 a.IsPrivate,
+    						 a.Id,
+    						 a.Description,
+    						 a.ContentType,
+    						 a.BodyLength,
+    						 //a.Body,
+    						 a.SystemModstamp
+    						 From Attachment a
+                    WHERE a.ParentId = :opportunityId]);
+                    
+    for (Integer i = 0; i < attachments.size(); i++) {
+      containers.add(new Container(attachments[i], i));
+    }
+
+    return containers;
+  }
+  
+  public void deleteAttachment() {
+
+      if (recordToDelete != null) {
+      	Attachment record = [SELECT Id FROM Attachment WHERE Id = :recordToDelete];
+      delete record;
+    }
+  }
+  
+  public void saveAllAttachments() {
+    upsert attachments;
+
+    refresh();
+  }
+  
+  public void refresh() {
+
+    editAll = false;
+    recordToDelete = null;
+    //newTasks = new Task[] {};
+  }
+  
+  public void editAll() {
+
+    editAll = true;
+  }
+  
+  @RemoteAction
+   global static String  CollectData(String filename, String fileContent) {
+        String s1 = ApexPages.currentPage().getParameters().get('data');
+        system.debug('### S1'+s1);
+        transient Blob b = EncodingUtil.base64Decode(s1.substringAfter('base64,'));
+        Attachment a = new Attachment();  
+        //a.Body= b;
+        a.Body=EncodingUtil.base64Decode(fileContent);
+        a.ParentId =Apexpages.currentPage().getParameters().get('id');
+        //a.ParentId = opportunityId ;
+        a.Name=filename;
+        //a.Name= ApexPages.currentPage().getParameters().get('name');
+        system.debug('@@@@aaaaa'+a);
+        insert a;
+        return null;
+    }
+
+public class Container {
+
+    public Attachment attachment {get;set;}
+    public Integer index {get;set;}
+
+    public Container(Attachment instance, Integer index) {
+      attachment = instance;
+      this.index = index;
+    }
+
+  } 
+
+}

@@ -1,0 +1,135 @@
+<apex:page standardController="NSIBPM__Service_Request__c" sidebar="false" showHeader="false" id="pg" standardStylesheets="true">
+    <apex:form id="frm">
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <style>
+            #clockdiv {
+                font-family: sans-serif;
+                color: #fff;
+                display: inline-block;
+                font-weight: 20;
+                text-align: center;
+                font-size: 14px;
+            }
+            
+            #clockdiv > div {
+                padding: 8px;
+                border-radius: 3px;
+                background: {!IF(NOT(ISBLANK(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c)) && DATETIMEVALUE(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c) <= NOW(), '#BF2600', '#00BF96')} !important;
+                display: inline-block;
+            }
+            
+            #clockdiv div > span {
+                padding: 8px;
+                border-radius: 3px;
+                background: {!IF(NOT(ISBLANK(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c)) && DATETIMEVALUE(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c) <= NOW(), '#811A00', '#00816A')} !important;
+                display: inline-block;
+            }
+            
+            .smalltext {
+                padding-top: 5px;
+                font-size: 12px;
+            }
+            
+            .alert {
+                padding: 5px;
+            }
+        </style>
+        <center>
+            <apex:outputPanel rendered="{!IF(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c != null && 
+                                             NSIBPM__Service_Request__c.Token_Deposit_Paid_Date_Time__c == null, true, false)}" styleclass="align-middle">
+                <div class="alert {!IF(NOT(ISBLANK(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c)) &&
+                                        DATETIMEVALUE(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c) <= NOW() && 
+                                        NSIBPM__Service_Request__c.Token_Deposit_Paid_Date_Time__c == null, 'alert-danger', 'alert-success')} text-uppercase" 
+                     role="alert">
+                    <apex:outputPanel rendered="{!IF(DATETIMEVALUE(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c) < NOW() && 
+                                                      NSIBPM__Service_Request__c.Token_Deposit_Paid_Date_Time__c == null, true, false)}"
+                                      style="width: 50%;"
+                                      layout="block">
+                         <strong>Deal expired due to timeout</strong>
+                    </apex:outputPanel>
+                    <apex:outputPanel rendered="{!IF(DATETIMEVALUE(NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c) > NOW() && 
+                                                      NSIBPM__Service_Request__c.Token_Deposit_Paid_Date_Time__c == null, true, false)}"
+                                      style="width: 50%;"
+                                      layout="block">
+                         <strong>Time remaining for token deposit</strong>
+                    </apex:outputPanel>
+                    <div id="clockdiv" style="width: 50%;">
+                        <div>
+                            <span class="days"></span>
+                            <div class="smalltext">DAYS</div>
+                        </div>
+                        <div>
+                            <span class="hours"></span>
+                            <div class="smalltext">HRS</div>
+                        </div>
+                        <div>
+                            <span class="minutes"></span>
+                            <div class="smalltext">MIN</div>
+                        </div>
+                    </div>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NSIBPM__Service_Request__c.Is_Submitted_For_Approval__c}" styleclass="align-middle">
+                <div class="alert alert-danger text-uppercase" role="alert">
+                     <span class="glyphicon glyphicon-lock"></span>
+                     <strong>Deal is submitted for approval</strong>
+                </div>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(NSIBPM__Service_Request__c.Is_Submitted_For_Approval__c) && 
+                                          NOT(CONTAINS(NSIBPM__Service_Request__c.NSIBPM__Internal_Status_Name__c, 'Rejected'))}" styleclass="align-middle">
+                <div class="alert alert-info text-uppercase" role="alert">
+                     <strong>Deal in progress</strong>
+                </div>
+            </apex:outputPanel>
+             <apex:outputPanel rendered="{!CONTAINS(NSIBPM__Service_Request__c.NSIBPM__Internal_Status_Name__c, 'Rejected')}" styleclass="align-middle">
+                <div class="alert alert-danger text-uppercase" role="alert">
+                     <strong>Deal has been {!NSIBPM__Service_Request__c.NSIBPM__Internal_Status_Name__c}</strong>
+                </div>
+            </apex:outputPanel>
+        </center>
+        <script>
+            function getTimeRemaining(endtime) {
+                var t = Date.parse(endtime) - Date.parse(new Date());
+                var seconds = Math.floor((t / 1000) % 60);
+                var minutes = Math.floor((t / 1000 / 60) % 60);
+                var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+                var days = Math.floor(t / (1000 * 60 * 60 * 24));
+                return {
+                    'total': t,
+                    'days': days,
+                    'hours': hours,
+                    'minutes': minutes,
+                    'seconds': seconds
+                };
+            }
+
+            function initializeClock(id, endtime) {
+                var clock = document.getElementById(id);
+                var daysSpan = clock.querySelector('.days');
+                var hoursSpan = clock.querySelector('.hours');
+                var minutesSpan = clock.querySelector('.minutes');
+                var secondsSpan = clock.querySelector('.seconds');
+
+                function updateClock() {
+                    var t = getTimeRemaining(endtime);
+                    daysSpan.innerHTML = t.days > 0 ? t.days : 0;
+                    hoursSpan.innerHTML = t.hours > 0 ? ('0' + t.hours).slice(-2) : 0;
+                    minutesSpan.innerHTML = t.minutes > 0 ? ('0' + t.minutes).slice(-2) : 0;
+                    //secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+                    if (t.total <= 0) {
+                        clearInterval(timeinterval);
+                    }
+                }
+                updateClock();
+                var timeinterval = setInterval(updateClock, 1000);
+            }
+
+            //var deadline = new Date(Date.parse(new Date()) + 15 * 24 * 60 * 60 * 1000);
+            //var deadline = 'December 31 2015 23:59:59 GMT+0200';
+            var deadline = '{!NSIBPM__Service_Request__c.Token_Deposit_Due_Date_Time__c}';
+            initializeClock('clockdiv', deadline);
+        </script>
+    </apex:form>
+</apex:page>

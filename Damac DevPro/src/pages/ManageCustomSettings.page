@@ -1,0 +1,93 @@
+<apex:page controller="ManageCustomSettingsController">
+
+    <apex:form id="myFrom">
+    	<apex:actionStatus id="myStatus">
+            <apex:facet name="start">
+                <div class="waitingSearchDiv" id="el_loading" style="background-color: #000000; height: 100%;opacity:0.65;width:100%; z-index: 102; zIndex: 102;"> 
+                    <div class="waitingHolder" style="width: 150px; border: 1px solid grey; padding: 10px; border-radius: 5px; background-color: #fbfbfb">
+                        <img class="waitingImage" src="/img/loading.gif" title="Please Wait..." />
+                        <span class="waitingDescription">Please Wait...</span>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:pageBlock id="PB" >
+            <apex:pageblockbuttons location="top" >
+                    <apex:commandButton value="Save" action="{!saveCustomSettings}" status="myStatus" reRender="configurePanel,errorBlock,customsettingsValues"/>
+            </apex:pageblockbuttons>
+            <apex:outputPanel id="configurePanel">
+                <apex:pageBlockSection columns="1">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >Configure</apex:outputLabel>
+                        <apex:selectList value="{!selectConfigureType}" size="1">
+                            <apex:selectOption itemValue="CustomSettings" itemLabel="Inquiry Score and Settings" /> <!-- value="{!listCustomSettingNames}" -->
+                            <apex:selectOption itemValue="CustomLabels" itemLabel="Bands and Activities" />
+                            <apex:actionSupport event="onchange" action="{!getselectedConfigures}" status="myStatus" reRender="configurePanel,errorBlock,customsettingsValues"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!CONTAINS(selectConfigureType,'CustomSettings')}">
+                        <apex:outputLabel >{!selectConfigureType}</apex:outputLabel>
+                        <apex:selectList value="{!selectedObject}" size="1">
+                            <apex:selectOptions value="{!listCustomSettingNames}"/>
+                            <apex:actionSupport event="onchange" action="{!showCustomSettingValues}" status="myStatus" reRender="errorBlock,customsettingsValues"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                </apex:pageblocksection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+        <apex:pageMessages id="errorBlock"/>
+        <apex:outputPanel id="customsettingsValues">
+	        <apex:pageBlock id="result" title="{!selectedObjectLabel}" rendered="{!if(AND(listCustomSettingRecords.size > 0,CONTAINS(selectConfigureType,'CustomSettings')),true,false)}"   >
+	            <apex:outputPanel id="customsettingValues">
+		            <Table width="100%" frame="below" rules="rows">
+		            	<tr>
+		            		<th style="background-color:#CAC7C7;">Name</th>
+		            		<apex:repeat value="{!listField}" var="fieldvalue">
+		            			<th style="background-color:#CAC7C7;">{!fieldvalue.fieldName}</th>
+		            		</apex:repeat>
+		            	</tr>
+		            	<apex:repeat value="{!listCustomSettingWarpper}" var="custSetting">
+			            	<tr>
+			            		<apex:repeat value="{!custSetting.listFields}" var="fields" >
+			            			<td>
+			            				<apex:outputText value="{!fields.fieldValue }" rendered="{!AND(CONTAINS(fields.fieldLabel,'Name'),NOT(OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))))}" />
+		                				<apex:inputText value="{!fields.fieldValue }" rendered="{!AND(NOT(CONTAINS(fields.fieldLabel,'Name')),NOT(OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))))}"/>
+		                				<apex:inputCheckbox value="{!fields.fieldValue}" rendered="{!OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))}"/>
+			            			</td>
+			            		</apex:repeat>
+			            	</tr>
+		            	</apex:repeat>
+		            </Table>
+	            </apex:outputPanel>
+	        </apex:pageblock>
+            <apex:pageBlock id="customLabel" rendered="{!IF(AND(CONTAINS(selectConfigureType,'CustomLabels'),listCustomLabelsWrapper.size > 0),true,false)}">
+                <apex:outputPanel id="customLabelValues">
+                    <Table width="100%" frame="below" rules="rows">
+                        <tr>
+                            <th style="background-color:#CAC7C7;">Name</th>
+                            <th style="background-color:#CAC7C7;">Category</th>
+                            <th style="background-color:#CAC7C7;">Description</th>
+                            <th style="background-color:#CAC7C7;">Value</th>
+                        </tr>
+                        <apex:repeat value="{!listCustomLabelsWrapper}" var="custLabel">
+                            <tr>
+                                <td>
+                                    <apex:outputText value="{!custLabel.labelName}"/>
+                                </td>
+                                <td>
+                                    <apex:outputText value="{!custLabel.labelCategory}"/>
+                                </td>
+                                <td>
+                                    <apex:inputText value="{!custLabel.labelDescription}"/>
+                                </td>
+                                <td>
+                                    <apex:inputText value="{!custLabel.labelValue}"/>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </Table>
+                </apex:outputPanel>
+            </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,63 @@
+<apex:page standardController="Location__c" extensions="ProceedWithHandoverController" action="{!init}" >
+    
+    <apex:form id="frm">    
+    <apex:messages />
+    <div id="loadingImage" >
+            <center>
+                <apex:actionStatus style="width: 20px; margin-left: 50px" id="status">
+                    <apex:facet name="start">
+                        <img src="/img/loading.gif" />Loading...
+                    </apex:facet>
+                </apex:actionStatus>
+            </center>
+     </div>
+        
+    <apex:pageBlock title="Select Units For Handover" id="pb1" >
+        <apex:pageBlockButtons location="top">
+            <apex:commandButton value="Proceed for Handover" action="{!proceedWithHandover}" status="status" rerender="frm" />
+            <apex:commandButton value="Back" action="{!backMethod}"/>
+            
+        </apex:pageBlockButtons>
+        <apex:outputPanel id="unitDetailsPanel">
+            <table border="1" class="table" cellpadding="10" width="100%">
+                <thead class="thead-inverse">
+                    <tr>
+                        <th><apex:inputCheckbox onclick="selectAllCheckboxes(this,'inputId1')"/></th>
+                        <th><b>{!$ObjectType.Booking_Unit__c.fields.Name.label}</b></th>
+                        <th><b>{!$ObjectType.Booking_Unit__c.fields.Unit_Details__c.label}</b></th>
+                        <th><b>{!$ObjectType.Booking_Unit__c.fields.JOPD_Area__c.label}</b></th>
+                        <th><b>{!$ObjectType.Booking_Unit__c.fields.Approved_By_HOD__c.label}</b></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <apex:repeat value="{!lstBUWrapper}" var="BU">
+                        <tr>
+                            <td><apex:inputCheckbox value="{!BU.isSelect}" id="inputId1"/></td>
+                            <td>{!BU.bookingUnit.Name}</td>
+                            <td>{!BU.bookingUnit.Unit_Details__c}</td>
+                            <td>{!BU.bookingUnit.JOPD_Area__c}</td>
+                            <td>{!BU.bookingUnit.Approved_By_HOD__c}</td>
+                        </tr>
+                    </apex:repeat>
+                </tbody>
+            </table>
+        </apex:outputPanel>
+    </apex:pageBlock>
+    </apex:form>
+
+    <apex:includeScript value="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"/>    
+    <script type="text/javascript">        
+        function selectAllCheckboxes(obj,receivedInputID){
+            var inputCheckBox = document.getElementsByTagName("input");
+            for(var i=0; i<inputCheckBox.length; i++){
+                if(inputCheckBox[i].id.indexOf(receivedInputID)!=-1){
+                    var isDisabled = inputCheckBox[i].disabled;
+                    if(!isDisabled) {
+                        inputCheckBox[i].checked = obj.checked;
+                    }
+                }
+            }
+        }
+        
+    </script>
+</apex:page>

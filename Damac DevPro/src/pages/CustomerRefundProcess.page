@@ -1,0 +1,152 @@
+<apex:page controller="CustomerRefundProcessController" sidebar="false" tabStyle="Account">
+    <apex:includeScript value="{!$Resource.jquery191min}"/> 
+    <apex:includeScript value="{!$Resource.jquery191ui}"/> 
+    <apex:includeScript value="{!$Resource.jquery191blockui}"/>
+
+
+    <script>
+        //$j = jQuery.noConflict();
+        
+        //function to block the whole page
+        function blockPage(){ 
+        // salesforce standard image src="/img/loading32.gif" </br></br><h1>Processing...</h1>
+        $.blockUI({ message: '<div class="slds"><img height="42" width="42" src="/img/loading32.gif" }"  /></br><h1>please wait...</h1></div>', 
+        css: { 
+        border: 'none', 
+        padding: '15px', 
+        backgroundColor:'white',
+        
+        '-webkit-border-radius': '10px', 
+        '-moz-border-radius': '10px', 
+        opacity: 9
+        } 
+        }); 
+        return false;
+        }
+        
+        
+        //function to unblock the page
+        function unblockPage(){
+        $.unblockUI();
+        }
+    </script>
+
+
+<apex:form id="frm">
+    <apex:pagemessages ></apex:pagemessages>
+      <apex:actionStatus onstart="blockPage()" onstop="unblockPage()" id="blockUI" />  
+    <apex:pageBlock title="Customer Selection">
+        <apex:pageBlockSection columns="1"> 
+        <apex:pageBlockSectionItem >
+        <apex:outputLabel value="Select the customer"/>
+        <apex:outputPanel >
+        <apex:inputField value="{!Booking.Account__c}"/>
+        <apex:commandButton value="Get Booking Units" action="{!bookingUnit}" reRender="frm" status="blockUI"/>
+        </apex:outputPanel>
+        </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+        
+        
+    <apex:pageBlock title="Booking Units" rendered="{!showBooking}">
+        <apex:pageBlockSection columns="1"> <!--  -->
+        <apex:pageBlockTable value="{!lstWrapper}" var="l">
+        
+        <apex:column headerValue="Select">
+        <apex:inputCheckbox value="{!l.Wselected}"/>
+        </apex:column>
+        <apex:column value="{!l.WBU.Inventory__r.Unit__c}" headerValue="Unit"/>
+        <apex:column value="{!l.WBU.Inventory__r.Property__r.Name}"/>
+        
+        <apex:column headerValue="Booking Unit">
+        <apex:outputLink target="_blank" value="/{!l.WBU.ID}">{!l.WBU.Name}</apex:outputLink>
+        </apex:column>
+        <apex:column value="{!l.WBU.Unit_Selling_Price__c}"/> 
+        <apex:column value="{!l.WBU.Booking_Unit_Type__c}"/>
+        <!-- <apex:column value="{!l.WBU.Inventory__c}"/>-->
+        <apex:column value="{!l.WBU.Inventory__r.Property_Status__c}"/>
+        </apex:pageBlockTable>           
+        </apex:pageBlockSection>
+    </apex:pageBlock>
+    
+    <apex:pageBlock title="Upload Douments" rendered="{!showAttachments}">
+    
+      
+        <apex:pageBlockButtons location="top">
+        <apex:commandButton value="Add Attachment" action="{!goToAttachmentPage}" reRender="frm" status="blockUI"/>
+        </apex:pageBlockButtons>
+        
+        <apex:pageBlockButtons location="bottom">
+        <apex:commandButton value="Validate & Get Additional Details" action="{!BookingUnitDetails}" rendered="{!blnBookingDetails}" reRender="frm" status="blockUI"/>
+        </apex:pageBlockButtons>
+        <apex:pageBlockSection columns="1" >    
+        <apex:pageBlockTable value="{!lstSRattachments}" var="l">
+        <apex:column >
+        <apex:commandLink title="Remove Attachment" style="width:80px;" type="image/png"  action="{!removeAttachment}" reRender="frm" status="blockUI" >
+        <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!RemoveSelected}" /> 
+        <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+        </apex:commandLink>
+        </apex:column>
+        
+        <apex:column value="{!l.name}"/>
+        <apex:column value="{!l.SR__c}"/>
+        <apex:column value="{!l.Attachment__c }"/>
+        <apex:column value="{!l.type__c }"/>
+        <apex:column value="{!l.View__c}"/>
+        </apex:pageBlockTable>
+        
+        </apex:pageBlockSection> 
+    
+    </apex:pageBlock>
+    
+    <apex:pageBlock title="Booking Unit Details" rendered="{!showBookingDetails}">                    
+        <apex:pageBlockSection columns="1" >
+            <apex:pageBlockTable value="{!lstBookingUnitWrapper}" var="objBU">
+            <apex:column value="{!objBU.strUnitName}" headerValue="Unit"/>
+            <apex:column value="{!objBU.strPropertyName}" headerValue="Property Name"/>                  
+            <!-- <apex:column value="{!objBU.strPaymentMethod}" headerValue="Payment Method"/> -->
+            <apex:column value="{!objBU.decUnitValue}" headerValue="Unit Selling Price(AED)"/>
+            <apex:column value="{!objBU.decExcessAmt_RefundLiability}" headerValue="Excess Amount/Refund Liability(AED)"/>
+            <apex:column value="{!objBU.strPropertyStatus}" headerValue="Property Status"/>
+            <apex:column value="{!objBU.strACD}" headerValue="Anticipated Completion Date"/>
+            <apex:column value="{!objBU.strUnitStatus}" headerValue="Unit Status"/>
+            <apex:column value="{!objBU.blnIsBulkDeal}" headerValue="Is Bulk Deal"/>
+            <apex:column value="{!objBU.blnIsURCSigned}" headerValue="Is URC Signed"/>
+            <apex:column value="{!objBU.blnIsOlderThan3Months}" headerValue="Older Than 3 Months"/>
+            <apex:column value="{!objBU.blnMortgage}" headerValue="Is Mortgage Unit"/>
+            </apex:pageBlockTable>       
+        </apex:pageBlockSection>
+    
+        <apex:outputPanel rendered="{!showApprovers}">
+        <apex:pageBlockSection title="Approvers from Rule Engine" columns="1">
+        
+            <apex:pageBlockTable value="{!lstApproverWrapper }" var="l">
+            <apex:column headerValue="Role" value="{!l.WRoleName }"/>
+            
+            
+            <apex:column headerValue="User Name" value="{!l.WUsers }"/>
+            <apex:column headerValue="Sequence Number" value="{!l.WSequence}"/>
+            </apex:pageBlockTable> 
+        
+        </apex:pageBlockSection> 
+    
+        <center> <b> Total Customer Refund Value : <big>{!refundValue}</big> </b> <br/><br/>
+        <apex:commandButton value="Send for Approval" action="{!sendApproval}" />
+        </center> 
+        
+        </apex:outputPanel>
+    </apex:pageBlock>
+    
+    
+    <!--
+    <apex:pageBlockSection id="pbs" title="Get Customer Refund Value from IPMS" rendered="{!showIPMSValue}" columns="1" >
+    
+    <apex:commandButton value="Call IPMS" action="{!getRefundAmount}" status="blockUI" reRender="frm"/>   
+    <apex:outputLabel value="Customer Refund Value"/>       
+    <apex:inputText disabled="true" value="{!refundValue}"/>    
+    
+    
+    </apex:pageBlockSection>         
+    -->   
+    </apex:form>
+</apex:page>

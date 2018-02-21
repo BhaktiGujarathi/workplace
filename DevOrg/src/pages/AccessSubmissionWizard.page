@@ -1,0 +1,221 @@
+<apex:page controller="AccessSubmissionWizardController" showHeader="false" action="{!querySubmission}" id="pg" docType="html-5.0">
+    <apex:includescript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></apex:includescript>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.js"></script>
+    <apex:includeScript value="{!URLFOR($Resource.FileSaver)}"  />
+    <style>
+        .imgCss {
+            width: 12%;
+        }
+        #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        .downloadAll{
+            position: relative;
+            right: 475px !important;
+        }
+    </style>
+    <apex:form id="frm">
+        
+        <apex:image url="/servlet/servlet.FileDownload?file={!$Label.SubmissionWizard_LogoName}" styleClass="imgCss"/>
+        <apex:actionStatus id="loadingPanel" layout="block">
+            <apex:facet name="start">
+                <div id="assign-action-spinner-main">
+                    <div id="assign-action-spinner-content">
+                        <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                        <p>Processing...</p>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        
+        <!--<apex:sectionHeader title="Access submission Wizard"/> -->
+        <apex:pageBlock id="pgBlkSubmission">
+            <apex:pageMessages id="showmsg"/>
+            <apex:pageBlockSection title="Submission details" id="pgBlkSctnSubmission">
+                <!--  
+                <apex:outputField value="{!submission.Opportunity__r.Owner_1__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Owner_2__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.AccountId}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Avg_Monthly_CC_sales__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Gross_monthly_Sales__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.NSFs_avg__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.NDBs_avg__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Amount_Requested__c}"/>
+                <apex:outputField value="{!submission.Opportunity__r.Bank_Program__c}"/>-->
+                <apex:repeat value="{!$ObjectType.Submission__c.FieldSets.Submission_Wizard_Field_Set}" var="subField"> 
+                    <apex:outputField value="{!submission[subField]}" rendered="{!submission[subField] != 'Selected_Attachment_Id__c'}"/>
+                </apex:repeat>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:pageBlock id="pgBlkAttach" >
+            <apex:pageBlocksection title="Attachments" id="pgBlkSctnAttach">
+<!--                 <BODY> -->
+<!--                     <input type="button" onclick="create_zip(false)" value=" Download Selected" class="btn" ></input> 
+<!--                      <apex:outputPanel rendered="{!isVisible}" layout="block"> --> 
+<!--                         <input type="button" onclick="create_zip(true)" value=" Download All" class="btn "></input>
+<!--                      </apex:outputPanel> 
+<!--                 </BODY> -->
+                <BODY>
+                    <apex:panelGrid columns="2">
+                    <apex:commandButton onclick="create_zip(false)" value=" Download Selected" rerender="pgBlkAttach" status="loadingPanel"/>
+<!--                     <apex:outputPanel rendered="{!isVisible}" layout="block"> -->
+                        <apex:commandButton onclick="create_zip(true)" value=" Download All" rerender="pgBlkAttach" status="loadingPanel"/>
+<!--                     </apex:outputPanel> --></apex:panelGrid>
+                </BODY>
+            </apex:pageBlocksection><br/><br/>
+            <apex:pageBlockTable value="{!listWrapperAttachment}" var="lstAttach" id="attachmentLst">
+                <apex:column id="colId">
+                    <apex:facet name="header" > Select All
+                        <apex:inputCheckbox styleClass="ckbCheckAll">
+                        </apex:inputCheckbox>
+                    </apex:facet>
+                    <apex:inputCheckbox styleclass="checkBoxClass" title="{!lstAttach.attachmentInstance.id}"/> 
+                </apex:column>
+                <apex:column value="{!lstAttach.attachmentInstance.Name}"/>
+                <apex:column value="{!lstAttach.attachmentInstance.Description}"/>
+                <apex:column value="{!lstAttach.sizeKB}" headerValue="Size (KB)"/>
+                <apex:column value="{!lstAttach.attachmentInstance.LastModifiedDate}"/>
+                <apex:column value="{!lstAttach.attachmentInstance.CreatedDate}"/>
+                
+            </apex:pageBlockTable>
+            <apex:pageblockButtons >
+                   <!--  <apex:commandButton value="First Page" rerender="pgBlkAttach" 
+                        action="{!FirstPage}" status="loadingPanel" rendered="{!isPrev}"/>
+                    <apex:commandButton value="Previous" rerender="pgBlkAttach" 
+                        action="{!previous}" status="loadingPanel" rendered="{!isPrev}"/>
+                    <apex:commandButton value="Next" rerender="pgBlkAttach" action="{!next}" 
+                        status="loadingPanel" rendered="{!isNext}"/>
+                    <apex:commandButton value="Last Page" rerender="pgBlkAttach" 
+                        action="{!LastPage}" status="loadingPanel" rendered="{!isNext}"/>   -->
+             </apex:pageblockButtons>
+             <script>
+                $(".ckbCheckAll").click(function () {
+                    $(".checkBoxClass").prop('checked', $(this).prop('checked'));
+                });
+             </script>
+        </apex:pageBlock>
+        <center>
+        <div style="position:absolute;top: 50%;left: 350px;" >
+            <apex:actionStatus stopText="" id="counterStatusSave">
+                <apex:facet name="start">
+                     <apex:outputPanel style="padding-left:50%;">
+                        <apex:image value="{!$Resource.Loading}" width="50%" height="50%"/>
+                     </apex:outputPanel>
+                </apex:facet>
+            </apex:actionStatus>
+        </div>
+        </center>
+        <div id="downloadfile"></div>
+     </apex:form>
+     <script>
+        var zip;
+        function create_zip(isdownloadAll) {
+            zip = new JSZip();
+            var attID = [];
+            var content, noCall = 0;
+            //var listAtt = [];
+            // Get all checked attchment id
+            $('.checkBoxClass').each(function () {
+                var sThisVal = (this.checked ? $(this).prop('title')  :" Values ");
+                attID.push(sThisVal);
+            });
+            try {
+                for(var count = 0; count < attID.length; count++) {
+                    noCall++;
+                    var listAtt = [];
+                    if(attID[count] != null && attID[count] != '')
+                        listAtt.push(attID[count]); 
+                    count++;
+                    if(attID[count] != null && attID[count] != '')
+                        listAtt.push(attID[count]); 
+                    count++;
+                    if(attID[count] != null && attID[count] != '')
+                        listAtt.push(attID[count]);
+                    /*if(barPercentage < 80) {
+                        progress(90, t$('#progressBar'));
+                        barPercentage +=10;
+                    }*/
+                // Vf remoting start
+                Visualforce.remoting.Manager.invokeAction(
+                    '{!$RemoteAction.AccessSubmissionWizardController.getAttachments}',
+                        '{!oppId}', listAtt, isdownloadAll,
+                        function(result, event){
+                            if (event.status) {
+                                // add files into zip
+                                noCall--;
+                                for (var i = 0; i < result.length; i++) {
+                                    zip.file(result[i].attName, result[i].attchBody, {base64: true});
+                                    //progress(90, t$('#progressBar'));
+                                    //if(noCall == 0)
+                                       //progress(100, t$('#progressBar'));
+                                    //console.log('----'+result[i]);
+                                }// end For
+                                if(noCall == 0) {
+                                    zip_Creation();
+                                }
+                            }// End If
+                        }// End return function of vf remoting
+                    );// End vf remoting invoke function
+                }
+            }catch(err) {
+                alert('Please select less file. Error Is '+err.message);
+            }
+            
+            }// End create_zip()
+            
+            function zip_Creation() {
+            
+                // Check browser and perform download operation
+                var isIE = /*@cc_on!@*/false;
+                if(isIE){
+                    //alert('hiii out side safari');
+                    content = zip.generate({type:"blob"});
+                    // see FileSaver.js
+                    saveAs(content, "Submissions_Attachment.zip");
+                }else if(navigator.vendor.indexOf("Apple")==0 && /\sSafari\//.test(navigator.userAgent)) {
+                    content = zip.generate();
+                    location.href="data:application/zip;base64," + content;
+                } else {
+                    content = zip.generate({type:"blob"});
+                    // see FileSaver.js
+                    saveAs(content, "Submissions_Attachment.zip");
+                }// End Else If
+                //t$("#assign-action-spinner-main").hide();
+                //progress(0, t$('#progressBar'));
+            }
+   </script>
+</apex:page>

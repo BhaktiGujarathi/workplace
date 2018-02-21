@@ -1,0 +1,169 @@
+<apex:page controller="AvailabilityController" renderAs="pdf"  showHeader="false" sidebar="false"  applyBodyTag="false" applyHtmlTag="false">
+<html>
+<head>
+    <style type="text/css" media="print">
+        @page {
+            size: letter;
+            margin: 25mm;
+            @top-center {
+                //background-image:url('https://damacsandbox--damacdev--c.cs88.content.force.com/servlet/servlet.FileDownload?file=00P9E000000Gh7X');
+                //background-repeat:no-repeat;
+                //background-position:right top;
+                //content: "Available Inventory";
+                //width: 100px;
+                //height:50px;
+                content: element(header);
+            }
+            @bottom-center {
+                content: element(footer);
+            }
+        }
+         div.footer {
+             display: block;
+             padding: 5px;
+             color:red;
+             font-size:10px;
+             font-style: italic;
+            position: running(footer);
+        }
+        .page-break {
+            display:block;
+            page-break-after:always;
+        }
+        body {
+            font-family: Arial Unicode MS;
+        }
+        
+        div.header {
+            padding: 0px;
+            position: running(header);
+            text-align="center";
+        }
+        
+        .propertyDiv{
+            background-color:#000000;
+            height:50px;
+            width:100%;
+        }
+        .propertyLabel{
+            font-size:12px;
+            font-weight:bold;
+            color:white;
+            display: inline;
+        }
+        .statusLabel{
+            font-size:12px;
+            font-weight:bold;
+            color:white;
+            margin-right:5px;
+        }
+        
+        table{
+            font-size:10px;
+        }
+        
+    </style>
+</head>
+<body>  
+    <div class="header" align="center">
+        <img src="{!$Resource.DAMAC_logo}" width="150" height="50"/>
+    </div>
+    <div class="footer" align="center">
+        <apex:outputPanel rendered="{!propId == null}">Avaliability List generated on : 
+         <apex:outputText value="{0,date,MMM dd ',' yyyy hh:mm:ss a}">
+            <apex:param value="{!NOW()+offset}"/>
+         </apex:outputText>
+         (Confidential and not for redistribution)</apex:outputPanel>
+        <apex:outputPanel rendered="{!propId != null}">Generated on : <apex:outputText value="{0,date,MMM dd ',' yyyy hh:mm:ss a}">
+            <apex:param value="{!NOW()+offset}"/>
+         </apex:outputText> (Confidential and not for redistribution)</apex:outputPanel>
+    </div>
+    <apex:variable var="cnt" value="{!0}" /> 
+    <apex:repeat value="{!mpAvailable}" var="bld">
+        <div style="{!if(cnt < 1, 'page-break-before:avoid;','page-break-before:always;')}">
+        <apex:variable var="cnt" value="{!cnt+1}"/>
+        <!--<div style="page-break-after:always;">-->
+        <div style="background-color:#000000;height:30px;width:100%;" align="center">
+            <div style="float:left">
+                <label class="propertyLabel" style="margin-left:5px">{!mpBuildings[bld].Building_name__c}</label>
+                <apex:repeat value="{!mpAvailable[bld]}" var="prop" rows="1">
+                    <label class="propertyLabel">(Country :{!prop.Property_Country__c} )</label>
+                    <label class="propertyLabel">({!prop.Property_City__c})</label>
+                </apex:repeat>
+               <!-- <label class="countryLabel">(Country :{!mpAvailable[bld].Property_Country__c} )</label>
+                <label class="statusLabel">({!mpAvailable[bld].Property_City__c})</label>-->
+            </div>
+            <div style="float:right">
+                <label class="statusLabel">Status : {!mpBuildings[bld].status__c}</label>
+            </div> 
+        </div>
+            
+        <br/>
+        <br/>
+        
+        <table width="100%" style="font-size:10px" cellspacing="0" border="1px solid #eee">
+            <tr >
+               <th style="background:#000000; color:white;font-weight:bold;text-align:center; font-size:12px" colspan="{!$ObjectType.Inventory__c.fieldsets.Project_Unit.size}">Available Units</th> 
+            </tr>
+            <tr>
+                <apex:repeat value="{!$ObjectType.Inventory__c.fieldsets.Project_Unit}" var="f">
+                    
+                        <th style="width:{!widthpx};font-size:10px; font-weight:bold;background-color:#ccc;display:{!IF( f.Label = 'Currency ISO Code' , 'None', '')}">
+                            <b>{!f.label}</b>
+                        </th>
+                    
+                </apex:repeat>
+            </tr>
+            <apex:repeat value="{!mpAvailable[bld]}" var="inv">
+                <tr>
+                    <apex:repeat value="{!$ObjectType.Inventory__c.fieldsets.Project_Unit}" var="f">
+                        
+                        <td style="width:{!widthpx}; font-size:10px;display:{!IF( f.Label = 'Currency ISO Code' , 'None', '')}">
+                             <apex:outputPanel rendered="{!IF(f.Type == 'currency',true,false)}">
+                                <apex:outputText value="{!inv.CurrencyIsoCode}{0, number, ###,##0.00}"> 
+                                    <apex:param value="{!inv[f]}"/> 
+                                </apex:outputText>
+                            </apex:outputPanel>
+                            <apex:outputPanel rendered="{!IF(f.Type != 'currency',true,false)}">
+                                <apex:outputText value="{!inv[f]}" style="text-transform: uppercase;"/>
+                            </apex:outputPanel>
+                        </td>
+                     
+                    </apex:repeat>
+                </tr>
+            </apex:repeat>  
+        </table>
+        <br/>
+        <br/>
+            <apex:repeat rendered="{!IF(CONTAINS(planKeyStr,bld), true, false)}" value="{!mpPaymentPlans[bld]}" var="pp">
+                <table width="100%" style="font-size:10px" cellspacing="0" border="1px solid #eee">
+                    <tr >
+                       <th style="background:#000000; color:white;font-weight:bold;text-align:center; font-size:12px" colspan="{!$ObjectType.Payment_Terms__c.fieldsets.PaymentTerm.size}">Payment Plan</th> 
+                    </tr>
+                    <tr>
+                        <apex:repeat value="{!$ObjectType.Payment_Terms__c.fieldsets.PaymentTerm}" var="f">
+                            <th style="width:{!ptWidthPx};font-size:10px; font-weight:bold;background-color:#ccc;">
+                                <b>{!f.label}</b>
+                            </th>
+                        </apex:repeat>
+                    </tr>
+                    <apex:repeat value="{!mpPaymentTerms[pp.Id]}" rendered="{!IF(CONTAINS(pTermKeyStr,pp.Id), true, false)}"  var="term">
+                        <tr>
+                            <apex:repeat value="{!$ObjectType.Payment_Terms__c.fieldsets.PaymentTerm}" var="f">
+                                <td style="width:{!ptWidthPx}; font-size:10px">
+                                    <apex:outputField value="{!term[f]}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </apex:repeat>  
+                </table>
+                <br/>
+                <br/>
+            </apex:repeat>
+        </div>
+
+    </apex:repeat>
+
+</body>
+</html>    
+</apex:page>

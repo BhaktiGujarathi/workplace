@@ -1,0 +1,257 @@
+<apex:page showHeader="true" sidebar="true" cache="true" controller="DamacEventsController">
+<html>
+    <head>
+        
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Events</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+        <style>
+           
+
+            .annoucement table{
+                width: 100%;
+            }
+            
+            
+            
+
+            .table-bordered>thead>tr>th{
+               font-size:14px !important;
+               color:#FFFFFF !important;
+               border:1px solid #ddd !important;
+               background:#000000 !important;
+            }
+
+            .table-bordered>tbody>tr>td,td{
+                font-size:13px !important;
+                color:#000000 !important;
+                border:1px solid #ddd !important;
+            }
+           
+            .table-bordered, .table-bordered>tbody>tr>td, .table-bordered>tbody>tr>th,.table-bordered>thead>tr>td, .table-bordered>thead>tr>th{
+                padding:10px !important;
+                font-family:Arial,sans-serif !important;
+            }
+
+            .global-content-w-footer{
+                padding-bottom:150px;
+            }
+
+            .more-data a{
+                font-size:13px !important;
+                cursor:pointer !important;
+            }
+            
+            .dataTables_filter{
+                width:100% !important;
+            }
+            
+            .title{
+                cursor:pointer !important;
+            }
+
+            .height-100vh{
+                width:90%;
+            }
+            
+            .calander-date {
+                width: 53px;
+                height: 60px;
+                background: url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/calander-grey-related.png')}') no-repeat;
+                display: inline-block;
+                padding-top: 21px;
+                text-align: center;
+            }
+            
+            .calander-date .day {
+                font-size: 24px;
+                line-height: 18px;
+                margin-bottom: 1px;
+                color: #878787;
+                font-family: Arial,sans-serif;
+            }
+            
+            .calander-date .month {
+                font-size: 12px;
+                line-height: 12px;
+                font-family: Arial,sans-serif;
+            }
+            
+            .calander-date-sep {
+                font-family: Arial,sans-serif;
+                display: inline-block;
+                height: 2px;
+                width: 10px;
+                background: #000;
+                font-size: 1px;
+                line-height: 2px;
+                margin-bottom: 15px;
+            }
+            
+            .address{
+                line-height: 18px;
+                min-height: 30px;
+                padding: 6px 0;
+                padding-left: 40px;
+                background: no-repeat left 1px;
+                margin-bottom: 10px;
+                background-image: url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/icon-pin.png')}') !important;
+            }
+        
+
+        </style>
+    </head>
+<body >
+       
+        <div class="global-wrapper content-bg annoucement">
+            <div class="global-content-w-footer">
+                <apex:pageMessages id="messages"></apex:pageMessages>
+                <!--<div style="padding:20px !important;" class="table-responsive height-100vh">-->
+                 <!--<table class="table responsive custom-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <apex:repeat value="{!allEvents}" var="event">
+                            <tr data-expanded="true">
+                                <td>
+                                    
+                                    {!event.campaignName}
+                                    
+                                </td>
+                                <td>
+                                    <apex:outputText value="{0,date,MM/dd/yy}"> <apex:param value="{!event.campaignStartDate}" /> </apex:outputText>
+                                </td>
+                                <td>
+                                    <apex:outputText value="{0,date,MM/dd/yy}"> <apex:param value="{!event.campaignEndDate}" /> </apex:outputText>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </tbody>        
+                </table>-->
+                    <apex:repeat value="{!allEvents}" var="event">
+                        <div class="slds" style="margin-bottom:10px;background:#FFFFFF !important;padding:20px">
+                            <div class="slds-grid slds-wrap">
+                                <div class="slds-size--1-of-1 slds-medium-size--3-of-12" style="padding:0px 25px;border-right:1px solid #000">
+                                    <div class="calander-date">
+                                        <div class="day">{!event.campaignStartDay}</div>
+                                        <div class="month">{!event.campaignStartMonth}</div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!event.campaignEndDate != null}">
+                                        <div class="calander-date-sep"></div>
+            
+                                        <div class="calander-date">
+                                            <div class="day">{!event.campaignEndDay}</div>
+                                            <div class="month">{!event.campaignEndMonth}</div>
+                                        </div>
+                                    </apex:outputPanel>
+                                    
+                                </div>
+                                <div class="slds-size--1-of-1 slds-medium-size--9-of-12 slds-grid slds-wrap" style="padding:0px 25px;">
+                                    <div class="slds-size--1-of-1 text-large" style="color:#000000">{!event.campaignName}</div>
+                                    <div class="slds-size--1-of-1 text-medium" style="color:#000000">{!event.campaignDescription}</div>
+                                    
+                                </div>
+                                
+                            </div>
+                            <div class="slds-grid slds-wrap" style="padding:10px 25px 0px">
+                                <div class="slds-size--1-of-1" style="color:#000000;">
+                                    <apex:outputPanel rendered="{!event.campaignLocation != null}"> 
+                                        <li class="address">
+                                            {!event.campaignLocation}
+                                        </li>
+                                    </apex:outputPanel>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:repeat>
+                
+               <!-- </div>-->
+            </div>
+        </div>
+       
+      
+        <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+        <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+        <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <script>
+        $('.page-name').text('Events');
+        
+        $(document).ready(function(){
+
+            
+            $('.custom-table').DataTable({
+                "bInfo": false,
+                "pageLength": 10,
+                "language": {
+                    "search": "<p class='SearchTitle'>Search</p>"
+                },
+                "autoWidth": true,
+                "lengthMenu": [10, 25, 50, 100],
+                dom: 'lBfrtip',
+                 buttons: [
+                     ],
+                "order": [],
+                columnDefs: [
+                   { type: 'de_date', targets: 1 }
+                 ],
+                "oSearch": {"bSmart": false}
+            });
+            $('.custom-table tr>td>span>a').each(function(i, link){
+                $(link).replaceWith($(link).text())
+            });
+            
+            /*Date Sorting*/
+             jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+                "de_date-asc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = a.split("/");
+                        c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = b.split("/");
+                        d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]))
+                    } else d = 1 / 0;
+                    var h = c < d ? -1 : c > d ? 1 : 0;
+                    return h
+                },
+                "de_date-desc": function(a, b) {
+                    var c, d;
+                    if ("" !== jQuery.trim(a)) {
+                        var e = jQuery.trim(a).match(/>([^<]*)/),
+                            f = a.split("/");
+                        c = 1 * (parseInt(f[2]) + parseInt(f[1]) + parseInt(f[0]))
+                    } else c = 1 / 0;
+                    if ("" !== jQuery.trim(b)) {
+                        var e = jQuery.trim(b).match(/>([^<]*)/),
+                            g = b.split("/");
+                        d = 1 * (parseInt(g[2]) + parseInt(g[1]) + parseInt(g[0]));
+                    } else d = 1 / 0;
+                    var h = c < d ? 1 : c > d ? -1 : 0;
+                    return h
+                }
+            });
+        });
+
+      
+        
+    </script>
+   
+</body>
+</html>
+
+
+    
+</apex:page>

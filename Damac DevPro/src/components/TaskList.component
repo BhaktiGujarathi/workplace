@@ -1,0 +1,103 @@
+<apex:component controller="TaskListController">
+
+    <style type="text/css">
+        /*Styles missing from {!URLFOR($Resource.assets, 'assets/css/style.css')}*/
+        .task-link {
+            color: initial;
+        }
+        .cardHeading{
+            margin-bottom: 1em;
+            border-bottom: 1px solid #f5f7f9;
+        }
+        .cardHeading .dropdown > .dropdown-menu > li{
+            display: inline-block;
+            padding: 0px;
+        }
+        .cardHeading .dropdown > .dropdown-menu > li > a > .fa {
+            color: #fff;
+        }
+        .cardHeading .dropdown > .dropdown-menu {
+            background-color: rgba(50, 57, 77, 0.95);
+        }
+        .cardHeading .dropdown > .dropdown-menu > li > a:hover {
+            background: #343948;
+        }
+        .cardHeading h5 {
+            margin-bottom: 10px;
+            font-weight: 600;
+            margin-top: 0;
+        }
+        .cardHeading a{
+            cursor: pointer;
+        }
+        .cardHeading .fa{
+            color: #d9e0e5;
+            margin-top: 4px;
+        }
+        .taskContainer .checkbox .fa {
+            color: #14a4fa;
+        }
+        .conversationTasks .well {
+            max-height: 480px;
+        }
+        .fa.fa-flag.priority-high {
+            color: #d12323;
+        }
+        .fa.fa-flag.priority-normal {
+            color: #3788cc;
+        }
+        .fa.fa-flag.priority-low {
+            color: #0f9148;
+        }
+        /*Styles missing from {!URLFOR($Resource.assets, 'assets/css/style.css')}*/
+    </style>
+
+    <div class="well recommendedProjects" style="overflow: hidden;overflow-y: scroll;outline: none;">
+        <div class="row">
+            <div class="col-sm-12 cardHeading">
+                <h5 class="pull-left">Task List</h5>
+                <span class="pull-right dropdown">
+                    <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                        <i class="fa fa-ellipsis-h" aria-hidden="true"></i>
+                    </a>
+                    <ul class="row dropdown-menu site-dropdown">
+                        <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-expand" aria-hidden="true"></i></a></li>
+                        <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-trash" aria-hidden="true"></i></a></li>
+                        <li class="col-xs-4 col-md-4"><a href="#"><i class="fa fa-arrows" aria-hidden="true"></i></a></li>
+                    </ul>
+                </span>
+            </div>
+            <div class="col-sm-12 taskList">
+                <div class="taskContainer">
+                    <apex:repeat value="{!lstTask}" var="task">
+                        <div class="checkbox checkbox-primary">
+                            <div class="row">
+                                <div class="col-xs-1 col-md-1">
+                                    <!-- <apex:inputCheckbox id="task" value="{!task.IsClosed}"/> -->
+                                    <!-- <label for="!{!$Component.task}"> -->
+                                        <i aria-hidden="true" class="fa {!IF(task.Type=='Call','fa-phone',IF(task.Type=='Meeting','fa-calendar','fa-tasks'))}"></i>
+                                    <!-- </label> -->
+                                </div>
+
+                                <div class="col-xs-1 col-md-1">
+                                    <i class="fa fa-flag {!IF(task.Priority=='High','priority-high', IF(task.Priority=='Low','priority-low', 'priority-normal'))}" aria-hidden="true"></i>
+                                </div>
+
+                                <div class="col-xs-9 col-md-9">
+                                    <a href="/{!task.Id}" target="_blank" class="task-link">{!task.Subject}</a>
+                                </div>
+                                <div class="col-xs-1 col-md-1">
+                                    <a id="task-{!task.Id}" href="{!IF(task.Type=='Meeting','/00U/e?evt10=Meeting&evt3_mlktp=' + LEFT(task.WhatId,3) + '&evt3=' + task.What.Name + '&evt3=' + task.WhatId + '&retURL='+pageUrl,'#task-'+task.Id)}" target="{!IF(task.Type=='Meeting','_blank','')}" title="" class="task-link" style="{!IF(task.Type=='Meeting','','')}">
+                                    <!-- <a href="/{!IF(task.Type=='Meeting','scheduling/createMeeting.apexp?&retURL='+pageUrl,task.Id)}" target="_blank" title="" class="task-link" style="{!IF(task.Type=='Meeting','','display: none')}"> -->
+                                        <i aria-hidden="true" class="fa {!IF(task.Type=='Call','fa-phone',IF(task.Type=='Meeting','fa-calendar','fa-tasks'))}"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:repeat>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</apex:component>

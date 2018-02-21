@@ -1,0 +1,431 @@
+<apex:page Controller="ESUT.TestCodeExecutorController" sidebar="false">
+	<apex:sectionHeader title="{!$Label.esut__Execute_Test_Code}"/>
+	<apex:stylesheet value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'css/TestExecutor.css')}" />
+
+	<apex:form id="formId">
+
+		<!--Radio buttons -->
+		<apex:pageblock title="{!$Label.esut__TestCodeExect_Seleclasses_title}">
+			<apex:outputPanel id="pnlSelectClass" layout="block"
+				rendered="{!blnPanelVisible}">
+				<apex:selectRadio value="{!strClsCategory}"
+					disabled="{!blnIsRadio}" >
+					<apex:actionSupport action="{!populateClsNames}" event="onchange"
+						reRender="formId" status="status" />
+					<apex:selectOptions value="{!lstClassCategory}" />
+				</apex:selectRadio>
+				<br />
+
+				<apex:pageMessages id="pageMsgId" />
+				 <apex:actionPoller action="{!checkforButtonDisable}" rendered="{!blnIsButtonDisabled}" reRender="runNowId" interval="5"/>
+
+				<apex:outputPanel id="pnlAllCls" onclick="toggle(this)" style="display:none"/>
+				
+				<apex:outputpanel id="pnlSpecificCls" layout="block" rendered="{!blnSpecificCls}">
+					<div>
+						<apex:outputText styleClass="boldText"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_selectTest}" />
+					</div>
+
+					<br />
+					<apex:panelGrid columns="3">
+						<!-- Select main list which contains all classe names -->
+						<apex:selectList multiselect="true" size="5" styleClass="width"
+							value="{!lstAllClassNamesSelected}">
+							<apex:selectOptions value="{!lstAllClassNameOptions}" />
+						</apex:selectList>
+						<apex:panelGroup >
+							<!-- Buttons to Add and remove class names from both select list-->
+							<apex:commandbutton id="btnId" title="Add"
+								action="{!addClassNameToTag}" reRender="formId" value="{!$Label.esut__TestCodeExecutor_Add}"
+								status="status" />
+							<br />
+							<apex:commandbutton action="{!removeClassNameFromTag}"
+								title="Remove" reRender="formId" value="{!$Label.esut__TestCodeExecutor_Remove}" status="status"/>
+						</apex:panelGroup>
+						<!-- Select 2nd list which contains selscted class names from main list -->
+						<apex:selectList multiselect="true" size="5" styleClass="width"
+							value="{!lstSelectedClassNames}">
+							<apex:selectOptions value="{!lstSelectedClassNameOptions}" />
+						</apex:selectList>
+					</apex:panelGrid>
+				</apex:outputpanel>
+
+
+				<apex:outputPanel id="pnlTagCls" layout="block" rendered="{!blnTagCls}">
+					<apex:outputPanel layout="block" rendered="{!blnIsLinkVisible}">
+
+						<apex:outputText styleClass="boldText"
+							rendered="{!blnSelecttagVisible}"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_SelectTags}" />
+
+						<apex:selectList multiselect="false" rendered="{!blnIsSelectlist}"
+							styleClass="margin" size="1" value="{!strSelectTag}">
+							<apex:actionSupport event="onchange" 
+							status="status" reRender="formId"/>
+							<apex:selectOptions value="{!lstAllTagNames}" />
+						</apex:selectList>
+
+						<apex:commandLink action="{!edit}" reRender="formId"
+							styleClass="margin" status="status" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_EditTag}" />
+
+						<apex:outputText styleClass="margin" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExecutor_vLine}" />
+
+						<apex:commandLink reRender="formId" action="{!deleteTag}"
+							status="status" styleClass="margin" rendered="{!blnIsSelectlist}"
+							onclick="if(!confirm('Do you want to continue?')){return false;}"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_delete}"></apex:commandLink>
+						<apex:actionfunction name="delete" />
+
+						<apex:outputText styleClass="margin" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExecutor_vLine}" />
+
+						<apex:commandLink action="{!cloneTag}" reRender="formId"
+							rendered="{!blnIsSelectlist}" status="status" styleClass="margin"
+							value="{!$Label.esut__TestCodeExecutor_clone}"></apex:commandLink>
+
+						<apex:outputText styleClass="margin" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExecutor_vLine}" />
+							
+						<apex:commandLink action="{!viewTag}" reRender="formId"
+							styleClass="margin" status="status" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExecutor_View}"></apex:commandLink>	
+							
+						<apex:outputText styleClass="margin" rendered="{!blnIsSelectlist}"
+							value="{!$Label.esut__TestCodeExecutor_vLine}" />
+
+						<apex:commandLink action="{!create}" reRender="formId"
+							styleClass="margin" status="status"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_CreateNew}"></apex:commandLink>
+
+					</apex:outputPanel>
+					
+					<apex:outputPanel rendered="{!blnViewPanel}">
+							<br/>
+							<apex:outputText styleClass="boldText" value="{!$Label.esut__TestCodeExecutor_TaggedCls} {!strSelectTag} "/>
+							<br/><br/>
+							<apex:selectList multiselect="true" size="5" styleClass="width"
+									value="{!lstSelectedClassNames}">
+									<apex:selectOptions value="{!lstSelectedClassNameOptions}" />
+							</apex:selectList>
+							<br/>
+							<apex:commandLink action="{!cancel}" reRender="formId"
+							styleClass="margin" status="status"
+							value="{!$Label.esut__TestCodeExecutor_Back}">
+							</apex:commandLink>
+					</apex:outputPanel>
+					
+
+					<apex:outputPanel id="pnlCreate" layout="block"
+						rendered="{!blnIsPanelVisible}">
+						<br />
+						<div>
+							<apex:outputText styleClass="boldText"
+								value="{!$Label.esut__TestCodeExect_Seleclasses_CreateEditTag}"
+								rendered="{!!blnIsEdit}" />
+							<br />
+							<apex:outputText styleClass="boldText"
+								value="{!$Label.esut__TestCodeExecutor_EditTag}"
+								rendered="{!blnIsEdit}" />
+							<br />
+						</div>
+						<br />
+						<apex:outputLabel styleClass="boldText"
+							value="{!$Label.esut__TestCodeExect_Seleclasses_Tag}" rendered="{!!blnText}"/ >
+						<apex:outputLabel styleClass="boldText" value="{!$Label.esut__TestCodeExecutor_inputtext}" rendered="{!blnText}"/>
+						<apex:inputtext styleClass="margin" value="{!strTagName}" />
+						<br />
+						<br />
+						
+						<apex:outputpanel layout="block" rendered="{!blnClonePnlVisible}">
+
+							<apex:panelGrid columns="3">
+								<apex:selectList multiselect="true" size="5" styleClass="width"
+									value="{!lstAllClassNamesSelected}">
+									<apex:selectOptions value="{!lstAllClassNameOptions}" />
+								</apex:selectList>
+
+								<apex:panelGroup >
+									<!-- Buttons to Add and remove class names from both select list-->
+									<apex:commandbutton action="{!addClassNameToTag}" title="Add"
+										reRender="formId" value="{!$Label.esut__TestCodeExecutor_Add}" status="status" />
+									<br />
+									<apex:commandbutton action="{!removeClassNameFromTag}"
+										title="Remove" reRender="formId" value="{!$Label.esut__TestCodeExecutor_Remove}" status="status"/>
+								</apex:panelGroup>
+
+								<apex:selectList multiselect="true" size="5" styleClass="width"
+									value="{!lstSelectedClassNames}">
+									<apex:selectOptions value="{!lstSelectedClassNameOptions}" />
+								</apex:selectList>
+								<br />
+							</apex:panelGrid>
+						</apex:outputpanel>
+
+						<apex:commandbutton action="{!save}" reRender="formId"
+							status="status" value="{!$Label.esut__TestCodeExecutor_save}" />
+						<apex:commandbutton action="{!cancel}" reRender="formId"
+							status="status" value="{!$Label.esut__TestCodeExecutor_cancel}" />
+
+					</apex:outputPanel>
+				</apex:outputPanel>
+
+				
+			</apex:outputPanel>
+
+			<apex:pageBlockButtons location="bottom" rendered="{!blnBtnVisible}">
+				<apex:commandbutton id="runNowId" action="{!runNow}"  
+									reRender="formId" disabled="{!blnIsButtonDisabled}"
+					value="{!$Label.esut__TestCodeExecutor_RunNow}" status="status" />
+				<apex:commandbutton action="{!showSchedulerPane}" reRender="formId"
+					value="{!$Label.esut__TestCodeExecutor_schedule}" status="status" />
+			</apex:pageBlockButtons>
+
+			<apex:outputPanel id="pnlScheduler" rendered="{!blnSchedulePanel}">
+				<table>
+					<tr>
+						<td valign="top"><apex:outputlabel styleClass="boldText"
+								value="{!$Label.esut__TestCodeExect_ScheduleTestExecution}" />
+						</td>
+						<td></td>
+						<td><apex:outputPanel layout="block">
+								<table>
+									<tr>
+										<td valign="top"><apex:outputlabel styleClass="margin"
+												value="{!$Label.esut__TestCodeExect_Frequency}" /> 
+												<apex:selectList multiselect="false" size="1" value="{!strSelectedFrequency}"
+												styleClass="margin">
+												<apex:actionSupport event="onchange" action="{!frequencySelected}"
+													status="status" reRender="formId"/>
+												<apex:selectOptions value="{!lstFrequenyOptions}" />
+											</apex:selectList> <br /> <apex:outputPanel id="pnlOneTime" layout="block">
+											</apex:outputPanel> <apex:outputPanel id="pnlWeek" layout="block"
+												rendered="{!blnWeekly}">
+												<br />
+
+												<apex:outputlabel styleClass="margin"
+													value="{!$Label.esut__TestCodeExect_EveryWeek}" />
+												<table>
+													<tr>
+														<td><apex:inputCheckbox required="true"
+																value="{!blnIsSunday}" />
+														</td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Sunday}" /></td>
+														<td><apex:inputCheckbox value="{!blnIsMonday}" /></td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Monday}" /></td>
+														<td><apex:inputCheckbox value="{!blnIsTuesday}" /></td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Tuesday}" /></td>
+														<td><apex:inputCheckbox value="{!blnIsWednesday}" />
+														</td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Wednesday}" /></td>
+													</tr>
+													<tr>
+														<td><apex:inputCheckbox value="{!blnIsThursday}" />
+														</td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Thursday}" /></td>
+														<td><apex:inputCheckbox value="{!blnIsFriday}" /></td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Friday}" /></td>
+														<td><apex:inputCheckbox value="{!blnIsSaturday}" />
+														</td>
+														<td><apex:outputLabel value="{!$Label.esut__TestCodeExecutor_Saturday}" /></td>
+													</tr>
+
+												</table>
+											</apex:outputPanel> <apex:outputpanel id="pnlMonthly" layout="block"
+												rendered="{!blnMonthly}">
+												<table>
+													<tr>
+														<td><apex:selectRadio layout="pageDirection"
+																value="{!strSelectedMonthlyOption}">
+																<apex:actionSupport event="onchange" action="{!frequencyMonthly}" reRender="formId" status="status"/>
+																<apex:selectOptions value="{!lstMonthlyRadioOptionOn}" />
+															</apex:selectRadio>
+														</td>
+														<td>
+															<table>
+																<tr>
+																	<td><apex:selectList multiselect="false"
+																			styleClass="margin" size="1"
+																			value="{!strSelectedMonthlyOnday}"
+																			disabled="{!blnSelectedradioOnDay}">
+																			<apex:selectOptions value="{!lstMonthlyOptionOnday}" />
+																		</apex:selectList> <apex:outputlabel styleClass="margin"
+																			value="{!$Label.esut__TestCodeExect_OfEveryMonth}" />
+																	</td>
+																</tr>
+																<tr>
+																	<td><apex:selectList multiselect="false"
+																			styleClass="margin" size="1"
+																			disabled="{!blnSelectedradioOn}"
+																			value="{!strSelectedMonthlyOn}">
+																			<apex:selectOptions value="{!lstMonthlyOptionOn}" />
+																		</apex:selectList> <apex:selectList styleClass="margin"
+																			multiselect="false" size="1"
+																			disabled="{!blnSelectedradioOn}"
+																			value="{!strSelectedMonthlyDay}">
+																			<apex:selectOptions value="{!lstMonthlyOptionOnSelectDay}" />
+																		</apex:selectList> <apex:outputlabel styleClass="margin"
+																			value="{!$Label.esut__TestCodeExect_OfEveryMonth}" />
+																	</td>
+																</tr>
+															</table>
+														</td>
+													</tr>
+												</table>
+											</apex:outputpanel>
+										</td>
+									</tr>
+								</table>
+								<br />
+
+								<table>
+									<tr>
+										<td><apex:outputlabel styleClass="margin"
+												value="{!$Label.esut__TestCodeExecutor_ScheduleOn}" />
+										</td>
+										<td><apex:outputlabel styleClass="margin"
+												value="{!$Label.esut__TestCodeExect_StartDate}" />
+										</td>
+<!-- 										<td> -->
+<!-- 											<div class="requiredInput"> -->
+<!-- 												<div class="requiredBlock"></div> -->
+<!-- 												<apex:inputText styleClass="margin" size="10" id="textStartId" -->
+<!-- 													value="{!strSelectedStartDate}" -->
+<!-- 													onfocus="DynamicDatePicker(this);" -->
+<!-- 													onchange="checkDateFormatt(this.id);" -->
+<!-- 													onclick="return validate(this);" /> -->
+<!-- 											</div> -->
+<!-- 										</td> -->
+										<td></td>
+										<td>
+											<div class="requiredInput">
+												<div class="requiredBlock"></div>
+												<apex:inputField styleClass="margin" id="textStartId"
+													value="{!objExecutionSummary1.ESUT__Date_Field__c}" />
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td></td>
+										<td><apex:outputlabel styleClass="margin" rendered="{!blnDisabledEndDate}"
+												value="{!$Label.esut__TestCodeExect_EndDate}" /></td>
+<!-- 										<td> -->
+<!-- 											<div class="requiredInput"> -->
+<!-- 												<div class="requiredBlock"></div> -->
+<!-- 												<apex:inputText disabled="{!blnDisabledEndDate}" styleClass="margin" -->
+<!-- 													size="10" id="textEndId" value="{!strSelectedEndDate}" -->
+<!-- 													label="Ending date" onfocus="DynamicDatePicker(this);" -->
+<!-- 													onchange="checkDateFormatt(this.id);" -->
+<!-- 													onclick="return validate(this);" /> -->
+<!-- 											</div> -->
+<!-- 										</td> -->
+										<td></td>
+										<td>
+											<div class="requiredInput">
+												<div class="requiredBlock"></div>
+												<apex:inputField styleClass="margin" id="textEndId" rendered="{!blnDisabledEndDate}"
+													value="{!objExecutionSummary2.ESUT__Date_Field__c}" />
+											</div>
+										</td>
+									</tr>
+								</table>
+								<br />
+
+								<table>
+									<tr>
+										<td><apex:outputlabel styleClass="margin"
+												value="{!$Label.esut__TestCodeExect_ScheduleAt}" />
+										</td>
+
+										<td><apex:selectList multiselect="false" size="1"
+												styleClass="margin" value="{!strSelectedTimeHrs}"
+												required="true">
+												<apex:selectOptions value="{!lstTimeHrs}" />
+											</apex:selectList> <apex:outputtext styleClass="margin"
+												value="{!$Label.esut__TestCodeExect_HRS}" /></td>
+
+										<td><apex:selectList multiselect="false" size="1"
+												styleClass="margin" value="{!strSelectedTimeMin}">
+												<apex:selectOptions value="{!lstTimeMin}" />
+											</apex:selectList> <apex:outputtext styleClass="margin"
+												value="{!$Label.esut__TestCodeExect_MIN}" /></td>
+									</tr>
+								</table>
+							</apex:outputPanel> <br />
+							<table>
+								<tr>
+									<td align="center"><apex:commandbutton action="{!showPopup}" reRender="formId " status="status"
+											styleClass="margin"
+											value="{!$Label.esut__TestCodeExecutor_ScheduleTest}" /> 
+											<apex:commandbutton action="{!cancelSchedule}" status="status" styleClass="margin"
+											reRender="formId" value="{!$Label.esut__TestCodeExecutor_cancel}" />
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+				<br/>
+				<apex:pageMessages id="pageMsg" />
+			</apex:outputPanel>
+			
+		</apex:pageblock>
+
+		<apex:outputPanel id="tstpopup" rendered="{!blnDisplayPopUp}">
+			<apex:outputPanel styleClass="popupBackground" layout="block"
+				rendered="{!blnDisplayPopUp}" />
+			<apex:outputPanel styleClass="custPopup" layout="block"
+				rendered="{!blnDisplayPopUp}">
+				<apex:pageBlock id="pb" rendered="{!blnDisplayPopUp}">
+					<apex:pageBlockSection columns="1" title="{!$Label.esut__TestCodeExecutor_LoginTitle}"
+						collapsible="false">
+
+						<apex:pageblockSectionItem >
+							<apex:outputLabel >{!$Label.esut__TestCodeExector_UserName}
+							</apex:outputLabel>
+							<apex:outputText value="{!strUserName}" />
+						</apex:pageblockSectionItem>
+						<apex:pageblockSectionItem >
+							<apex:outputLabel >{!$Label.esut__TestCodeExecutor_Password}
+							</apex:outputLabel>
+							<apex:inputsecret value="{!strPassword}" />
+						</apex:pageblockSectionItem>
+						<apex:pageblockSectionItem >
+							<apex:outputLabel >{!$Label.esut__TestCodeExecutor_Environment}
+							</apex:outputLabel>
+							<apex:selectList id="environment" value="{!strEnvironment}" size="1"
+								styleClass="generalNormalLogin">
+								<apex:selectOptions value="{!EnviromentOptions}" />
+							</apex:selectList>
+						</apex:pageblockSectionItem>
+					</apex:pageBlockSection>
+					<apex:pageBlockButtons location="bottom">
+						<apex:commandButton value="{!$Label.esut__TestCodeExecutor_Ok}" action="{!scheduleTestExecution}"
+							status="status" id="btnOk" reRender="formId">
+						</apex:commandButton>
+						<apex:commandButton value="{!$Label.esut__TestCodeExecutor_cancel}" action="{!closePopup}"
+							status="status" id="btnCancel" reRender="formId">
+						</apex:commandButton>
+					</apex:pageBlockButtons>
+
+				</apex:pageBlock>
+			</apex:outputPanel>
+		</apex:outputPanel>
+		<apex:actionStatus id="status">
+					<apex:facet name="start">
+						<center>
+							<table>
+								<tr>
+									<td><img src="/img/loading.gif" /></td>
+									<td></td>
+									<td></td>
+									<td>{!$Label.TestCodeExecutor_Loading}</td>
+								</tr>
+							</table>
+						</center>
+					</apex:facet>
+		</apex:actionStatus>
+	</apex:form>
+</apex:page>

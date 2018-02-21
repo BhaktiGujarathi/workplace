@@ -1,0 +1,93 @@
+<apex:component controller="ondeck.OnDeckFileUploadController" access="global" allowDML="true" >
+    <apex:attribute name="recordId" type="String" assignTo="{!dealId}" description="Deal Id for OnDeck request" />
+    
+    <apex:includeScript value="{!URLFOR($Resource.ondeck__OnDeck, 'js/jquery.min.js')}" />
+    <style>
+    
+        #Fileloader {
+            background: #fff url("{!URLFOR($Resource.OnDeck, 'img/loader.gif')}") no-repeat scroll center center;
+            opacity: 0.8;
+            position: absolute;
+            width: 100%;
+            height: 400px;
+            top: 0;
+            left: 0;
+            z-index: 1000;         
+        }
+    
+        .loaderText {
+            text-align: center;
+            vertical-align: middle;
+            font-size: 200%;
+            
+        }
+    
+    </style>
+    
+    <script>
+        function showFileLoader() {
+            
+            $("#Fileloader").show();    
+            
+        }
+    
+        function hideFileLoader() {
+            $("#Fileloader").hide();
+        }
+        
+    </script>
+    
+    <div id="Fileloader" style="display: none; height: 100%;" > 
+        <apex:image id="onDeckLogo" url="{!URLFOR($Resource.ondeck__OnDeck, 'img/ondeckLogo.png')}" style="position: absolute; left: 40%;"/>
+        <p class="loaderText" style="margin-top: 10%;"><b> Please wait. We are sending your file(s).</b></p> 
+    </div>
+    
+    
+    <apex:form rendered="{!attachmentsWrapper.size > 0 && showFiles}" >
+        <apex:pageBlock title="File Upload" >
+        
+            <apex:pageMessage summary="{!error}" severity="error" rendered="{!error != ''}" strength="3"/>
+            <apex:pageMessage summary="{!success}" severity="confirm" rendered="{!success != ''}" strength="3"/>
+            <apex:pageMessage summary="{!info}" severity="info" rendered="{!info != ''}" strength="3"/>
+        
+            <apex:pageBlockButtons location="top">
+                <apex:commandButton value="Send File to OnDeck" action="{!sendFile}"  onclick="showFileLoader();" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockSection columns="1">
+	            <apex:pageBlockSectionItem >
+	                <apex:outputLabel value="" />
+		            <apex:pageBlockTable value="{!attachmentsWrapper}" var="attachment" id="attachments" style="width: 80%;">
+		            
+		                   <apex:column style="{!if(attachment.BodyLength < 3000000 / 1024.0, '', 'color: #C7C7C7')}" width="15px">
+		                       <apex:inputCheckbox value="{!attachment.selected}" disabled="{!attachment.bodyLength > 3000000 / 1024 || attachment.disabled}" />
+		                   </apex:column>
+		                                
+		                   <apex:column headerValue="Name" style="{!if(attachment.BodyLength < 3000000 / 1024.0 && !attachment.disabled, '', 'color: #C7C7C7')}">
+		                       <apex:outputText value="{!attachment.Name}"  />
+		                   </apex:column>
+		                   
+		                   <apex:column headerValue="Size (Kb)" style="{!if(attachment.BodyLength < 3000000 / 1024.0 && !attachment.disabled, '', 'color: #C7C7C7')}" >
+		                       <apex:outputText value="{0, number,###,###,##0.00}">
+		                       <apex:param value="{!attachment.bodyLength}" />
+		                       </apex:outputText>
+		                   </apex:column>
+		                   
+		                   <apex:column headerValue="File Type" style="{!if(attachment.BodyLength < 3000000 / 1024.0 && !attachment.disabled, '', 'color: #C7C7C7')}" >
+		                       <apex:outputText value="{!attachment.contentType}" />
+		                   </apex:column>
+		                   
+		                   <apex:column headerValue="" style="{!if(attachment.BodyLength < 3000000 / 1024.0 && !attachment.disabled, '', 'color: #C7C7C7')}" >
+                               <apex:repeat value="{!attachment.errorMessage}" var="error">
+                                    <apex:outputText value="{!error}" /><br/>
+                                </apex:repeat>
+                               
+                               <!-- <apex:outputText value="{!attachment.errorMessage}" /> -->
+                           </apex:column>
+		                   
+		            </apex:pageBlockTable>
+	            </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+</apex:component>

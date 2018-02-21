@@ -1,0 +1,215 @@
+<apex:component controller="GRIDSyndicationsController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!syndEditAllFlag}" access="global" />
+
+    <apex:form id="syndform" styleClass="records">
+        <apex:outputLabel rendered="{!syndIsRefrenceField}">Please remove '{!syndRefrenceFieldLabel}' field from the 'GRIDSyndicationsFieldSet' field set, as referenced fields are not allowed.</apex:outputLabel>
+
+        <apex:outputPanel id="syndTable" rendered="{!NOT(syndIsRefrenceField)}">
+        <script type="text/javascript">
+            
+            t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='syndicationTab_lbl']").text( 'Syndications'+' ({!syndRecordCount})');
+                    
+                    t$('#syndicationsTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                });
+            //save functionality 
+            
+          
+        </script>
+        <apex:pageblock mode="inlineEdit">
+            
+            <apex:pageBlockButtons location="top">
+                <apex:outputpanel rendered="{!$ObjectType.Syndication__c.createable}">
+                    <input type="button" onclick="runNewSynd(); return true;" class="{!if(syndIsDisable,'btnDisabled disBtn','btn')}" value="New Syndication" status="loadingPanel" />
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!AND($ObjectType.Syndication__c.updateable, NOT(syndEditAllFlag))}">
+                    <apex:CommandButton action="{!editAllSynd}" value="Edit All" disabled="{!syndIsDisable}" rerender="syndTable" status="loadingPanel"/>
+                </apex:outputPanel>
+                <apex:outputpanel rendered="{!OR($ObjectType.Syndication__c.updateable,$ObjectType.Syndication__c.createable)}">
+                    <input type="button" onclick="runSaveSynd()" class="{!if(syndIsDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refreshSynd}" value="Refresh" disabled="{!syndIsDisable}" rerender="syndTable" status="loadingPanel" immediate="true" />
+                <apex:CommandButton action="{!refreshSynd}" value="Cancel" disabled="{!syndIsDisable}" rerender="syndTable" status="loadingPanel" immediate="true" />
+            
+            </apex:pageBlockButtons>
+                <apex:pageMessages id="syndpgMsgId" escape="false" />
+
+                <table class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="syndicationsTableInner">
+                    <tbody>
+                        <tr class="headerRow" >
+                            <th>Record</th>
+                            <th>Action</th>
+                            <apex:repeat value="{!syndFieldsetList}" var="syndField">
+                            <th>
+                                
+                                <div>
+                                 <apex:outputLabel value="{!syndField.label}"/> 
+                                 <apex:OutputPanel rendered="{!AND(syndField.type != 'textarea', syndField.type != 'multipicklist', syndField.type != 'phone')}"> 
+                                   <img src= "{!IF(syndSortExprFieldApi==syndField.fieldPath, IF(syndSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name="{!syndField.fieldPath}" class="sorting" onclick="sortCallSynd('{!syndField.type}');" />
+                                  </apex:OutputPanel>   
+                                </div>
+                            </th>
+                            </apex:repeat>
+                        </tr>
+                        
+                        <apex:repeat value="{!syndWrapperLst}" var="syndWraper" >
+                        <tr class="dataRow">
+                            <td>
+                                <apex:outputtext value="{!syndWraper.syndIndex + 1}"/>
+                            </td>
+                            <td>
+                                <apex:outputLink value="/{!syndWraper.synd.Id}" target="blank" rendered="{!NOT(ISBLANK(syndWraper.synd.Id))}"> View </apex:outputLink>
+                                <apex:outputLabel value="| " rendered="{!AND(NOT(ISBLANK(syndWraper.synd.Id)),$ObjectType.Syndication__c.deletable)}" />
+                                <apex:commandLink action="{!deleteSynd}" value="Del" rerender="syndTable" rendered="{!AND(NOT(ISBLANK(syndWraper.synd.Id)),$ObjectType.Syndication__c.deletable)}" status="loadingPanel">
+                                    <apex:param name="syndIndexToRemove" value="{!syndWraper.syndIndex}" assignTo="{!syndIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                                <apex:commandLink action="{!deleteSynd}" value="Remove" rerender="syndTable" rendered="{!(ISBLANK(syndWraper.synd.Id))}"  styleClass="removeRow" status="loadingPanel" immediate="true">
+                                    <apex:param name="syndIndexToRemove" value="{!syndWraper.syndIndex}" assignTo="{!syndIndexToRemove}"></apex:param>
+                                </apex:commandLink>
+                            </td>
+                            <apex:repeat value="{!syndFieldsetList}" var="syndfield">
+                                <td>
+                                    <apex:outputField value="{!syndWraper.synd[syndfield]}" rendered="{!AND(IF(syndWraper.syndEdit = false, true, false),NOT(ISBLANK(syndWraper.synd.Id)))}" />
+                                    <apex:inputField value="{!syndWraper.synd[syndfield]}" rendered="{!OR(IF(syndWraper.syndEdit = true, true, false),ISBLANK(syndWraper.synd.Id))}"/>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                        </apex:repeat>
+                    </tbody>
+                    <tfoot>
+                        <tr class="headerRow"> 
+                            <td><b>Total</b></td>
+                            <td></td>
+                            <apex:repeat value="{!syndFieldsetList}" var="syndfield">
+                                <td>
+                                    <!-- apex:outputText value="{!syndFieldToSumMap[syndfield.fieldPath]}" rendered="{!syndFieldToSumMap[syndfield.fieldPath] != -999.999}" / -->
+                                    <apex:outputText value="${0, number, ###,###,###,##0.00}" rendered="{!AND(syndFieldToSumMap[syndfield.fieldPath] != -999.999,syndfield.type== 'currency')}" >
+                                         <apex:param value="{!syndFieldToSumMap[syndfield.fieldPath]}" />
+                                    </apex:outputText>
+                                    
+                                    <apex:outputText value="{0, number, ###,###,###,##0.00}" rendered="{!AND(syndFieldToSumMap[syndfield.fieldPath] != -999.999,syndfield.type!= 'currency')}" >
+                                         <apex:param value="{!syndFieldToSumMap[syndfield.fieldPath]}" />
+                                    </apex:outputText>
+                                </td>
+                            </apex:repeat>
+                        </tr>
+                    </tfoot>
+                </table>
+                <br />
+                {!IF((syndOffsetsize + 1) > syndRecordCount, IF(syndRecordCount - syndBlockSize <= 0, 0, syndRecordCount - syndBlockSize), syndOffsetsize + 1)} - {!syndWrapperLst.size + syndOffsetsize} of {!syndRecordCount}
+                
+                <!-- panel grid for pagination buttons -->
+                   <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="syndTable" action="{!beginningSynd}" status="loadingPanel" rendered="{!IF(syndOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="syndTable" action="{!previousSynd}"  status="loadingPanel" rendered="{!IF(syndOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="syndTable" action="{!nextSynd}" status="loadingPanel" rendered="{!IF(syndWrapperLst.size + syndOffsetsize < syndRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="syndTable" action="{!endSynd}" status="loadingPanel" rendered="{!IF(syndWrapperLst.size + syndOffsetsize < syndRecordCount, true, false)}" />
+                   </apex:pageBlockButtons>
+            
+        </apex:pageblock>
+          <apex:inputHidden value="{!syndSortExpression}" id="syndSortHiddencriterian"/>
+          <apex:inputHidden value="{!syndSortDirection}" id="syndSortHiddenOrder"/>     
+          <apex:inputHidden value="{!syndSortExprFieldApi}" id="syndSortFieldApi"/>
+        </apex:outputPanel>
+        
+        <apex:actionFunction action="{!newSynd}" name="newSynd" rerender="syndTable" status="loadingPanel" />
+        <apex:actionFunction action="{!saveAllSynd}" name="saveSynd" rerender="syndTable" status="loadingPanel" />
+        <apex:actionFunction action="{!sortSynd}" name="sortAllSynd" rerender="syndTable" status="loadingPanel" >
+            <apex:param name="syndTypeParam" value="" /> 
+        </apex:actionFunction>
+         
+                
+    </apex:form>
+    <script>
+        function runNewSynd()
+        {
+            setTimeout(function()
+            {
+                newSynd();
+            }, 100);
+           
+        }
+        
+        function runSaveSynd() 
+        {
+            setTimeout(function()
+            {
+                saveSynd();
+            }, 100);
+        }
+        
+       function sortCallSynd(syndFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             
+                 var syndElement = event.target;
+                 var newSyndSortCol = t$(syndElement).attr("Name"); // new sort field
+                 t$("input[id$='syndSortFieldApi']").val(newSyndSortCol);
+                 var oldSyndSortCol = t$("input[id$='syndSortHiddencriterian']").val();
+                 var indexSynd;
+                 var syndTempSortExpr;
+                 if(newSyndSortCol.endsWith('__c')) 
+                 {
+                     indexSynd = newSyndSortCol.indexOf('__');
+                 }
+                 else if(newSyndSortCol.endsWith('Id'))
+                 {
+                     indexSynd = newSyndSortCol.indexOf('Id');
+                 }
+                if(indexSynd != null) {
+                    syndTempSortExpr = newSyndSortCol.substring(0, indexSynd);
+                }
+                else 
+                {
+                    syndTempSortExpr = newSyndSortCol;
+                }
+
+               //if(String(newSyndSortCol) == String(oldSyndSortCol))
+               if(oldSyndSortCol.indexOf(syndTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='syndSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='syndSortHiddenOrder']").val("DESC");
+                      t$(syndElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='syndSortHiddenOrder']").val("ASC");
+                      t$(syndElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='syndSortHiddencriterian']").val(newSyndSortCol);
+                    sortAllSynd(syndFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='syndSortHiddencriterian']").val(newSyndSortCol);
+                    t$("input[id$='syndSortHiddenOrder']").val("ASC");
+                    t$(syndElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllSynd(syndFieldDataType);
+                }
+          }
+          
+    </script>
+</apex:component>

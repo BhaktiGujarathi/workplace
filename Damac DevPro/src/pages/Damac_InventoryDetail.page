@@ -1,0 +1,309 @@
+<apex:page renderAs="pdf" standardController="Inventory__c" extensions="InventoryPDFDetailPage,BuildingPaymentPlanController" showHeader="false" sidebar="false"  applyBodyTag="false" applyHtmlTag="false">
+<html>
+    <head>
+        <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/> 
+        <style type="text/css" media="print">
+            @page {
+            size: letter;
+            margin: 25mm;
+            @top-center {
+                //background-image:url('https://damacsandbox--damacdev--c.cs88.content.force.com/servlet/servlet.FileDownload?file=00P9E000000Gh7X');
+                //background-repeat:no-repeat;
+                //background-position:right top;
+                //content: "Available Inventory";
+                //width: 100px;
+                //height:50px;
+                content: element(header);
+            }
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+            }
+        }
+        .page-break {
+            display:block;
+            page-break-after:always;
+        }
+        
+            .pbSubheader {
+            background:Black !important;
+            color:white !important;
+            border-bottom:2px solid Black !important;
+            font-size:11px !important;
+        }
+        
+        .bEditBlock {
+            background:white !important;
+        }
+        
+       
+        .Custom52Tab .secondaryPalette, .individualPalette .Custom52Block .secondaryPalette{
+            border-color:Black !important;
+            }
+            
+        body {
+            font-family: Arial Unicode MS !important;
+        }
+           
+        </style>
+    </head>
+    <body>
+    <div class="header" align="center">
+        <img src="{!$Resource.DAMAC_logo}" width="150" height="50"/>
+    </div>
+   <apex:pageBlock title="" mode="detail">
+        <apex:pageBlockSection title="Property Details" columns="2"  >
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Selling Price" for="selling_price"/>
+                    <apex:outputField value="{!inventory.List_Price_calc__c}" id="selling_price"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;                                                 
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Special Price" for="special_price"/>
+                    <apex:outputField value="{!inventory.Special_Price_calc__c}" id="special_price"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Property Type" for="property_type"/>
+                    <apex:outputField value="{!inventory.Property_Type__c}" id="property_type"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Building Name" for="building_name"/>
+                    <apex:outputField value="{!inventory.Building_Name__c}" id="building_name"/> 
+            </apex:pageBlockSectionItem>
+            
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                 " labelStyle="width:15%;
+                                                  font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;
+                                                    " >
+                    <apex:outputLabel value="Brand" for="brand"/>
+                    <apex:outputField value="{!inventory.Brand__c}" id="brand"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;                                                 
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Floor Package Name" for="floor_package"/>
+                    <apex:outputField value="{!inventory.Floor_Package_Name__c}" id="floor_package"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;                                                 
+                                                    " >
+                    <apex:outputLabel value="Floor Package Type" for="floor_type"/>
+                    <apex:outputField value="{!inventory.Floor_Package_Type__c}" id="floor_type"/> 
+            </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="Unit Sale" columns="2" >
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Unit" for="unit"/>
+                    <apex:outputField value="{!inventory.Unit__c}" id="unit"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Property Status" for="property_status"/>
+                    <apex:outputField value="{!inventory.Property_Status__c}" id="property_status"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Unit Type" for="unit_type"/>
+                    <apex:outputField value="{!inventory.Unit_Type__c}" id="unit_type"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Bedrooms" for="bedrooms"/>
+                    <apex:outputField value="{!inventory.IPMS_Bedrooms__c}" id="bedrooms"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Area (Sqft)" for="areaSqft"/>
+                    <apex:outputField value="{!inventory.Area_Sqft_2__c}" id="areaSqft"/> 
+            </apex:pageBlockSectionItem>
+             <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Price Per Sqft" for="pricePerSqft"/>
+                    <apex:outputField value="{!inventory.Price_Per_Sqft__c}" id="pricePerSqft"/> 
+            </apex:pageBlockSectionItem>
+        </apex:pageBlockSection>
+        
+        
+        <apex:pageBlockSection title="Release Details" columns="2" >
+            <apex:pageBlockSectionItem dataStyle="width:20%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:30%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Anticipated Completion Date" for="ACD"/>
+                    <apex:outputField value="{!inventory.Anticipated_Completion_Date__c}" id="ACD"/> 
+            </apex:pageBlockSectionItem>
+            
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="Additional Charges" columns="2" >
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;" >
+                    <apex:outputLabel value="Land Registration Fee (A)*" for="lrf"/>
+                    <apex:outputField value="{!inventory.Land_Registration_Fee_A__c}" id="lrf"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="Title Deed (B)" for="title_deed"/>
+                    <apex:outputField value="{!inventory.Title_Deed_B__c}" id="title_deed"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="OQOOD Fee(C)" for="oqood_deed"/>
+                    <apex:outputField value="{!inventory.OQOOD_Fee_C__c}" id="oqood_deed"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  border-bottom:1px solid Black !important;" labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    border-bottom:1px solid Black !important;">
+                    <apex:outputLabel value="DSR Fees(D)" for="dsr_fee"/>
+                    <apex:outputField value="{!inventory.DSR_Fees_D__c}" id="dsr_fee"/> 
+            </apex:pageBlockSectionItem>
+            <apex:pageBlockSectionItem dataStyle="width:35%;padding-left:10px;font-size:11px !important;
+                                                  font-family:Arial,sans-serif !important;padding:5px !important;
+                                                  " labelStyle="width:15%;
+                                                    font-size:11px !important;
+                                                    font-family:Arial,sans-serif !important;
+                                                    padding:5px !important;
+                                                    ">
+                    <apex:outputLabel value="Total Fees to DLD(A+B+C+D)" for="total_fees"/>
+                    <apex:outputField value="{!inventory.Total_Fees_to_DLD__c}" id="total_fees"/> 
+            </apex:pageBlockSectionItem>
+          
+           
+            
+        </apex:pageBlockSection>
+        <div style="border-top:1px solid Black !important;">
+             <apex:include pageName="Damac_InventoryDisclaimer"/>
+        </div>
+    </apex:pageBlock>
+    <div style="font-size:11px;font-weight:bold;background:Black !important;color:#FFFFFF;padding:10px;margin-top:30px">Payment Plan</div>
+    <apex:variable var="cnt" value="{!0}" /> 
+            <apex:repeat value="{!mpAvailable}" var="bld">
+                <apex:variable var="cnt" value="{!cnt+1}"/>
+                    <apex:repeat rendered="{!IF(CONTAINS(planKeyStr,bld), true, false)}" value="{!mpPaymentPlans[bld]}" var="pp">
+                        <div class="table-responsive ">
+                        <table width="100%" style="font-size:10px" cellspacing="0" border="1px solid #eee">
+                            
+                            <tr>
+                                <apex:repeat value="{!$ObjectType.Payment_Terms__c.fieldsets.PaymentTerm}" var="f">
+                                    <th style="font-size:10px; font-weight:bold">{!f.label}</th>
+                                </apex:repeat>
+                            </tr>
+                            <apex:repeat value="{!mpPaymentTerms[pp.Id]}" rendered="{!IF(CONTAINS(pTermKeyStr,pp.Id), true, false)}"  var="term">
+                            
+                            
+                                <tr>
+                                    <apex:repeat value="{!$ObjectType.Payment_Terms__c.fieldsets.PaymentTerm}" var="f">
+                                        <td style="font-size:10px">
+                                            <apex:outputField value="{!term[f]}"/>
+                                        </td>
+                                    </apex:repeat> 
+                                    
+                                </tr>
+                            </apex:repeat>  
+                        </table>
+                        </div>
+                    </apex:repeat> 
+            </apex:repeat>
+       
+      <!-- <div style="font-size:18px; font-weight:Bold; margin-top:50px;margin-bottom:30px">Unit Documents</div>
+       <apex:outputPanel rendered="{!inventory.Unit_Plan__c != null}" layout="block" style="padding-bottom:10px">
+           <a style="color:#0D80FC;padding-bottom:10px" href="{!inventory.Unit_Plan__c}" target="_blank">Unit Plan</a>
+       </apex:outputPanel>
+       <apex:outputPanel rendered="{!inventory.Floor_Plan__c != null}" layout="block" style="padding-bottom:10px">
+           <a style="color:#0D80FC;" href="{!inventory.Floor_Plan__c}" target="_blank">Floor Plan</a>
+       </apex:outputPanel>
+       <apex:outputPanel rendered="{!inventory.Plot_Plan__c != null}" layout="block" style="padding-bottom:10px">
+           <a style="color:#0D80FC;" href="{!inventory.Plot_Plan__c}" target="_blank">Plot Plan</a>
+       </apex:outputPanel>-->
+        </body>
+ </html> 
+
+</apex:page>

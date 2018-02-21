@@ -1,0 +1,562 @@
+<apex:page showHeader="true" sidebar="true" controller="DamacProjectController" readOnly="true">
+<html>
+    <!-- apex page attribute readonly is added to ensure the page viewstate issue doesnt occur and limit is extended to show 10000 records: PLEASE NOTE - there can not be any DML operations performed if readOnly is 
+    set to true. If there is a need to remove readOnly then please add the pagination logic to query max
+    1000 records at a time -->
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta content="utf-8" http-equiv="encoding"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <title>Agent Portal- Projects</title>
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/lightning-responsive.css')}" />
+
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/damac-theme.css')}" />
+        <apex:stylesheet value="{!URLFOR($Resource.AgentPortal_Resources, 'assets/css/dataTable.css')}" />
+
+        <style>
+            .global-content-w-footer{
+                padding-bottom:100px !important;
+            }
+
+            .custom-table thead > tr > th{
+                width: 200px !important;
+            }
+
+            .header-home{
+                background:url('{!URLFOR($Resource.AgentPortal_Resources, 'assets/images/Projects.jpg')}') no-repeat !important;
+                -webkit-background-size: cover!important;
+                -moz-background-size: cover!important;
+                background-size: cover!important;
+                position:relative;
+            }
+
+         
+            .no-bg-image{
+                background:#000000 !important;
+            }
+
+            .outer td.oRight{
+                padding:0px !important;
+            }
+
+            .height-100vh{
+                width:100%;
+            }
+
+            .global-wrapper{
+                padding:7px !important;
+            }
+
+           .dataTables_filter{
+               float:right;
+               padding-right:10px;
+               width:auto !important;
+               padding-bottom:8px !important;
+           }
+
+            label,p{
+                margin:0px !important;
+            }
+
+            .dataTables_filter .SearchTitle{
+                padding:6px 20px 10px;
+                margin:0px !important;
+                box-sizing: border-box !important; 
+                
+            }
+
+
+
+            .btn{
+                vertical-align: middle !important;
+                text-align: center !important;
+                background: #0D80FC !important;
+                border: none !important;
+                border-radius: 0px !important;
+                color: white !important;
+                font-size: 13px !important;
+                font-family: Arial,sans-serif !important;
+                min-height: 30px !important;
+                min-width: 100px !important;
+                padding: 5px !important;
+                cursor: pointer !important;
+                padding: 6px !important;
+                text-decoration: none !important;
+                display: inline-block;
+                margin-bottom: 0;
+                font-weight: normal;
+                text-align: center;
+                vertical-align: middle;
+                -ms-touch-action: manipulation;
+                touch-action: manipulation;
+                cursor: pointer;
+                background-image: none;
+                border: 1px solid transparent;
+                white-space: nowrap;
+                padding: 6px 12px;
+                font-size: 14px;
+                line-height: 1.42857143;
+                border-radius: 4px;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+                box-sizing: border-box;
+            }
+            
+            .dataTables_filter input{
+                box-sizing: border-box !important; 
+            }
+           
+            .dt-buttons{
+               padding-left:5px;
+               
+           }
+
+           
+           .btn,.slds-button, .slds-button--neutral{
+                font-size:13px !important;
+                font-weight:bold !important;
+            }
+            
+            label{
+                margin-bottom:0px !important;
+            }
+            
+            #map{
+                display:none;
+            }
+            
+
+            @media only screen and (max-width: 767px){
+                .dt-buttons{
+                    display:block !important;
+                    width:100% !important;
+                }
+
+                .dataTables_filter{
+                   
+                    display: block !important;
+                }
+
+                .height-100vh{
+                    width:85vw;
+                }
+            
+                #map,#view_map{
+                    display:none !important;
+                }
+            
+            }
+        </style>
+    </head>
+<body>
+    <apex:actionStatus id="pleasewait" stopText="">
+        <apex:facet name="start">
+            <div>
+            <!-- to disable whole page when user clicks on next button  -->
+                <div class="popupBackground override-bg"></div>
+                <div class="PopupPanel">
+                    <img src="{!$Resource.Portal_Loading_Image}"/>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <div class="global-wrapper content-bg">
+        <apex:insert name="body slds">
+            <apex:form id="project-form">
+                <section class="global-content-w-footer" id="project-section">
+                    <div class="slds-container--large banner-tint slds" style="">
+                        <div class="slds-grid slds-wrap slds-p-around--medium ie-padding">
+                            <div class="slds-size--1-of-1 slds-medium-size--10-of-12">
+                                <div class="slds-grid slds-wrap slds-wrap-override ie-responsive">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Location
+                                    </div>
+                                    <div id="location-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected" onclick="selectFilterItems($(this),LocationSelected)">
+                                            <div class="all-pin"></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!locationNames}" var="locationName">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),LocationSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">{!locationName}</div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap slds-wrap-override ie-responsive">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Type
+                                    </div>
+                                    <div id="type-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected" onclick="selectFilterItems($(this),TypeSelected)">
+                                            <div class="all-pin"></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!projectType}" var="types">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),TypeSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">
+                                                {!types}
+                                            </div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                                <div class="slds-grid slds-wrap slds-wrap-override ie-responsive">
+                                    <div class="slds-size--1-of-1 slds-medium-size--2-of-12 text-medium text-color-white padding-5">
+                                        Bedrooms
+                                    </div>
+                                    <div id="bedroom-items" class="slds-size--1-of-1 slds-medium-size--10-of-12 padding-5 items">
+                                        <div class="filter-item-container all filter-item-selected" onclick="selectFilterItems($(this),BedroomSelected)">
+                                            <div class="all-pin"></div>
+                                            <div class="text-x-small text-color-white filter-item-text">All</div>
+                                        </div>
+                                        <apex:repeat value="{!bedrooms}" var="no">
+                                            <div class="filter-item-container other-than-all" onclick="selectFilterItems($(this),BedroomSelected)">
+                                            <div class="text-x-small text-color-white filter-item-text">{!no}</div>
+                                        </div>
+                                        </apex:repeat>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="slds-size--1-of-1 slds-medium-size--2-of-12 slds-grid slds-wrap slds ie-responsive" style="text-align:center">
+                                <div class="slds-grid slds-wrap slds-size--1-of-1 slds-p-bottom--medium"  style="text-align:center">
+                                    <div class="slds-size--1-of-2"></div>
+                                    <div class="slds-button slds-button--neutral slds-size--1-of-2" style="margin-top:5px;min-width:0px" id="filter" onclick="filterProjectLists();">Filter</div>
+                                </div>
+                                 <div class="slds-grid slds-wrap slds-size--1-of-1"  style="text-align:center">
+                                     <div class="slds-size--1-of-2"></div>
+                                     <div class="slds-button slds-button--neutral slds-size--1-of-2" style="min-width:0px" id="view_map" onclick="viewMap()">View Map</div>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="slds-container--large slds" style="margin-top:0px;overflow:hidden;position:relative">
+                        <div id="map" style="height: 400px;"></div>
+                    </div>
+                    <div class="slds-container--large" style="margin-top:7px;background: #FFFFFF; padding-top:10px">
+                        <div class="text-medium padding-5" style="font-weight: bold !important">Project Lists</div>
+                        <apex:outputPanel id="propertyList">
+                          <div class="table-responsive">
+                            <table class="table responsive custom-table">
+                            <thead>
+                                <tr>
+                                    <!--<apex:repeat value="{!$ObjectType.Inventory__c.FieldSets.Project}" var="DetailsList">
+                                        <th>
+                                            {!DetailsList.Label}
+                                        </th>
+                                    </apex:repeat>-->
+                                    <th>
+                                        Marketing Name
+                                    </th>
+                                    <th>
+                                        Property Name 
+                                    </th>
+                                    <th>
+                                        District
+                                    </th>
+                                    <th class="no-bg-image">More</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!--<apex:repeat var="dataList" value="{!projectsAssigned}">
+                                    <tr>
+                                        <apex:repeat var="f" value="{!$ObjectType.Inventory__c.FieldSets.Project}">
+                                            <td>
+                                                <apex:outputField value="{!dataList[f]}" style="text-transform: uppercase;"/>
+                                            </td>
+                                        </apex:repeat>
+                                        <td>
+                                            <a onclick="loadProjectUnits('{!dataList.Property__c}')" href="" style="cursor:pointer !important;color:#0D80FC">View</a>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>-->
+                                <apex:repeat var="dataList" value="{!projectsAssigned}">
+                                    <tr>
+                                        <td>
+                                            {!dataList.marketingName}
+                                        </td> 
+                                        <td>
+                                            {!dataList.propertyName}
+                                        </td>
+                                        <td>    
+                                            {!dataList.district}
+                                        </td>
+                                        <td>
+                                            <a onclick="loadProjectUnits('{!dataList.marketingName}')" href="" style="cursor:pointer !important;color:#0D80FC">View</a>
+                                        </td>
+                                    </tr>
+                                </apex:repeat>
+                            </tbody>
+                            </table>
+                           </div>   
+                        </apex:outputPanel>     
+                    </div>
+                </section>
+                <apex:actionFunction name="filterProjects" action="{!filterProjects}" reRender="mapScript,propertyList" status="pleasewait" oncomplete="initMap()">
+                    <apex:param name="locationNamesSelected" value=""></apex:param>
+                    <apex:param name="projectTypeSelected" value=""></apex:param>
+                    <apex:param name="BedroomsSelected" value=""></apex:param>
+                </apex:actionFunction>
+            </apex:form>
+        </apex:insert>
+    </div>
+    <script src="https://maps.googleapis.com/maps/api/js?key={!$Label.AgentPortal_GoogleMap_ID}"></script>
+     <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/jquery.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.js')}"></script>
+    <!--<script type="text/javascript" src="{!URLFOR($Resource.AgentPortal_Resources, 'assets/js/datatable.responsive.min.js')}"></script>-->
+    <script type="text/javascript" src="https://cdn.datatables.net/responsive/2.1.1/js/dataTables.responsive.min.js"></script>
+
+    <script>
+        var LocationSelected = [];
+        var TypeSelected = [];
+        var BedroomSelected = [];
+        var init = true;
+
+        if (GetIEVersion() > 0) {
+          if(window.innerWidth<768){
+            $('.ie-responsive').css('display','block');
+          }
+        }
+
+      function GetIEVersion() {
+            var sAgent = window.navigator.userAgent;
+            var Idx = sAgent.indexOf("MSIE");
+
+            // If IE, return version number.
+            if (Idx > 0) 
+              return parseInt(sAgent.substring(Idx+ 5, sAgent.indexOf(".", Idx)));
+
+            // If IE 11 then look for Updated user agent string.
+            else if (!!navigator.userAgent.match(/Trident\/7\./)) 
+              return 11;
+
+            else
+              return 0; //It is not IE
+          }
+
+        
+        function selectFilterItems(object,list){
+            $(object).toggleClass('filter-item-selected');
+
+            if($(object).find('.filter-item-text').text().trim() === 'All'){
+                $(object).closest('.items').find('.other-than-all').removeClass('filter-item-selected');
+                list.length = 0;
+                if($(object).hasClass('filter-item-selected'))
+                    addItem('All',list);
+            }
+            else{
+                $(object).closest('.items').find('.all').removeClass('filter-item-selected');
+                removeItem($(object).closest('.items').find('.all').text().trim(),list);
+
+                if($(object).hasClass('filter-item-selected'))
+                    addItem($(object).find('.filter-item-text').text().trim(),list);
+                else
+                    removeItem($(object).find('.filter-item-text').text().trim(),list);
+
+            }
+        }
+
+        function addItem(item,list){
+            if($.inArray(item,list)<0)
+                list.push(item);
+        }
+
+        function removeItem(item,list){
+          var i = list.indexOf(item);
+          if(i != -1) {
+            list.splice(i, 1);
+          }
+        }
+
+        function filterProjectLists(){
+
+            filterProjects("'" + LocationSelected.join("','")+"'" + "" ,
+                "'" + TypeSelected.join("','")+"'" + "","'" + BedroomSelected.join("','")+"'" + "");
+
+        }
+        
+        function loadProjectUnits(Value){
+            console.log('{!$User.UIThemeDisplayed}');
+            if('{!$User.UIThemeDisplayed}' != 'Theme4t'){
+                window.open('{!URLFOR($Page.Damac_Project_Units,null)}?sfdc.tabName={!tabName}&Id='+Value+'&Bedrooms='+BedroomSelected+'&Type='+TypeSelected+'&Location='+LocationSelected , '_self');
+            }else{
+                sforce.one.navigateToURL(encodeURI('/apex/Damac_Project_Units?sfdc.tabName={!tabName}&Id='+Value+'&Bedrooms='+BedroomSelected+'&Type='+TypeSelected+'&Location='+LocationSelected));
+            }
+        }
+        
+        function viewMap(){
+        
+             if($('#map').css('display') == 'none'){
+                  $('#view_map').text('Hide Map'); 
+                 $('#map').slideDown('slow',function(){
+                    $('#map').css('display','block');
+                    $('#map').parent().css('margin-top','7px');
+                     initMap();
+                 });
+                 
+              }
+            else{
+                $('#view_map').text('View Map');
+                $('#map').parent().css('margin-top','0px');  
+                $('#map').slideToggle('slow');
+            }
+            
+            
+            
+            
+        }
+
+        $(document).ready(function(){
+             var bedroomSelectedFromURL = '{!bedroomsSelectedFromURL}';
+                if(null != bedroomSelectedFromURL && '' != bedroomSelectedFromURL){
+                    var bedroomSelectedList = bedroomSelectedFromURL .split(',');
+                    BedroomSelected = bedroomSelectedList;
+                    $('#bedroom-items .filter-item-text').each(function(){
+                        for(bedroomSelected in bedroomSelectedList){
+                            if(null != $(this).text() && $(this).text().trim() == bedroomSelectedList[bedroomSelected].trim()){
+                                $(this).parent().addClass('filter-item-selected');
+                                $('#bedroom-items .all').removeClass('filter-item-selected');
+                           }
+                        }
+                    });
+                }
+                
+                var typeSelectedFromURL = '{!typeSelectedFromURL}';
+                if(null != typeSelectedFromURL && '' != typeSelectedFromURL ){
+                    var typeSelectedList = typeSelectedFromURL.split(',');
+                    TypeSelected = typeSelectedList;
+                    $('#type-items .filter-item-text').each(function(){
+                        for(typeSelected in typeSelectedList){
+                            if(null != $(this).text() && $(this).text().trim() == typeSelectedList[typeSelected].trim()){
+                                $(this).parent().addClass('filter-item-selected');
+                                $('#type-items .all').removeClass('filter-item-selected');
+                           }
+                        }
+                    });
+                }
+
+                 var locationSelectedFromURL = '{!locationSelectedFromURL}';
+                if(null != locationSelectedFromURL && '' != locationSelectedFromURL ){
+                    var locationSelectedList = locationSelectedFromURL.split(',');
+                    LocationSelected = locationSelectedList;
+                    $('#location-items .filter-item-text').each(function(){
+                        for(locationSelected in locationSelectedList){
+                            if(null != $(this).text() && $(this).text().trim() == locationSelectedList[locationSelected].trim()){
+                                $(this).parent().addClass('filter-item-selected');
+                                $('#location-items .all').removeClass('filter-item-selected');
+                           }
+                        }
+                    });
+                }
+            });
+        
+        
+
+           
+    </script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script> 
+    <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js"></script>
+    <apex:outputPanel id="mapScript">
+        <script>
+            function initMap() {
+
+              if(typeof google != 'undefined'){
+
+                   var locations = {!mapMarkers};
+                   var lookup = [];
+                   var centerLatLang = new google.maps.LatLng(25.2048,55.2708);
+
+                  /*if({!noOfMarkers}>0){
+                      centerLatLang =new google.maps.LatLng(locations[0][1],locations[0][2]);
+                   }*/
+
+                    var map = new google.maps.Map(document.getElementById('map'), {
+                      zoom: 6,
+                      center: centerLatLang,
+                      mapTypeId: google.maps.MapTypeId.ROADMAP
+                    });
+
+                  var infowindow = new google.maps.InfoWindow();
+
+                  var marker, i;
+
+                  for (i = 0; i < locations.length; i++) {  
+                      marker = new google.maps.Marker({
+                        //size: new google.maps.Size(20, 32),
+                        //icon:'{!URLFOR($Resource.AgentPortal_Resources, "assets/images/marker.svg")}',
+                        position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+                        map: map
+                      });
+
+                     //lookup.push([locations[i][1],locations[i][2]]);
+                      google.maps.event.addListener(marker, 'click', (function(marker, i) {
+                        return function() {
+                          infowindow.setContent(locations[i][0]);
+                          infowindow.open(map, marker);
+                        }
+                      })(marker, i));
+                    }
+                }
+                
+                
+                
+                
+            }
+
+           
+            $(document).ready(function() {
+                $('.custom-table').DataTable({
+                    "bInfo": false,
+                    "pageLength": 10,
+                    "language": {
+                        "search": "<p class='SearchTitle'>Search</p>"
+                    },
+                    "lengthMenu": [10, 25, 50, 100],
+                    dom: 'lBfrtip',
+                    buttons: [
+                         {  text: 'Download', className: 'download btn' }
+                    ],
+                    "pageLength": 30,
+                    "oSearch": {"bSmart": false},
+                    responsive: true
+                });
+                $('.custom-table tr>td>span>a').each(function(i, link){
+                    $(link).replaceWith($(link).text())
+                });
+
+                //initMap();
+                //$('#map').slideToggle('slow');
+                
+                $('.download').click(function(){
+                    window.open('{!$Site.Prefix}/apex/Availability?agentId={!userId}&Location='+LocationSelected+'&Type='+
+                        TypeSelected+'&Bedrooms='+BedroomSelected
+                        ,'_blank');
+                });
+                
+                var ms_ie = false;
+                var ua = window.navigator.userAgent;
+                var old_ie = ua.indexOf('MSIE ');
+                var new_ie = ua.indexOf('Trident/');
+            
+                if ((old_ie > -1) || (new_ie > -1)) {
+                    ms_ie = true;
+                }
+            
+                if ( ms_ie && $('.show-mob-tablet ').css('display') == 'block') {
+                    $('.banner-tint').removeClass('slds');
+                    $('.ie-padding').css('padding','10');
+                    
+                } 
+
+               
+
+        });
+        </script>
+    </apex:outputPanel>
+</body>
+</html> 
+</apex:page>

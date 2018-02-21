@@ -1,0 +1,129 @@
+<!--
+* Name                  : AutoComplete_Controller    
+* Description           : This component will give the autocomplete functionality based on the parameters
+* Created By            : NSI - Sivasankar K                                                                        
+* Created Date          : 11/Feb/2017 
+* Last Modified Date    :                                                                            
+* Last Modified By      :                                                                            
+* -------------------------------------------------------------------------------------------------- 
+* ChangeHistroy     VERSION     AUTHOR                     DATE             Description                                                      
+* CH00              1.0         NSI - Sivasankar K         11/Feb/2017      Initial development
+* CH01              2.0
+* CH02              3.0
+-->
+<apex:component controller="AutoComplete_Controller" selfClosing="true" id="comAuto">
+    <apex:attribute name="required" type="Boolean" description="TODO: Describe me"/>
+    <apex:attribute name="SObject" description="SOQL Object to query" type="String" assignTo="{!sObjVal}" required="true"/>
+    <apex:attribute name="labelField" description="API Name of Field to display for label" type="String" required="true"/>
+    <apex:attribute name="valueField" description="API Name of Field to display for value that is passed to the targetField" type="String" required="true"/>
+    <apex:attribute name="targetFields" assignTo="{!targetField}" description="Field of current object that will hold the selection." type="Object"/>
+    <apex:attribute name="conString" description="conditions of the Query if any" type="String"/>
+    <!--Required js files-->
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <script>
+    
+        /*
+        *check if jquery is loaded if not load jquery again
+        **/
+       if(typeof jQuery != 'undefined'){
+           $j =jQuery.noConflict();
+       }
+       $j(function(){
+            $j( ".auto{!randomJsIden}" ).autocomplete({
+                source: function(request, response) {
+                 $j('.hiddenField{!randomJsIden}').val('');  
+                   queryData{!randomJsIden}(response ,request.term);
+                },
+                minLength: 0,
+                select: function(event, ui) {
+                                    //pass the selected value to hidden input field
+                                    $j('.hiddenField{!randomJsIden}').val(ui.item.value);                              
+                                    $j(this).val(ui.item.label);
+                                   
+                                    return false;
+                                },
+                focus: function( event, ui ) {
+                      //  $j(this).val( ui.item.label );
+                        return false;  
+                }
+            });
+                   
+        });
+        
+         /*
+        *This method queries data according to the passed parameter
+        *and populates the combobox accordingly
+        ***/    
+        function queryData{!randomJsIden}(response,param){
+           Visualforce.remoting.Manager.invokeAction(
+                     '{!$RemoteAction.AutoComplete_Controller.getData}','{!sObjVal}','{!labelField}','{!valueField}',param,'{!conString}',
+                     function(result, event){
+                         //if success
+                         if(event.status){ 
+                            var data = [];
+                            var labelIndex = '{!labelField}'.indexOf('.'); 
+                            var labelSplit = [];
+                            if(labelIndex >= 0 )
+                             labelSplit = '{!labelField}'.split('.');
+                             
+                            console.log('@# Field = '+'{!labelField}'); 
+                            console.log('@# labelSplit = '+labelSplit);
+                            $j.each(result,function(){
+                                 var obj = new Object();
+                                 
+                                 for (var field in this) { 
+                                 	 console.log('@# Field = '+field);
+                                 	 
+                                 	 if( labelIndex >= 0){
+                                 	 	obj.label = $j('<div />').html(this[labelSplit[0]][labelSplit[1]]).text();
+	                                 	console.log('split working');
+	                                 }
+                                 	 
+                                     //match the passed label and returned value to populate the label and value                                  
+                                     if((field.toUpperCase()=='{!labelField }'.toUpperCase())){
+                                         obj.label = $j('<div />').html(this[field]).text();
+                                         console.log('@# obj.label = '+obj.label);
+                                         if( '{!labelField }'.toUpperCase() == '{!valueField}'.toUpperCase())
+                                            obj.value = this[field];
+                                         console.log('@# obj.value = '+obj.value);
+                                     }
+                                     else if((field.toUpperCase()=='{!valueField}'.toUpperCase())){
+                                         obj.value= this[field];                                                                               
+                                     }
+                                    console.log('@# obj.value2 = '+obj.value);                                     
+                                }
+                                console.log('@# obj = '+obj);                                   
+                                 data.push(obj);
+                             });
+                             //return the dataa
+                             response( data);
+                         }
+                         else{
+                              alert('Invalid Field/Object API Name : '+event.message);
+                         }
+                         
+                     }, 
+                      {escape: true}
+                );
+            }     
+    </script>
+    <style>
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            /* prevent horizontal scrollbar */
+            overflow-x: hidden;
+            /* add padding to account for vertical scrollbar */
+            padding-right: 20px;
+        }
+    </style>
+    <apex:inputText id="inpText" styleClass="auto{!randomJsIden}"/>
+    <apex:actionFunction id="actFun" name="refreshPanel{!randomJsIden}" reRender="hiddenPanel" /> 
+    <apex:outputPanel id="hiddenPanel" >
+        <apex:actionRegion >
+            <apex:inputText value="{!targetFields}" id="hiddenField" styleClass="hiddenField{!randomJsIden}" style="display:none"/>
+        </apex:actionRegion>
+    </apex:outputPanel>
+</apex:component>

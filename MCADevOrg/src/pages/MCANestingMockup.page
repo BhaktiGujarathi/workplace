@@ -1,0 +1,80 @@
+<apex:page controller="MCASubmissionsTabController">
+
+  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" /> 
+  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery.tablesorter.min.js')}" />  
+
+  <apex:form id="records" styleClass="records">
+  
+    <c:MCAJQTabComponent />
+  
+	  <apex:pageblock >
+	  
+      <apex:pageBlockButtons >
+        <apex:CommandButton action="{!saveAll}" value="Save" rerender="records" status="loadingPanel"></apex:CommandButton>
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records" status="loadingPanel"></apex:CommandButton>
+        
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records" status="loadingPanel" immediate="true"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records" status="loadingPanel" immediate="true"></apex:CommandButton>
+         
+        <apex:CommandButton action="{!newSubmission}" value="New Submission" rerender="records" ></apex:CommandButton>
+        
+      </apex:pageBlockButtons>	  
+			
+		  <apex:dataTable value="{!submissions}" var="submission" styleClass="list" headerClass="headerRow">
+		  
+				<apex:inlineEditSupport />
+				             	             
+				<apex:column headerValue="" styleClass="dataCell">
+          <apex:outputLink value="javascript:void(0);" styleClass="toggleLink" rendered="{!AND(NOT(ISNULL(submission.Offers__r)), submission.Offers__r.size > 0)}">
+            <apex:image value="/img/setup_plus.gif" />
+				  </apex:outputLink>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Name.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Name}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Name}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Funder__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Funder__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Funder__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Date_Submitted__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Date_Submitted__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Date_Submitted__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Status__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Status__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Status_Date__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Status_Date__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Status_Date__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				  
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Contact__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Contact__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Contact__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>
+				
+				<apex:column headerValue="{!$ObjectType.Submission__c.Fields.Program__c.Label}" styleClass="dataCell">
+				  <apex:outputField value="{!submission.Program__c}" rendered="{!AND(NOT(ISBLANK(submission.Id)), NOT(false))}"/>
+				  <apex:inputField value="{!submission.Program__c}" rendered="{!OR((ISBLANK(submission.Id)), false)}"/>
+				</apex:column>	       
+		  
+				<apex:column breakBefore="true" colspan="7" rendered="{!AND(NOT(ISNULL(submission.Offers__r)), submission.Offers__r.size > 0)}" styleClass="detail-{!submission.Id}">
+				
+				    <c:MCANestedOffersTabComponent submission="{!submission.Id}" />
+				
+				</apex:column>
+		  
+		  </apex:dataTable>
+		
+		</apex:pageblock>
+		
+	</apex:form>
+
+</apex:page>

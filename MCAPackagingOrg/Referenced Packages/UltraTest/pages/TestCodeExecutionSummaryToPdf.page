@@ -1,0 +1,153 @@
+<apex:page controller="ESUT.TestCodeExecutionSummaryController"  standardStylesheets="false"
+			title="{!$Label.esut__Test_Code_Execution_Results}" renderAs="pdf">
+<apex:stylesheet value="{!URLFOR($Resource.ESUT__TestCodeExect_resource, 'css/TestExecutor.css')}" />
+<apex:form id="formSummaryPdf">
+
+		 <apex:image style="text-align:left;" 
+		 			 url="{!URLFOR($Resource.ESUT__TestCodeExect_resource,'img/Logo.png')}"/>
+         <br/> 
+         <br/>        									
+		<apex:pageBlock id="blkTestResults">
+		 <apex:outputlabel style="font-family:arial;font-weight:bold;font-size:20px;text-align:center;text-decoration:underline" 
+		 	value="{!$Label.esut__Test_Code_Execution_Results}"/>	
+		</apex:pageBlock> 	
+		<br/>	
+		<apex:pageBlock id="blkSummary"  >
+			 <apex:outputlabel style="font-family:arial;font-weight:bold;font-size:16px;" value="{!$Label.esut__Summary}"/>
+			 <br/>	
+				<table border="1px solid" cellpadding="4" cellspacing="0">				
+					<tr>
+						<td style="font-family:arial;font-size:12px;">{!$Label.esut__Test_Executed_On}</td>
+						<td><apex:outputText style="font-family:arial;font-size:12px;" value="{!objTstCodeSummary.ESUT__ExecutionDateTime__c}"/></td>
+					</tr>
+					<tr>
+						<td style="font-family:arial;font-size:12px;">{!$Label.esut__Tests_Run}</td>
+						<td><apex:outputText style="font-family:arial;font-size:12px;"  value="{!objTstCodeSummary.ESUT__NumberOfTestRuns__c}"/></td>
+					</tr>
+					<tr>
+						<td style="font-family:arial;font-size:12px;">{!$Label.esut__Test_Successes}</td>
+						<td><apex:outputText style="font-family:arial;font-size:12px;"  value="{!objTstCodeSummary.ESUT__NumberOfTestSucceeded__c}"/></td>
+					</tr>
+					<tr>
+						<td style="font-family:arial;font-size:12px;">{!$Label.esut__Test_Failures}</td>
+						<td><apex:outputText style="font-family:arial;font-size:12px;"  value="{!objTstCodeSummary.ESUT__NumberOfTestFailed__c}"/></td>
+					</tr>
+					<tr>
+						<td style="font-family:arial;font-size:12px;">{!$Label.esut__Average_Code_Coverage}</td>
+						<td><apex:outputText style="font-family:arial;font-size:12px;" value="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c}%"/></td>
+					</tr>					
+				</table>				
+		</apex:pageBlock>		
+		<br/>
+		<apex:pageBlock id="blkTestSuccessTemp" >
+		 <apex:outputlabel style="font-family:arial;font-weight:bold;font-size:16px;" value="{!$Label.esut__Test_Method_Execution_Details}"/>			
+				<apex:repeat value="{!testClassResultList}" var="TestMethodDetail">
+					
+					<apex:pageBlockSection id="secMethodDetails"
+										   columns="1">	<br/>				
+					  <apex:outputlabel style="font-family:arial;font-weight:bold;font-size:14px;" value="{!TestMethodDetail.strClassName}"/><br/>
+						<apex:pageBlockTable style="font-family:arial;font-size:12px;" cellpadding="2px"
+											 columns="5" value="{!TestMethodDetail.successFailureList}"
+											 var="methodDetail" width="100%">
+							
+								<apex:column width="50%">
+									<apex:facet name="header">{!$Label.esut__Test_Method_Name}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__TestMethod_Name__c}"/>
+								</apex:column>
+								
+								<apex:column width="15%">
+									<apex:facet name="header">{!$Label.esut__Status}</apex:facet>
+									<apex:image title="{!$Label.esut__StatusFail}"
+													url="{!$Resource.ESUT__Fail}" 
+													width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Fail'}"/>
+									<apex:image title="{!$Label.esut__StatusPass}"
+													url="{!$Resource.ESUT__Pass}" 
+													width="15" height="15" rendered="{!methodDetail.ESUT__Status__c = 'Pass'}"/>
+								</apex:column>
+								
+								<apex:column width="15%">
+									<apex:facet name="header">{!$Label.esut__Message}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__FailureMessage__c}"/>
+								</apex:column>
+								
+								<apex:column width="40%">
+									<apex:facet name="header">{!$Label.esut__Stack_Trace}</apex:facet>
+									<apex:outputText value="{!methodDetail.ESUT__StackTrace__c}"/>
+								</apex:column>																
+									
+						</apex:pageBlockTable>
+					</apex:pageBlockSection>
+				</apex:repeat>
+			</apex:pageBlock>			
+			<br/>
+			<apex:pageBlock id="blkCoverage" >
+				<apex:outputlabel style="font-family:arial;font-weight:bold;font-size:16px;" value="{!$Label.esut__Code_Coverage}"/>
+				<apex:pageBlockSection id="secClassCoverage"
+									   columns="1"><br/>
+									
+					<apex:outputlabel style="font-family:arial;font-weight:bold;font-size:14px;" value="{!$Label.esut__Class_Coverage_Details}"/><br/>				   
+					<apex:pageBlockTable style="font-family:arial;font-size:12px;" columns="3" value="{!codeCoverageClassList}" var="classCoverageDetails">
+						
+						<apex:column width="30%" value="{!classCoverageDetails.ESUT__ClassName__c}">
+							<apex:facet name="header">{!$Label.esut__Class_Name}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%" style="text-align:center;" value="{!classCoverageDetails.ESUT__CodeCoverage__c} ">
+							<apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+						</apex:column>
+										
+						<apex:column width="20%"> 
+							<apex:image title="{!$Label.esut__StatusFail}"
+													url="{!$Resource.ESUT__Warning}" 
+													width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+							<apex:image title="{!$Label.esut__StatusPass}"
+													url="{!$Resource.ESUT__Pass}" 
+													width="15" height="15" rendered="{!classCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+							<apex:facet name="header">{!$Label.esut__Severity}</apex:facet>							
+						</apex:column>
+					
+						
+						
+					</apex:pageBlockTable>								   
+				</apex:pageBlockSection>
+				<br/>
+				<apex:pageBlockSection id="secTriggerCoverage"
+									   columns="1">
+					<apex:outputlabel style="font-family:arial;font-weight:bold;font-size:14px;" value="{!$Label.esut__Trigger_Coverage_Details}"/><br/>				   
+					<apex:pageBlockTable style="font-family:arial;font-size:12px;" 
+										 columns="3" value="{!codeCoverageTriggerList}" var="triggerCoverageDetails"> 
+						
+						<apex:column width="30%"  value="{!triggerCoverageDetails.ESUT__ClassName__c}">
+							<apex:facet name="header">{!$Label.esut__Trigger_Name}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%" style="text-align:center;" value="{!triggerCoverageDetails.ESUT__CodeCoverage__c} "> 
+							<apex:facet name="header">{!$Label.esut__Coverage}</apex:facet>
+						</apex:column>
+						
+						<apex:column width="20%">
+							<apex:image title="{!$Label.esut__StatusFail}"
+													url="{!$Resource.ESUT__Warning}" 
+													width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c < 75}"/>
+							<apex:image title="{!$Label.esut__StatusPass}"
+													url="{!$Resource.ESUT__Pass}" 
+													width="15" height="15" rendered="{!triggerCoverageDetails.ESUT__CodeCoverage__c >= 75}"/>
+							<apex:facet name="header">{!$Label.esut__Severity}</apex:facet>	
+							</apex:column>
+						
+					</apex:pageBlockTable>								   
+				</apex:pageBlockSection>
+				<br/>
+				<apex:pageBlockSection columns="1" 
+									   rendered="{!objTstCodeSummary.ESUT__AverageCodeCoverage__c < 75}">	
+									   
+				 	<apex:outputlabel style="font-family:arial;font-weight:bold;font-size:16px;" value="{!$Label.esut__Test_Coverage_Warnings}"/>
+				 	
+					<apex:outputlabel style="font-family:arial;font-size:12px;color:red;" value=" Average test coverage across all Apex Classes and Triggers is 
+					 					{!objTstCodeSummary.ESUT__AverageCodeCoverage__c}% ,
+										at least 75% test coverage is required. ">
+					</apex:outputlabel>					      
+				</apex:pageBlockSection>	
+			</apex:pageBlock>	
+</apex:form>			
+</apex:page>

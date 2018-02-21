@@ -1,0 +1,43 @@
+<apex:page standardController="Inquiry__c" extensions="CustomTaskList"
+    sidebar="false" showHeader="false">
+    <apex:form >
+        <apex:pageBlock >
+            <div align="center">
+                <apex:outputPanel >
+                    <apex:commandButton title="New Task" value="New Task"
+                        action="javascript&colon;;"
+                        onclick="window.open('/00T/e?what_id={!Inquiry__c.Id}&retURL={!Inquiry__c.Id}','_parent');" />
+                    <apex:commandButton title="Log a call" value="Log a call"
+                        action="javascript&colon;;"
+                        onclick="window.open('/00T/e?title=Call&what_id={!Inquiry__c.Id}&tsk5=Call&retURL={!Inquiry__c.Id}','_parent');" />
+                </apex:outputPanel>
+            </div>
+            <apex:outputPanel rendered="{!wrapperObj.taskList.size > 0}">
+                <apex:pageBlockTable value="{!wrapperObj.taskList}" var="task">
+                    <apex:column headerValue="Action" styleClass="actionColumn">
+                        <apex:outputLink value="/{!task.Id}/e" target="_parent"
+                            title="Edit Task" styleClass="actionLink">Edit</apex:outputLink>
+                    </apex:column>
+                    <apex:repeat value="{!wrapperObj.fieldList}" var="f">
+                        <apex:column rendered="{!f !='OwnerId' && f != 'Subject' && f!='WhoId'}"
+                            value="{!task[f]}">
+                            <apex:facet name="header">{!f}</apex:facet>
+                        </apex:column>
+                        <apex:column rendered="{!f == 'Subject'}"
+                            style="white-space: nowrap">
+                            <apex:facet name="header">{!f}</apex:facet>
+                            <apex:outputLink value="javascript&colon;;"
+                                onclick="window.top.location='/{!task.id}';">{!task[f]}</apex:outputLink>
+                        </apex:column>
+                    </apex:repeat>
+                </apex:pageBlockTable>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!wrapperObj.taskList.size == 0}">
+                <apex:pageBlockSection >
+                    <apex:outputText value="No task exists at the moment." style="font-weight: bold;"/><br/>
+                    <apex:outputText value="To create a new task use the New Task button or the Log a Call button." style="font-weight: bold;"/>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

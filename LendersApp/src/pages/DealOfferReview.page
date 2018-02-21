@@ -1,0 +1,123 @@
+<apex:page standardController="Opportunity" extensions="DealOfferController">
+    <apex:form >
+        <apex:pageBlock title=" " mode="edit" id="offerReviewId">
+            
+            <apex:actionFunction name="offerRender1" status="loadStatus1" reRender="offerReviewId,fmId"/>
+            
+            <apex:pageBlockSection title="Selected Offers" columns="1">
+            
+                <apex:outputLabel value="No Selected Offers" rendered="{!lstSelectedOffer.size<=0}"></apex:outputLabel>
+                    
+                <apex:pageBlockTable width="100%" value="{!lstSelectedOffer}" var="o" align="center" rendered="{!lstSelectedOffer.size>0}">
+                    
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Name.label}">
+                        <apex:outputText style="width:60px;" value="{!o.programMasterName}"/>
+                    </apex:column>
+                    
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Deal_Type__c.label}">
+                        <apex:inputField id="dealTypeId" style="width:70px;" value="{!o.objOffer.McaApp__Deal_Type__c}" onchange="calculateDailyACH('{!$Component.dailyAchId}','{!$Component.monthlyPbId}','{!$Component.holdbackId}','{!$Component.dealTypeId}');offerRender1();"/>
+                    </apex:column>
+                    
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Term_Months__c.label}" rendered="{!NOT(showTermDays)}">
+                        <apex:inputField id="termId" style="width:35px;" value="{!o.objOffer.McaApp__Term_Months__c}" onchange="termOnChange(this,'{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Term_Days__c.label}" rendered="{!showTermDays}">
+                        <apex:inputField id="termDaysId" style="width:35px;" value="{!o.objOffer.Term_Days__c}" onchange="termOnChange(this,'{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Amount__c.label}">
+                        <apex:inputField style="width:80px;" id="fundedId" value="{!o.objOffer.McaApp__Amount__c}" onchange="fundedOnchange('{!$Component.fundedId}','{!$Component.paybackId}','{!$Component.maxFRate}','{!$Component.monthlyPBId}','{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}',true,'{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Payback__c.label}">
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.McaApp__Payback_Amt__c!=NULL,o.objOffer.McaApp__Term_Months__c!=NULL,opp.AdjustedMonthlyGrossSales__c!=NULL,o.objOffer.McaApp__Payback_Amt__c>(o.objOffer.McaApp__Term_Months__c*opp.AdjustedMonthlyGrossSales__c))}"/>
+                        <apex:inputField style="display:none;" id="payBackId" value="{!o.objOffer.Payback__c}" />
+                        <apex:outputField value="{!o.objOffer.Payback__c}" />
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Rate__c.label}">
+                        <apex:inputField id="maxFRate" style="width:35px;" value="{!o.objOffer.McaApp__Rate__c}" onchange="rateOnchange('{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.payBackId}','{!$Component.monthlyPbId}','{!$Component.facMonth}','{!$Component.maxFRate}','{!$Component.fundedId}','{!$Component.dealLenId}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}')"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.McaApp__Rate__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,o.objOffer.McaApp__Rate__c<opp.Min_Factor_Per_Month__c)}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Holdback__c.label}">
+                        <apex:inputField id="holdbackId" style="width:40px;display:none;" value="{!o.objOffer.McaApp__Holdback__c}"/>
+
+                        <apex:inputField id="holdbackIdNonDec" onchange="holdbackOnchange(this,'{!$Component.holdbackId}','{!$Component.monthlyPbId}','{!$Component.dailyAchId}','{!$Component.dealTypeId}');offerRender1();" style="width:40px;display:{!IF(OR(o.objOffer.McaApp__Deal_Type__c=='MCA',o.objOffer.McaApp__Deal_Type__c=='Hybrid'),'block','none')};" value="{!o.objOffer.Holdback_Non_Decimal__c}"/>
+                    </apex:column>
+
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_ACH__c.label}">
+                        <apex:inputField id="dailyAchId" style="width:60px;display:none;" value="{!o.objOffer.Daily_ACH__c}"/>
+                        <apex:outputField value="{!o.objOffer.Daily_ACH__c}"/>
+                    </apex:column>
+
+                     <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__Payment_Amt__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__Payment_Amt__c}"/>
+                    </apex:column>
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.McaApp__PMT_Schedule__c.label}">
+                        <apex:inputField style="width:80px;" value="{!o.objOffer.McaApp__PMT_Schedule__c}"/>
+                    </apex:column>
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Daily_PB_Amount__c.label}">
+                        <apex:inputField id="dailyPBAmtId" style="width:80px;display:none;" value="{!o.objOffer.Daily_PB_Amount__c}"/>
+                        <apex:outputField value="{!o.objOffer.Daily_PB_Amount__c}" rendered="{!OR(o.objOffer.McaApp__Deal_Type__c=='ACH',o.objOffer.McaApp__Deal_Type__c=='Hybrid')}"/>
+                    </apex:column>
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Monthly_PB_Amount__c.label}">
+                        <apex:inputField style="display:none;" id="monthlyPbId" styleClass="monthlyPBAmountClass" value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                        <apex:outputField value="{!o.objOffer.Monthly_PB_Amount__c}"/>
+                    </apex:column>
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee_Percentage__c.label}">
+                        <apex:inputField id="origFeePer1" styleClass="origFeePer1" style="width:70px;" value="{!o.objOffer.Orig_Fee_Percentage__c}" onchange="fundedOnchange('{!$Component.fundedId}','{!$Component.paybackId}','{!$Component.maxFRate}','{!$Component.monthlyPBId}','{!IF(NOT(showTermDays), $Component.termId, $Component.termDaysId)}','{!$Component.holdbackId}','{!$Component.dailyPBAmtId}','{!$Component.perGrossId}',true,'{!$Component.dailyAchId}','{!$Component.dealTypeId}')" />
+                    </apex:column>
+                    <apex:column width="7%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Orig_Fee__c.label}">
+                        <apex:inputField id="origFee1" styleClass="origFee1" style="width:70px;" value="{!o.objOffer.Orig_Fee__c}" />
+                    </apex:column>
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Deal_Length__c.label}">
+                        <apex:inputField style="display:none;" id="dealLenId" styleClass="dealLengthClass" value="{!o.objOffer.Deal_Length__c}"/>
+                        <apex:outputField value="{!o.objOffer.Deal_Length__c}"/>
+                    </apex:column>
+
+                    <apex:column width="8%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Factor_per_Month__c.label}">
+                        <apex:inputField id="facMonth" style="width:40px;" value="{!o.objOffer.Factor_per_Month__c}" onchange="offerRender()"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Factor_per_Month__c!=NULL,opp.Min_Factor_Per_Month__c!=NULL,(o.objOffer.Factor_per_Month__c<opp.Min_Factor_Per_Month__c))}"/>
+                    </apex:column>
+
+                    <apex:column width="10%" headerValue="{!$ObjectType.McaApp__Offer__c.fields.Percentage_of_Gross__c.label}">
+                        <apex:inputField id="perGrossId" style="display:none;" value="{!o.objOffer.Percentage_of_Gross__c}"/>
+                        <apex:outputField style="width:40px;" value="{!o.objOffer.Percentage_of_Gross__c}"/>
+                        <apex:image url="/img/func_icons/util/alert16.gif" rendered="{!AND(o.objOffer.Percentage_of_Gross__c!=NULL,opp.Max_Gross__c!=NULL,(opp.Max_Gross__c<o.objOffer.Percentage_of_Gross__c))}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            
+            </apex:pageBlockSection>
+
+            <br/>
+
+            <apex:commandButton value="Add New Offer" action="{!addOffer}" reRender="offerReviewId" style="margin: 0 20px;">
+                <apex:param name="currentTab" value="step3" assignTo="{!currentTab}"/>
+            </apex:commandButton>
+        
+            <apex:pageBlockSection title="Selected Stips" columns="1">
+                
+                <apex:outputLabel value="No Selected Stips" rendered="{!lstStipToInsert.size<=0}" ></apex:outputLabel>
+                
+                <apex:pageBlockTable value="{!lstStipToInsert}" var="s" width="50%" align="center" rendered="{!lstStipToInsert.size>0}">
+                    <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.fields.Name.label}">
+                        <apex:inputField value="{!s.Name}"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.McaApp__Stips__c.fields.Notes__c.label}">
+                        <apex:inputField value="{!s.Notes__c}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            
+            </apex:pageBlockSection>
+
+            <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="Back" action="{!backTostep2}"/>
+                <apex:commandButton value="Cancel" action="{!Cancel}"/>
+                <apex:commandButton value="Next" action="{!saveOffersStips}"/>
+                <apex:commandButton value="Save & Close" action="{!saveSelectedOfferAndStip}"/>
+            </apex:pageBlockButtons>
+        </apex:pageBlock>
+    </apex:form>
+</apex:page>

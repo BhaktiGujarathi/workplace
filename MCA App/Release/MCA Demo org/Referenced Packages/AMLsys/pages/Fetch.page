@@ -1,0 +1,46 @@
+<apex:page showHeader="true" sidebar="true" controller="aml.FetchController" tabStyle="Setup__tab">
+	
+	<apex:sectionHeader subtitle="Business Profile" title="Anti Money Laundering"/>
+  
+	<apex:outputpanel id="MessagesContainer">
+		<apex:pageMessages />
+	</apex:outputpanel>
+	
+	<p>    
+    {!$Label.Fetch_Instructions}
+  </p>
+
+	<apex:form >
+		
+		<!-- Select business profile -->
+		<apex:pageBlock title="Business Profile" rendered="{!ISBLANK(app_setup.aml__Selected_IndustryID__c)}">
+			<apex:pageBlockButtons location="bottom">
+	      <apex:commandButton value="Set Business Profile" action="{!fetch}"/>	      
+	      <apex:commandButton value="Cancel" action="{!goBack}"/>	      
+	    </apex:pageBlockButtons>
+			<apex:pageBlockSection columns="2" title="Select Industry and Jurisdiction">
+				
+				<apex:outputLabel value="Industry" for="industry"/>
+				<apex:selectList value="{!selected_industry}" multiselect="false" size="1" id="industry">
+            <apex:selectOptions value="{!industries}"/>
+        </apex:selectList>
+
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+
+		<!-- after fetch -->
+		<apex:pageBlock title="Hierarchy Rules Definitions" rendered="{!NOT(ISBLANK(app_setup.aml__Selected_IndustryID__c))}">
+			<apex:pageBlockButtons location="bottom">	      
+	      <apex:commandButton value="Return" action="{!goBack}"/>	      
+	    </apex:pageBlockButtons>
+			<apex:pageBlockSection columns="2">
+				<p>
+					Hierarchy Rules Definitions updated!
+				</p>					
+			</apex:pageBlockSection>			  
+		</apex:pageBlock>
+
+	
+	</apex:form>
+	
+</apex:page>

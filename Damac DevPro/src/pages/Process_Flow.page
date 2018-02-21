@@ -1,0 +1,742 @@
+<apex:page controller="Process_FlowCls" id="DyncPgFlow" tabstyle="Account" sidebar="false" action="{!Redirect_DefaultCustomPage}" showHeader="{!showHeaderAndSidebar}" applyBodyTag="{!showHeaderAndSidebar}" cache="false">
+    <link rel="shortcut icon" href="{!URLFOR($Resource.Inquiry_Resources,'assets_inquiry/images/favicon.ico')}" type="image/x-icon"/> 
+    <script src="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.js')}"></script>    
+    <apex:stylesheet value="{!URLFOR($Resource.ProcessFlow_resource , 'ProcessFlow/ProcessFlow.css')}"/>
+    
+    <style>
+        .sidebar-components {
+            /*padding-top:20px;
+            width: 17.5% !important;;*/
+            float:left;
+            /*margin-right: 1.5%;*/
+            background-color: #f6f6f6; 
+            padding-left: 1px;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        td.main-row, .sidebar, .dashboard-content{
+            padding-top: 0px !important;
+            vertical-align: top;
+        }
+        td.main-row {
+            vertical-align: top;
+            width: 230px !important;
+            padding: 0;
+            border: 1px solid #cbcbcb;
+        }        
+         body .bPageTitle {padding: 0}
+        .page-title.row h3,.page-title.row h4, 
+        .page-title.row h5{ color: #000;}        
+        
+        .dashboard-content {border: none; padding-right: 10px;}
+
+        .nosidebarCell > table.row { margin: 0; }        
+        
+        .message table td {padding: 0;}
+        .message {margin: 8px 0px;}
+        
+        
+        .actionLink:hover{
+            text-decoration:underline !important;
+        }
+        .reveal-modal{
+            top:180px;
+        }
+        .reveal-modal .close-reveal-modal{
+            top:12px;
+        }
+        
+        .pbBody{
+            margin-left: 0px !important;
+            margin-right: 0px !important;
+        }
+        .pageTitle{
+            color: #454a50;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 35px;
+            margin-bottom: 13px;
+        }
+        .pageDescription{
+            color: #454a50;
+            line-height: 1.5; 
+            margin-bottom: 13px;
+            font-size: 12px;
+        }
+        .loader{
+            z-index: 1200;
+            position: absolute;
+            margin-left: -60px;
+            filter: Alpha(Opacity =70);
+            opacity: 0.70;
+            -moz-opacity: 0.70;
+            top: 40%;
+            left: 50%;
+        }
+        .rowWrapper{
+            width: 100%;
+            display: table;
+            padding: 10px 0 10px 0;
+        }
+        .rowWrapper td {
+            border: none;
+        }
+        .pageBlockSectionWrapper .labelCol, .pageBlockSectionWrapper .dataCol, .pageBlockSectionWrapper .data2Col{
+            border: none !important;
+            padding: 0px !important;
+        }
+        .bPageBlock .pbHeader{
+            border-bottom: none !important;
+            margin-bottom: 20px !important;
+        }
+        .bPageBlock .pbHeader .pbTitle, .bPageBlock .pbBottomButtons .pbTitle{
+            display: none;
+        }
+        .bPageBlock .pbHeader .btn.right, .bPageBlock .pbBottomButtons .btn.right{
+            float: right;
+        }
+        .bPageBlock .pbHeader .btn.left, .bPageBlock .pbBottomButtons .btn.left{
+            float: left;
+        }
+        .bPageBlock .pbHeader .pbButton, .bPageBlock .pbBottomButtons .pbButtonb{
+            text-align: center;
+        }
+        .pbBody .pbSubheader{
+            padding-left: 15px !important;
+        }
+        .bPageBlock .pbBody .labelCol.empty{
+            display: none;
+        }
+        .sectionDescription{
+            box-sizing: border-box;
+            padding: 8px 15px 10px 15px;
+            border-bottom: 1px solid #e4e4e4;
+            margin-bottom: 5px;
+            line-height: 1.5;
+            color: #454a50;
+            font-size: 13px;
+        }
+        .labelWrapper{
+            display: table-cell;
+            text-align: right;
+            vertical-align: middle;
+            color: #454a50;
+            font-weight: bold;
+        }
+        .colLayout1 .labelWrapper{
+            width: 28%;
+            padding-right: 6%;
+        }
+        .colLayout2 .labelWrapper, .colLayout3 .labelWrapper{
+            width: 30%;
+            padding-left: 3%;
+        }
+        .fieldWrapper{
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .colLayout1 .fieldWrapper{
+            width: 38%;
+            padding-right: 6%;
+        }
+        .colLayout2 .fieldWrapper, .colLayout3 .fieldWrapper{
+            width: 70%;
+            padding-left: 3%;
+            padding-right: 3%;
+        }
+        .fieldWrapper input, .fieldWrapper select, .fieldWrapper textarea{
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .fieldWrapper input[type="checkbox"]{
+            margin: 0 0 0 0px;
+            width: auto;
+        }
+        .fieldWrapper img.checkImg{
+            margin: 0 0 0 -4px;
+        }
+        .fieldWrapper .requiredInput .requiredBlock{
+            left: -6px;
+        }
+        .fieldWrapper .dateInput, .fieldWrapper .lookupInput{
+            display: table;
+            width: 100%;
+        }
+        .fieldWrapper .dateInput input, .fieldWrapper .lookupInput input{
+            display: table-cell;
+            width: 100%;
+        }
+        .fieldWrapper .dateFormat{
+            display: table-cell;
+            width: 1px;
+            white-space: nowrap;
+            padding-left: 6px;
+            
+        }
+        .fieldWrapper .lookupInput .lookupIcon, .fieldWrapper .lookupInput .lookupIconOn{
+            margin-right: 0px !important;
+        }
+        .colLayout1 .descWrapper{
+            width: 34%;
+            display: table-cell;
+            vertical-align: middle;
+            line-height: 1.5;
+            color: #454a50;
+            font-size: 12px;
+        }
+        .reqErrorMsg{
+            font-weight: normal;
+            color: #fff;
+            text-align: left;
+        }
+        
+        .requiredText{
+            color:#FFFFFF !important;
+        }
+        /* This is for the full screen DIV */
+         .popupBackground {
+             /* Background color */
+             background-color:black;
+             opacity: 0.20;
+             filter: alpha(opacity = 20);
+          
+             /* Dimensions */
+             width: 100%;
+             height: 100%;
+             top: 0;
+             left: 0;
+             z-index: 998;
+             position: absolute;
+         }
+      
+         /* This is for the message DIV */
+         .PopupPanel {
+             /* Background color */
+             /*border: solid 2px #00205B;
+             background-color: white;
+            */
+             /* Dimensions */
+             left: 50%;
+             width: 100px;
+             //margin-left: -100px;
+             border-radius: 15px;
+             top: 25%;
+             height: 100px;
+             margin-top: 200px;
+             z-index: 999;
+             position: fixed;
+         }
+         
+        /*fixing side spacing*/          
+        .nosidebarCell {padding: 0;}
+        .bodyDiv .outerNoSidebar table .sidebarCell {padding-right: 1px;}
+        .bodyDiv .outerNoSidebar table .sidebarCell #NavigDiv {border-left: 1px solid #cbcbcb;}
+        .bPageBlock .pbBody .labelCol.empty{
+            display: none;
+        }
+        .lookupInput input { display: inline !important;}
+        .panel-container
+        {
+            padding-top: 15px;
+            padding-bottom: 15px;
+            padding-left: 15px;
+            padding-right: 15px;
+        }
+        body a:hover
+        {
+            text-decoration: none !important;
+        }
+        .labelWrapper,.fieldWrapper
+        {
+            
+            padding-bottom: 10px !important;
+        }
+        input[type=text],select:not([multiple])
+        {
+            height: 27px;
+        }
+        select[multiple]
+        {
+            height: 100px;
+        }
+        .secondaryPalette {
+            border-top-color: #1ebe93!important;
+        }
+        html .brandTertiaryBgr
+        {
+            background-color: #1ebe93 !important;
+        }
+
+        @media only screen and (max-width: 767px){
+            .bPageBlock .detailList .dataCol {
+                width: 98%;
+                display: inline-block;
+            }
+            .colLayout1 .fieldWrapper {
+                width: 100% !important;
+            }
+            #form-description{
+                padding: 0 12px;
+            }
+        }
+
+    </style>
+    <c:Damac_Registration_Override_CSS ></c:Damac_Registration_Override_CSS>
+    <apex:actionStatus id="pleasewait" stopText="">
+        <apex:facet name="start">
+            <div>
+            <!-- to disable whole page when user clicks on next button  -->
+                <div class="popupBackground override-bg">&nbsp;</div>
+                <div class="PopupPanel">
+                    <img src="{!$Resource.Portal_Loading_Image}"/>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    <apex:outputlabel id="hdnCurrentPageId" value="{!strPageId}" style="display:none;"/>
+    <c:Damac_Header rendered="{!showHeaderAndSidebar ==false}"></c:Damac_Header>
+    <table class="row page-bg" style="width: 100%;" >
+        <tbody>
+            <tr>
+                <td class="main-row" id="SidebarCell">
+                    <div class="main-row sidebar-components">
+                        <div id="NavigDiv">
+                            <c:DPFSideBarComponent id="MenuComp" curPageId="{!strPageId}" rerender="MainPnl"/>                        
+                        </div>
+                    </div>
+                 </td>
+                 <td id="bodyCell" class="dashboard-content large-12 columns">
+                    <apex:form id="frm">
+                    <!-- page navigation -->
+                    <apex:actionfunction name="SaveRecord" action="{!CommitRecord}" status="pleasewait" rerender="errormsg,hdnCurrentPageId,MenuComp,MainPnl" oncomplete="ErrorFocus();"/>
+                    <apex:actionfunction name="InvokeAction" action="{!DynamicButtonAction}" status="pleasewait" rerender="hdnCurrentPageId,MenuComp,MainPnl" oncomplete="ErrorFocus();"/>
+                    <!--  for re-evaluating all the conditions and displaying the sections and details   -->
+                    <apex:actionfunction name="RePrepareFields" action="{!RePrepareSection}" status="pleasewait" rerender="hdnCurrentPageId,MenuComp,MainPnl,ScriptPnl"/>
+                    <apex:actionfunction name="SaveRecord" action="{!CommitRecord}" status="pleasewait" rerender="hdnCurrentPageId,MenuComp,MainPnl" oncomplete="ErrorFocus();"/>
+                    <apex:actionfunction name="CancelReq" action="{!CancelSR}" status="pleasewait" rerender="hdnCurrentPageId,MenuComp,MainPnl"/>
+                    <apex:actionfunction name="NavigatePage" action="{!goTopage}" status="pleasewait" rerender="hdnCurrentPageId,MenuComp,MainPnl" oncomplete="ErrorFocus();">
+                            <apex:param name="NextPageId" value="" assignTo="{!strNavigatePageId}"/>
+                    </apex:actionfunction>
+                    <apex:inputhidden value="{!stringActionId}" id="hdnActnId"/>
+                    <apex:outputpanel id="MainPnl" layout="block" styleClass="panel-container">
+                        <apex:inputhidden value="{!strReqFieldIds}" id="hdnReqFldIds"/>
+                        <apex:inputhidden value="{!CurrentPageOrder}" id="hdnPageOrder" />
+                        <div class="page-title row" style="margin-left: 0; margin-bottom: 15px;">
+                            <div class="medium-9 columns title">
+                                <h3 style="display: block; font-size: 18px;">{!pageTitle}</h3>
+                                <h5 style="display: block; font-size: 14px;">
+                                    <apex:outputtext rendered="{!IF(objSR.NSIBPM__Record_Type_Name__c=='New_Company_Setup',false,true)}" value="{!pageDescription}" escape="false"/>
+                                    <apex:outputtext rendered="{!IF(objSR.NSIBPM__Record_Type_Name__c=='New_Company_Setup',true,false)}" value="New Company Setup - ({!objSR.Name})" escape="false"/>
+                                </h5>
+                            </div>                        
+                        </div>
+                        <div class="message" style="display:none;"  id="errorDiv">
+                            <div class="reqErrorMsg" >
+                                <img src="/img/msg_icons/error24.png" alt='Error' style="float:left;margin-right:8px;"/>
+                                <h4>Error: </h4>
+                                <span>Invalid Data.</span>
+                                <span style="display: block; padding-left: 20px;">Review all Required Fields below and provide values for those.</span>
+                            </div>
+                        </div>                        
+
+                        <apex:actionStatus id="ActStatus">
+                             <apex:facet name="start">
+                                 <img class="loader" id="theLoadImage" src="/img/loading32.gif"/>
+                             </apex:facet>
+                         </apex:actionStatus>
+                        <apex:outputpanel id="DyncPnl">
+                            <apex:pagemessages id="errormsg"/>
+                            <apex:dynamicComponent componentValue="{!DyncPgMainPB}" />
+                        </apex:outputpanel>
+                        <apex:outputpanel layout="block" id="ScriptPnl">
+                        <apex:inputhidden id="hiddenPageIds" value="{!strHiddenPageIds}"/>
+                        <apex:inputHidden id="isEditAllowed" value="{!isEditable}"/>
+                        <apex:inputHidden id="isDocAllowed" value="{!isDocEditable}"/>
+                        <c:Damac_RegistrationJS ></c:Damac_RegistrationJS>
+                        <script>
+                            
+                            var hdnMenu;
+                            if(document.getElementById('{!$Component.hiddenPageIds}')!=null)
+                                hdnMenu = document.getElementById('{!$Component.hiddenPageIds}').value;
+                            //hdnMenu = '{!strHiddenPageIds}';
+                            var CommunityUsr = '{!isCommunity}';
+                            console.log('hdnMenu===>'+hdnMenu);
+                            if(hdnMenu!=null && hdnMenu!=''){
+                                var hdnsize = hdnMenu.indexOf(",");
+                                if(hdnsize>-1){
+                                    var hdnPgLst = hdnMenu.split(',');
+                                    for(i = 0; i < hdnPgLst.length;i++){
+                                        if(document.getElementById(hdnPgLst[i])!=null){
+                                            document.getElementById(hdnPgLst[i]).style.display = 'none';
+                                        }
+                                    }
+                                }else{
+                                    if(document.getElementById(hdnMenu)!=null)
+                                        document.getElementById(hdnMenu).style.display = 'none';
+                                }
+                            }
+                            //
+                            //to hide the red bar for check boxes
+                            if(document.getElementById('{!$Component.hdnReqFldIds}')!=null){
+                                var reqflds = document.getElementById('{!$Component.hdnReqFldIds}').value;
+                                if(reqflds!=null && reqflds!=''){
+                                    var ReqFldCompIds = reqflds;
+                                    var n = ReqFldCompIds.indexOf(",");
+                                    
+                                    var BranchCompanyElemId = '';
+                                    var ParentCompanyElemId = '';
+                                    
+                                    if(n>-1){
+                                        var strFldIds = ReqFldCompIds.split(',');
+                                        if(strFldIds!=null && strFldIds.length>0){
+                                            for(var i=0;i<strFldIds.length;i++){
+                                                var ComPid = strFldIds[i];
+                                                var inputs, index;
+                                                inputs = document.getElementsByTagName('input');
+                                                for(index = 0; index < inputs.length; ++index) {
+                                                    var ElemId = inputs[index].id;
+                                                    if(ElemId.indexOf(ComPid)>-1){
+                                                        if(document.getElementById(ElemId).type=='checkbox' && document.getElementById(ElemId+'_ReqBlock')!=null){
+                                                            document.getElementById(ElemId+'_ReqBlock').style.backgroundColor="#F9F4F4";
+                                                        }
+                                                    }
+                                                    if(ElemId.indexOf('ParentCompanyNamewithoutsuffixc')>-1){
+                                                        ParentCompanyElemId = ElemId;
+                                                    }else if(ElemId.indexOf('BranchNamec')>-1){
+                                                        BranchCompanyElemId = ElemId;
+                                                    }
+                                                    //to hide the customer field for community user logins
+                                                    if((CommunityUsr==true || CommunityUsr=='true') && ElemId.indexOf(':Customerc')>-1){
+                                                        document.getElementById(ElemId).disabled = true;
+                                                        if(document.getElementById(ElemId+'_lkwgt')!=null)
+                                                            document.getElementById(ElemId+'_lkwgt').style.display = 'none';
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }else{
+                                    //for muliple fields
+                                        var ComPid = ReqFldCompIds;
+                                        var inputs, index;
+                                        inputs = document.getElementsByTagName('input');
+                                        for(index = 0; index < inputs.length; ++index) {
+                                            var ElemId = inputs[index].id;
+                                            if(ElemId.indexOf(ComPid)>-1){
+                                                if(document.getElementById(ElemId).type=='checkbox' && document.getElementById(ElemId+'_ReqBlock')!=null){
+                                                    document.getElementById(ElemId+'_ReqBlock').style.backgroundColor="#F9F4F4";
+                                                }
+                                            }
+                                            if(ElemId.indexOf('ParentCompanyNamewithoutsuffixc')>-1){
+                                                ParentCompanyElemId = ElemId;
+                                            }else if(ElemId.indexOf('BranchNamec')>-1){
+                                                BranchCompanyElemId = ElemId;
+                                            }
+                                            if((CommunityUsr==true || CommunityUsr=='true') && ElemId.indexOf(':Customerc')>-1){
+                                                document.getElementById(ElemId).disabled = true;
+                                                if(document.getElementById(ElemId+'_lkwgt')!=null)
+                                                    document.getElementById(ElemId+'_lkwgt').style.display = 'none';
+                                            }
+                                        }
+                                    }
+                                    console.log('BranchCompanyElemId==>'+BranchCompanyElemId);
+                                    console.log('ParentCompanyElemId==>'+ParentCompanyElemId);
+                                    if(ParentCompanyElemId!=null && ParentCompanyElemId!='' && BranchCompanyElemId!=null && BranchCompanyElemId!=''){
+                                        document.getElementById(ParentCompanyElemId).setAttribute("onchange","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                        document.getElementById(ParentCompanyElemId).setAttribute("onblur","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                        document.getElementById(ParentCompanyElemId).setAttribute("onmouseout","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                        
+                                        document.getElementById(BranchCompanyElemId).setAttribute("onchange","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                        document.getElementById(BranchCompanyElemId).setAttribute("onblur","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                        document.getElementById(BranchCompanyElemId).setAttribute("onmouseout","AutoPopulateBranch('"+ParentCompanyElemId+"','"+BranchCompanyElemId+"');");
+                                    }
+                                    //AutoPopulateBranch
+                                }
+                            }
+                        </script>
+                        </apex:outputpanel>
+                        <script>
+                            var ReqFieldsFilled = true;
+                            //navigate from one to another page
+                            function DoAction(ButtonSectionId,IgnoreReqFlds){
+                                DisableButtons();
+                                if(document.getElementById('DyncPgFlow:frm:hdnActnId')!=null){
+                                    document.getElementById('DyncPgFlow:frm:hdnActnId').value = ButtonSectionId;
+                                    if(IgnoreReqFlds==true || IgnoreReqFlds=='true'){
+                                        InvokeAction();
+                                    }else{
+                                        ValidateRequiredFlds();
+                                        if(ReqFieldsFilled==true){
+                                            InvokeAction();
+                                        }else{
+                                            location.href = "#";
+                                            location.href = "#errorDiv";
+                                            //window.location.hash = '#errorDiv';
+                                        }
+                                    }
+                                }
+                            }
+                            //save sr and keep the user on the same page 
+                            function SaveDetails(){
+                                ValidateRequiredFlds();
+                                if(ReqFieldsFilled==true){
+                                   DisableButtons();
+                                   SaveRecord();
+                                }
+                                //EnableButtons();
+                            }
+                            //re evaluate the condition and re-prepare the sections with new values 
+                            function InvokeChangeEvent(){
+                                RePrepareFields();
+                            }
+                            //cancel sr and redirects to home 
+                            function CancelRequest(){
+                                CancelReq();
+                            }
+                            //error message displayed
+                            function DisplayMessage(FldDetail,FldLabel){
+                                if(document.getElementById('FldDesc')!=null)
+                                    document.getElementById('FldDesc').innerHTML = FldDetail;
+                                if(document.getElementById('FldHead')!=null)
+                                    document.getElementById('FldHead').innerHTML = FldLabel + ' Description';
+                            }
+                            //whether user entered value or not for the required fields 
+                            function ValidateRequiredFlds(){
+                                ReqFieldsFilled = true;
+                                if(document.getElementById('{!$Component.hdnReqFldIds}')!=null){
+                                    var ReqFldCompIds = document.getElementById('{!$Component.hdnReqFldIds}').value;
+                                    if(ReqFldCompIds!=null && ReqFldCompIds!=''){
+                                        var n = ReqFldCompIds.indexOf(",");
+                                        if(n>-1){
+                                            var strFldIds = ReqFldCompIds.split(',');
+                                            if(strFldIds!=null && strFldIds.length>0){
+                                                for(var i=0;i<strFldIds.length;i++){
+                                                    var ComPid = strFldIds[i];
+                                                    ComPid = ':'+ComPid;
+                                                    var inputs, index, selects;
+                                                    
+                                                    inputs = document.getElementsByTagName('input');
+                                                    selects = document.getElementsByTagName('select');
+                                                    
+                                                    for(index = 0; index < inputs.length; ++index) {
+                                                        var ElemId = inputs[index].id;
+                                                        if(ElemId.indexOf(ComPid)>-1){
+                                                            if(document.getElementById(ElemId).value==null || document.getElementById(ElemId).value==''){
+                                                                ReqFieldsFilled = false;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                    for(index = 0; index < selects.length; ++index) {
+                                                        var ElemId = selects[index].id;
+                                                        if(ElemId.indexOf(ComPid)>-1){
+                                                           var isMultiSelect = (document.getElementById(ElemId).getAttribute('multiple') =="multiple")?true:false;
+                                                                        
+                                                            if(isMultiSelect){
+                                                                if(ElemId.indexOf('selected')>-1){
+                                                                    if(document.getElementById(ElemId).options.length<1){
+                                                                        ReqFieldsFilled = false;
+                                                                        document.getElementById(ElemId).className = "errorHighlight";
+                                                                    }
+                                                                }
+                                                            }  
+                                                            else if(document.getElementById(ElemId).value==null || document.getElementById(ElemId).value==''){
+                                                                ReqFieldsFilled = false;
+                                                                document.getElementById(ElemId).className = "errorHighlight";
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }else{
+                                            var ComPid = ReqFldCompIds;
+                                            var inputs, index, selects;
+                                            
+                                            inputs = document.getElementsByTagName('input');
+                                            selects = document.getElementsByTagName('select');
+                                            
+                                            for(index = 0; index < inputs.length; ++index) {
+                                                var ElemId = inputs[index].id;
+                                                if(ElemId.indexOf(ComPid)>-1){
+                                                    if(document.getElementById(ElemId).value==null || document.getElementById(ElemId).value==''){
+                                                        ReqFieldsFilled = false;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            for(index = 0; index < selects.length; ++index) {
+                                                var ElemId = selects[index].id;
+                                                if(ElemId.indexOf(ComPid)>-1){
+                                                    var isMultiSelect = (document.getElementById(ElemId).getAttribute('multiple') =="multiple")?true:false;                
+                                                    if(isMultiSelect){
+                                                        if(ElemId.indexOf('selected')>-1){
+                                                            if(document.getElementById(ElemId).options.length<1){
+                                                                ReqFieldsFilled = false;
+                                                                document.getElementById(ElemId).className = "errorHighlight";
+                                                            }
+                                                        }
+                                                    }  
+                                                    else if(document.getElementById(ElemId).value==null || document.getElementById(ElemId).value==''){
+                                                        ReqFieldsFilled = false;
+                                                        document.getElementById(ElemId).className = "errorHighlight";
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if(ReqFieldsFilled==false){
+                                    document.getElementById('errorDiv').style.display = '';
+                                }else{
+                                    //all required fields are filled
+                                    document.getElementById('errorDiv').style.display = 'none';
+                                }
+                            }
+                            //
+                            function DisableButtons(){
+                                /*
+                                var node_list = document.getElementsByTagName('input');
+                                for(var i = 0; i < node_list.length; i++) {
+                                    var node = node_list[i];
+                                    if(node.getAttribute('type') == 'submit' && node.value!='Top-up Balance') {
+                                        node.className = 'btnDisabled';
+                                        node.value = 'Processing...';
+                                    }
+                                }
+                                */       
+                            }
+                            //
+                            function EnableButtons(){
+                                /*
+                                var node_list = document.getElementsByTagName('input');
+                                for(var i = 0; i < node_list.length; i++) {
+                                    var node = node_list[i];
+                                    if(node.getAttribute('type') == 'submit') {
+                                        node.className = 'btn';
+                                    }
+                                }
+                                */
+                            }
+                            function Navigate_To_Page(NextPG,PageOrder){
+                                    console.log('NextPG==>'+NextPG);
+                                    console.log('PageOrder==>'+PageOrder);
+                                    var CurrentPageOrder;
+                                    if(document.getElementById('DyncPgFlow:frm:hdnPageOrder')!=null)
+                                        CurrentPageOrder = document.getElementById('DyncPgFlow:frm:hdnPageOrder').value;
+                                    
+                                    showPrompt = false;
+                                    if(CurrentPageOrder!=null && PageOrder!=null && PageOrder>CurrentPageOrder){
+                                        ValidateRequiredFlds();
+                                    }else{
+                                        ReqFieldsFilled = true;
+                                    }
+                                    
+                                    if(ReqFieldsFilled==true){
+                                        NavigatePage(NextPG);
+                                    }else{
+                                        if(document.getElementById('SuccessMsgDiv')!=null)
+                                            document.getElementById('SuccessMsgDiv').style.display = 'none';
+                                        location.href = "#";
+                                        location.href = "#errorDiv";
+                                        //window.location.hash = '#errorDiv';
+                                    }
+                        }
+                            function ErrorFocus(){
+                                if(document.getElementById('DyncPgFlow:frm:errormsg')!=null){
+                                    var ErrorDiv = document.getElementById('DyncPgFlow:frm:errormsg');
+                                    ErrorDiv.setAttribute('id','ErrMsgDiv');
+                                    //window.location.hash = '#ErrMsgDiv';
+                                    location.href = "#";
+                                    location.href = "#ErrMsgDiv";
+                                }
+                            }
+                            function AutoPopulateBranch(ParentCompanyId,BranchCompanyId){
+                                if(document.getElementById(ParentCompanyId)!=null && document.getElementById(ParentCompanyId).value!=null){
+                                    if(document.getElementById(BranchCompanyId)!=null){
+                                        document.getElementById(BranchCompanyId).value = document.getElementById(ParentCompanyId).value+' Freezone Branch';
+                                    }
+                                }
+                            }
+                            window.onload=function(){
+
+                            };
+                            function PrintPage(){
+                                var ParametersVals = document.URL;
+                                ParametersVals = ParametersVals + '&PrintPage=true';
+                                var win = window.open(ParametersVals, '_blank');
+                                win.focus();
+                            }
+                            function Print_or_Download(){
+                                document.getElementById('sidebarCell').style.display = 'none';
+                                document.getElementById('PrintLnk').style.display = 'none';
+                                if(document.getElementById('ReviewFinal:RevFrm:MainPBBottom')!=null){
+                                    document.getElementById('ReviewFinal:RevFrm:MainPBBottom').style.display='none';
+                                }
+                                var btn_pb = document.getElementsByClassName("pbButton ");
+                                for(var i = 0; i < btn_pb.length; i++) {
+                                    var btnDetail = btn_pb[i];
+                                    btnDetail.setAttribute("Style", "Visibility:hidden;");
+                                }
+                                window.focus();
+                                window.print();
+                                window.onfocus=function(){ console.log('===Window Close==');window.close();}
+                                //window.close();
+                            }
+                            Sfdc.onReady(function() {
+                                var query_string = {};
+                                var query = window.location.search.substring(1);
+                                var vars = query.split("&");
+                                var PrintFound = false;
+                                for (var i=0;i<vars.length;i++) {
+                                    var pair = vars[i].split("=");
+                                    if(pair[0]=='PrintPage'){
+                                        PrintFound = true;
+                                    }
+                                }
+                                if(PrintFound==true){
+                                    Print_or_Download();
+                                }
+                            });
+
+                            //save sr and keep the user on the same page 
+                            function SaveDetails(){
+                                //ValidateRequiredFlds();
+                                if(ReqFieldsFilled==true){
+                                   SaveRecord();
+                                }
+                            }
+
+                            function AutoFillAgentArabic(){
+                                var AgentNameEngElemId = '';
+                                var AgentNameArabicElemId = '';
+                                var FormInputs = document.getElementsByTagName('input');
+                                for(k = 0; k < FormInputs.length; ++k){
+                                    var InputElemId = FormInputs[k].id;
+                                    if(InputElemId.indexOf('PBSItem_AgencyNamec:AgencyNamec')>-1){
+                                        AgentNameEngElemId = InputElemId;
+                                    }
+                                    if(InputElemId.indexOf('PBSItem_AgencyNameArabicc:AgencyNameArabicc')>-1){
+                                        AgentNameArabicElemId = InputElemId;
+                                    }
+                                }
+                                console.log('AgentNameEngElemId===>'+AgentNameEngElemId);
+                                console.log('AgentNameArabicElemId===>'+AgentNameArabicElemId);
+                                if(AgentNameEngElemId!='' && AgentNameArabicElemId!=''){
+                                    //Logic to Invoke Google Translate Webservice
+                                    var source = 'https://www.googleapis.com/language/translate/v2?key=AIzaSyDRGGayaFVzowZx5SR60n931-xu13Yp-is&source=en&target=ar&q='+document.getElementById(AgentNameEngElemId).value;
+                                    var xhttp = new XMLHttpRequest();
+                                      xhttp.open("GET", source, false);
+                                      xhttp.send();
+                                      var trsn = JSON.parse(xhttp.responseText);
+                                      console.log('>>>>>>>>>>>>>>>>>'+xhttp.responseText);
+                                      console.log('>>>>>>>>>>>>>>>>>'+trsn.data.translations[0].translatedText);
+                                      document.getElementById(AgentNameArabicElemId).value=trsn.data.translations[0].translatedText;
+                                }
+                            }
+                        </script>
+                    </apex:outputpanel>
+                </apex:form>
+            </td>
+        </tr>
+      </tbody>
+    </table>
+</apex:page>

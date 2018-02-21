@@ -1,0 +1,359 @@
+<!-------------------------------------------------------------------------------------------------
+* Name               : Manage Inventories for Team/Agency.                                        *
+* Description        : Page used to manage Inventories for Team/Agencies .                        *
+* Created Date       : NSI - Sivasankar                                                           *
+* Created By         : 30/01/2017                                                                 *
+* ----------------------------------------------------------------------------------------------- *
+* VERSION     AUTHOR                DATE                                                          *
+* 1.0         NSI - Sivasakar      30/01/2017                                                     *
+--------------------------------------------------------------------------------------------------> 
+<apex:page id="MTAIPAge" docType="html-5.0" controller="ManageTeamsAgenciesInventoriesCtrl_LDS" title="Manage Team" tabStyle="Manage_Inventories__tab" sidebar="false">
+    <!-- Lightning Design System Source -->
+    <apex:stylesheet value="{!URLFOR($Resource.Lightning, 'assets/styles/salesforce-lightning-design-system-vf.css')}" />
+    <!-- MomentJS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.js"></script>
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <!-- Important To Include ALJS init File-->
+    <script src="{!URLFOR($Resource.appiphonyLightningJs, '/jquery.aljs-init.min.js')}"></script>
+    <!-- ALJS Datepicker Module-->
+    <script src="{!URLFOR($Resource.appiphonyLightningJs, '/jquery.aljs-datepicker.min.js')}"></script>
+    <style>
+        /* This is for the apex page message override*/
+            .msgIcon {
+                    display: none!important
+            }
+            .customMessage * {
+                color: #fff!important
+            }
+            .customMessage {
+                margin: 5px 0!important;
+                max-width: 1280px;
+                opacity: 1!important;
+                width: 100%;
+                font-size: 12px;
+                border: 0px;
+                padding-left: 10px;
+            }
+            .message {
+                opacity: .1
+            }
+            /* This is for the apex page message override*/
+    </style>
+    <script>
+        function overridePageMessages(){    
+            var textureEffect = '';
+            //Uncomment below line for texture effect on page messages
+            textureEffect = 'slds-theme--alert-texture';
+
+            $('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+            $('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+            $('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+            $('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                     
+            $('.errorM3').removeClass('errorM3'); 
+            $('.confirmM3').removeClass('confirmM3'); 
+            $('.infoM3').removeClass('infoM3');   
+            $('.warningM3').removeClass('warningM3');  
+        }
+        
+        //Convert standard checkboxes/RadioButtons to Lightning Design System
+        function convertToLDS() {
+            var Row = document.getElementsByClassName("LDS-Radio");
+            for (var k = 0; k < Row.length; k++) {
+                var colTds = Row[k].getElementsByTagName("td");
+                for (var i = 0; i < colTds.length; i++) {
+                    var inrHtml = colTds[i].innerHTML;
+                    var chkId = inrHtml.substring(inrHtml.indexOf("id=") + 4, inrHtml.indexOf("\"", inrHtml.indexOf("id=") + 4));
+                    var chkBx = inrHtml.substring(inrHtml.indexOf("<input"), inrHtml.indexOf(">") + 1);
+                    var chkLable = colTds[i].getElementsByTagName("label")[0].textContent;
+                    var typeOfInput = colTds[i].getElementsByTagName("input")[0].getAttribute("type");
+                    var newChkBox = '<label class="slds-' + typeOfInput + '" for="' + chkId + '">' + chkBx +
+                        '<span class="slds-' + typeOfInput + '--faux"></span>' +
+                        '<span class="slds-form-element__label">' + chkLable + '</span>' +
+                        '</label>';
+                    colTds[i].innerHTML = newChkBox;
+                }
+            }
+        }
+    </script>
+    <apex:slds />
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    
+    <apex:actionstatus id="status">
+        <apex:facet name="start">
+            <div>
+                <div class="slds-spinner_container" style="position: fixed;">
+                    <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                        <span class="slds-assistive-text">Please Wait...</span>
+                        <div class="slds-spinner__dot-a"></div>
+                        <div class="slds-spinner__dot-b"></div>
+                    </div>
+                </div>
+            </div>
+        </apex:facet> 
+    </apex:actionstatus> 
+    
+    <apex:form styleClass="slds-form" id="myForm">
+        <apex:actionFunction name="removeBuilding" action="{!removeRow}" reRender="displayTeamsBuildings,errorBlock" status="status"> 
+            <apex:param assignTo="{!removeBuildingfor}" name="removeBuildingfor" value=""/> 
+            <apex:param assignTo="{!removeBuildingIndex}" name="removeBuildingIndex" value=""/> 
+        </apex:actionFunction>
+        <!--<apex:actionFunction name="editTeamAgency" action="{!viewUsers}" reRender="viewUserTable,errorBlock" status="status"> 
+            <apex:param assignTo="{!removeBuildingfor}" name="removeBuildingfor" value=""/>
+            
+        </apex:actionFunction>-->
+        <!--<apex:actionFunction name="searchTeamsAgencies" action="{!searchTeamsAgencies}" rerender="errorBlock,selTeamAgency"  status="status"/>-->
+
+        <div id="errorBlock"><apex:pageMessages id="errorBlocks"/><script>overridePageMessages(); </script></div>
+        <apex:pageBlock html-class="slds-panel" id="PB" title=" Manage Teams / Agencies for Inventories"> 
+            <apex:pageBlockButtons styleClass="slds-button" id="PBB" location="top">
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Next" onclick="if(!goToNext()){return false};" action="{!goToNextPage}" status="status" rerender="displayTeamsBuildings,errorBlock,PB" rendered="{!firstPage}" oncomplete="dateinits();"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Back" action="{!goToHomePage}" status="status" rerender="status,myForm" rendered="{!secondPage}" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Save" action="{!saveBuildingAllocation}" rerender="status,myForm" status="status" rendered="{!secondPage}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection html-class="slds-panel__section" id="PBS" columns="1">
+                <apex:outputPanel styleClass="slds-panel" id="TeamAgency" layout="block" rendered="{!firstPage}">
+                    <apex:pageBlockSection html-class="slds-panel__section" columns="1" title="Select Teams / Agencies" id="teamSection" collapsible="false">
+                        <apex:selectRadio styleClass="LDS-Radio" style="background-color:white;" id="selRadio" value="{!selTeamAgency}">
+                            <apex:selectOption html-class="slds-select" title="options" itemValue="Teams" itemLabel="Teams"/>
+                            <apex:selectOption html-class="slds-select" title="options" itemValue="Agencies" itemLabel="Agencies"/>
+                            <apex:actionSupport event="onchange" action="{!displayTeamsAgences}" status="status" rerender="TeamAgency,PBB" oncomplete="convertToLDS();"/>  
+                        </apex:selectRadio>
+                        <h1>All {!selTeamAgency}</h1>
+                        <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" columnsWidth="10%,45%,45%" id="tGroupAgency" value="{!lstGroupsAgency}" var="GrA">
+                            <apex:column id="selAll">
+                                <apex:facet name="header">
+                                <span class="slds-checkbox">
+                                  <input type="checkbox" name="options" id="allSelect" value="on" onchange="toggleSelectAll(this);" />
+                                  <label class="slds-checkbox__label" for="allSelect">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"></span>
+                                  </label>
+                                </span>
+                                    
+                                </apex:facet>
+
+                                <div class="slds-form-element__row">
+                                   <div class="slds-form-element">
+                                      <label class="slds-checkbox">
+                                            <apex:inputcheckbox styleclass="slds-input oneSelect" value="{!GrA.selected}" onchange="toggleItem();" />
+                                               <span class="slds-checkbox--faux"></span>
+                                      </label>
+                                   </div>
+                                </div>
+
+                               
+                            </apex:column>
+                            <apex:column id="ganame" headerValue="Name">
+                                <apex:outputText styleClass="slds-text-body_regular" value="{!GrA.nameValue}"/>
+                            </apex:column>
+                            <apex:column id="gaAction" headerValue="Action">
+                                <apex:outputLink value="#" styleClass="slds-text-link" onClick="window.open('{!windowURL}{!GrA.idValue}');">View</apex:outputLink>
+                            </apex:column>
+                        </apex:pageBlockTable>
+                    </apex:pageBlockSection>
+                    <div align="center">
+                        <apex:commandButton styleClass="slds-button slds-button--neutral" value="First Page" action="{!Firstbtn}" status="status" disabled="{!hasPrevious}" reRender="TeamAgency"/>
+                        <apex:commandButton styleClass="slds-button slds-button--neutral" value="Previous Page" action="{!prvbtn}" status="status" disabled="{!hasPrevious}" reRender="TeamAgency"/>
+                        <apex:commandButton styleClass="slds-button slds-button--neutral" value="Next Page" action="{!Nxtbtn}" status="status" disabled="{!hasNext}"  reRender="TeamAgency"/>
+                        <apex:commandButton styleClass="slds-button slds-button--neutral" value="Last Page" action="{!lstbtn}" status="status" disabled="{!hasNext}" reRender="TeamAgency"/>
+                        <label style="margin-left:50px;">Page {!currPageNumber} of {!totalPageNumber}</label>
+                    </div>
+                    Display records per page <apex:selectList styleClass="slds-select" value="{!noOfRecToDisplay}" size="1" >
+                    <apex:selectOption html-class="slds-select" itemLabel="5" itemValue="05" ></apex:selectOption>
+                    <apex:selectOption html-class="slds-select" itemLabel="10" itemValue="10"></apex:selectOption>
+                    <apex:selectOption html-class="slds-select" itemLabel="20" itemValue="20"></apex:selectOption>
+                    <apex:selectOption html-class="slds-select" itemLabel="30" itemValue="30"></apex:selectOption>
+                    <apex:actionSupport event="onchange" status="status" reRender="TeamAgency," action="{!updatePage}" oncomplete="convertToLDS();"/>
+                    </apex:selectList><br/><br/><br/>
+                    
+                    <!--<apex:outputPanel styleClass="slds-panel" id="viewUserTable" rendered="{!areUsersPresent}">
+                        <apex:pageBlockSection html-class="slds-panel__section" title=" Users" collapsible="false"/>
+                        <br/>
+                        <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" value="{!viesTeamAgencyUsers}" var="AgencyUser">
+                            <apex:column headerValue="Name" value="{!AgencyUser.Name}"/>
+                            <apex:column headerValue="Role" value="{!AgencyUser.UserRole.Name}"/>
+                        </apex:pageBlockTable>
+                    </apex:outputPanel>-->
+                    
+                </apex:outputPanel>
+            </apex:pageBlockSection>
+            <!--Second page Start -->
+            <apex:outputPanel styleClass="slds-panel" id="displayTeamsBuildings" rendered="{!secondPage}">
+                <!-- Add the Building to the Group Start -->
+                <apex:outputPanel styleClass="slds-panel" id="addBuildingRec">
+                    
+                    <table  width="100%" cellpadding="1" cellspacing="1">
+                        <tr> 
+                            <th>Project Name</th>
+                            <th>Building Name</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th></th>
+                        </tr> 
+                        <tr>
+                            <td style="width:25%">
+                                <apex:selectList styleClass="slds-select " multiselect="true" size="5"  value="{!selectedProperty}">
+                                    <apex:selectOptions value="{!allPropertyNames}"/>
+                                    <apex:actionSupport event="onchange" action="{!getBuildingNames}" status="status" reRender="addBuildingRec"/>
+                                </apex:selectList>
+                            </td>
+                            <td style="width:25%">
+                                <apex:selectList styleClass="slds-select" multiselect="true"  size="5" value="{!selectedBuildings}">
+                                    <apex:selectOptions value="{!allBuildingNames}"/>
+                                </apex:selectList>
+                            </td>
+                            <td style="width:20%;vertical-align: top;"><apex:inputField styleClass="slds-input" value="{!addteambuilding.End_Date__c}"/>
+
+                            </td>
+                            <td style="width:20%;vertical-align: top;"><apex:inputField styleClass="slds-input" value="{!addteambuilding.End_Date__c}"/></td>
+                            <td style="width:10%" text-align="center"><apex:commandButton styleClass="slds-button slds-button--neutral" value="Add" action="{!addRow}" status="status" reRender="buildingAllocation,addBuildingRec,errorBlock"/></td>
+                        </tr>
+                    </table>
+                </apex:outputPanel>
+                <!-- Add the Building to the Group End -->
+                <br/><br/>
+                
+                <!-- Displaying the records of the group Start-->
+                <apex:outputPanel styleClass="slds-panel" id="buildingAllocation">
+                    <apex:repeat value="{!teamAgencyIDNameMap}" var="teamAgency">
+                        <apex:pageBlockSection columns="1" title="{!teamAgencyIDNameMap[teamAgency]}">
+                            <apex:variable var="count" value="{!0}"/>
+                            <apex:pageBlockTable width="100%" columnsWidth="25%,25%,20%,20%,10%" id="buildingTable" value="{!teamBuildings[teamAgency]}" var="building">
+                                <apex:column headerValue="Project">
+                                    <apex:outputText value="{!mapOfProjectNames[building.Project__c]}" rendered="{!IF(CONTAINS(propertiespresent,building.Project__c),true,false)}"/>
+                                </apex:column>
+                                <apex:column headerValue="Building Name">
+                                    <apex:outputText value="{!mapOfbuildingNames[building.Location__c]}" rendered="{!buildingspresent}"/>
+                                </apex:column>
+                                <apex:column headerValue="Start Date"  >
+                                    
+                                </apex:column>
+                                <apex:column headerValue="End Date" value="{!building.End_Date__c}" >
+                                </apex:column>
+                                <apex:column headerValue="Remove" style="width: 25px;padding-left: 20px;">
+                                    <apex:commandLink onClick="removeBuild('{!teamAgency}',{!count},'{!teamAgencyIDNameMap[teamAgency]}');return false;" >
+                                        <apex:image value="/img/func_icons/remove12_on.gif" alt="Remove"/>
+                                    </apex:commandLink>
+                                    <apex:variable var="count" value="{!count + 1}"/>
+                                </apex:column>
+                            </apex:pageBlockTable> 
+                        </apex:pageBlockSection>
+                    </apex:repeat>
+                </apex:outputPanel>
+                <!-- Displaying the records of the group End-->
+            </apex:outputPanel>
+            <!--Second page End -->
+        </apex:pageBlock>
+        <apex:actionFunction name="methodSetCheckbox" action="{!methodSetCheckbox}" reRender="the">
+            <apex:param name="id"  value=""/>
+            <apex:param name="value"  value=""/>
+        </apex:actionFunction>
+    </apex:form>
+    
+    <script type="text/javascript">
+        var $j = jQuery.noConflict();
+        
+        function toggleSelectAll(checkbox){
+            
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j( "input[class$=oneSelect]" ).prop('checked', true);
+            }
+            else{
+                //set all row level checkboxes de-selected
+                $j( "input[class$=oneSelect]" ).prop('checked', false);
+            }
+        }
+        
+        /*
+        * set "all checkbox" based on state of row level checkboxes
+        */
+        function toggleItem(){
+            var cbs = $j("input[class$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbs.filter(':not(:checked)').length==0){
+                //set "all checkbox" selected
+                $j("input[id^=allSelect]").prop('checked', true);
+            }
+            else{
+                //set "all checkboxes" de-selected
+                $j("input[id^=allSelect]").prop('checked', false);
+            }
+        }
+        
+        
+        function goToNext(){
+            var cbs = $j("input[class$=oneSelect]");
+            
+            var radioValue = $j("input[type='radio']:checked").val();
+            
+            console.log('valradioValue = '+radioValue);
+            if(cbs.filter(':checked').length == 0){
+                alert('Please select at least one '+(radioValue == 'Agencies' ? 'Agency':'Team'));
+                return false;
+            }
+            return true;
+        }
+        
+        function removeBuild(idval,bldIndex,teamName){
+            console.log('idval = '+idval+', bldIndex = '+bldIndex+', teamName = '+teamName);
+            if(confirm('Are you sure want to remove the access for Inventories to '+teamName+' ?')){
+                removeBuilding(idval,bldIndex);
+            }
+        }
+
+    </script>
+            <script>
+
+   
+$(document).ready(function() {
+
+convertToLDS();
+
+  
+
+});
+
+function dateinits() {
+var j$ = jQuery.noConflict();
+//Assigning SLDS Static Resource Path To A Variable To Use It With ALJS Initialization
+var assetsLoc = '{!URLFOR($Resource.Lightning)}';
+  
+//ALJS Initialization   
+       
+j$.aljsInit({
+  assetsLocation: assetsLoc, //SLDS Static Resource Path
+  scoped: true
+});
+//ALJS Initialization   
+       
+$.aljsInit({
+  assetsLocation: assetsLoc, //SLDS Static Resource Path
+  scoped: true
+});
+console.log('rahim');
+//Initializing Datepicker with options To The SLDS Input on document ready.
+ $('.date').datepicker({    // Apply Datepicker component
+    //initDate: moment(), //Today Date
+    format: 'YYYY-MM-DD', //Date Format Of Datepicker Input Field
+    onChange: function(datepicker) {  // onChange Event
+    var selObj = datepicker.$selectedInput;
+    if(selObj){
+        var id = selObj.get('0').dataset.sfdcid;
+        var date = selObj.get('0').value;
+        var type = selObj.get('0').dataset.datetype;
+        methodSetUserList(id, date, type);// Pass the RecordId,
+                                          // input date and the field(start date or end date)
+                                          // to Action function  
+    }
+     
+   }
+  });
+}
+</script>
+</apex:page>

@@ -1,0 +1,260 @@
+<apex:component controller="GRIDContactRolesController" allowDML="true" access="global">
+    <apex:attribute name="isEditAll" description="This is decides the Editall of records on component."
+                    type="Boolean" assignTo="{!conRoleEditAllFlag}" access="global" />
+
+    <apex:form id="contactroleform" styleClass="records">
+        <apex:actionFunction name="Sample" action="getContactRoleFromDB"/> 
+        <apex:outputPanel id="ContactRoleTable"> 
+        <script type="text/javascript">
+          
+                t$ = jQuery.noConflict();
+                t$(document).ready(function()
+                {
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='contactroleTab_lbl']").text( 'Contact Roles'+' ({!conRoleRecordCount})');  
+                    
+                    t$('#contactRolesTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                });
+                //save functionality
+                
+            
+            
+        </script>
+        <apex:pageBlock mode="inlineEdit">
+         <!--   <apex:inlineEditSupport event="ondblclick" changedStyleClass="editorOn" /> -->
+            <apex:pageBlockButtons location="top">
+     
+               <input type="button" onclick="runNewContactRole()" class="{!if(conRoleIsDisable,'btnDisabled disBtn','btn')}" value="New Contact Role" status="loadingPanel"/>
+               <apex:CommandButton action="{!editAllContactRoles}" value="Edit All" disabled="{!conRoleIsDisable}" rerender="ContactRoleTable" status="loadingPanel" rendered="{!AND($ObjectType.OpportunityContactRole.updateable, NOT(conRoleEditAllFlag))}"/>
+               <input type="button" onclick="runSaveContactRoles()" class="{!if(conRoleIsDisable,'btnDisabled disBtn','btn')}" value="Save" status="loadingPanel" />
+               <apex:CommandButton action="{!refreshContactRoles}" value="Refresh" disabled="{!conRoleIsDisable}" rerender="ContactRoleTable" status="loadingPanel" immediate="true"/>
+               <apex:CommandButton action="{!refreshContactRoles}" value="Cancel" disabled="{!conRoleIsDisable}" rerender="ContactRoleTable" status="loadingPanel" immediate="true"/>
+            </apex:pageBlockButtons>
+
+                <apex:pageMessages id="ContactRolepgMsgId" escape="false" />
+                
+                 <table class="list contentTable" border="0" cellpadding="0" cellspacing="0" id="contactRolesTableInner">
+                         <tbody>
+                            <tr class="headerRow">
+                            <th>Record</th>
+                            <th>Action</th>
+                            <th>
+                            <div>
+                                <apex:outputLabel value="Contact Name"/>
+                                <img src="{!IF(conRoleSortExprFieldApi=='ContactId',IF(conRoleSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="ContactId" class="sorting" onclick="sortCallContactRoles('reference');" />
+                            </div>
+                            </th>
+                            <th>
+                            <div>
+                                <apex:outputLabel value="Primary"/><br/>(Select one)
+                                <img src="{!IF(conRoleSortExprFieldApi=='IsPrimary',IF(conRoleSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="IsPrimary" class="sorting" onclick="sortCallContactRoles('boolean');" />
+                            </div>
+                            </th>
+                            <th><div>
+                                <apex:outputLabel value="Role"/>
+                                 <img src="{!IF(conRoleSortExpression=='Role',IF(conRoleSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="Role" class="sorting" onclick="sortCallContactRoles('picklist');" />
+                            </div></th>
+                            <th><div>
+                                <apex:outputLabel value="Phone"/>
+                                <!--<img src="{!IF(conRoleSortExpression=='Contact.Phone',IF(conRoleSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name ="Contact.Phone" class="sorting" onclick="sortCallContactRoles('phone');" /> -->
+                            </div></th>
+                            <th><div>
+                                <apex:outputLabel value="Mobile"/>
+                                <!--<img src="{!IF(conRoleSortExpression=='Contact.MobilePhone',IF(conRoleSortDirection=='ASC',$Resource.sortImageAsc,$Resource.sortImageDesc),$Resource.SortImagesBoth)}" style="height:11px;" name ="Contact.MobilePhone" class="sorting" onclick="sortCallContactRoles('phone');" /> -->
+                            </div></th>
+                            <th><div>
+                                <apex:outputLabel value="Email"/>
+                                <img src="{!IF(conRoleSortExprFieldApi=='Contact.Email',IF(conRoleSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}" style="height:11px;" name ="Contact.Email" class="sorting" onclick="sortCallContactRoles('email');" />
+                            </div></th>
+                            </tr>
+                              <apex:repeat value="{!conRoleWrapperLst}" var="conRoleWrap">
+
+                                <tr class="dataRow">
+                                    <td><apex:outputtext value="{!conRoleWrap.conRoleIndex + 1}" /></td>
+                                    <td>
+                                        <apex:outputLink value="/p/opp/ContactRoleEditUi/e?oppid={!conRoleWrap.conRole.OpportunityId}" target="blank" rendered="{!NOT(ISBLANK(conRoleWrap.conRole.Id))}"> Edit </apex:outputLink>
+                                        <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(conRoleWrap.conRole.Id))}"/>
+                                        <apex:commandLink action="{!deleteContactRole}" value="Del" rerender="ContactRoleTable" rendered="{!NOT(ISBLANK(conRoleWrap.conRole.Id))}" status="loadingPanel">
+                                            <apex:param name="cardIndexToRemove" value="{!conRoleWrap.conRoleIndex}" assignTo="{!conRoleIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                        <apex:commandLink action="{!deleteContactRole}" value="Remove" rerender="ContactRoleTable" rendered="{!(ISBLANK(conRoleWrap.conRole.Id))}"   styleClass="removeRow" status="loadingPanel" immediate="true">
+                                            <apex:param name="conRoleIndexToRemove" value="{!conRoleWrap.conRoleIndex}" assignTo="{!conRoleIndexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <td width="140px">
+                                     <apex:outputField value="{!conRoleWrap.conRole.ContactId}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}"  />
+                                     <apex:inputField value="{!conRoleWrap.conRole.ContactId}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}" onchange="contactDetailNew({!conRoleWrap.conRoleIndex});"/>
+                                    </td> 
+                                    
+                                    <td>
+                                     <apex:outputField value="{!conRoleWrap.conRole.IsPrimary}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}" />
+                                     <apex:inputField value="{!conRoleWrap.conRole.IsPrimary}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}" />
+                                    </td>
+                                    
+                                    <td>
+                                    <apex:outputField value="{!conRoleWrap.conRole.Role}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}" />
+                                    <apex:inputField value="{!conRoleWrap.conRole.Role}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}" />
+                                    </td>
+                                    
+                                    
+                                    <td >
+                                    <apex:outputField value="{!conRoleWrap.conRoleContact.Phone}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}" />
+                                    <apex:inputField value="{!conRoleWrap.conRoleContact.Phone}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}" />
+                                    </td> 
+                                    
+                                    
+                                    <td>
+                                        <apex:outputField value="{!conRoleWrap.conRoleContact.MobilePhone}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}" />
+                                        <apex:inputField value="{!conRoleWrap.conRoleContact.MobilePhone}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}" />
+                                    </td>
+                                    
+                                    
+                                    <td width="140px">
+                                        <apex:outputField value="{!conRoleWrap.conRoleContact.Email}" rendered="{!AND(IF(conRoleWrap.conRoleEdit = false, true, false),NOT(ISBLANK(conRoleWrap.conRole.Id)))}"/>
+                                        <apex:inputField value="{!conRoleWrap.conRoleContact.Email}" rendered="{!OR(IF(conRoleWrap.conRoleEdit = true, true, false),ISBLANK(conRoleWrap.conRole.Id))}"/>
+                                    </td>
+                               </tr>
+                              </apex:repeat>
+                         </tbody>
+                         
+<!--                          <tfoot> -->
+<!--                         <tr class ="headerRow"> -->
+<!--                             <td></td> -->
+<!--                             <td></td> -->
+<!--                             <apex:repeat value="{!conRoleFieldsApiSet}" var="conRolefield"> -->
+<!--                                 <td> -->
+<!--                                     <apex:outputText value="{!conRoleFieldToSumMap[conRolefield]}" rendered="{!conRoleFieldToSumMap[conRolefield] != 100}" /> -->
+<!--                                 </td> -->
+<!--                             </apex:repeat> -->
+<!--                         </tr> -->
+<!--                     </tfoot> -->
+                         
+                  </table>
+                  <br />
+                  {!IF((conRoleOffsetsize + 1) > conRoleRecordCount, IF(conRoleRecordCount - conRoleBlockSize <= 0, 0, conRoleRecordCount - conRoleBlockSize), conRoleOffsetsize + 1)} - {!conRoleWrapperLst.size + conRoleOffsetsize} of {!conRoleRecordCount}
+                <apex:pageBlockButtons >
+                        <apex:commandButton style="left:75px;position:relative;" value="<<" 
+                                            rerender="ContactRoleTable" action="{!beginningContactRoles}" status="loadingPanel" rendered="{!IF(conRoleOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:95px;position:relative;" value="<" 
+                                            rerender="ContactRoleTable" action="{!previousContactRoles}"  status="loadingPanel" rendered="{!IF(conRoleOffsetsize != 0, true, false)}"/>
+                        <apex:commandButton style="left:115px;position:relative;" value = ">" 
+                                            rerender="ContactRoleTable" action="{!nextContactRoles}" status="loadingPanel" rendered="{!IF(conRoleWrapperLst.size + conRoleOffsetsize < conRoleRecordCount, true, false)}" />
+                        <apex:commandButton style="left:135px;position:relative;" value = ">>" 
+                                            rerender="ContactRoleTable" action="{!endContactRoles}" status="loadingPanel" rendered="{!IF(conRoleWrapperLst.size + conRoleOffsetsize < conRoleRecordCount, true, false)}"/>
+                    </apex:pageBlockButtons>
+    
+ </apex:pageBlock>
+        
+    <apex:inputHidden value="{!conRoleSortExpression}" id="conRoleSortHiddencriterian"/>
+    <apex:inputHidden value="{!conRoleSortDirection}" id="conRoleSortHiddenOrder"/>
+    <apex:inputHidden value="{!conRoleSortExprFieldApi}" id="conRoleSortFieldApi"/>
+ </apex:outputPanel>
+    <apex:actionFunction action="{!newContactRole}" name="newContactRole" rerender="ContactRoleTable" status="loadingPanel"/>
+    <apex:actionFunction action="{!saveContactRoles}" name="saveContactRoles" rerender="ContactRoleTable" status="loadingPanel"/>
+    <apex:actionFunction name="contactdetailfetch" action="{!contactFetch}"  rerender="ContactRoleTable" status="loadingPanel" >
+        <apex:param name="roleIndex" value="" assignTo="{!conRoleIndexToFetch}"/>
+    </apex:actionFunction>
+    <apex:actionFunction action="{!sortContactRoles}" name="sortAllContactRoles" rerender="ContactRoleTable" status="loadingPanel" >
+        <apex:param name="conRoleTypeParam" value="" /> 
+    </apex:actionFunction>
+    
+ </apex:form>
+
+    <script>
+        function runNewContactRole() 
+        {
+            setTimeout(function() 
+            {               
+                newContactRole();
+            }, 200);
+        }
+        
+        function runSaveContactRoles() 
+        {
+            setTimeout(function() 
+            {               
+                saveContactRoles();
+            }, 200);
+        }
+        
+        function contactDetailNew(roleIndex) 
+        {        
+            contactdetailfetch(roleIndex);                
+        }
+        
+        function sortCallContactRoles(conRoleFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+                 var conRoleElement= event.target;
+                 
+                 var newconRoleSortCol = t$(conRoleElement).attr("Name"); // new sort field
+                 t$("input[id$='conRoleSortFieldApi']").val(newconRoleSortCol);
+                 var oldconRoleSortCol = t$("input[id$='conRoleSortHiddencriterian']").val();
+                 var indexConRole;
+                 var conRoleTempSortExpr;
+                 if(newconRoleSortCol.endsWith('__c')) 
+                 {
+                     indexConRole = newconRoleSortCol.indexOf('__');
+                 }
+                 else if(newconRoleSortCol.endsWith('Id'))
+                 {
+                     indexConRole = newconRoleSortCol.indexOf('Id');
+                 } 
+                if(indexConRole != null) {
+                    conRoleTempSortExpr = newconRoleSortCol.substring(0, indexConRole);
+                }
+                else 
+                {
+                    conRoleTempSortExpr = newconRoleSortCol;
+                }
+                 
+               //if(String(newconRoleSortCol) == String(oldconRoleSortCol))
+               if(oldconRoleSortCol.indexOf(conRoleTempSortExpr) != -1)
+                {
+                    
+                    if(String(t$("input[id$='conRoleSortHiddenOrder']").val()) == "ASC")
+                    {
+                      t$("input[id$='conRoleSortHiddenOrder']").val("DESC");
+                      t$(conRoleElement).removeClass('SortAsc').addClass('SortDesc');
+                    }
+                    else
+                    {
+                      t$("input[id$='conRoleSortHiddenOrder']").val("ASC");
+                      t$(conRoleElement).removeClass('SortDesc').addClass('SortAsc');
+                    }
+                    
+                    t$("input[id$='conRoleSortHiddencriterian']").val(newconRoleSortCol);
+                   
+                    sortAllContactRoles(conRoleFieldDataType);
+                
+                }
+                else
+                {
+                    t$("input[id$='conRoleSortHiddencriterian']").val(newconRoleSortCol);
+                    t$("input[id$='conRoleSortHiddenOrder']").val("ASC");
+                    t$(conRoleElement).removeClass('sorting').addClass('SortAsc');
+                    sortAllContactRoles(conRoleFieldDataType);
+                }
+        }
+        
+                  
+    </script>
+  
+</apex:component>

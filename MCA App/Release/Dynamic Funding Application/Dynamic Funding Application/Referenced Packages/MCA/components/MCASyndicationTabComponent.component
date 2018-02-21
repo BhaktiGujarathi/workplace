@@ -1,0 +1,165 @@
+<apex:component controller="McaApp.MCASyndicationTabController" allowDML="true">
+
+      <apex:form id="records" styleClass="records">
+      <apex:pageMessages id="pageMessageId" />    
+        <c:MCAJQTabComponent />
+
+        <apex:pageBlock >
+
+          <script>
+
+            function runSaveSyndications() {
+
+              setTimeout(function() {
+                saveAllSyndications();
+              }, 1000);
+            }
+            
+            function runNewSyndications() {
+
+              setTimeout(function() {
+                newSyndications();
+              }, 1000);
+            }
+            
+            function runEditSyndications() {
+
+              setTimeout(function() {
+                editSyndications();
+              }, 1000);
+            }
+            var syndrTabLabelOriginal ;
+            t$(function () {
+                syndrTabLabelOriginal = t$("[id*='syndicationtab_lbl']").text();
+                computeSyndCalculations();
+            });
+            
+            function computeSyndCalculations() {
+                console.log('-----tab label component1----'+t$("[id*='syndicationtab_lbl']").text());
+                    var syndTabLabel = 'Syndications'; // + ' (' + {!containers.size} + ')';
+                    t$("[id*='syndicationtab_lbl']").text(syndTabLabel);
+                   
+                    t$("[id*='syndicationtab_lbl']").append(' (' + {!containers.size} + ')');
+            }
+
+          </script>
+
+            <apex:actionFunction action="{!saveAllSyndications}" name="saveAllSyndications" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSyndCalculations()"/>
+            <apex:actionFunction action="{!newSyndication}" name="newSyndications" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSyndCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editSyndications" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeSyndCalculations()"/>
+          <apex:pageBlockButtons >
+            <apex:outputpanel rendered="{!$ObjectType.McaApp__Syndication__c.createable}">
+                <input type="button" onclick="runNewSyndications()" class="btn" value="New Syndication"/>
+            </apex:outputpanel>
+            <!-- <apex:CommandButton action="{!save}" onclick="runSaveSyndications()" value="Save" oncomplete="computeSyndCalculations()" rendered="{!OR($ObjectType.McaApp__Syndication__c.updateable,$ObjectType.McaApp__Syndication__c.createable)}"></apex:CommandButton> -->
+            <apex:outputpanel rendered="{!OR($ObjectType.McaApp__Syndication__c.updateable,$ObjectType.McaApp__Syndication__c.createable)}">
+                <input type="button" onclick="runSaveSyndications()" class="btn" value="Save"/>
+            </apex:outputpanel>
+           <apex:outputpanel rendered="{!$ObjectType.McaApp__Syndication__c.updateable}">
+                <input type="button" onclick="runEditSyndications()" class="btn" value="Edit All"/> 
+           </apex:outputpanel>
+            <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSyndCalculations()"></apex:CommandButton>
+            <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computeSyndCalculations()" rendered="{!OR($ObjectType.McaApp__Syndication__c.updateable,$ObjectType.McaApp__Syndication__c.createable)}"></apex:CommandButton>
+
+          </apex:pageBlockButtons>
+
+          <apex:pageBlockSection columns="1" title="Syndications ({!containers.size})" collapsible="false">
+            <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header" >
+              <apex:inlineEditSupport event="ondblclick" />
+
+              <apex:column >
+
+                <apex:outputLink value="/{!container.syndication.Id}" target="blank" rendered="{!NOT(ISBLANK(container.syndication.Id))}"> View </apex:outputLink>
+                <apex:outputLabel value=" | " rendered="{!AND(NOT(ISBLANK(container.syndication.Id)),$ObjectType.McaApp__Syndication__c.deletable)}"/>
+                <apex:commandLink action="{!deleteSyndication}" value="Del" rerender="records,refreshComponent" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)),$ObjectType.McaApp__Syndication__c.deletable)}" status="loadingPanel" oncomplete="computeSyndCalculations()">
+                  <apex:param name="recordToDelete" value="{!container.syndication.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                  <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                </apex:commandLink>
+
+                <apex:commandLink action="{!removeSyndication}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.syndication.Id))}" status="loadingPanel" oncomplete="computeSyndCalculations()">
+                  <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                </apex:commandLink>
+
+                <apex:facet name="footer">
+                  <apex:outputLabel value="Total" rendered="{!containers.size > 0}" />
+                </apex:facet>
+
+              </apex:column>
+
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Syndication_Amt__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Syndication_Amt__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}" />
+                <apex:inputField value="{!container.syndication.McaApp__Syndication_Amt__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+
+                <apex:facet name="footer"> 
+                  <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                      <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                        <apex:param value="{!amount}" />
+                      </apex:outputText>
+                  </apex:outputPanel>
+                </apex:facet>
+              </apex:column>
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Syndication_Percentage__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Syndication_Percentage__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Syndication_Percentage__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+              </apex:column> 
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Commission_Fee__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Commission_Fee__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Commission_Fee__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+
+                <apex:facet name="footer">
+                  <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                      <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                        <apex:param value="{!commissionFee}" />
+                      </apex:outputText>
+                  </apex:outputPanel>
+                </apex:facet>
+              </apex:column>  
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Syndicated_By__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Syndicated_By__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Syndicated_By__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+              </apex:column> 
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Disbursment_Schedule__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Disbursment_Schedule__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Disbursment_Schedule__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+              </apex:column> 
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Profit_Amount__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Profit_Amount__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Profit_Amount__c}" rendered="{!(ISBLANK(container.syndication.Id))}"/>
+              </apex:column>
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__ROR_per__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__ROR_per__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__ROR_per__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+              </apex:column>
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Memo__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Memo__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Memo__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+              </apex:column>          
+              
+              <apex:column headerValue="{!$ObjectType.McaApp__Syndication__c.Fields.McaApp__Servicing_Fee__c.Label}">
+                <apex:outputField value="{!container.syndication.McaApp__Servicing_Fee__c}" rendered="{!AND(NOT(ISBLANK(container.syndication.Id)), NOT(editAll))}"/>
+                <apex:inputField value="{!container.syndication.McaApp__Servicing_Fee__c}" rendered="{!OR((ISBLANK(container.syndication.Id)), editAll)}"/>
+
+                <apex:facet name="footer">
+                  <apex:outputPanel layout="block" rendered="{!containers.size > 0}">
+                      <apex:outputText value="${0, number, ###,###,###,##0.00}">
+                        <apex:param value="{!servicingFee}" />
+                      </apex:outputText>
+                  </apex:outputPanel>
+                </apex:facet>
+              </apex:column>        
+               
+            </apex:pageBlockTable>
+          </apex:pageBlockSection>
+
+        </apex:pageBlock>
+
+      </apex:form>
+
+    </apex:component>

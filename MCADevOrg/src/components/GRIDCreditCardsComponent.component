@@ -1,0 +1,250 @@
+<apex:component controller="GRIDCreditCardsController" allowDMl="true"
+    access="global">
+    <apex:attribute name="isEditAll"
+        description="This is decides the Editall of records on component."
+        type="Boolean" assignTo="{!cardEditAllFlag}" access="global" />
+    <apex:form id="CreditCardform" styleClass="records">
+        <apex:outputLabel rendered="{!cardIsRefrenceField}">
+            Please remove '{!cardRefrenceFieldLabel}' field from the 'GRIDCreditCardFieldSet' field set, as referenced fields are not allowed.
+        </apex:outputLabel>
+        <!--
+        <script type="text/javascript">
+            t$(".saveBtn").click(function(){
+                t$('.saveBtn').prop('disabled', true);
+            }); 
+            
+        </script> -->
+        <apex:outputPanel id="cardTable"
+            rendered="{!NOT(cardIsRefrenceField)}">
+            <script type="text/javascript">
+                t$ = jQuery.noConflict();
+                t$(document).ready(function(){
+                    t$(".disBtn").prop('disabled', true);
+                    t$("a").attr("onmouseover","");
+                    t$("[id*='creditcardTab_lbl']").text( 'Merchant Statements'+' ({!cardRecordCount})');  
+                    
+                    t$('#creditCardsTableInner tr').hover(
+                    function() {
+                       t$(this).addClass('hoverhighlight');
+                    }, function() {
+                        t$(this).removeClass('hoverhighlight');
+                    });
+                });
+
+            </script>
+            <apex:pageBlock mode="inlineEdit">
+                <apex:pageBlockButtons location="top">
+                    <apex:outputpanel rendered="{!$ObjectType.Credit_Card__c.createable}">
+                        <input type="button" onclick="runNewCreditCard()"
+                            class="{!if(isDisable,'btnDisabled disBtn','btn')}"
+                            value="New Merchant Statement" status="loadingPanel" />
+        </apex:outputPanel>
+        <apex:outputpanel rendered="{!AND($ObjectType.Credit_Card__c.updateable, NOT(cardEditAllFlag))}">
+            <apex:CommandButton action="{!editAllCreditCards}" value="Edit All"
+                rerender="cardTable" status="loadingPanel" disabled="{!isDisable}" />
+            </apex:outputPanel>
+            <apex:outputpanel rendered="{!OR($ObjectType.Credit_Card__c.updateable,$ObjectType.Credit_Card__c.createable)}">
+                <input type="button" onclick="runSaveCreditCards()"
+                    class="{!if(isDisable,'btnDisabled disBtn','btn')}" value="Save"
+                    status="loadingPanel" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refreshCreditCards}" value="Refresh"
+                    rerender="cardTable" status="loadingPanel" disabled="{!isDisable}"
+                    immediate="true" />
+                <apex:CommandButton action="{!refreshCreditCards}" value="Cancel"
+                    rerender="cardTable" status="loadingPanel" disabled="{!isDisable}"
+                    immediate="true" />
+        </apex:pageBlockButtons>
+
+        <apex:pageMessages id="cardpgMsgId" escape="false" />
+        <table class="list contentTable" border="0" cellpadding="0"
+            cellspacing="0" id="creditCardsTableInner">
+            <tbody>
+                <tr class="headerRow">
+                    <th>Record</th>
+                    <th>Action</th>
+                    <apex:repeat value="{!cardFieldsetList}" var="cardField">
+                        <th>
+                            <div>
+                                <apex:outputLabel value="{!cardField.label}" />
+                                <apex:OutputPanel rendered="{!AND(cardField.type != 'textarea', cardField.type != 'multipicklist', cardField.type != 'phone')}">
+                                    <img
+                                        src="{!IF(cardSortExprFieldApi==cardField.fieldPath,IF(cardSortDirection=='ASC',urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Asc.png'),urlfor($Resource.GRIDResource, 'GRIDResource/Images/Sort_Desc.png')),urlfor($Resource.GRIDResource
+                                        ,'GRIDResource/Images/Sort_Both.png'))}"
+                                        style="height: 11px;" name="{!cardField.fieldPath}"
+                                        class="sorting"
+                                        onclick="sortCallCreditCards('{!cardField.type}');" />
+                                </apex:OutputPanel>
+                            </div>
+                        </th>
+                    </apex:repeat>
+                </tr>
+                <apex:repeat value="{!cardWrapperLst}" var="cardWraper">
+                    <tr class="dataRow">
+                        <td><apex:outputtext value="{!cardWraper.cardIndex + 1}" /></td>
+                        <td><apex:outputLink value="/{!cardWraper.Card.Id}"
+                                target="blank" rendered="{!NOT(ISBLANK(cardWraper.Card.Id))}"> View </apex:outputLink>
+                            <apex:outputLabel value="| "
+                                rendered="{!AND(NOT(ISBLANK(cardWraper.Card.Id)), $ObjectType.Credit_Card__c.deletable)}" />
+                            <apex:commandLink action="{!deleteCreditCard}" value="Del"
+                                rerender="cardTable"
+                                rendered="{!AND(NOT(ISBLANK(cardWraper.Card.Id)), $ObjectType.Credit_Card__c.deletable)}"
+                                status="loadingPanel">
+                                <apex:param name="cardIndexToRemove"
+                                    value="{!cardWraper.cardIndex}" assignTo="{!CardIndexToRemove}">
+                                </apex:param>
+                            </apex:commandLink> <apex:commandLink action="{!deleteCreditCard}" value="Remove"
+                                rerender="cardTable" rendered="{!(ISBLANK(cardWraper.Card.Id))}"
+                                styleClass="removeRow" status="loadingPanel" immediate="true">
+                                <apex:param name="cardIndexToRemove"
+                                    assignTo="{!cardIndexToRemove}" value="{!cardWraper.cardIndex}">
+                                </apex:param>
+                            </apex:commandLink></td>
+                        <apex:repeat value="{!cardFieldsetList}" var="cardfield">
+                            <td><apex:outputField value="{!cardWraper.Card[cardfield]}"
+                                    rendered="{!AND(IF(cardWraper.cardEdit = false, true, false),NOT(ISBLANK(cardWraper.Card.Id)))}" />
+                                <apex:inputField value="{!cardWraper.Card[cardfield]}"
+                                    rendered="{!OR(IF(cardWraper.cardEdit = true, true, false),ISBLANK(cardWraper.Card.Id))}" />
+                            </td>
+                        </apex:repeat>
+                    </tr>
+                </apex:repeat>
+            </tbody>
+            <tfoot>
+                <tr class="headerRow">
+                    <td><b>Average</b></td>
+                    <td></td>
+                    <apex:repeat value="{!cardFieldsetList}" var="cardfield">
+                        <td>
+                            <!-- apex:outputText value="{!cardFieldToSumMap[cardfield.fieldPath]}" rendered="{!cardFieldToSumMap[cardfield.fieldPath] != -999.999}" /! -->
+                            <apex:outputText value="${0, number, ###,###,###,##0.00}"
+                                rendered="{!AND(cardFieldToSumMap[cardfield.fieldPath] != -999.999,cardfield.type=='currency')}">
+                                <apex:param value="{!cardFieldToSumMap[cardfield.fieldPath]}" />
+                            </apex:outputText> <apex:outputText value="{0, number, ###,###,###,##0.00}"
+                                rendered="{!AND(cardFieldToSumMap[cardfield.fieldPath] != -999.999,cardfield.type!='currency')}">
+                                <apex:param value="{!cardFieldToSumMap[cardfield.fieldPath]}" />
+                            </apex:outputText>
+                        </td>
+                    </apex:repeat>
+                </tr>
+            </tfoot>
+        </table>
+        <br />
+                {!IF((cardOffsetsize + 1) > cardRecordCount, IF(cardRecordCount - cardBlockSize <= 0, 0, cardRecordCount - cardBlockSize), cardOffsetsize + 1)} - {!IF(cardWrapperLst != null,cardWrapperLst.size + cardOffsetsize,0)} of {!cardRecordCount}
+                <apex:pageBlockButtons >
+            <apex:commandButton style="left:75px;position:relative;" value="<<"
+                rerender="cardTable" action="{!beginningCreditCards}"
+                status="loadingPanel"
+                rendered="{!IF(cardOffsetsize != 0, true, false)}" />
+            <apex:commandButton style="left:95px;position:relative;" value="<"
+                rerender="cardTable" action="{!previousCreditCards}"
+                status="loadingPanel"
+                rendered="{!IF(cardOffsetsize != 0, true, false)}" />
+            <apex:commandButton style="left:115px;position:relative;" value=">"
+                rerender="cardTable" action="{!nextCreditCards}"
+                status="loadingPanel"
+                rendered="{!IF(cardWrapperLst != null && cardWrapperLst.size + cardOffsetsize < cardRecordCount, true, false)}" />
+            <apex:commandButton style="left:135px;position:relative;" value=">>"
+                rerender="cardTable" action="{!endCreditCards}"
+                status="loadingPanel"
+                rendered="{!IF(cardWrapperLst != null && cardWrapperLst.size + cardOffsetsize < cardRecordCount, true, false)}" />
+        </apex:pageBlockButtons>
+
+        </apex:pageBlock>
+
+
+        <apex:inputHidden value="{!cardSortExpression}"
+            id="cardSortHiddencriterian" />
+        <apex:inputHidden value="{!cardSortDirection}"
+            id="cardSortHiddenOrder" />
+        <apex:inputHidden value="{!cardSortExprFieldApi}"
+            id="cardSortFieldApi" />
+        </apex:outputPanel>
+
+        <apex:actionFunction action="{!newCreditCard}" name="newCreditCard"
+            rerender="cardTable" status="loadingPanel" />
+        <apex:actionFunction action="{!saveCreditCards}"
+            name="saveCreditCards" rerender="cardTable" status="loadingPanel" />
+        <apex:actionFunction action="{!sortCreditCards}"
+            name="sortAllCreditCards" rerender="cardTable" status="loadingPanel">
+            <apex:param name="cardTypeParam" value="" />
+        </apex:actionFunction>
+
+    </apex:form>
+
+    <script>
+        function runNewCreditCard() 
+        {
+            setTimeout(function() 
+            {               
+                newCreditCard();
+            }, 200);
+        }
+        
+        function runSaveCreditCards() 
+        {
+            setTimeout(function() 
+            {               
+                saveCreditCards();
+            }, 100);
+        }
+        
+        function sortCallCreditCards(cardFieldDataType)
+        {
+            /*
+              event.target will have the DOM structure on which the event is fired.So here salesforce automically will
+              pick up native html id of the selector
+            */
+             var cardElement= event.target;
+             var newcardSortCol = t$(cardElement).attr("Name"); // new sort field
+             t$("input[id$='cardSortFieldApi']").val(newcardSortCol);
+             var oldcardSortCol = t$("input[id$='cardSortHiddencriterian']").val();
+             var indexCard;
+             var cardTempSortExpr;
+             if(newcardSortCol.endsWith('__c')) 
+             {
+                 indexCard = newcardSortCol.indexOf('__');
+             }
+             else if(newcardSortCol.endsWith('Id'))
+             {
+                 indexCard = newcardSortCol.indexOf('Id');
+             }
+            if(indexCard != null) {
+                cardTempSortExpr = newcardSortCol.substring(0, indexCard);
+            }
+            else 
+            {
+                cardTempSortExpr = newcardSortCol;
+            }
+             
+           //if(String(newcardSortCol) == String(oldcardSortCol))
+            if(oldcardSortCol.indexOf(cardTempSortExpr) != -1)
+            {
+                
+                if(String(t$("input[id$='cardSortHiddenOrder']").val()) == "ASC")
+                {
+                  t$("input[id$='cardSortHiddenOrder']").val("DESC");
+                  t$(cardElement).removeClass('SortAsc').addClass('SortDesc');
+                }
+                else
+                {
+                  t$("input[id$='cardSortHiddenOrder']").val("ASC");
+                  t$(cardElement).removeClass('SortDesc').addClass('SortAsc');
+                }
+                
+                t$("input[id$='cardSortHiddencriterian']").val(newcardSortCol);
+                sortAllCreditCards(cardFieldDataType);
+            
+            }
+            else
+            {
+                t$("input[id$='cardSortHiddencriterian']").val(newcardSortCol);
+                t$("input[id$='cardSortHiddenOrder']").val("ASC");
+                t$(cardElement).removeClass('sorting').addClass('SortAsc');
+                sortAllCreditCards(cardFieldDataType);
+            }
+        }
+    </script>
+
+</apex:component>

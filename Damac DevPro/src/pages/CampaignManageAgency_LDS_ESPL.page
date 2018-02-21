@@ -1,0 +1,420 @@
+<apex:page id="myPage" standardController="Campaign__c" extensions="CampaignManageAgencyControl" docType="html-5.0" standardStylesheets="true" sidebar="true" showHeader="true" >
+ <apex:slds />
+     <!-- jQuery CDN -->
+    <apex:includeScript value="{!$Resource.jQuery_Lib}"/>
+    <apex:includeScript value="{!$Resource.jQuery_UI_JS}"/>
+    <apex:stylesheet value="{!$Resource.jQuery_UI_CSS}"/>
+    <script>
+        function overridePageMessages(){    
+            var textureEffect = '';
+            //Uncomment below line for texture effect on page messages
+            textureEffect = 'slds-theme--alert-texture';
+            var $j =jQuery.noConflict();
+            $j('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+            $j('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+            $j('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+            $j('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                     
+            $j('.errorM3').removeClass('errorM3'); 
+            $j('.confirmM3').removeClass('confirmM3'); 
+            $j('.infoM3').removeClass('infoM3');   
+            $j('.warningM3').removeClass('warningM3');  
+        }
+    </script>
+    <style>
+        /* This is for the apex page message override*/
+        .msgIcon {
+                display: none!important
+        }
+        .customMessage * {
+            color: #fff!important
+        }
+        .customMessage {
+            margin: 5px 0!important;
+            max-width: 1280px;
+            opacity: 1!important;
+            width: 100%;
+            font-size: 12px;
+            border: 0px;
+            padding-left: 10px;
+        }
+        .message {
+            opacity: .1
+        }
+    </style>
+    
+    <style type="text/css">
+        .fontClass{
+            color: #000; 
+            font-size: .9em; 
+            font-weight: bold;
+            
+        }
+        .selectWidth {
+            width: 90% !important;
+        }
+        .slds-panel__section {
+            padding-left:0px !important;
+            padding-right:0px !important;
+        }
+        .slds-scope td, .slds-scope th {
+            padding: 1px !important;
+        }
+    </style>
+    <apex:form styleClass="slds-form" id="myForm">
+        <apex:pageBlock html-class="slds-panel" id="PB" title="Select Agencies">
+            
+            <apex:pageBlockButtons styleClass="slds-button" id="PBB" location="top">
+                <apex:actionStatus id="myStatus">
+                    <apex:facet name="start">
+                        <div>
+                            <div class="slds-spinner_container" style="position: fixed;">
+                                <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                                    <span class="slds-assistive-text">Please Wait...</span>
+                                    <div class="slds-spinner__dot-a"></div>
+                                    <div class="slds-spinner__dot-b"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" status="myStatus" onclick="if(!validations()){return false};" action="{!assignAgents}" value="Save" rerender="myForm,scriptTag"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" action="{!doCancel}" value="Cancel" rendered="{!NOT(isSaved)}" immediate="true" />
+                <apex:commandButton styleClass="slds-button slds-button--neutral" action="{!doCancel}" value="Back to Campaign" rendered="{!isSaved}" immediate="true"/>
+            </apex:pageBlockButtons>
+            
+            <apex:outputPanel styleClass="slds-panel" id="seachSection">
+                <apex:pageBlockSection html-class="slds-panel__section" title="Filters" collapsible="false"/>
+                <Table id="searchTable" width="90%" style="background-color:#F8F8F8;">
+                    <tr>
+                        <td align="right" style="vertical-align: middle;"><apex:outputLabel id="agency" styleClass="fontClass slds-text-body_regular" value="Agency"/></td>
+                        <td>
+                            <apex:inputText styleClass="slds-input" style="width:90%;" value="{!searchSection.agencyName}" id="agnecyautocomplete"/>
+                        </td>
+                        <td align="right" style="vertical-align: middle;">
+                            <apex:outputLabel id="City" styleClass="fontClass slds-text-body_regular" value="City"/>
+                            
+                        </td>
+                        <td>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchSection.city}" id="cityautocomplete"/>-->
+                            <c:Autocomplete_LDS_ESPL id="cityautocomplete" required="false" SObject="Account" labelField="BillingCity" valueField="BillingCity" targetFields="{!searchSection.city}" />
+                        </td>
+                        <td align="right" style="vertical-align: middle;"><apex:outputLabel id="Country" styleClass="fontClass slds-text-body_regular" value="Country"/></td>
+                        <td>
+                            <c:Autocomplete_LDS_ESPL id="countryautocomplete" required="false" SObject="Account" labelField="BillingCountry" valueField="BillingCountry" targetFields="{!searchSection.country}" />
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchSection.country}" id="countryautocomplete"/>-->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="right" style="vertical-align: middle;"><apex:outputLabel id="taccont" styleClass="fontClass slds-text-body_regular" value="Type of Account"/></td>
+                        <td>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchSection.typeofAccount}" id="typeofAccount"/>-->
+                            <apex:selectList styleClass="slds-select selectWidth" value="{!searchSection.typeofAccount}" Id="typeofAccount" size="1">
+                                <apex:selectOption html-class="slds-select" itemValue="" itemLabel="-- Select Agency Type --"></apex:selectOption>
+                                <apex:selectOption html-class="slds-select" itemValue="Individual Agency" itemLabel="Individual"></apex:selectOption>
+                                <apex:selectOption html-class="slds-select" itemValue="Corporate Agency" itemLabel="Corporate"></apex:selectOption>
+                            </apex:selectList>
+                        </td>
+                        <td align="right" style="vertical-align: middle;"><apex:outputLabel id="tier" styleClass="fontClass slds-text-body_regular" value="Tier"/></td>
+                        <td>
+                            <apex:selectList styleClass="slds-select selectWidth" value="{!searchSection.tier}" Id="tierVal" size="1">
+                                <apex:selectOption html-class="slds-select" itemValue="" itemLabel="-- Select Agency Tier --"></apex:selectOption>
+                                <apex:selectOption html-class="slds-select" itemValue="SILVER" itemLabel="SILVER"></apex:selectOption>
+                                <apex:selectOption html-class="slds-select" itemValue="GOLD" itemLabel="GOLD"></apex:selectOption>
+                                <apex:selectOption html-class="slds-select" itemValue="PLATINUM" itemLabel="PLATINUM"></apex:selectOption>
+                            </apex:selectList>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchSection.tier}" id="tierVal"/>-->
+                        </td>
+                        <td align="right" style="vertical-align: middle;">
+                            <apex:outputLabel id="strength" styleClass="fontClass slds-text-body_regular" value="Strength"/>
+                        </td>
+                        <td>
+                            <apex:selectList styleClass="slds-select selectWidth"  value="{!searchSection.strength}" Id="StrengthVal" size="1">
+                                <apex:selectOptions value="{!strengthOfAgency}"/>
+                            </apex:selectList>
+                            <!--<apex:inputText styleClass="slds-input" value="{!searchSection.strength}" id="StrengthVal"/>-->
+                        </td>
+                    </tr> 
+                    
+                </Table>
+            </apex:outputPanel>
+            <table border="0" width="70%">
+                <tr >
+                    <td align="center" colspan="2">
+                        <div align="center">
+                        <apex:commandButton styleClass="slds-button slds-button--neutral" id="search" value="Search"  action="{!searchAgency}"  status="myStatus" reRender="myForm,scriptTag"/>
+                        </div>
+                    </td>
+                    
+                </tr>
+                <tr colspan="2"> 
+                       <br/> 
+                </tr>
+                <tr >
+                        <td>
+                            <apex:outputLabel id="mstart" styleClass="fontClass" Style="margin-right:15px;" value="Marketing Start Date : "/>  
+                            <apex:outputField id="mStartDate" styleClass="slds-text-body_regular"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_Start_Date__c}" /> + 
+                            &nbsp;<apex:inputText styleClass="slds-input" style="width:30%;" id="incrStartDate" value="{!mStartDate}" ></apex:inputText>
+                        </td>
+                        <td>
+                            <apex:outputLabel id="mEnd" styleClass="fontClass" Style="margin-right:15px;" value="Marketing End Date : "/>
+                            <apex:outputField id="mEndDate" styleClass="slds-text-body_regular"  Style="margin-left:20px;margin-right:20px;" value="{!Campaign__c.Marketing_End_Date__c}" /> - 
+                            &nbsp;<apex:inputText styleClass="slds-input" style="width:30%;" id="incrEndDate" value="{!mEndDate}" ></apex:inputText>
+                        </td>   
+                        
+                </tr> 
+            </table>
+            <apex:pageBlockSection html-class="slds-panel__section" id="PBS" title="Search Results " columns="1">
+                <apex:pageMessages /><script>overridePageMessages();</script>
+                <apex:pageMessage detail="No Agencies are exist for currenty search." summary="" severity="info" strength="2" rendered="{!IF(lstAgencies.size = 0,true,false)}"/>
+                <apex:pageBlockTable styleClass="slds-table slds-table--bordered slds-table--cell-buffer" id="searchResults" value="{!lstAgencies}" var="agUser">
+                    <apex:column width="40px" id="selID" headerValue="Select">
+                        <apex:facet name="header">
+                            <span class="slds-checkbox">
+                                <input type="checkbox" name="options" id="allSelect" value="on" onchange="toggleSelectAll(this);" />
+                                <label class="slds-checkbox__label" for="allSelect">
+                                    <span class="slds-checkbox_faux"></span>
+                                    <span class="slds-form-element__label"></span>
+                                </label>
+                            </span>
+                        </apex:facet>
+                        <div class="slds-form-element__row">
+                            <div class="slds-form-element">
+                              <label class="slds-checkbox">
+                                    <apex:inputcheckbox styleclass="slds-input oneSelect" value="{!agUser.checked}" onchange="toggleItem();" />
+                                       <span class="slds-checkbox--faux"></span>
+                              </label>
+                            </div>
+                        </div>
+                    </apex:column>
+                    <apex:column headerValue="Name">
+                        <apex:outputLink styleClass="slds-text-link" target="_blank" value="/{!agUser.obj['Id']}">{!agUser.obj['Name']}</apex:outputLink>
+                    </apex:column>
+                    <apex:column headerValue="City">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!agUser.obj['BillingCity']}"/>
+                    </apex:column>
+                    <apex:column headerValue="country">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!agUser.obj['BillingCountry']}"/>
+                    </apex:column>
+                    <apex:column headerValue="No of PCs">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!agUser.obj['Strength_of_Agency__c']}"/>
+                    </apex:column>
+                    <apex:column headerValue="Agency Type">
+                        <apex:outputField styleClass="slds-text-body_regular" value="{!agUser.obj['RecordType']['Name']}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+            <div align="center">
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="First" action="{!first}" status="myStatus" disabled="{!NOT(hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Previous" action="{!previous}" status="myStatus" disabled="{!NOT(hasPrevious)}" reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Next" action="{!next}" status="myStatus" disabled="{!NOT(hasNext)}"  reRender="myForm" immediate="true"/>
+                <apex:commandButton styleClass="slds-button slds-button--neutral" value="Last" action="{!last}" status="myStatus" disabled="{!NOT(hasNext)}" reRender="myForm" immediate="true"/>
+                <apex:outputLabel style="margin-left:15px;" value="Page #" >{!pageNumber}</apex:outputLabel>
+            </div>
+        </apex:pageBlock>
+    </apex:form>
+    <apex:outputPanel styleClass="slds-panel" id="scriptTag">
+    <script type="text/javascript">
+    
+        /*
+        * set row level checkboxes based on "all checkbox" state
+        */
+        var $j = jQuery.noConflict();
+        
+        $j(document).ready(function(){
+            
+            var cbselect = $j("input[id$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbselect.filter(':checked').length==0){
+                //set "all checkbox" selected
+                $j("input[id$=allSelect]").prop('checked', false);
+            }
+            
+            
+            var agencyNames;
+            var cityName;
+            var countryName;
+            
+            $j("[id$=agnecyautocomplete]").autocomplete({
+                //source : userNames
+                //console.log("pc Calling");
+                source: function(request, response) {
+                    queryTerm = request.term;
+                    CampaignManageAgencyControl.getAgencies(request.term,'{!campaignID}','Name', function(result, event){
+                        if(event.type == 'exception') {
+                            alert(event.message);
+                        } else {
+                            agencyNames = result;
+                            response(agencyNames);
+                        }
+                    }); 
+                },
+                
+            });
+            
+            $j("[id$=cityautocomplete]").autocomplete({
+                //source : userNames
+                //console.log("pc Calling");
+                source: function(request, response) {
+                    queryTerm = request.term;
+                    CampaignManageAgencyControl.getAgencies(request.term,'BillingCity', function(result, event){
+                        if(event.type == 'exception') {
+                            alert(event.message);
+                        } else {
+                            cityName = result;
+                            response(cityName);
+                        }
+                    });
+                },
+                
+            });
+            
+            $j("[id$=countryautocomplete]").autocomplete({
+                //source : userNames
+                //console.log("pc Calling");
+                source: function(request, response) {
+                    queryTerm = request.term;
+                    CampaignManageAgencyControl.getAgencies(request.term,'BillingCountry', function(result, event){
+                        if(event.type == 'exception') {
+                            alert(event.message);
+                        } else {
+                            countryName = result;
+                            response(countryName);
+                        }
+                    });
+                },
+                
+            });
+        });
+        
+        function validations(){
+            //var sDate = dateformat('{!manageHelper.campainRecord.Marketing_Start_Date__c}');
+            //var eDate = dateformat('{!manageHelper.campainRecord.Marketing_End_Date__c}');
+            //console.log('sDate = '+sDate+';eDate = '+eDate); 
+            
+            var cbs = $j("input[id$=oneSelect]");
+            var isdatesPresent = true;
+            //console.log('sDate ='+sDate+' eDate = '+eDate);
+            if(cbs.filter(':checked').length == 0){
+                alert('Please select at least one Agency');
+                return false;
+            }
+            /*
+            var incrStartDate = $j("input[id$=incrStartDate]").val();
+            var incrEndDate = $j("input[id$=incrEndDate]").val();
+            var mStartDate = $j('[id$=mStartDate]').text();//Marketing_End_Date__c
+            var mEndDate = $j('[id$=mEndDate]').text();//Marketing_End_Date__c
+            var convertedMSDate;
+            var convertedMEDate;
+            //after modification
+            var marketingStartDate = new Date();
+            var marketingEndDate = new Date();
+            console.log('incrStartDate = '+incrStartDate+' : incrEndDate = '+incrEndDate);
+            console.log('mStartDate = '+mStartDate+' : mEndDate = '+mEndDate);
+            
+            if(mStartDate != '' && mEndDate != '' ){
+                convertedMSDate = toDateVal(mStartDate);
+                convertedMEDate = toDateVal(mEndDate);
+                console.log('convertedMSDate = '+convertedMSDate+' : convertedMEDate = '+convertedMEDate);
+                if(incrStartDate != '')
+                    marketingStartDate.setDate(convertedMSDate.getDate()+parseInt(incrStartDate));
+                else
+                    marketingStartDate.setDate(convertedMSDate.getDate());
+                if(incrEndDate != ''){
+                    marketingEndDate.setDate(convertedMEDate.getDate()+parseInt(incrEndDate));
+                }
+                else{
+                    marketingEndDate.setDate(convertedMEDate.getDate());
+                }
+                console.log('marketingStartDate = '+marketingStartDate+' : marketingEndDate = '+marketingEndDate);
+                console.log('toDateVal(mStartDate) < marketingStartDate = '+(toDateVal(mStartDate) < marketingStartDate)+' :  = '+(toDateVal(mStartDate) < marketingEndDate));
+                console.log('toDateVal(mEndDate) <  marketingStartDate = '+(toDateVal(mEndDate) <  marketingStartDate)+' :  = '+(toDateVal(mEndDate) <  marketingEndDate));
+                
+                if(toDateVal(mStartDate) < marketingStartDate || toDateVal(mStartDate) < marketingEndDate || 
+                    toDateVal(mEndDate) <  marketingStartDate || toDateVal(mEndDate) <  marketingEndDate){
+                        console.log('Start and End dates must be between Marketing Start and End dates.');
+                        isdatesPresent = false;
+                }
+            }
+            */
+          /* $j(".dataCell input:checked").each(function () {
+               //console.log($j(this).closest('.dataRow').find(".startDate"));
+                var startDate = $j(this).closest('tr').find(".startDate").val();
+                var endtDate = $j(this).closest('tr').find(".endDate").val();
+                console.log(startDate+','+endtDate);
+                console.log(toDateVal(startDate)+','+toDateVal(endtDate));
+                if(startDate == '' || endtDate == ''){
+                    isdatesPresent = false;
+                    alert('Start and End dates are required for selected user');
+                    return false;
+                }else if (sDate != null && eDate != null){
+                    if(toDateVal(startDate) > toDateVal(endtDate) ){
+                        isdatesPresent = false;
+                        alert('Start Date must be on or before the end date.');
+                        return false;
+                    }
+                    else if(sDate > toDateVal(startDate) || eDate < toDateVal(startDate)) {
+                        isdatesPresent = false;
+                        alert('Start Date must be between Marketing Start and End dates.');
+                        return false;
+                    } 
+                    else if(sDate > toDateVal(endtDate) || eDate < toDateVal(endtDate)) {
+                        isdatesPresent = false;
+                        alert('End Date must be between Marketing Start and End dates.');
+                        return false;
+                    }
+                }
+            });*/
+            
+            return isdatesPresent;
+        }
+        
+        function toDateVal(dateStr) {
+            var parts = dateStr.split("/");
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+        
+        function dateformat(input){
+            if (!(input == '' || input == null || input == 'undefined')){
+                var year = input.slice(-4),
+                month = ['Jan','Feb','Mar','Apr','May','Jun',
+                         'Jul','Aug','Sep','Oct','Nov','Dec'].indexOf(input.substr(4,3))+1,
+                day = input.substr(8,2);
+            
+                var output = year + '-' + (month<10?'0':'') + month + '-' + day;
+                var dateValue = new Date(year, month - 1, day);
+                return dateValue;
+            } else return null;
+        }
+    
+        function toggleSelectAll(checkbox){
+            
+            //all checkbox is selected
+            if(checkbox.checked){
+                //set all row level checkboxes selected
+                $j( "input[class$=oneSelect]" ).prop('checked', true);
+            }
+            else{
+                //set all row level checkboxes de-selected
+                $j( "input[class$=oneSelect]" ).prop('checked', false);
+            }
+        }
+        
+        /*
+        * set "all checkbox" based on state of row level checkboxes
+        */
+        function toggleItem(checkbox){
+            var cbs = $j("input[class$=oneSelect]");
+            //all row level checkboxes selected
+            if(cbs.filter(':not(:checked)').length==0){
+                //set "all checkbox" selected
+                $j("input[id^=allSelect]").prop('checked', true);
+            }
+            else{
+                //set "all checkboxes" de-selected
+                $j("input[id^=allSelect]").prop('checked', false);
+            }
+        }
+    </script>
+    </apex:outputPanel>
+</apex:page>

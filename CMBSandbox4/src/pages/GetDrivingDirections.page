@@ -1,0 +1,64 @@
+<apex:page standardController="Account" showHeader="false" sidebar="false" standardstylesheets="false">
+<script>
+
+function getDirections()
+  {
+    document.write('<div style="position:absolute;top:50%;left:50%;">loading...</div>');
+    
+    if(navigator.geolocation) 
+    {
+      navigator.geolocation.getCurrentPosition(gotoDirections,showError);
+    }
+    
+    else
+    {
+      alert('Your browser is incompatible with this app. Sorry for the inconvenience.');
+      window.close();
+    }
+    
+  }
+
+function gotoDirections(position)
+  {
+    var currentLocation = position.coords.latitude + ',' + position.coords.longitude;
+    
+    var address = '{!URLENCODE(SUBSTITUTE(JSENCODE(Account.BillingStreet),'\n',' '))}+' + '{!URLENCODE(Account.BillingCity)},+' + '{!URLENCODE(Account.BillingState)}+' + '{!URLENCODE(Account.BillingPostalCode)}';
+
+    if ((navigator.userAgent.match(/iPhone/i)) || (navigator.userAgent.match(/iPad/i)) || (navigator.userAgent.match(/iPod/i)))
+    {
+        var URL = 'http://maps.apple.com/?saddr=' + currentLocation + '&daddr=' + address;
+        window.open(URL,'_parent');
+    }
+    else
+    {
+        var URL = 'https://maps.google.com/maps?saddr=' + currentLocation + '&daddr=' + address;
+        window.open(URL,'_parent');
+    }
+  }
+
+function showError(error)
+  {
+  switch(error.code) 
+    {
+    case error.PERMISSION_DENIED:
+      alert('User denied the request for Geolocation.');
+      break;
+    case error.POSITION_UNAVAILABLE:
+      alert('Location information is unavailable.');
+      break;
+    case error.TIMEOUT:
+      alert('The request to get user location timed out.');
+      break;
+    case error.UNKNOWN_ERROR:
+      alert('An unknown error occurred.');
+      break;
+    }
+    window.close();
+  }
+
+window.onload = new function() { getDirections(); };
+
+
+</script>
+
+</apex:page>

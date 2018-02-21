@@ -1,0 +1,96 @@
+<apex:page controller="PaymentsProcessController" tabStyle="Processor_Integration__c" >
+    <style>
+        .message {
+            margin: 4px 0px !important;
+        }
+        
+        .apexp .detailList .list .headerRow th {
+            white-space: initial!important;
+        }
+    </style>
+    
+    <script>
+    
+        $(function() {
+           showMessage();
+        });
+        
+        function getCheckedPayments() {
+            if (document.getElementsByClassName("selected").length > 0) {
+                var checks = document.getElementsByClassName("selected");
+                var selectedPayments = 0;
+                for (var i = 0; i < checks.length; i++) {
+                    if (checks[i].checked) {
+                        selectedPayments++;
+                    }
+                }
+            }
+            showMessage(selectedPayments);
+        } 
+    </script>
+
+    <apex:sectionHeader title="Process Payments" />
+    
+    <div class="ptBreadcrumb">
+        &nbsp;«&nbsp;<a href="{!URLFOR($Action.Processor_Integration__c.View, processorIntegration.Id, null,true)}">Back to: {!processorIntegration.Name}</a>
+    </div>
+
+    <br/>
+    
+    <apex:outputPanel id="payments" >
+    <apex:pageMessages />
+    
+    <apex:form >
+        
+        <apex:actionFunction name="showMessage" action="{!showMessage}" rerender="payments">
+		</apex:actionFunction>
+        
+        <apex:pageBlock rendered="{!payments == null || payments.size = 0}" >
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Continue" action="{!processFile}"/>
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="2" >
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="File" />
+                    <apex:inputFile value="{!csvFileBody}" filename="{!csvFileName}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:outputPanel >
+	        <apex:pageBlock rendered="{!payments != null && payments.size > 0}">
+	            <apex:pageBlockButtons >
+	                <apex:commandButton value="Confirm" action="{!insertPayments}"/>
+	                <apex:commandButton value="Back" action="{!resetImport}"/>
+	            </apex:pageBlockButtons>
+	            <apex:pageBlockSection columns="1" >
+	                <apex:pageBlockSectionItem >
+	                    <apex:pageBlockTable value="{!payments}" var="pw" >
+							<apex:column headerValue="Salesforce Field (CSV Field)" >	
+				                <apex:inputCheckbox value="{!pw.selected}" styleClass="selected" onclick="getCheckedPayments()"/> 
+				            </apex:column>                    
+	                        <apex:repeat value="{!columnsInOrder}" var="column" >
+					            <apex:column headerValue="{!columns[column]}" >				                
+					                <apex:outputField value="{!pw.payment[column]}" /> 
+					            </apex:column>
+					        </apex:repeat>
+							<apex:column headerValue="Payment Setup">				                
+				                <apex:outputField value="{!pw.payment['Payment_Setting__c']}" /> 
+				            </apex:column>     
+				            <apex:column headerValue="Payment Method" >   
+					            <apex:selectList value="{!pw.paymentMethod}" size="1">
+					                <apex:selectOption itemValue="Split Funding" itemLabel="Split Funding"/>
+	                                <apex:selectOption itemValue="ACH" itemLabel="ACH"/>
+                                    <apex:selectOption itemValue="Wire" itemLabel="Wire"/>
+                                    <apex:selectOption itemValue="Check" itemLabel="Check"/>
+                                    <apex:selectOption itemValue="Other" itemLabel="Other"/>
+	                            </apex:selectList>
+                            </apex:column>                 
+	                    </apex:pageBlockTable>
+	                </apex:pageBlockSectionItem>
+	            </apex:pageBlockSection>
+	        </apex:pageBlock>
+	     </apex:outputPanel>
+    </apex:form>
+    </apex:outputPanel>
+</apex:page>

@@ -1,0 +1,160 @@
+<apex:component controller="MCAContactRolesTabController" allowDML="true">
+    <!--<apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" />-->
+    <apex:form id="recordscontactrole" styleClass="records">
+        <apex:pageMessages id="pageMessageId" escape="false" />
+        <c:MCAJQTabComponent />
+        <apex:pageBlock >
+            <apex:inlineEditSupport event="ondblclick" changedStyleClass="editorOn" />
+            <apex:inputHidden value="{!primaryIndex}" id="myHiddenPrimaryCheckbox"/>
+            <apex:actionFunction action="{!saveAll}" name="saveAll" rerender="recordscontactrole,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()"/>
+            <apex:actionFunction name="contactdetailfetch" action="{!contactFetch}"  rerender="recordscontactrole,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()">
+                <apex:param name="conid" value="" assignTo="{!contactindex}"/>
+            </apex:actionFunction>
+            <apex:actionFunction action="{!newContactRole}" name="newContactRole" rerender="recordscontactrole,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()"/>
+            <apex:actionFunction action="{!editAll}" name="editContactRole" rerender="recordscontactrole,refreshComponent" status="loadingPanel" oncomplete="computecontRoleCalculations()"/>
+
+            <apex:pageBlockButtons >
+                <apex:outputpanel >
+                    <input type="button" onclick="runNewcontactRole()" class="btn" value="New Contact Role" />
+                </apex:outputPanel>
+                <apex:outputpanel >
+                    <input type="button" onclick="runSaveAll()" class="btn saveBtn" value="Save" />
+                </apex:outputPanel>
+                <apex:outputpanel >
+                    <input type="button" onclick="runEditContactRole()" class="btn" value="Edit All" />
+                </apex:outputPanel>
+                <apex:CommandButton action="{!refresh}" value="Refresh" rerender="recordscontactrole,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+                <apex:CommandButton action="{!refresh}" value="Cancel" rerender="recordscontactrole,refreshComponent" status="loadingPanel" immediate="true" oncomplete="computecontRoleCalculations()"></apex:CommandButton>
+            </apex:pageBlockButtons>
+
+            <div class="test" id="ManageSubmission1">
+                <div class="container-new">
+                    <table class="tablesorting tablesorter">
+                        <thead class="header">
+                            <tr>
+                            <th><div></div></th>
+                            <th>{!$Label.ContactRole_ContactName}<div>{!$Label.ContactRole_ContactName}</div></th>
+                            <th>&nbsp;&nbsp;Primary<br/>(Select one)<div style="padding-bottom: 0px !important;">&nbsp;&nbsp;Primary<br/>(Select one)</div></th>
+                            <th>{!$ObjectType.OpportunityContactRole.Fields.Role.Label}<div>{!$ObjectType.OpportunityContactRole.Fields.Role.Label}</div></th>
+                            <th>{!$ObjectType.Contact.Fields.Phone.Name}<div>{!$ObjectType.Contact.Fields.Phone.Name}</div></th>
+                            <th>{!$Label.ContactRole_Mobile}<div>{!$Label.ContactRole_Mobile}</div></th>
+                            <th>{!$ObjectType.Contact.Fields.Email.Label}<div>{!$ObjectType.Contact.Fields.Email.Label}</div></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <apex:repeat value="{!containers}" var="container">
+                                <tr>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputLink value="/p/opp/ContactRoleEditUi/e?oppid={!container.contactRole.OpportunityId}" target="blank" rendered="{!NOT(ISBLANK(container.contactRole.Id))}"> View </apex:outputLink>
+                                        <apex:outputLabel value=" | " rendered="{!NOT(ISBLANK(container.contactRole.Id))}"/>
+                                        <apex:commandLink action="{!deleteContactRole}" value="Del" rerender="recordscontactrole,refreshComponent" rendered="{!NOT(ISBLANK(container.contactRole.Id))}" status="loadingPanel"  oncomplete="computecontRoleCalculations()">
+                                        <apex:param name="recordToDelete" value="{!container.contactRole.Id}" assignTo="{!recordToDelete}" ></apex:param>
+                                        </apex:commandLink>
+                            
+                                        <apex:commandLink value="Remove" action="{!removeRoles}" rerender="recordscontactrole,refreshComponent" rendered="{!(ISBLANK(container.contactRole.Id))}" status="loadingPanel" oncomplete="computecontRoleCalculations()">
+                                        <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+                                        </apex:commandLink>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                         <apex:outputPanel html-data-index="{!container.index}"  html-data-id="{!container.contactRole.ContactId}" styleClass="ContactLookupFinder">
+                                        <apex:outputField value="{!container.contactRole.ContactId}" styleClass="contactRoleField"  rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}" title="{!container.index}"/>
+                                        </apex:outputPanel> 
+                                        <apex:inputField value="{!container.contactRole.ContactId}"   rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}" onchange="contactDetailNew({!container.index});"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputPanel html-data-index="{!container.index}"  styleClass="isPrimaryIndex"> 
+                                        <apex:outputField value="{!container.contactRole.IsPrimary}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.contactRole.IsPrimary}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}"/>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.contactRole.Role}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.contactRole.Role}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputPanel id="newclass">
+                                        <apex:outputField value="{!container.contactList.Phone}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.contactList.Phone}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}"/>
+                                        </apex:outputPanel>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                        <apex:outputField value="{!container.contactList.MobilePhone}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                        <apex:inputField value="{!container.contactList.MobilePhone}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                    <td styleClass="wrapperClass">
+                                       <apex:outputField value="{!container.contactList.Email}" rendered="{!AND(NOT(ISBLANK(container.contactRole.Id)), NOT(editAll),NOT(container.isedited))}"/>
+                                       <apex:inputField value="{!container.contactList.Email}" rendered="{!OR((ISBLANK(container.contactRole.Id)), editAll, container.isedited)}"/>
+                                    </td>
+                                </tr>
+                            </apex:repeat>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </apex:pageBlock>
+        <script>
+            function runSaveAll() {
+              setTimeout(function() {
+                saveAll();
+              }, 500);
+            }
+            
+            function runEditContactRole() {
+                setTimeout(function() {
+                        editContactRole();
+                }, 500);
+            }
+            function runNewcontactRole() {
+                setTimeout(function() {
+                        newContactRole();
+                }, 500);
+            }
+               
+    
+            var contRoleTabLabelOriginal;
+            t$(function () {
+                contRoleTabLabelOriginal = t$("[id*='contactRoletab_lbl']").text();
+                computecontRoleCalculations();
+            });
+            
+            function computecontRoleCalculations() {
+                    var contRoleTabLabel = 'Contact Roles';
+                    t$("[id*='contactRoletab_lbl']").text(contRoleTabLabel);
+                    t$("[id*='contactRoletab_lbl']").append(' (' + {!containers.size} + ')');
+            }
+            
+            function contactDetailNew(conid) {
+                
+                console.log('2222222'+conid);
+              contactdetailfetch(conid);
+                
+            }
+           
+            t$(document).ready(function(){
+            
+                t$( document ).on( "blur", "span .ContactLookupFinder input[type='text']", function() {
+                    var value = this.value || "";
+                    var index = t$(this).closest(".ContactLookupFinder").attr("data-index");
+                    var oldValue=t$(this).closest(".ContactLookupFinder").attr("data-id");
+                    console.log(oldValue+'----'+value+'-----'+index);
+                    if (oldValue!=value && value!=""){
+                        console.log("one step at a time ");
+                    }
+                
+                });
+                t$( document ).on( "change", "span .isPrimaryIndex input[type='checkbox']", function() {
+                
+                    console.log('hiiii');
+                    var value = this.value || "";
+                    var index = t$(this).closest(".isPrimaryIndex").attr("data-index");
+                    t$('[id$=myHiddenPrimaryCheckbox]').val(index);
+               
+                });
+            });
+             
+            t$(".saveBtn").click(function(){      
+                t$('.saveBtn').prop('disabled', true);
+            });    
+        </script>
+    </apex:form>
+</apex:component>

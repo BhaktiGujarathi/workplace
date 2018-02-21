@@ -1,0 +1,80 @@
+<messaging:emailTemplate subject="Available Offers" recipientType="Contact" relatedToType="Opportunity">
+
+    <messaging:htmlEmailBody > 
+        <style>
+
+            #contentFrame{width:750px !important;background-color:#e7e7e7;padding:2px}
+    
+        .offer{font-family: Arial; font-size: 11px; padding:5px; border: 1px solid;border-collapse:collapse;border-spacing:0;}
+        .offer th{font-size:11px !important; background-color:#e7e7e7;padding:2px;}
+        </style>
+        <p style="font-family: Arial; font-size: 13px;">Hi {!recipient.FirstName},</p>  
+        
+        <p style="font-family: Arial; font-size: 13px;"><b>Offers:</b></p>    
+        
+         
+        <table class="offer" border="1" cellpadding="2" cellspacing="0">
+            <tr>
+                <th>Deal Type</th>
+                <th>Funding Amt</th>
+                <th>Payback Amt</th>
+                <th>Factor Rate</th>
+                <th>Term (Months)</th>
+                <th>Holdback %</th>
+                <th>Payment Amt</th>
+                <th>PMT Schedule</th>
+                <th style="width:60px;">Origination Fee</th>           
+                
+            </tr>                
+               
+            <apex:repeat var="offer" value="{!relatedTo.Offers__r}" >  
+            <div> 
+                <tr style="display: {!IF(offer.McaApp__Status__c != 'Removed' , 'table-row','none!important;' )};">
+                
+                    <td>{!IF(offer.McaApp__Deal_Type__c != null, offer.McaApp__Deal_Type__c, '')}</td>
+                    <td>
+                        <apex:outputText value="${0,number,###,##0.00}">
+                             <apex:param value="{!offer.McaApp__Amount__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="${0,number,###,##0.00}">
+                             <apex:param value="{!offer.McaApp__Payback_Amt__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>
+                        <apex:outputText value="{0,number,###,##0.00}">
+                             <apex:param value="{!offer.McaApp__Rate__c}"/>
+                        </apex:outputText>                    
+                    </td>
+                    <td>
+                        <apex:outputText value="{0, number, ###,##0}">
+                             <apex:param value="{!offer.McaApp__Term_Months__c}"/>
+                        </apex:outputText>
+                    </td>                     
+                    <td>
+                        <apex:outputText value="{0,number,###,##0}%">
+                             <apex:param value="{!offer.McaApp__Holdback__c}"/>
+                        </apex:outputText>                    
+                    </td>
+                    <td>
+                        <apex:outputText value="${0,number,###,##0.00}">
+                             <apex:param value="{!offer.McaApp__Payment_Amt__c}"/>
+                        </apex:outputText>
+                    </td>
+                    <td>{!IF(offer.McaApp__PMT_Schedule__c != null, offer.McaApp__PMT_Schedule__c, '')}</td>
+                    <td>
+                        <apex:outputText value="${0, number, ###,##0.00}">
+                             <apex:param value="{!offer.McaApp__Origination_fee__c}"/>
+                        </apex:outputText>
+                    </td>
+                </tr>
+            </div> 
+            </apex:repeat>
+        </table>
+        <br/>
+        <p style="font-family: Arial; font-size: 13px;">Thanks,</p>
+        <p style="font-family: Arial; font-size: 13px;">{!relatedTo.Owner.Name}</p>
+    
+    </messaging:htmlEmailBody>
+</messaging:emailTemplate>

@@ -1,0 +1,1136 @@
+<apex:page controller="SubmissionWizardController" sidebar="false" showHeader="{!showHeader}">
+
+    <apex:includescript value="//code.jquery.com/jquery-1.11.1.min.js"/>
+
+    <style>
+       #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94;
+            border-radius: 1em;
+            /*border: 1px solid #CEECFF;*/
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+
+        /* back opportunity css - Back to Opportunity link*/
+        .backLink {
+            text-decoration: none;
+        }
+
+        .backLineDiv { /* back opportunity css - Back to Opportunity link*/
+            margin-top: -23px;
+            padding-bottom: 15px !important
+        }
+
+        .backLinkText {/* back opportunity css - Back to Opportunity link*/
+            color: #26a5e0;
+            /*border-bottom: 1px solid #26a5e0;*/
+        }
+
+        .popupBackground {/*Display popup on button click*/
+            background-color: white;
+            opacity: 0.20;
+            filter: alpha(opacity =   20);
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 100;
+            left: 0;
+            z-index: 9998;
+        }
+
+        .custPopup {
+            background-color: white;
+            /*border-width: 2px;************/
+            /*border-style: solid;*/
+            z-index: 9999; /* for popup*/
+            left: 50%;
+            padding: 10px;
+            position: absolute;
+            /* These are the 3 css properties you will need to change so the popup
+                    displays in the center of the screen. First set the width. Then set
+                    margin-left to negative half of what the width is. You can add
+                    the height property for a fixed size pop up if you want.*/
+            width: 400px;
+            margin-left: -250px;
+            top: 30%;
+        }
+
+        #dropbox {
+            width: 90%;
+            height:30px;
+            padding: 1.145em;
+            margin: 0 auto;
+            margin-bottom:14px;
+            border: 6px white double;
+            color:white;
+            font:weight:bold;
+            font-size:14px;
+            border-color: white !important;
+            border-radius:20px;
+            background-color:#69c;
+        }
+
+        #preview {
+            display: none;
+            margin: 1.125em auto;
+            /*border: 1px solid pink;*/
+        }
+
+        .SummaryLine {
+            border-top-color: #cfeef8 !important;
+            border-top-style: solid !important;
+            border-top-width: 2px !important;
+            margin-bottom: 5px !important;
+        }
+
+        .test th {
+            min-width: 8%;
+            padding: 6px;
+        }
+
+        .test input {
+            width: 80% !important;
+        }
+
+        .empty {
+            display:none;
+        }
+
+        .apexp .bPageBlock .dataCol .td {
+            /*width: 5%;*/
+            /*padding-right: 57px;*/
+        }
+
+        /***********CSS APPLIED ON FRIDAY************/
+       /* .apexp .bPageBlock .detailList {/*This property is used to set the
+                                          table of deal summary section
+            width: 100%;
+            padding-right: 57px;
+        }*/
+
+        .bPageBlock .detailList .dataCol {
+            width: 0%;
+            padding-right: 20px;
+            padding-left: 0px;
+        }
+    </style>
+
+    <apex:form id="form">
+        <script>
+            var previousTimeStamp = 0;
+            $(document).ready(function() {
+                $('[id$=openInPopup]').click(function(event) {
+                    event.preventDefault();
+                    var url = event.target;
+                    if ($(url).is("a")) {
+                        window.open(url, '_blank');
+                    }
+                    //window.open(url, '_blank');
+                });
+                $('[id$=openInNewTab]').click(function(event) {
+                    event.preventDefault();
+                    var url = event.target;
+                    if ($(url).is("a")) {
+                        window.open(url, '_blank');
+                    }
+                    //window.open(url, '_blank');
+                });
+                
+                // Search box event handler
+                $('[id$=searchBox]').keypress(function(event) {
+                    // Check 3 or more characters are entered
+                    // This is magic. Not actually.
+                    // keypress event gives the previous value, so had to check >= 2
+                    if(event.target.value.length >= 2) {
+                        var diff = event.timeStamp - previousTimeStamp;
+                        // Set timeout to call search method only if
+                        //  user has not entered any characters for 1 sec
+                        setTimeout(function () {
+                            console.log('diff: ', diff);
+                            console.log('previousTimeStamp: ', previousTimeStamp);
+                            if(previousTimeStamp === 0 || diff != event.timeStamp) {
+                                previousTimeStamp = event.timeStamp;
+                                searchValues();
+                            }
+                        }, 1000);
+                    }
+                });
+
+                // To display all prorams when search result is cleared
+                $('[id$=searchBox]').keyup(function(event) {
+                    
+                    // Key code for backspace and delete
+                    if(event.keyCode == '8' || event.keyCode == '46') {
+                        if(event.target.value.length < 1 || event.target.value.length > 2) {
+                            searchValues();
+                        }
+                    }
+                });
+
+                 $('[id$=searchBox]').bind('paste', function(event) {
+                    var data = event.originalEvent.clipboardData.getData('Text');
+                    if(data.length > 2) {
+                        $('[id$=searchBox]').keyup(function(event) {
+                            if(event.target.value.length < 1 || event.target.value.length > 2) {
+                                searchValues();
+                            }
+                        });
+                    }
+                });
+                $('[id$=searchBox]').bind('blur', function(event) {
+                    previousTimeStamp = 0;
+                });
+            });
+
+            function checkErrorMessage(){
+                if ($(".messageText")[0]) {
+                    $('html, body').animate({scrollTop: '0px'}, 300);
+                }
+            }
+        </script>
+
+        <apex:pageMessages id="pageMessageId" escape="false"/>
+
+        <!-- Start of Submission Wizard block -->
+        <apex:pageBlock title="Submission Wizard" id="notThankYouBlock" mode="maindetail"
+                rendered="{!NOT(showThankYouPage)}">
+            <div align="right" class="backLineDiv">
+                <!--<apex:outputLink value="{!URLFOR($Action.Opportunity.View,oppId, null,true)}"
+                        styleClass="backLink">
+                <apex:outputText value="<< Back to Opportunity" styleClass="backLinkText"/> -->
+                <apex:commandLink action="{!bckToOpportunity}" value="<< Back to Opportunity"
+                        id="returnCmndLink" styleClass="backLinkText"/>
+               <!-- </apex:outputLink>-->
+            </div>
+            <style>
+                .detailLabel {
+                    font-weight: bold;
+                    float:right;
+                    color: #4a4a56;
+                    font-family: Arial,Helvetica,sans-serif;
+                    font-size: 91%;
+                    text-align: left !important;
+                    white-space: nowrap;
+                }
+                /*.bPageBlock .dataCol{padding-left: 30px} */
+            </style>
+
+            <!-- Deal Summary Start -->
+            <apex:outputPanel rendered="{!Not(isFieldSet)}">
+                <apex:pageBlockSection columns="8" title="Deal Summary" collapsible="true">
+                    <apex:repeat value="{!fields}" var="fldSet">
+                        <apex:outputLabel styleClass="detailLabel" value="{!fldSet.Label}"/>
+                        <!--<apex:outputLabel styleClass="detailLabel" value="{!fldSet.Type}"/> -->
+                        <apex:outputPanel layout="block"
+                            style="{!IF(OR(fldSet.Type=='textarea',fldSet.Type=='string',fldSet.Type=='reference'),'overflow-y: auto;max-height:55px;max-width:250px','max-width:200px')}">
+                            <!--<apex:outputlink value="/{!oppFieldSet[fldSet.fieldPath]}" target="_blank"> -->
+                            <apex:outputField id="openInPopup" value="{!oppFieldSet[fldSet.fieldPath]}"/>
+                            <!--</apex:outputlink>-->
+                            <!--<apex:outputField value="{!oppFieldSet[fldSet.fieldPath]}"/>-->
+                        </apex:outputPanel>
+                    </apex:repeat>
+                </apex:pageBlockSection>
+            </apex:outputPanel>
+            <!-- Deal Summary End -->
+
+            <!-- programs filter section Start -->
+            <apex:outputPanel title="Programs" id="prgmPanel"
+                    style="margin-left: -1060px !important;">
+                <apex:pageBlockSection title="Programs" collapsible="false">
+                </apex:pageBlockSection>
+
+                <table cellspacing="0" cellpadding="0" border="0" class="test">
+                    <tr>
+                        <th>
+                            <apex:outputLabel value="Credit Score"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Years in Business"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Monthly Deposits $"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Monthly Deposits #"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Avg Daily Balance"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="NSFs"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="NDBs"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Industry"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="State"/>
+                        </th>
+                        <th>
+                            <apex:outputLabel value="Preferred Programs"/>
+                        </th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <apex:inputText value="{!creditScore}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!yearInBusiness}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!minMonthlyDeposite}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!minDepositeCount}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!minAvgDailyBalance}" onkeypress="return noenter(event);" />
+                        </td>
+                        <td>
+                            <apex:inputText value="{!maxNSFs}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!maxNDBs}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputCheckbox value="{!restrictedIndustry}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputCheckbox value="{!restrictedState}" onkeypress="return noenter(event);"/>
+                        </td>
+                        <td>
+                            <apex:inputCheckbox value="{!prefferedProgram}" onkeypress="return noenter(event);"/>
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr>
+                        <td width="50%"></td>
+                        <td>
+                            <apex:commandButton id="filterBtn" value="Filter"
+                                                action="{!getPrograms}"
+                                                rerender="pgmTable,pageMessageId,attachmentTable"
+                                                status="loadingAttachment"
+                                                onclick="showDisablingDiv();"
+                                                oncomplete="hideDisablingDiv();checkErrorMessage();"/>
+                        </td>
+                        <td width="40%">
+                            <apex:commandButton id="clrFilter" value="Clear Filters"
+                                                action="{!clearFilter}"
+                                                rerender="form"
+                                                status="loadingAttachment"
+                                                onclick="showDisablingDiv();"
+                                                oncomplete="hideDisablingDiv();"/>
+                        </td>
+                        <td>
+                            <apex:inputText value="{!searchQuery}" id="searchBox"
+                                html-placeholder="Enter Program or Bank name"/>
+                            <apex:actionfunction name="searchValues" action="{!getPrograms}"
+                                     rerender="pgmTable, pageMessageId, attachmentTable"
+                                    status="loadingAttachment"/>
+                        </td>
+                    </tr>
+                </table>
+            </apex:outputPanel>
+            <!-- programs filter section End -->
+
+            <!-- programs Data section Start -->
+            <apex:outputPanel id="pgmTable">
+                <script type="text/javascript">
+                    function checkAll(event, elementId, className) {
+                        var element = event.target;
+                        if(element.checked)
+                        { // check select status
+                            if(className == 'masterCheck')
+                            {
+                                $('.iptCheckbox').each(function() { //loop through each checkbox
+                                    this.checked = true;
+                                    //select all checkboxes with class "checkbox1"
+                                });
+                            }
+                            else if(className == 'masterCheckAttach')
+                            {
+                                $('.iptCheckboxAttach').each(function() { //loop through each checkbox
+                                    this.checked = true;
+                                    //select all checkboxes with class "checkbox1"
+                                });
+                            }
+                        }
+                        else
+                        {
+                            if(className == 'masterCheck')
+                            {
+                                $('.iptCheckbox').each(function() { //loop through each checkbox
+                                    this.checked = false; //deselect all checkboxes with class "checkbox1"
+                                });
+                            }
+                            else if (className == 'masterCheckAttach')
+                            {
+                                $('.iptCheckboxAttach').each(function() { //loop through each checkbox
+                                    this.checked = false; //deselect all checkboxes with class "checkbox1"
+                                });
+                            }
+                        }
+                    }
+
+                    function selectOne(event, elementId, className) {
+                        var element=event.target;
+                        if (element.checked)
+                        {
+                            if(className == 'iptCheckbox')
+                            {
+                                if($('.iptCheckbox:checked').length == $('.iptCheckbox').length){
+                                    $('.masterCheck').each(function() { //loop through each checkbox
+                                        this.checked = true;  //select all checkboxes with class "checkbox1"
+                                    });
+                                }
+                            }
+                            else if(className == 'iptCheckboxAttach')
+                            {
+                                if($('.iptCheckboxAttach:checked').length == $('.iptCheckboxAttach').length){
+                                    $('.masterCheckAttach').each(function() { //loop through each checkbox
+                                        this.checked = true;  //select all checkboxes with class "checkbox1"
+                                    });
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(className == 'iptCheckbox')
+                            {
+                                $('.masterCheck').each(function() { //loop through each checkbox
+                                    this.checked = false;  //select all checkboxes with class "checkbox1"
+                                });
+                            }
+                            else if(className == 'iptCheckboxAttach')
+                            {
+                                $('.masterCheckAttach').each(function() { //loop through each checkbox
+                                    this.checked = false;  //select all checkboxes with class "checkbox1"
+                                });
+                            }
+                        }
+                    }
+                    function onChangeSelectedProgram() {
+                        selectedPrgValue();
+                    }
+                </script>
+                <apex:actionFunction Name="selectedPrgValue" action="{!toStoreSelectedProgram}"
+                                      rerender="none" />
+                <apex:pageBlockTable value="{!programWrapListLimit}" var="pgmWrapper" id="table">
+                    <apex:column >
+                        <apex:facet name="header">
+                            <script>
+                                if($('.iptCheckbox:checked').length != $('.iptCheckbox').length){
+                                    $('.masterCheck').each(function() { //loop through each checkbox
+                                        this.checked = false;  //select all checkboxes with class "checkbox1"
+                                    });
+                                }
+                            </script>
+                            <!--
+                            <input type="checkbox" onclick="checkAll(event);" styleClass="masterCheck" value="false">
+                            </input>
+                            -->
+                            <apex:inputCheckbox id="pgmCheckBoxId"
+                                                styleClass="masterCheck" onchange="selectedPrgValue();"
+                                                onclick="checkAll(event,'pgmCheckBoxId','masterCheck');"/>
+                        </apex:facet>
+                        <apex:inputCheckbox value="{!pgmWrapper.isSelected}" id="checkBox"
+                                            styleClass="iptCheckbox" onChange="onChangeSelectedProgram();"
+                                            onclick="selectOne(event,'checkBox','iptCheckbox');">
+<!--                             <apex:param Name="selectedPgmId" value="{!pgmWrapper.prgm.Id}"/> -->
+                        </apex:inputCheckbox>
+                    </apex:column>
+                    <apex:column value="{!pgmWrapper.prgm['Bank__c']}" id="openInNewTab">
+                        <apex:facet name="header">
+                            <apex:commandLink action="{!ViewSortedData_Program}" id="cmdSortBankName"
+                                            reRender="pgmTable"
+                                            status="loadingStatus"
+                                            value="Bank{!IF(sortExpression=='Bank__r.Name',IF(sortDirection='ASC','▲','▼'),'')}">
+                                <apex:param value="Bank__r.Name" name="column" assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                    </apex:column>
+                    <apex:column >
+                        <a id="{!pgmWrapper.prgm['Id']}"
+                            href="{!URLFOR($Action.Program__c.View,pgmWrapper.prgm['Id'], null,true)}"
+                            onmouseover="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}', '/{!pgmWrapper.prgm['Id']}/m?retURL={!pgmWrapper.prgm['Id']}&isAjaxRequest=1').show();"
+                            onmouseout="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}').hide();"
+                            onfocus="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}', '/{!pgmWrapper.prgm['Id']}/m?retURL={!pgmWrapper.prgm['Id']}&isAjaxRequest=1').show();"
+                            onblur="LookupHoverDetail.getHover('{!pgmWrapper.prgm['Id']}').hide();"
+                            target="_blank">
+                            {!pgmWrapper.prgm['Name']}
+                        </a>
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortName"
+                                            action="{!ViewSortedData_Program}"
+                                            value="Program{!IF(sortExpression=='Name',IF(sortDirection='ASC','▲','▼'),'')}"
+                                            reRender="pgmTable"
+                                            status="loadingStatus">
+                                <apex:param value="Name" name="column" assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                    </apex:column>
+                    <!-- FO-1357 Start-->
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:outputLabel value="Submission Method" />
+                        </apex:facet>
+                        <apex:selectList size="1" value="{!pgmWrapper.submissionMethodValue}">
+                            <apex:selectOptions value="{!submissionMethodOptions}"/>
+                        </apex:selectList>
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortCreditScore" action="{!ViewSortedData_Program}"
+                                            value="Credit Score{!IF(sortExpression=='Credit_Score__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                            reRender="pgmTable"
+                                            status="loadingStatus">
+                                <apex:param value="Credit_Score__c" name="column" assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                    rendered="{!IF(contains(pgmWrapper.matchingPer, "Credit_Score__c"), true , false)}"
+                                    style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                    rendered="{!IF(contains(pgmWrapper.matchingPer, "Credit_Score__c"), false, true)}"
+                                    style="float:left;"/>
+                        <apex:outputField value="{!pgmWrapper.prgm['Credit_Score__c']} " />
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortYearsInBui" action="{!ViewSortedData_Program}"
+                                            value="Years in Biz{!IF(sortExpression=='Years_in_Business__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                            reRender="pgmTable"
+                                            status="loadingStatus">
+                                <apex:param value="Years_in_Business__c" name="column" assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Years_in_Business__c"), true, false)}"
+                                style="float:left"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Years_in_Business__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputField value="{!pgmWrapper.prgm['Years_in_Business__c']}"/>
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortMinMonthly" action="{!ViewSortedData_Program}"
+                                    value="$ Deposits{!IF(sortExpression=='Min_Monthly_Deposits__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Min_Monthly_Deposits__c" name="column"
+                                            assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Min_Monthly_Deposits__c"), true, false)}"
+                                style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Min_Monthly_Deposits__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputText value="{0,number,$###,###}">
+                            <apex:param value="{!FLOOR(pgmWrapper.prgm['Min_Monthly_Deposits__c'])}"/>
+                        </apex:outputText>
+                    </apex:column>
+                     <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortDepositCount" action="{!ViewSortedData_Program}"
+                                    value="# Deposits{!IF(sortExpression=='Minimum_Deposit_Count__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Minimum_Deposit_Count__c" name="column"
+                                            assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Minimum_Deposit_Count__c"), true, false)}"
+                                style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Minimum_Deposit_Count__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputField value="{!pgmWrapper.prgm['Minimum_Deposit_Count__c']}"/>
+                    </apex:column>
+                  <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortDailyBalance" action="{!ViewSortedData_Program}"
+                                    value="Avg Daily Balance{!IF(sortExpression=='Min_Avg_Daily_Bal__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Min_Avg_Daily_Bal__c" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Min_Avg_Daily_Bal__c"), true, false)}"
+                                style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Min_Avg_Daily_Bal__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputText value="{0,number,$###,###}">
+                            <apex:param value="{!pgmWrapper.prgm.Min_Avg_Daily_Bal__c}" />
+                        </apex:outputText>
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortMaxNSF" action="{!ViewSortedData_Program}"
+                                    value="Max NSFs{!IF(sortExpression=='Max_No_NSFs__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Max_No_NSFs__c" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Max_No_NSFs__c"), true, false)}"
+                                style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Max_No_NSFs__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputField value="{!pgmWrapper.prgm['Max_No_NSFs__c']}"/>
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortMaxNDB" action="{!ViewSortedData_Program}"
+                                    value="Max NDBs{!IF(sortExpression=='Max_NDBs__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Max_NDBs__c" name="column"
+                                    assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:image url="/img/msg_icons/confirm16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Max_NDBs__c"), true, false)}"
+                                style="float:left;"/>
+                        <apex:image url="/img/msg_icons/error16.png"
+                                rendered="{!IF(contains(pgmWrapper.matchingPer, "Max_NDBs__c"), false , true)}"
+                                style="float:left;"/>
+                        <apex:outputField value="{!pgmWrapper.prgm['Max_NDBs__c']}"/>
+                    </apex:column>
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortMaxAmt" action="{!ViewSortedData_Program}"
+                                    value="Max Amount{!IF(sortExpression=='Max_Amount__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Max_Amount__c" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputText value="{0,number,$###,###}">
+                              <apex:param value="{!FLOOR(pgmWrapper.prgm['Max_Amount__c'])}" />
+                        </apex:outputText>
+                    </apex:column>
+
+                    <apex:column style="text-align:center;">
+                        <apex:facet name="header">
+                            <apex:commandLink id="cmdSortCommPer" action="{!ViewSortedData_Program}"
+                                    value="Commission %{!IF(sortExpression=='Commission_Percentage__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Commission_Percentage__c" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                        <apex:outputField value="{!pgmWrapper.prgm['Commission_Percentage__c']}"/>
+                    </apex:column>
+
+                    <apex:column style="text-align:center;">
+                        <apex:outputText value="{0,number,$###,###}">
+                            <apex:param value="{!pgmWrapper.PotentialFundingAmt}" />
+                        </apex:outputText>
+                        <apex:facet name="header" >
+                            <apex:commandLink id="cmdSortPotFundAmt" action="{!ViewSortedData_Program}"
+                                    value="Potential Funding Amt.{!IF(sortExpression=='Funding_Amt_of_Monthly_Gross_Sales__c',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="Funding_Amt_of_Monthly_Gross_Sales__c" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                    </apex:column>
+
+                    <apex:column width="145px">
+                        <apex:outputPanel rendered="{!NOT(pgmWrapper.missingInfo)}">
+                            <apex:outputPanel >
+                                <apex:image value="/img/samples/color_green.gif"
+                                        width="{!pgmWrapper.score}"
+                                        height="12" />
+                                <apex:image value="/img/samples/color_yellow.gif"
+                                        width="{!(100 - pgmWrapper.score)}"
+                                        height="12" />
+                            </apex:outputPanel>&nbsp;
+                            <apex:outputText value="{0,number,###}">
+                                <apex:param value="{!pgmWrapper.score}" />
+                            </apex:outputText>%
+                        </apex:outputPanel>
+
+                        <apex:outputPanel rendered="{!(pgmWrapper.missingInfo)}">
+                            <apex:outputText value="Missing Info" style="color:Red;"/>
+                        </apex:outputPanel>
+
+                        <apex:facet name="header" >
+                            <apex:commandLink id="cmdSortScore" action="{!ViewSortedData_Program}"
+                                    value="Matching %{!IF(sortExpression=='score',IF(sortDirection='ASC','▲','▼'),'')}"
+                                    reRender="pgmTable"
+                                    status="loadingStatus">
+                                <apex:param value="score" name="column"
+                                        assignTo="{!sortExpression}">
+                                </apex:param>
+                            </apex:commandLink>
+                        </apex:facet>
+                    </apex:column>
+                </apex:pageBlockTable><br/>
+                <apex:outputText value="No programs were matched to the current filters" id="sizePgm"
+                                rendered="{!programWrapListLimit.size == 0}" />
+                <br/>
+                <apex:panelGrid columns="2" >
+                    <apex:commandLink value="Show More>>" id="shwmore" action="{!showMore}"
+                                    reRender="pgmTable"
+                                    status="loadingAttachment"
+                                    style="display:{!IF(OR(programWrapListLimit.size >= noofRecords),'none','block')};color: #26a5e0; !important">
+                    </apex:commandLink>
+                    <apex:outputText rendered="{!hideShowPrgCount}">
+                        {!startCount} - {!sizeOfProgram} of {!noOfRecords}
+                    </apex:outputText>
+                </apex:panelGrid>
+            </apex:outputPanel>
+            <div align="center">
+                <apex:commandButton value="Review Required Documents"
+                                    action="{!checkReqdDocument}"
+                                    rerender="tstpopup,pageMessageId"
+                                    status="loadingAttachment"
+                                    id="delayBtn"
+                                    oncomplete="checkErrorMessage();"/>
+
+                <apex:commandButton value="Assign Attachments"
+                                    action="{!selectProgramForAtt}"
+                                    id="selectAttachBtnId"
+                                    rerender="attachmentTable,pageMessageId"
+                                    status="loadingAttachment"
+                                    oncomplete="checkErrorMessage();"/>
+            </div>
+
+            <!-- Code for the popup -->
+            <apex:outputPanel id="tstpopup">
+                <apex:outputPanel styleClass="popupBackground" layout="block" rendered="{!displayPopUp}" id="parentPopup"/>
+                    <apex:outputPanel styleClass="custPopup" layout="block" rendered="{!displayPopUp}" id="actPopup">
+                        <apex:pageBlock title="Required Documents" id="popup" >
+                            <apex:facet name="header">
+                                <div style="padding:12px;font-size: initial;font-weight: bold; border-bottom: 1px solid #eaeaea;color:#000;">Required Documents</div>
+                            </apex:facet>
+                            <div style="overflow-y: auto; max-height: 100px;">
+                                <apex:repeat value="{!prgmDocMap}" var="pgm" >
+                                    <b><apex:outputText value="{!pgm}"/></b><br/>
+                                    <apex:dataList value="{!prgmDocMap[pgm]}" var="doc" >
+                                        <!--<apex:outputText value="{!FLOOR(rowNum)}"/> - -->
+                                        <apex:outputText value="{!doc}"/>
+                                        <!-- <apex:variable var="rowNum" value="{!rowNum + 1}"/><br/> -->
+                                    </apex:dataList>
+                                </apex:repeat>
+                            </div>
+                            <apex:outputText Value="There are no Required Documents for the selected Programs"
+                                rendered="{!MapSize}"/>
+                        </apex:pageBlock>
+                        <div align="center">
+                            <apex:commandButton value="Close" action="{!closePopup}"
+                                rerender="tstpopup" status="loadingStatus"/>
+                        </div>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+                <!-- End of Popup -->
+                <!-- Start of Drag & Drop section -->
+                <apex:pageBlockSection title="Attachments" columns="1" collapsible="false">
+                    <apex:outputPanel id="dragDropSection">
+                        <div style="border-width:2px;border:4px #69c;height:auto;width:auto;border-radius:17px;">  &nbsp;
+                            <div id="dropbox">
+                                <center><span id="droplabel">Drop files to attach</span></center>
+                            </div>
+                            <apex:outputPanel id="Op1">
+                                <img id="preview" src="" alt="[ image will display here ]" />
+                            </apex:outputPanel>
+                        </div>
+                    </apex:outputPanel>
+                </apex:pageBlockSection>
+                <!-- End of Drag & Drop section -->
+
+                <apex:actionFunction name="refershCom" reRender="form" status="loadingAttachment">
+                </apex:actionFunction>
+                <apex:actionStatus id="loadingAttachment" layout="block">
+                    <apex:facet name="start">
+                        <div id="assign-action-spinner-main">
+                            <div id="assign-action-spinner-content">
+                                <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." />
+                                <p>Processing...</p>
+                            </div>
+                        </div>
+                    </apex:facet>
+                </apex:actionStatus>
+
+                <!-- Start of Available Attachment Block -->
+                <!-- <apex:pageblock mode="maindetail" rendered="{!NOT(showThankYouPage)}" id="Op">
+                <div class="SummaryLine"></div>
+                <h2><apex:outputText value="Available Attachments" style="font-size: 1.2em;"/></h2>-->
+                <apex:pageBlock id="Op" mode="maindetail">
+                <!-- <apex:pageBlockButtons location="top"  id="saveButton" > -->
+                    <div align="center">
+                        <apex:commandButton onclick="runSaveAllAttachment();" value="Save"
+                                rerender="showmsg pgBlkSctnAttachment" />
+                        <apex:commandButton value="Cancel" action="{!resetAttachments}"
+                                rerender="Op"
+                                status="loadingAttachment" />
+                        <apex:commandButton value="Add Attachments" action="{!openAttachment}"/>
+                    </div>
+                    <apex:pageblocksection columns="1" id="attachmentTable" >
+                        <apex:pageBlockTable value="{!AttachmentWrapperList}" var="attachmentWrapper"
+                                id="pgBlkSctnAttachment">
+                            <apex:column >
+                                <apex:facet name="header">
+                                    <apex:outputText value="Select All Attachment"/>
+                                    <script>
+                                        if($('.iptCheckboxAttach:checked').length != $('.iptCheckboxAttach').length) {
+                                            $('.masterCheckAttach').each(function() { //loop through each checkbox
+                                            this.checked = false;  //select all checkboxes with class "checkbox1"
+                                            });
+                                        }
+                                    </script>
+                                    <apex:inputCheckbox id="checkAttach"
+                                            onclick="checkAll(event,'checkAttach','masterCheckAttach');"
+                                            styleClass="masterCheckAttach"/>
+                                </apex:facet>
+                                <apex:inputCheckbox value="{!attachmentWrapper.isRequired}"
+                                        id="checkBoxAttachment"
+                                        styleClass="iptCheckboxAttach"
+                                        onclick="selectOne(event,'checkBoxAttachment','iptCheckboxAttach');"/>
+                            </apex:column>
+
+                            <apex:column headervalue="Record" value="{!attachmentWrapper.cnt}"/>
+
+                            <apex:column headervalue="Action">
+                                <apex:commandLink action="{!deleteAttachment}" value="Delete"
+                                        rerender="Op"
+                                        status="loadingAttachment"
+                                        rendered="{!($ObjectType.Attachment.deletable)}">
+                                    <apex:param name="indexToRemove" value="{!attachmentWrapper.attachment.Id}"
+                                            assignTo="{!indexToRemove}">
+                                    </apex:param>
+                                </apex:commandLink>
+                            </apex:column>
+
+                            <apex:column headervalue="Name" headerClass="headerStyle">
+                                <apex:actionRegion >
+                                    <apex:outputField value="{!attachmentWrapper.attachment['name']}">
+                                        <apex:inlineEditSupport disabled="true" />
+                                    </apex:outputField>
+                                </apex:actionRegion>
+                            </apex:column>
+
+                            <apex:column headerValue="Description" headerClass="headerStyle" id="descColumn">
+                            <apex:actionRegion >
+                                <apex:outputField value="{!attachmentWrapper.attachment['Description']}">
+                                    <apex:inlineEditSupport disabled="false" event="ondblClick"
+                                            showOnEdit="saveButton" />
+                                </apex:outputField>
+                            </apex:actionRegion>
+                            </apex:column>
+
+                            <apex:column headerClass="headerStyle">
+                                <apex:facet name="header" >
+                                    <apex:outputText value="Programs"/>
+                                </apex:facet>
+                                <apex:selectList value="{!attachmentWrapper.selectedPrograms}"
+                                        rendered="{!showSelectList}"
+                                        multiselect="true"
+                                        size="4">
+                                    <apex:selectOptions value="{!attachmentWrapper.options}"/>
+                                </apex:selectList>
+                            </apex:column>
+                            <!--
+                            <apex:column headerClass="headerStyle">
+                                <apex:facet name="header">
+                                    <apex:outputText value="Include"/>
+                                </apex:facet>
+                                <apex:inputCheckbox value="{!attachmentWrapper.isRequired}"
+                                    onclick="checkUncheckAtt('{!attachmentWrapper.isRequired}','{!attachmentWrapper.attachment.Id}');showDisablingDiv();">
+                                </apex:inputCheckbox>
+                            </apex:column>
+                            -->
+                        </apex:pageBlockTable>
+                        <br/>
+                        <apex:outputText value="No attachments present for this Opportunity."
+                                id="sizeAttach"
+                                rendered="{!AttachmentWrapperList.size == 0}"/>
+                        <br/>
+                    </apex:pageblocksection>
+                </apex:pageBlock>
+                <!-- End of Available Attachment section -->
+                <div align="center">
+                    <!-- <apex:commandButton value="Create without Sending" action="{!createWithoutSending}" status="loadingAttachment"
+                    rerender="form" oncomplete="checkErrorMessage();"/>
+                    <apex:commandButton value="Send without Attachments" action="{!sendWithoutAttachment}" status="loadingAttachment"
+                    rerender="form" oncomplete="checkErrorMessage();"/>
+                    <apex:commandButton value="Send with Attachments" action="{!sendWithSelectedAttachments}" status="loadingAttachment"
+                    rerender="form" oncomplete="checkErrorMessage();"/>  -->
+                    <apex:commandButton value="Submit" action="{!submitToSend}" status="loadingAttachment"
+                            rerender="form" oncomplete="checkErrorMessage();"/>
+                    <apex:commandButton value="Cancel" action="{!cancel}"/>
+                    <!--<apex:commandButton value="Add Attachments" action="{!openAttachment}"/>-->
+                </div>
+                <!--</apex:pageblock> -->
+
+                <apex:actionFunction action="{!saveme}" name="saveAllAttch" rerender="pgBlkSctnAttachment"
+                                    status="loadingAttachment" oncomplete="checkButton();"/>
+                <apex:actionFunction action="{!CollectData}" name="collectDataBase64"
+                                    reRender="form" status="loadingAttachment">
+                    <apex:param name="data" id="data" value="" />
+                    <apex:param name="name" id="name" value="" />
+                </apex:actionFunction>
+        </apex:pageblock>
+         <!-- End of Submission Wizard block -->
+
+        <script type="text/javascript">
+            var fName = new Array();
+            var dropbox = document.getElementById('dropbox');
+            var count = 0;
+            // # Using an EventListener object
+            var dropListener = {
+                handleEvent: function(event) {
+                    if (event.type === 'dragenter') { this.onDragEnter(event); }
+                    if (event.type === 'dragexit') { this.onDragExit(event); }
+                    if (event.type === 'dragover') { this.onDragOver(event); }
+                    if (event.type === 'drop') { this.onDragDrop(event); }
+                },
+
+                onDragEnter: function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    console.debug('enter')
+                },
+
+                onDragExit: function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                },
+
+                onDragOver: function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                },
+
+                onDragDrop: function(event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    var isProcess = false;
+                    var files = event.dataTransfer.files,
+                    file = files;
+                    if (files.length == 1 ) {
+                        console.log('11111111111-->'+(files[0].size)/(1024*1024));
+                        document.getElementById('droplabel').innerHTML ='Uploading ' + files[0].name;
+                    }else if (files.length  >  1) {
+                        document.getElementById('droplabel').innerHTML ='Uploading ' + files.length + ' files';
+                    }
+                    if (files.length) {
+                        for (i = 0; i < files.length; i++) {
+                            file = files[i];
+                            if((files[i].size)/(1024*1024) < 4) {
+                                isProcess = true;
+                                //document.getElementById('droplabel').innerHTML = 'Uploading ' + file.name;
+                                this.processImage(file, i);
+                            } else
+                                alert('The file size of ' +files[i].name+' is too large for Drag and drop.Please use Attach File button to upload the file');
+                        }
+                        if(!isProcess)
+                            refershCom();
+                    }
+                },
+
+                processImage: function(file, i) {
+                    fName.push(file.name);
+                    if (! file.type.match('image.*')) {
+                        //document.getElementById('droplabel').innerHTML ='Uploading ' + file.name;
+                       // return;
+                    }
+                    var reader = new FileReader();
+                    reader.onloadend = this.onReaderLoadEnd;
+                    reader.readAsDataURL(file);
+                },
+
+                onReaderLoadEnd: function(event) {
+                    var img = document.getElementById("preview");
+                    img.src = event.target.result;
+                    collectDataBase64(img.src, fName[count]);
+                    count++;
+                }
+            };
+
+            // ## Adding drag and drop event listeners
+            dropbox.addEventListener('dragenter', dropListener, false);
+            dropbox.addEventListener('dragexit', dropListener, false);
+            dropbox.addEventListener('dragover', dropListener, false);
+            dropbox.addEventListener('drop', dropListener, false);
+            function runSaveAllAttachment() {
+                setTimeout(function() {
+                    saveAllAttch();
+                }, 500);
+            }
+        </script>
+
+        <apex:pageBlock id="thankYouBlock" rendered="{!showThankYouPage}">
+            <apex:outputPanel rendered="{!applicationSentToPgm.size > 0}">
+                <apex:outputText value="{!$Label.Submission_MailSent}"
+                        style="color:Green; font-weight: bold;"
+                        rendered="{!IF(contains(channelVal,'Create without Sending'),false,true)}"/>
+                <apex:outputText value="{!$Label.Submission_MailSent1}"
+                        style="color:Green; font-weight: bold;"
+                        rendered="{!IF(contains(channelVal,'Create without Sending'),true,false)}"/>
+                <apex:pageBlockTable value="{!applicationSentToPgm}" var="pgms" >
+                    <apex:column headerValue="Program Name" styleClass="columnWidth">
+                        <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/Sent.jpg')}"
+                                width="20"
+                                height="20"/>&nbsp;&nbsp;
+                        <a href="{!URLFOR($Action.Program__c.View,pgms.Id, null,true)}">
+                            {!pgms.Name}
+                        </a>
+                    </apex:column>
+                    <apex:column value="{!pgms.Bank__c}" styleClass="columnWidth"/>
+                    <apex:column value="{!pgms.Submission_Email__c}" styleClass="columnWidth"/>
+                    <apex:column headerValue="Status" styleClass="columnWidth">
+                        <apex:outputLabel value="UW" styleClass="columnWidth"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+                <br/>
+            </apex:outputPanel>
+
+            <style>
+                .columnWidth{
+                    width:250px;
+                }
+            </style>
+
+            <apex:outputPanel rendered="{!OR(lstApplicationNotSentToPgm.size > 0, applicationNotSentToPgm.size > 0)}">
+                <apex:outputText value="{!$Label.Submission_MailNotSent}"
+                        rendered="{!lstApplicationNotSentToPgm.size > 0}"
+                        style="color:Red; font-weight: bold; "/>
+                    <apex:pageBlockTable value="{!lstApplicationNotSentToPgm}" var="pgms"
+                            rendered="{!lstApplicationNotSentToPgm.size > 0}">
+                    <apex:column headerValue="Program Name" styleClass="columnWidth">
+                        <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/NotSent.jpg')}"
+                                width="16"
+                                height="16"/>&nbsp;&nbsp;
+                        <a href="{!URLFOR($Action.Program__c.View,pgms.Id, null,true)}">
+                            {!pgms.Name}
+                        </a>
+                    </apex:column>
+                    <apex:column value="{!pgms.Bank__c}" styleClass="columnWidth"/>
+                    <apex:column value="{!pgms.Submission_Email__c}" styleClass="columnWidth"/>
+                    <apex:column headerValue="Status" styleClass="columnWidth">
+                        <apex:outputLabel value="UW" styleClass="columnWidth"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+
+                <apex:outputText value="{!$Label.Submission_MailNotSentFunder}"
+                        rendered="{!applicationNotSentToPgm.size > 0}"
+                        style="color:Red; font-weight: bold; "  />
+                 <apex:pageBlockTable value="{!applicationNotSentToPgm}" var="pgms"
+                        rendered="{!applicationNotSentToPgm.size > 0}">
+                    <apex:column headerValue="Program Name" styleClass="columnWidth">
+                        <apex:image url="{!URLFOR($Resource.SubmissionWizard,'SubmissionWizard/NotSent.jpg')}"
+                                width="16" height="16"/>&nbsp;&nbsp;
+                        <a href="{!URLFOR($Action.Program__c.View,pgms.Id, null,true)}">
+                            {!pgms.Name}
+                        </a>
+                    </apex:column>
+                    <apex:column value="{!pgms.Bank__c}" styleClass="columnWidth"/>
+                    <apex:column value="{!pgms.Submission_Email__c}" styleClass="columnWidth"/>
+                    <apex:column headerValue="Status" styleClass="columnWidth">
+                        <apex:outputLabel value="UW" styleClass="columnWidth"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:outputPanel>
+
+            <!--<apex:outputLink value="{!URLFOR($Action.Opportunity.View,oppId, null,true)}">
+                <apex:outputText value="<< Back to Opportunity"/> </apex:outputLink>-->
+            <apex:commandLink action="{!bckToOpportunity}" value="<< Back to Opportunity"
+                    id="returnCommandLink"/>
+        </apex:pageBlock>
+        <!-- End of Thank You Page -->
+    </apex:form>
+
+    <script type="text/javascript" >
+        function noenter(e){
+            if(window.event){
+                key = window.event.keyCode; //IE
+            } else {
+                key = e.which; //firefox
+            }// end else - if
+
+            if(key == 13) {
+                var ele=document.getElementById("{!$Component.filterBtn}").id;
+                document.getElementById(ele).click();
+                return false;
+            } else {
+                return true;
+            }// end else - if
+        }//end noenter()
+
+        function showDisablingDiv() {
+            //document.getElementById('disablingDiv').style.display='block';
+        }// end showDisablingDiv()
+
+        function hideDisablingDiv() {
+            //document.getElementById('disablingDiv').style.display='none';
+        }// end hideDisablingDiv()
+
+        function focusOn(val) {
+            var checkboxId = val;
+            document.getElementById(checkboxId).focus();
+        }// end focusOn()
+    </script>
+
+</apex:page>

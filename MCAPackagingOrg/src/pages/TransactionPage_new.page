@@ -1,0 +1,669 @@
+<apex:page standardController="Transaction__c" tabStyle="Transaction__c" extensions="TransactionController_New" id="thepage" sidebar="false">
+    <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" />
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.17.8/js/jquery.tablesorter.min.js" />
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.66.0-2013.10.09/jquery.blockUI.min.js" />
+    <apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.25.8/js/jquery.tablesorter.widgets.js" />
+    <apex:stylesheet value="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.17.8/css/theme.blue.css" / >     
+
+    <style type="text/css">
+        .myClass2 {  
+                 overflow:auto;
+                 height:500px; }
+          .MyClass{
+                   overflow:auto;
+                   height:1000px; }
+         .darkenTHClass {
+         
+            background-color: #E0E3E6 !important;
+            color: #41A6D2 !important;
+         }
+         .sortedColumn {
+            background-color: #E0E3E6 !important; 
+           // color: #41A6D2 !important;
+         }
+         .filter1
+         {
+             left: 10px;
+             position: relative;
+         }
+         .filter2
+         {
+             left: 25px;
+             position: relative;
+         }
+         .filter3
+         {
+             left: 40px;
+             position: relative;
+         }
+         .filter4
+         {
+             left: 55px;
+             position: relative;
+         }
+         .filter5
+         {
+             left: 70px;
+             position: relative;
+         }
+         .getPayableBtn
+         {
+             left: 600px;
+             position: relative;
+         }
+         .disableClass
+         {
+            display:none !important;
+         }
+     </style>
+     
+<!-- script to check all the checkboxes -->
+        <script type="text/javascript">
+                function checkAll(cb,cbid)
+                {
+                    console.log('cbid..'+cbid);
+                    var inputElem = document.getElementsByTagName("input");
+                    var amount = 10;
+                    for(var i=0; i<inputElem.length; i++)
+                    {            
+                         if(inputElem[i].id.indexOf(cbid)!=-1){
+                            inputElem[i].checked = cb.checked;
+                        }
+                    }
+                }
+                
+        </script>
+        <script type="text/javascript">
+                function expandList()
+                { 
+                      document.getElementById("thepage:theform:j_id27:innerDebit").className = "MyClass";
+                      //document.getElementById("thepage:theform:j_id27:tableDebit").className = "MyClass";
+                      this.preventDefault();
+                 }
+                 function expandListCredit()
+                { 
+                      document.getElementById("thepage:theform:j_id27:innerCredit").className = "MyClass";
+                      //document.getElementById("thepage:theform:j_id27:tableDebit").className = "MyClass";
+                      this.preventDefault();
+                 }
+        </script>
+        <script>
+                 $j = jQuery.noConflict();
+                 $j(document).ready(function() {
+                    $j("[id$='accountTable']").tablesorter();
+                 });
+                function focusOn(val)
+                {
+                     var checkboxId = val;           
+                     document.getElementById(checkboxId).focus();
+                }
+                  
+        </script>
+        
+        <apex:sectionHeader title="Transaction Edit" subtitle="New {!strTransName} Transaction"  />
+        <apex:form id="theform">
+                <apex:pagemessages id="hiddenblock" />
+                <apex:pageBlock title="Transaction Edit">
+                <apex:pageBlock >
+                        <apex:pageBlockSection title="Transaction Information" columns="1"> 
+                        <apex:pageblockSection columns="2" id="accountInfo">
+                             <apex:outputField value="{!objTranscation.Account__c}" rendered="{!AND(IF(!blnEditMode,true,false),IF(!blnNewMode,true,false) )}" />
+                             <apex:inputfield value="{!objTranscation.Account__c}" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}" id="accountInput" >
+                                <apex:actionSupport event="onchange" rerender="toRerender" status="panelStatus" action="{!create}"/>
+                              </apex:inputfield>
+                              <apex:pageBlockSectionItem >
+                                <apex:outputLabel value="Status"/>
+                                <apex:outputText value="Pending"/>
+                          </apex:pageBlockSectionItem>
+                            <apex:repeat value="{!column1Fields}" var="f">
+                                <apex:inputText value="{!objTranscation[f.fieldPath]}" rendered="{!AND(IF(!blnEditMode,true,false),IF(!blnNewMode,true,false))}"/>
+                                <apex:inputField value="{!objTranscation[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}"/>
+                            </apex:repeat> 
+                        </apex:pageblockSection>
+                        
+                        <apex:pageBlockSection columns="1">
+                        <apex:repeat value="{!column2Fields}" var="f">
+                             <apex:outputField value="{!objTranscation[f.fieldPath]}" rendered="{!AND(IF(!blnEditMode,true,false),IF(!blnNewMode,true,false))}" />
+                             <apex:inputField value="{!objTranscation[f.fieldPath]}" required="{!OR(f.required, f.dbrequired)}"  rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}"/><br />
+                        </apex:repeat>      
+                        </apex:pageBlockSection>
+                        
+                        </apex:pageBlockSection>
+                        
+                </apex:pageBlock>
+                 <apex:inputHidden value="{!Transaction__c.Account__c}" rendered="{!IF(blnEditMode,true,false)}"  required="true"/>
+                   <apex:actionStatus id="panelStatus" stopText="">
+                      <apex:facet name="start">
+                          <img src="{!URLFOR('/img/loading.gif')}" />
+                          <span style="font-weight: bold"> Processing</span>
+                        <br />
+                    </apex:facet>
+                   </apex:actionStatus>
+
+        <apex:outputpanel id="toRerender">
+        
+        <apex:outputpanel id="creditTransBlock" rendered="{!IF(blnCreditTransLineItems,true,false)}" layout="block" >  
+            
+<!-- In our table we are displaying the cContact records -->
+        <!-- OutputPanel for Credit filter starts here -->
+        <apex:outputPanel rendered="{!IF(objTranscation.Account__c == null,false,true)}">
+            <table width="100%">
+             <thead>
+                 <tr>
+                     <th><div style="padding-left: 70px;"><b><apex:outPutLabel value="Type"/></b></div></th>
+                     <th><div style="padding-left: 56px;"><b><apex:outPutLabel value="Status"/></b></div></th>
+                     <th><div style="padding-left: 85px;"><b><apex:outPutLabel value="Invoice Date"/></b></div></th>
+                     <th><div style="padding-left: 95px;"><b><apex:outPutLabel value="Due Date"/></b></div></th>
+                 </tr>
+             </thead>
+             <tbody>
+                 <tr>
+                     <td> <apex:inputField value="{!objRec.Type__c}"/></td>
+                     <td> <apex:inputField value="{!objRec.Status__c}"/></td>
+                     <td>
+                         <apex:inputField value="{!objRecForDate.Date_Sent__c}"/>
+                         <apex:outputtext value=" - " />
+                         <apex:inputField value="{!objRec.Date_Sent__c}"/>
+                     </td>
+                     <td>
+                         <apex:inputField value="{!objRecForDate.Due_Date__c}"/>
+                         <apex:outputtext value=" - " />
+                         <apex:inputField value="{!objRec.Due_Date__c}"/>
+                     </td>   
+                 </tr>
+             </tbody>
+         </table>
+                        
+            <br />
+            <apex:outputpanel rendered="{!AND(IF(invoices.size==0,true,false),IF(blnCreditTransLineItems,true,false),IF(blnDebitTransLineItems,false,true))}" layout="block">
+                <apex:outputText rendered="{!AND(IF(strAccountName!=null,true,false),IF(blnCreditTransLineItems,true,false))}">No Receivable records found for '{!strAccountName}' matching your criteria.</apex:outputText><br/>
+                <apex:outputText rendered="{!AND(IF(strAccountName==null,true,false),IF(blnCreditTransLineItems,true,false))}">Please select Account to display invoices</apex:outputText><br />
+            </apex:outputpanel> 
+                
+            <br />
+            <div align="center">
+                <apex:commandButton value="Filter" action="{!clearInvoiceVal}" rerender="toRerender, testIdForRen" status="panelStatus" />
+                <apex:commandButton value="Clear Filter" action="{!clearRecFilter}" rerender="toRerender, testIdForRen" status="panelStatus" />
+            </div>
+        </apex:outputpanel>
+        <!--OutputPanel for Credit filter ends here -->
+        <br/><hr></hr><br/>
+        <apex:outputpanel id="innerCredit" layout="block" styleClass="myClass2" rendered="{!AND(IF(invoices.size>0,true,false),IF(blnCreditTransLineItems,true,false),IF(blnDebitTransLineItems,false,true))}">
+                <div align="center">
+                <apex:commandButton value="Reset" action="{!resetTransaction}" rerender="creditTransBlock" status="panelStatus"/> 
+                
+                <!-- apex:commandButton value="Calculate Total" action="{!autopopulate}" rerender="creditTransBlock,test123" status="panelStatus"/>  --> 
+        </div>
+        
+        <!-- apex:outputpanel id="test123Credit" style="float:right;">Total : {!totalAmount}</apex:outputpanel>  -->
+        <script>
+          $j('[id$=creditTable]').find("label").each(function() {
+                    var a = '{!pFieldToSort}';  
+                    var ele = document.getElementsByName(a);
+                    if($j(this).attr("class") == a) {
+                        $j(this).closest("th").addClass("sortedColumn");
+                        
+                    }
+                });
+         </script>
+         <br />
+         <br />
+        <apex:pageBlockTable value="{!invoices}" var="c" id="creditTable" styleClass="tablesorter" headerClass="header">
+                <apex:column >
+                <apex:facet name="header"> 
+                        <apex:inputCheckbox onclick="checkAll(this,'checkBox');" value="{!selectAllCreditCheckBox}">
+                                <apex:actionsupport event="onchange" action="{!getCheckedValuesCredit}" rerender="creditTransBlock" status="panelStatus"></apex:actionsupport>             
+                        </apex:inputCheckbox>
+                </apex:facet>
+                <apex:inputCheckbox value="{!c.selected}" id="checkBox" >
+                        <apex:actionsupport event="onchange" action="{!autoPopulate1}" rerender="creditTransBlock, test1234" status="panelStatus" oncomplete="focusOn(this.id)">
+                      <!-- apex:param name="billPaidDate1" assignto="{!c.cred.Date__c}" value="{!currentDate}"/>
+                      <apex:param name="balanceAmt1" assignto="{!c.cred.Amount__c}" value="{!c.invc.Amount_Due__c}"/ -->
+                        </apex:actionsupport>                   
+                </apex:inputCheckbox> 
+                </apex:column>
+                <apex:inputHidden value="{!c.cred.Transaction__c}"/>
+                <apex:column onmouseover="darkenTH();" onmouseout="normalTH();" >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Receivable {!IF(pFieldToSort =='ReceivableName',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableName', 'Name')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableName"/>
+                    </apex:facet>                        
+                        <apex:outputLink value="{!URLFOR($Action.Receivable__c.View,c.invc.Id, null,true)}" id="theLink" target="blank" >{!c.invc.Name}</apex:outputLink>
+            
+                </apex:column>
+                <apex:column >
+                    <apex:facet name="header"> 
+                        <apex:outputLabel value="Opportunity {!IF(pFieldToSort =='ReceivableOpportunity',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableOpportunity', 'Lookup')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableOpportunity"/>
+                    </apex:facet>
+                    <apex:outputLink value="/{!c.invc.Opportunity__c}" target="blank">{!c.invc.Opportunity__r.Name}</apex:outputLink>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header"> 
+                        <apex:outputLabel value="Type {!IF(pFieldToSort =='ReceivableType',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableType', 'String')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableType"/>
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Type__c}"/>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header"> 
+                        <apex:outputLabel value="Invoice Date {!IF(pFieldToSort =='ReceivableDate_Sent',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableDate_Sent', 'Date')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableDate_Sent"/>
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Date_Sent__c}"/>
+                </apex:column>
+                                
+                 <apex:column >
+                    <apex:facet name="header"> 
+                        <apex:outputLabel value="Due Date {!IF(pFieldToSort =='ReceivableDue_Date',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableDue_Date', 'Date')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableDue_Date" />
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Due_Date__c}"/>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header"> 
+                        <apex:outputLabel value="Status {!IF(pFieldToSort =='ReceivableStatus',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableStatus', 'String')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableStatus"/>
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Status__c}"/>
+                </apex:column>
+                             
+                <apex:column >
+                    <apex:facet name="header"> 
+                    <apex:outputLabel value="Amount {!IF(pFieldToSort =='ReceivableAmount',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableAmount', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableAmount"/>
+                    </apex:facet>
+                <apex:outputField value="{!c.invc.Amount__c}"/>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header"> 
+                    <apex:outputLabel value="Paid {!IF(pFieldToSort =='ReceivableReceivable_Amount_Paid',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableReceivable_Amount_Paid', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableReceivable_Amount_Paid" />
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Receivable_Amount_Paid__c}" />
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header"> 
+                    <apex:outputLabel value="Due {!IF(pFieldToSort =='ReceivableAmount_Due',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('ReceivableAmount_Due', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="ReceivableAmount_Due" />
+                    </apex:facet>
+                    <apex:outputField value="{!c.invc.Amount_Due__c}" id="invoiceDueAmount"/>
+                </apex:column>
+                
+                <apex:column >
+                    <apex:facet name="header">
+                        <apex:outputLabel value="Amount Received {!IF(pFieldToSort =='CreditAmount',IF(sortDirection='ASC','↑','↓'),'')}"  onclick="callcontroller('CreditAmount', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="CreditAmount"/>
+                    </apex:facet>
+                    <!--  <apex:inputField value="{!c.cred.Amount__c}" onchange="calculateTotalOnChange();" status="panelStatus"/> -->
+                    <apex:inputField value="{!c.cred.Amount__c}" >
+                        <apex:actionSupport event="onchange"
+                            action="{!autopopulate}"
+                            status="panelStatus" reRender="tableDebit, creditTable" />
+                    </apex:inputField>
+                    
+                    <apex:facet name="footer" >
+                        {!totalAmount}
+                    </apex:facet>
+                </apex:column> 
+ 
+                <apex:column >
+                    <apex:facet name="header">
+                     <apex:outputLabel value="Date Received {!IF(pFieldToSort =='CreditDate',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('CreditDate', 'Date')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="CreditDate"/>
+                    </apex:facet>
+                    <apex:inputField value="{!c.cred.Date__c}"/>
+                </apex:column> 
+                
+                <apex:column >
+                    <apex:facet name="header">
+                     <apex:outputLabel value="Memo {!IF(pFieldToSort =='CreditMemo',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('CreditMemo', 'String')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="CreditMemo"/>                   
+                        </apex:facet>
+                    <apex:inputField value="{!c.cred.Memo__c}"/>
+                </apex:column>
+        </apex:pageBlockTable>
+        <b>&nbsp;Total Records :&nbsp;<apex:outputLabel value="{!sizeOfReceivables}" /></b>
+    </apex:outputpanel>
+    </apex:outputpanel> 
+    <apex:actionFunction action="{!sortAscInputFields}" name="callSort" rerender="toRerender">
+           <apex:Param name="sortField" value=""/>
+           <apex:Param name="typeField" value=""/>
+       </apex:actionFunction> 
+       <apex:actionFunction action="{!autopopulate}" name="calculateTotal" reRender="toRerender" />
+            <apex:inputHidden value="{!sortExpression}" id="SortHiddencriterian"/>
+            <apex:inputHidden value="{!pFieldToSort}" id="SortField"/>
+            <apex:inputHidden value="{!sortDirection}" id="SortHiddenOrder"/>
+        
+<apex:outputpanel id="debitTransBlock" rendered="{!IF(blnDebitTransLineItems,true,false)}" layout="block">
+    <!-- Section for displaying table of all accounts having open payables starts here -->
+      <apex:outputPanel rendered="{!accountsFlag}" id="accountPanel">
+            <script>
+                $j('[id$=accountInput]').prop("disabled",true);
+                $j('[id$=accountInput_lkwgt]').children().removeClass('lookupIcon');
+            </script>
+            <apex:commandButton action="{!buildAccountIdSet}" value="Get Payables" rerender="toRerender" status="panelStatus" styleClass="getPayableBtn"/>
+            <script>
+          $j('[id$=accountTable]').find("label").each(function() {
+                    var a = '{!pFieldToSort}';
+                    var ele = document.getElementsByName(a);
+                    if($j(this).attr("class") == a) {
+                        $j(this).closest("th").addClass("sortedColumn");
+                    }
+                });
+         </script> 
+        <apex:pageBlockTable value="{!payAccountLst}" var="accId" id="accountTable" styleClass="tablesorter">
+        
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:inputCheckbox onclick="checkAll(this,'accountCheckBox');" value="{!selectAllPayAccCheckBox}">
+                        </apex:inputCheckbox>
+                </apex:facet>
+                <apex:inputCheckbox value="{!accId.isSelected}" id="accountCheckBox" >
+                <apex:actionsupport event="onchange" action="{!allAccountUnselect}" rerender="debitTransBlock" oncomplete="focusOn(this.id)">
+                 </apex:actionsupport>
+                 </apex:inputCheckbox>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="Account Name {!IF(pFieldToSort=='AccountName',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('AccountName', 'String')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="AccountName"/>
+                </apex:facet>
+                <apex:outputField value="{!accId.accObj.Name}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="Account Type {!IF(pFieldToSort=='AccountType',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('AccountType', 'String')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="AccountType"/>
+                </apex:facet>
+                <apex:outputField value="{!accId.accObj.Type}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="# Payables {!IF(pFieldToSort=='AccountPayNumber',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('AccountPayNumber', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="AccountPayNumber"/>
+                </apex:facet>
+                <apex:outputtext value="{!accId.payableLst.size}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="Total Amount Due {!IF(pFieldToSort=='AccountAmountDue',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('AccountAmountDue', 'Decimal')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="AccountAmountDue"/>
+                </apex:facet>
+                <apex:outputtext value="{!accId.totalAmountDue}"/>
+            </apex:column>
+        </apex:pageBlockTable>
+        <br />
+        </apex:outputPanel>
+
+       <!-- Section for displaying table of all accounts having open payables ends here -->
+     
+     <!--OutputPanel for Debit filter starts here -->
+     <apex:outputPanel rendered="{!OR(IF(objTranscation.Account__c == null,false,true),IF(multipleAccounts==false, false, true))}">
+         <table width="100%">
+             <thead>
+                 <tr>
+                     <th style="display:{!IF(multipleAccounts==true,'grid','none')}"><div style="padding-left: 45px;"><b><apex:outPutLabel value="Account Type" /></b></div></th>
+                     <th><div style="padding-left: 50px;"><b><apex:outPutLabel value="Type"/></b></div></th>
+                     <th><div style="padding-left: 56px;"><b><apex:outPutLabel value="Status"/></b></div></th>
+                     <th><div style="padding-left: 85px;"><b><apex:outPutLabel value="Payable Date"/></b></div></th>
+                     <th><div style="padding-left: 95px;"><b><apex:outPutLabel value="Due Date"/></b></div></th>
+                 </tr>
+             </thead>
+             <tbody>
+                 <tr>
+                     <td style="display:{!IF(multipleAccounts==true,'grid','none')}"> <apex:inputField value="{!objPay.Account__r.Type}"/> </td>
+                     <td> <apex:inputField value="{!objPay.Type__c}"/></td>
+                     <td> <apex:inputField value="{!objPay.Status__c}"/></td>
+                     <td>
+                         <apex:inputField value="{!objPayForDate.Payable_Date__c}"/>
+                         <apex:outputtext value=" - " />
+                         <apex:inputField value="{!objPay.Payable_Date__c}"/>
+                     </td>
+                     <td>
+                         <apex:inputField value="{!objPayForDate.Due_Date__c}"/>
+                         <apex:outputtext value=" - " />
+                         <apex:inputField value="{!objPay.Due_Date__c}"/>
+                     </td>   
+                 </tr>
+             </tbody>
+         </table>
+            <br />
+            <br />
+            <apex:outputpanel rendered="{!AND(IF(bills.size==0,true,false),IF(blnDebitTransLineItems,true,false),IF(blnCreditTransLineItems,false,true))}" layout="block">
+                <apex:outputText rendered="{!AND(IF(strAccountName!=null,true,false),IF(blnDebitTransLineItems,true,false))}">No Payable records found for '{!strAccountName}' matching your criteria.</apex:outputText>
+                <apex:outputText rendered="{!AND(IF(strAccountName==null,true,false),IF(blnDebitTransLineItems,true,false),IF(multipleAccounts==true, false, true))}">Please select Account to display Bills</apex:outputText>
+                <apex:outputText rendered="{!AND(IF(strAccountName==null,true,false),IF(blnDebitTransLineItems,true,false),IF(multipleAccounts==true, true, false))}">No Payable records found matching your criteria </apex:outputText>
+            </apex:outputpanel>
+            <br/>
+            <div align="center">
+                <apex:commandButton value="Filter" action="{!fetchFilteredDebits}" rerender="toRerender, testIdForRen" status="panelStatus" />&nbsp;&nbsp;
+                <apex:commandButton value="Clear Filter" action="{!clearPayFilter}" rerender="toRerender, testIdForRen" status="panelStatus" />
+            </div>
+        </apex:outputPanel>
+         <!--OutputPanel for Debit filter ends here -->
+         <br/><hr/><br/>
+     <apex:outputpanel id="innerDebit" layout="block" styleClass="myClass2" rendered="{!AND(IF(bills.size>0,true,false),IF(blnDebitTransLineItems,true,false),IF(blnCreditTransLineItems,false,true))}">
+       <div align="center">
+      <apex:commandButton value="Reset" action="{!resetTransaction}"  rerender="debitTransBlock, errorPanel1" status="panelStatus"/>
+       <!--  apex:commandButton value="Calculate Total" action="{!autopopulate}" rerender="debitTransBlock,test123" status="panelStatus"/> -->
+       </div>
+       
+         <!--  apex:outputpanel id="test123" style="float:right;"><b>Total : {!totalAmount}</b></apex:outputpanel>  --> 
+         <script>
+          $j('[id$=tableDebit]').find("label").each(function() {
+                    var a = '{!pFieldToSort}';
+                    var ele = document.getElementsByName(a);
+                    if($j(this).attr("class") == a) {
+                        $j(this).closest("th").addClass("sortedColumn");
+                    }
+                });
+         </script>
+        <br />
+         <br />
+        <apex:pageBlockTable value="{!bills}" var="c" id="tableDebit" styleClass="tablesorter">
+            <apex:column >
+                <apex:facet name="header"> 
+                      <apex:inputCheckbox onclick="checkAll(this,'checkBox');" value="{!selectAllDebitCheckBox}"> 
+                      <apex:actionsupport event="onchange" action="{!getCheckedValues}" rerender="debitTransBlock" status="panelStatus">
+                     </apex:actionsupport>             
+                     </apex:inputCheckbox>
+                 </apex:facet>
+                 <apex:inputCheckbox value="{!c.selected}" id="checkBox" >
+                <apex:actionsupport event="onchange" action="{!autoPopulate1}" rerender="debitTransBlock" oncomplete="focusOn(this.id)">
+                      <!-- apex:param name="billPaidDate" assignto="{!c.debt.Date__c}" value="{!currentDate}"/>
+                      <apex:param name="balanceAmt" assignto="{!c.debt.Amount__c}" value="{!c.bill.Bill_Amount_Due__c}"/ -->
+                 </apex:actionsupport>
+                 </apex:inputCheckbox>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="Payable {!IF(pFieldToSort=='PayableName',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableName', 'Name')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="PayableName"/>
+                </apex:facet>
+                <apex:outputLink value="{!URLFOR($Action.Payable__c.View,c.bill.Id, null,true)}" id="theLink" target="blank" >{!c.bill.Name}</apex:outputLink>
+            </apex:column>
+            
+            <apex:column rendered="{!IF(multipleAccounts==false, false, true)}">
+                <apex:facet name="header" > 
+                    <apex:outputLabel value="Account Name{!IF(pFieldToSort=='PayableAccount',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableAccount', 'Lookup'); return false;" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="PayableAccount"/>
+                </apex:facet>
+                <apex:outputlink value="/{!c.bill.Account__c}" target="blank" >{!c.bill.Account__r.Name} </apex:outputLink>
+            </apex:column>
+            <!-- NEW -->
+            
+            <apex:column >
+                    <apex:facet name="header"> 
+                    <apex:outputLabel value="Opportunity {!IF(pFieldToSort=='PayableOpportunity',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableOpportunity', 'Lookup'); return false;" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="PayableOpportunity"/>
+                    </apex:facet>
+            <apex:outputlink value="/{!c.bill.Opportunity__c}" target="blank" >{!c.bill.Opportunity__r.Name} </apex:outputLink>
+            </apex:column>
+            <!-- NEW -->
+            
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Type {!IF(pFieldToSort=='PayableType',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableType', 'String')" styleClass="PayableType" onmouseover="darkenTH();" onmouseout="normalTH();"/>
+                </apex:facet>
+                <apex:outputField value="{!c.bill.Type__c}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Payable Date {!IF(pFieldToSort=='PayablePayable_Date',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayablePayable_Date', 'Date')" onmouseover="darkenTH();" onmouseout="normalTH();" styleClass="PayablePayable_Date" />
+                </apex:facet>
+             <apex:outputField value="{!c.bill.Payable_Date__c}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Due Date {!IF(pFieldToSort=='PayableDue_Date',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableDue_Date', 'Date')" styleClass="PayableDue_Date" onmouseover="darkenTH();" onmouseout="normalTH();" />
+                 </apex:facet>
+                <apex:outputField value="{!c.bill.Due_Date__c}"/>
+            </apex:column>
+            
+            <apex:column >
+              <apex:facet name="header"  > 
+                    <apex:outputLabel value="Status {!IF(pFieldToSort=='PayableStatus',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableStatus', 'String')" styleClass="PayableStatus" onmouseover="darkenTH();" onmouseout="normalTH();"/>
+                    </apex:facet>
+                <apex:outputField value="{!c.bill.Status__c}"/>
+             </apex:column>
+             
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Amount {!IF(pFieldToSort=='PayableAmount_Due',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableAmount_Due', 'Decimal')" styleClass="PayableAmount_Due" onmouseover="darkenTH();" onmouseout="normalTH();"/>
+                </apex:facet>
+                <apex:outputField value="{!c.bill.Amount_Due__c}"/>
+             </apex:column>   
+             
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Paid {!IF(pFieldToSort=='PayableBill_Amount_Paid',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableBill_Amount_Paid', 'Decimal')" styleClass="PayableBill_Amount_Paid" onmouseover="darkenTH();" onmouseout="normalTH();"/>
+                </apex:facet>
+            <apex:outputField value="{!c.bill.Bill_Amount_Paid__c}"/>
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header"> 
+                    <apex:outputLabel value="Due {!IF(pFieldToSort=='PayableBill_Amount_Due',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('PayableBill_Amount_Due', 'Decimal')" styleClass="PayableBill_Amount_Due" onmouseover="darkenTH();" onmouseout="normalTH();" />
+                </apex:facet>
+            <apex:outputPanel styleClass="dueAmountCls" >
+                <apex:outputField id="AmtDue" value="{!c.bill.Bill_Amount_Due__c}" styleClass="dueAmountClss" />
+            </apex:outputPanel>            
+            </apex:column>
+            
+            <apex:column >
+                <apex:facet name="header">   
+                    <apex:outputLabel value="Amount Paid {!IF(pFieldToSort=='DebitAmount',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('DebitAmount', 'Decimal')" styleClass="DebitAmount" onmouseover="darkenTH();" onmouseout="normalTH();"/>                   
+                </apex:facet>
+                <apex:inputField value="{!c.debt.Amount__c}" >
+                        <apex:actionSupport event="onchange"
+                            action="{!autopopulate}"
+                            status="panelStatus" reRender="tableDebit, creditTable" />
+                    </apex:inputField>
+                <apex:facet name="footer" >
+                    {!totalAmount}
+                </apex:facet>
+                
+            </apex:column>        
+            
+            <apex:column >
+                <apex:facet name="header">   
+                    <apex:outputLabel value="Date Paid {!IF(pFieldToSort=='DebitDate',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('DebitDate', 'Date')" styleClass="DebitDate" onmouseover="darkenTH();" onmouseout="normalTH();"/>                   
+                </apex:facet>
+                <apex:inputField value="{!c.debt.Date__c}"/>
+            </apex:column>  
+            
+            <apex:column >
+                <apex:facet name="header">   
+                    <apex:outputLabel value="Memo {!IF(pFieldToSort=='DebitMemo',IF(sortDirection='ASC','↑','↓'),'')}" onclick="callcontroller('DebitMemo', 'String')" styleClass="DebitMemo" onmouseover="darkenTH();" onmouseout="normalTH();"/>                   
+                </apex:facet>
+                <apex:inputField value="{!c.debt.Memo__c}"/>
+            </apex:column>
+            <apex:inputHidden value="{!c.debt.Transaction__c}"/>     
+
+            </apex:pageBlockTable>
+            <b>&nbsp;Total Records :&nbsp;<apex:outputLabel value="{!sizeOfPayables}" /></b>
+        </apex:outputpanel>
+            
+        <!--  /apex:actionRegion>  -->
+        </apex:outputpanel> 
+        </apex:outputpanel>
+                <apex:pageBlockButtons location="top">
+                <apex:outputpanel id="pgbtns1" >
+                     <apex:commandButton style="margin-left: 160px !important;" action="{!save}" value="Save" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}" rerender="hiddenblock"/>
+                     <apex:commandButton action="{!cancelEdit}" value="Cancel" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}" immediate="true"/>
+                     <apex:commandButton action="{!showAccounts}" value="Multiple Payees" rendered="{!AND(IF(strTransName=='Debit', true, false), IF(accountsFlag==false, true, false))}" immediate="true" rerender="toRerender, accountInfo, pgbtns, pgbtns1, hiddenblock" status="panelStatus"/>
+                     <apex:commandButton action="{!resetSinglePayee}" value="Single Payee" rendered="{!AND(IF(strTransName=='Debit', true, false), IF(accountsFlag==true, true, false))}" immediate="true" rerender="toRerender, accountInfo, pgbtns, pgbtns1, hiddenblock" status="panelStatus"/>
+                 </apex:outputpanel>
+                 </apex:pageBlockButtons>
+                 
+                 <apex:pageBlockButtons location="bottom">
+                    <apex:outputpanel id="pgbtns" >
+                     <apex:commandButton style="margin-left: 160px !important;" action="{!save}" value="Save" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}" rerender="hiddenblock"/>
+                     <apex:commandButton action="{!cancelEdit}" value="Cancel" rendered="{!OR(IF(blnEditMode,true,false),IF(blnNewMode,true,false))}" immediate="true"/>
+                     <apex:commandButton action="{!showAccounts}" value="Multiple Payees" rendered="{!AND(IF(strTransName=='Debit', true, false), IF(accountsFlag==false, true, false))}" immediate="true" rerender="toRerender, accountInfo, pgbtns, pgbtns1,hiddenblock" status="panelStatus"/>
+                     <apex:commandButton action="{!resetSinglePayee}" value="Single Payee" rendered="{!AND(IF(strTransName=='Debit', true, false), IF(accountsFlag==true, true, false))}" immediate="true" rerender="toRerender, accountInfo, pgbtns, pgbtns1, hiddenblock" status="panelStatus"/>
+                 </apex:outputpanel>
+                 </apex:pageBlockButtons>
+     </apex:pageBlock>
+  </apex:form>
+   <script type="text/javascript">
+                     
+        function callcontroller(fieldToSort, fieldType, sortField) {
+                
+                 var oldSortCol = $j("input[id$='SortHiddencriterian']").val();
+                 var index;
+                 var TempSortExpr;
+                 if(oldSortCol.endsWith('__c')) 
+                 {
+                     index = oldSortCol.indexOf('__');
+                 }
+                 if(index != null)
+                 {
+                    TempSortExpr = oldSortCol.substring(0, index);
+                 }
+               
+                if(fieldToSort.indexOf(TempSortExpr) != -1)
+                {
+                
+                    if(String($j("input[id$='SortHiddenOrder']").val()) == "ASC")
+                    {
+                      $j("input[id$='SortHiddenOrder']").val("DESC");
+                    }
+                    else
+                    {
+                      $j("input[id$='SortHiddenOrder']").val("ASC");
+                    } 
+                    $j("input[id$='SortHiddencriterian']").val(sortField);
+                    callSort(fieldToSort, fieldType);
+                }
+                else
+                {
+                    if(String($j("input[id$='SortHiddenOrder']").val()) == "ASC")
+                    {
+                      $j("input[id$='SortHiddenOrder']").val("DESC");
+                      
+                    }
+                    else
+                    {
+                      $j("input[id$='SortHiddenOrder']").val("ASC");
+                    } 
+                    $j("input[id$='SortHiddencriterian']").val(sortField);
+                    callSort(fieldToSort, fieldType);
+
+                }
+        }
+        
+        function darkenTH() {
+            var element = event.target;
+            $j(element).closest("th").addClass("darkenTHClass");
+        }
+
+        function normalTH() {
+            var element = event.target;
+            $j(element).closest("th").removeClass("darkenTHClass");
+        }  
+        
+        function disableAccount() {
+            $j(".accountInput").attr('disabled','disabled');
+            //$j(".accountInput").eq(1).attr("onclick","return false;");
+        }
+        
+        function calculateTotalOnChange() {
+            calculateTotal();
+        }
+         </script>
+</apex:page>

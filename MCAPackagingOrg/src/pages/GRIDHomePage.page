@@ -1,0 +1,119 @@
+<apex:page standardController="Opportunity" cache="true" sidebar="false" extensions="GRIDHomePageExtension" > 
+<!--  <apex:includeScript value="{!urlfor($Resource.MCATableSorter, 'jquery-1.11.1.min.js')}" /> -->
+<style type="text/css">
+    #assign-action-spinner-main 
+    {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+    }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+        
+        .hoverhighlight
+        {
+             background-color:#BFEFFF;
+        }
+        
+        .rich-tabhdr-side-cell
+        {
+            width: 100px;
+            height: 50px;
+        
+        }
+        .contentTable td:hover {
+            background-color :#7addff;
+        }        
+        .opportunityTab .secondaryPalette, .individualPalette .opportunityBlock .secondaryPalette{
+            border-color: transparent;
+        }
+        
+        .activeTab 
+        {
+             color:black; 
+             background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(1, #ADCDAD))
+        }
+        .inactiveTab  
+        {
+            color:black; 
+            background-image:-webkit-gradient(linear, left bottom, left top, color-stop(0, #FFFFFF), color-stop(1, #C8C8C8));
+        }
+        </style>
+
+<apex:includeScript value="{!urlfor($Resource.GRIDResource, 'GRIDResource/JS/jquery-1.11.1.min.js')}" />
+
+        <script type="text/javascript">
+        t$ = jQuery.noConflict();
+
+        t$('body').on("click","a",function()
+        {
+                  
+                   if(t$(this).attr('href').search("https:") >= 0)
+                    {
+                        window.open(t$(this).attr('href'));
+                        return false;
+                    }
+                    
+         });
+       
+       </script> 
+        <apex:tabPanel switchType="client" id="tabpanel" tabClass="activeTab" inactiveTabClass="inactiveTab">
+            <apex:tab id="submissionTab" label="Submissions" rendered="{!AND(tabToSettingMap['Submissions'].Display_Tab__c, $ObjectType.Submission__c.accessible)}"> <c:GRIDSubmissionComponent /></apex:tab> 
+            <apex:tab id="offerTab" label="Offers" rendered="{!AND(tabToSettingMap['Offers'].Display_Tab__c, $ObjectType.Offer__c.accessible)}"> <c:GRIDOffersComponent /></apex:tab>
+            <apex:tab id="stipTab" label="Stips" rendered="{!AND(tabToSettingMap['Stips'].Display_Tab__c, $ObjectType.Stips__c.accessible)}" > <c:GRIDStipsComponent /></apex:tab>
+            <apex:tab id="loanbalanceTab" label="Loan Balances" rendered="{!AND(tabToSettingMap['Loan_Balances'].Display_Tab__c, $ObjectType.Loan_Balance__c.accessible)}"> <c:GRIDLoanBalanceComponent /></apex:tab>
+            <apex:tab id="bankstatementTab" label="Bank Statements" rendered="{!AND(tabToSettingMap['Bank_Statements'].Display_Tab__c, $ObjectType.Bank_Account__c.accessible)}"> <c:GRIDBankStatementsComponent /></apex:tab>
+            <apex:tab id="creditcardTab" label="Credit Cards" rendered="{!AND(tabToSettingMap['Credit_Cards'].Display_Tab__c, $ObjectType.Credit_Card__c.accessible)}"> <c:GRIDCreditCardsComponent /></apex:tab>
+            <apex:tab id="receivableTab" label="Receivables" rendered="{!AND(tabToSettingMap['Receivables'].Display_Tab__c, $ObjectType.Receivable__c.accessible)}"> <c:GRIDReceivablesComponent /></apex:tab>
+            <apex:tab id="payableTab" label="Payables" rendered="{!AND(tabToSettingMap['Payables'].Display_Tab__c, $ObjectType.Payable__c.accessible)}"> <c:GRIDPayablesComponent /></apex:tab>
+            <apex:tab id="syndicationTab" label="Syndications" rendered="{!AND(tabToSettingMap['Syndications'].Display_Tab__c, $ObjectType.Syndication__c.accessible)}"> <c:GRIDSyndicationsComponent /></apex:tab>
+            <apex:tab id="contactroleTab" label="Contact Roles" rendered="{!tabToSettingMap['Contact_Roles'].Display_Tab__c}"> <c:GRIDContactRoleComponent /></apex:tab>
+            <apex:tab id="taskTab" label="Tasks" rendered="{!tabToSettingMap['Tasks'].Display_Tab__c}" > <c:GRIDTaskComponent /> </apex:tab>
+            <apex:tab id="attachmentTab" label="Attachments" rendered="{!tabToSettingMap['Attachments'].Display_Tab__c}"> <c:GRIDAttachmentComponent /></apex:tab>      
+          
+        </apex:tabPanel>
+    
+    <apex:actionStatus id="loadingPanel" layout="block">
+        <apex:facet name="start">
+            <div id="assign-action-spinner-main">
+                <div id="assign-action-spinner-content">
+                    <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                    <p>Processing...</p>
+                </div>
+            </div>
+        </apex:facet>
+    </apex:actionStatus>
+    
+   
+    
+
+</apex:page>

@@ -1,0 +1,56 @@
+<apex:page controller="aml.AuditEngineController" tabStyle="Audit_Engine__tab">
+  <style>
+    .AuditReady {
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      background: rgb(171, 245, 147);  
+      font-size: 15px;
+      color: #111;          
+    }
+
+    .AuditNotReady {
+      border: 1px solid #333;
+      border-radius: 5px;
+      padding: 10px;
+      text-align: center;
+      background: rgb(245, 147, 147);
+      font-size: 15px;
+      color: #111;    
+    }
+  </style>
+  <apex:sectionHeader subtitle="Salesforce.com Objects Audit Engine" title="Anti Money Laundering"/>
+  
+  <apex:outputpanel id="MessagesContainer">
+    <apex:pageMessages />
+  </apex:outputpanel>
+
+  <p>    
+    {!$Label.Audit_Engine_Instructions}
+  </p>
+
+  <apex:pageBlock title="Audit process status">
+    <apex:outputpanel layout="block" rendered="{!isAuditProcessAvailable}" id="AuditReady" styleClass="AuditReady">
+      {!$Label.Audit_Ready}
+    </apex:outputpanel>
+
+    <apex:outputpanel layout="block" rendered="{!!isAuditProcessAvailable}" id="AuditNotReady" styleClass="AuditNotReady">
+      {!$Label.Audit_Not_Ready}
+    </apex:outputpanel>
+
+    <!-- HACK: Fake pbSection to inject the twistSection JS function -->
+    <apex:pageBlockSection title="Test" showHeader="true" rendered="false">
+        <apex:pageBlockSectionItem >
+            <apex:outputText value="Label" />
+            <apex:outputText value="Value" />
+        </apex:pageBlockSectionItem>
+    </apex:pageBlockSection>
+    <br/>
+    <br/>
+    <apex:form >
+    	<apex:commandButton value="Yes, start Audit Engine" action="{!submit}" rendered="{!isAuditProcessAvailable}"/>
+  	</apex:form>
+  </apex:pageBlock>
+
+</apex:page>

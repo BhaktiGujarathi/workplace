@@ -1,0 +1,161 @@
+<apex:page controller="ManageCustomSettingsController">
+    <apex:slds />
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script>
+        function overridePageMessages(){    
+            var textureEffect = '';
+            //Uncomment below line for texture effect on page messages
+            textureEffect = 'slds-theme--alert-texture';
+
+            $('.warningM3').addClass('slds-notify slds-notify--toast slds-theme--warning customMessage '+textureEffect);          
+            $('.confirmM3').addClass('slds-notify slds-notify--alert slds-theme--success  customMessage '+textureEffect);    
+            $('.errorM3').addClass('slds-notify slds-notify--alert slds-theme--error customMessage '+textureEffect);                  
+            $('.infoM3').addClass('slds-notify slds-notify--toast customMessage '+textureEffect);    
+                     
+            $('.errorM3').removeClass('errorM3'); 
+            $('.confirmM3').removeClass('confirmM3'); 
+            $('.infoM3').removeClass('infoM3');   
+            $('.warningM3').removeClass('warningM3');  
+        }
+    </script>
+    <style>
+        /* This is for the apex page message override*/
+        .msgIcon {
+                display: none!important
+        }
+        .customMessage * {
+            color: #fff!important
+        }
+        .customMessage {
+            margin: 5px 0!important;
+            max-width: 1280px;
+            opacity: 1!important;
+            width: 100%;
+            font-size: 12px;
+            border: 0px;
+            padding-left: 10px;
+        }
+        .message {
+            opacity: .1
+        }
+        /* This is for the apex page message override*/
+        .labelCol {
+            padding-top : 10px !important;
+        }
+        table td {
+            padding : 5px !important;
+        }
+        .checkbox-padding {
+            padding-top : 10px !important;
+        }
+        .textbox-padding {
+            padding-top : 5px !important;
+        }
+    </style>
+    <apex:form styleClass="slds-form" id="myFrom">
+        <apex:actionStatus id="myStatus">
+            <apex:facet name="start">
+                <div>
+                    <div class="slds-spinner_container" style="position: fixed;">
+                        <div role="status" class="slds-spinner slds-spinner--large slds-spinner--brand" >
+                            <span class="slds-assistive-text">Please Wait...</span>
+                            <div class="slds-spinner__dot-a"></div>
+                            <div class="slds-spinner__dot-b"></div>
+                        </div>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <apex:pageBlock html-class="slds-panel" id="PB" >
+            <apex:pageblockbuttons styleClass="slds-button" location="top" >
+                    <apex:commandButton styleClass="slds-button slds-button--neutral" value="Save" action="{!saveCustomSettings}" status="myStatus" reRender="configurePanel,errorBlock,customsettingsValues"/>
+            </apex:pageblockbuttons>
+            <apex:outputPanel styleClass="slds-panel" id="configurePanel">
+                <apex:pageBlockSection html-class="slds-panel__section" columns="1">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel >Configure</apex:outputLabel>
+                        <apex:selectList styleClass="slds-select" style="width:auto; !important;" value="{!selectConfigureType}" size="1">
+                            <apex:selectOption html-class="slds-select" itemValue="CustomSettings" itemLabel="Inquiry Score and Settings" /> <!-- value="{!listCustomSettingNames}" -->
+                            <apex:selectOption html-class="slds-select" itemValue="CustomLabels" itemLabel="Bands and Activities" />
+                            <apex:actionSupport event="onchange" action="{!getselectedConfigures}" status="myStatus" reRender="configurePanel,errorBlock,customsettingsValues"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem rendered="{!CONTAINS(selectConfigureType,'CustomSettings')}">
+                        <apex:outputLabel >{!selectConfigureType}</apex:outputLabel>
+                        <apex:selectList styleClass="slds-select" style="width:auto; !important;" value="{!selectedObject}" size="1">
+                            <apex:selectOptions value="{!listCustomSettingNames}"/>
+                            <apex:actionSupport event="onchange" action="{!showCustomSettingValues}" status="myStatus" reRender="errorBlock,customsettingsValues"/>
+                        </apex:selectList>
+                    </apex:pageBlockSectionItem>
+                </apex:pageblocksection>
+            </apex:outputPanel>
+        </apex:pageBlock>
+        <div id="errorBlock"><apex:pageMessages /><script>overridePageMessages(); </script></div>
+        <apex:outputPanel styleClass="slds-panel" id="customsettingsValues">
+                <apex:pageBlock html-class="slds-panel" id="result" title="{!selectedObjectLabel}" rendered="{!if(AND(listCustomSettingRecords.size > 0,CONTAINS(selectConfigureType,'CustomSettings')),true,false)}"   >
+                    <apex:outputPanel styleClass="slds-panel" id="customsettingValues">
+                            <Table width="100%" frame="below" rules="rows">
+                                <tr>
+                                        <th style="background-color:#CAC7C7;">Name</th>
+                                        <apex:repeat value="{!listField}" var="fieldvalue">
+                                        
+                                                <th style="background-color:#CAC7C7;">{!fieldvalue.fieldName}</th>
+                                        </apex:repeat>
+                                </tr>
+                                <apex:repeat value="{!listCustomSettingWarpper}" var="custSetting">
+                                        <tr>
+                                                <apex:repeat value="{!custSetting.listFields}" var="fields" >
+                                                        <td class="{!IF((OR((OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))),(AND(CONTAINS(fields.fieldLabel,'Name'),NOT(OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))))))),"checkbox-padding","textbox-padding")}">
+                                                                <apex:outputText styleClass="slds-text-body_regular" value="{!fields.fieldValue }" rendered="{!AND(CONTAINS(fields.fieldLabel,'Name'),NOT(OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))))}" />
+                                                                
+                                                                <apex:inputText styleClass="slds-input" value="{!fields.fieldValue }" rendered="{!AND(NOT(CONTAINS(fields.fieldLabel,'Name')),NOT(OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))))}"/>
+                                                                
+                                                                <apex:outputPanel rendered="{!OR(CONTAINS(fields.fieldValue,'true'),CONTAINS(fields.fieldValue,'false'))}">
+                                                                <div class="slds-form-element__row">
+                                                                   <div class="slds-form-element">
+                                                                      <label class="slds-checkbox">
+                                                                            <apex:inputcheckbox styleclass="slds-input" value="{!fields.fieldValue}" />
+                                                                               <span class="slds-checkbox--faux"></span>
+                                                                      </label>
+                                                                   </div>
+                                                                </div>
+                                                                </apex:outputPanel>
+                                                        </td>
+                                                </apex:repeat>
+                                        </tr>
+                                </apex:repeat>
+                            </Table>
+                    </apex:outputPanel>
+                </apex:pageblock>
+            <apex:pageBlock html-class="slds-panel" id="customLabel" rendered="{!IF(AND(CONTAINS(selectConfigureType,'CustomLabels'),listCustomLabelsWrapper.size > 0),true,false)}">
+                <apex:outputPanel styleClass="slds-panel" id="customLabelValues">
+                    <Table width="100%" frame="below" rules="rows">
+                        <tr>
+                            <th style="background-color:#CAC7C7;">Name</th>
+                            <th style="background-color:#CAC7C7;">Category</th>
+                            <th style="background-color:#CAC7C7;">Description</th>
+                            <th style="background-color:#CAC7C7;">Value</th>
+                        </tr>
+                        <apex:repeat value="{!listCustomLabelsWrapper}" var="custLabel">
+                            <tr>
+                                <td>
+                                    <apex:outputText styleClass="slds-text-body_regular" value="{!custLabel.labelName}"/>
+                                </td>
+                                <td>
+                                    <apex:outputText styleClass="slds-text-body_regular" value="{!custLabel.labelCategory}"/>
+                                </td>
+                                <td>
+                                    <apex:inputText styleClass="slds-input" value="{!custLabel.labelDescription}"/>
+                                </td>
+                                <td>
+                                    <apex:inputText styleClass="slds-input" value="{!custLabel.labelValue}"/>
+                                </td>
+                            </tr>
+                        </apex:repeat>
+                    </Table>
+                </apex:outputPanel>
+            </apex:pageBlock>
+        </apex:outputPanel>
+    </apex:form>
+</apex:page>

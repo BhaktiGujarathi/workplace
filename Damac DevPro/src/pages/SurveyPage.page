@@ -1,0 +1,538 @@
+<apex:page controller="SurveyProcessController" cache="false" sidebar="false" showheader="false"
+    standardStylesheets="false">
+
+    <title>Survey</title>
+    <apex:stylesheet value="{!URLFOR($Resource.PortalAssets, 'assets/css/bootstrap.min.css')}" />
+    <apex:includeScript value="{!URLFOR($Resource.PortalAssets, 'assets/js/jquery.js')}"/>
+    <style>
+        #survey_container {
+            width: 800px;
+            margin: 0 auto;
+            box-shadow: 0 0 14px #CCCCCC;
+            -moz-box-shadow: 0 0 14px #CCCCCC;
+            -webkit-box-shadow: 0 0 14px #CCCCCC;
+        }
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #d74c3b!important;
+        }
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+        .lookupInput a {
+            display: block;
+            position: absolute;
+            top: 0px;
+        }
+        .lookupInput img {
+            float: right;
+        }
+        span.lookupInput {
+            display: inherit;
+            position: relative;
+        }
+        .lookupInput a,
+        .lookupInput a {
+            border: none!important;
+            background: none!important;
+        }
+        .lookupInput {
+            display: inline;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .lookupInput img {
+            background-repeat: no-repeat;
+            margin-right: .25em;
+            vertical-align: middle;
+        }
+        .lookupInput .disabled {
+            background-color: #ccc;
+        }
+        .lookupInput .emptyDependentLookup {
+            font-style: italic;
+        }
+        .lookupInput input[readonly] {
+            background-color: #e6e6e6;
+            border: 2px solid #e6e6e6;
+            color: #333;
+            cursor: default;
+        }
+        .lookupInput a.readOnly {
+            float: right;
+        }
+        .lookupInput span.readOnly {
+            display: block;
+            white-space: normal;
+        }
+        .lookupInput span.totalSummary {
+            font-weight: bold;
+        }
+        .inlineEditRequiredDiv .lookupInput img,
+        .inlineEditDiv .lookupInput img {
+            vertical-align: middle;
+        }
+        .quickCreateModule .lookupInput input {
+            max-width: 155px
+        }
+        .lookupIcon {
+            background-image: url(/img/func_icons/util/lookup20.gif);
+            background-position: 0 0;
+            width: 20px;
+            height: 20px;
+            background-position: top left
+        }
+        .lookupIconOn {
+            background-image: url(/img/func_icons/util/lookup20.gif);
+            background-position: 0 0;
+            width: 20px;
+            height: 20px;
+            background-position: top right
+        }
+        label {
+            display: inline!important;
+            font-weight: 100!important;
+            margin-right: 5px!important;
+        }
+        .width40 {
+            width: 40%;
+        }
+        #filter {
+            display: none;
+            position: fixed;
+            top: 0%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 10;
+            opacity: 0.6;
+            filter: alpha(opacity=50);
+        }
+        .requiredClass{
+            color: red;
+        }
+
+    </style>
+    <apex:form id="theForm">
+        <div class="container">
+
+            <apex:outputPanel rendered="{!thankYouRendered}">
+                <br />
+                <div class="alert alert-success">
+                    <strong>Success!</strong> {!survey.Thank_You_Text__c}
+                </div>
+            </apex:outputpanel>
+
+            <apex:outputPanel rendered="{!NOT(thankYouRendered)}">
+                
+                <div class="panel panel-primary" id="survey_container">
+                    
+                    <apex:pageMessages />
+
+                    <div class="panel-heading">
+                        <apex:outputText value="{!survey.Survey_Header__c}" escape="false" />
+                    </div>
+
+                    <div class="panel-body">
+                        <apex:outputPanel rendered="{!NOT(isPortalSurvey)}">
+                            <div class="modal-body row">
+                                <div class="col-md-6">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">Customer Information</div>
+                                        <div class="panel-body">
+                                            <apex:outputPanel id="customerPanel">
+                                                
+												<div class="row">
+                                                    <div class="col-md-4">
+                                                        <apex:outputText value="*" styleClass="requiredClass"/>Unit
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <apex:inputField value="{!surveyTaken.Booking_Unit__c}" styleclass="form-control"
+                                                             onchange="populateAccount();" 
+                                                        />
+                                                    </div>
+                                                </div>                                                
+                                                <br />
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <apex:outputText value="*" styleClass="requiredClass"/>Customer Name
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <apex:inputField value="{!surveyTaken.Customer_taking_Survey__c}" 
+                                                        styleclass="form-control customerValue"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <br />
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <apex:outputText value="*" styleClass="requiredClass"/>Project
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <apex:inputField value="{!surveyTaken.Property__c}" 
+                                                        styleclass="form-control propertyValue"  />
+                                                    </div>
+                                                </div>
+                                                <br />
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <apex:outputText value="*" styleClass="requiredClass"/>Contact no.
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <apex:inputField value="{!surveyTaken.Phone__c}" 
+                                                        styleclass="form-control propertyValue"  />
+                                                    </div>
+                                                </div>
+                                            </apex:outputPanel>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">Purpose of Visit</div>
+                                        <div class="panel-body">
+                                            <div class="col-md-11">
+                                                <div class="row">
+                                                    <apex:inputField value="{!surveyTaken.Purpose_of_Visit__c}" styleclass="form-control"
+                                                        onclick="renderSection();" />
+                                                </div>
+                                                <br />
+                                                <div class="row">
+                                                    If other,Please specify
+                                                </div>
+                                                <div class="row">
+                                                    <apex:outputpanel id="otherSection">
+                                                        <apex:inputTextarea value="{!surveyTaken.Other_Please_Specify__c}" styleclass="form-control"
+                                                            disabled="{!If(surveyTaken.Purpose_of_Visit__c = 'Other',false,true)}"
+                                                        />
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </apex:outputPanel>
+                        
+                        <apex:outputPanel rendered="{!isPortalSurvey}">
+                            <div class="alert alert-success" role="alert">
+                              <h4 class="alert-heading">Dear {!$User.FirstName} {!$User.LastName}</h4>
+                              <p>Thank you for taking out time to provide your feedback. With the intention of improving your experience with Damac, we reuest you to take 5 minutes to share your inputs.</p>
+                            </div>
+                
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">Recent Mode of Communication With us</div>
+                                        <div class="panel-body">
+                                            <apex:selectRadio value="{!surveyTaken.Recent_Mode_of_Communication__c}" layout="pageDirection">
+                                                <apex:selectOption itemValue="Email" itemLabel="Email"/>
+                                                <apex:selectOption itemValue="Phone Call" itemLabel="Phone Call"/>
+                                                <apex:selectOption itemValue="Walk In" itemLabel="Walk In"/>
+                                                <apex:selectOption itemValue="Web chat" itemLabel="Web chat"/>
+                                            </apex:selectRadio>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="panel panel-info">
+                                        <div class="panel-heading">Purpose of Contact</div>
+                                        <div class="panel-body">
+                                            <div class="col-md-11">
+                                                <div class="row">
+                                                    <apex:inputField value="{!surveyTaken.Purpose_of_Visit__c}" styleclass="form-control visitPurpose" onchange="changePurpose();renderSection();"/>
+                                                </div>
+                                                <br />
+                                                <div class="row">
+                                                    If other,Please specify
+                                                </div>
+                                                <div class="row">
+                                                    <apex:outputpanel id="otherSection1">
+                                                        <apex:inputTextarea value="{!surveyTaken.Other_Please_Specify__c}" styleclass="form-control"
+                                                            disabled="{!If(surveyTaken.Purpose_of_Visit__c = 'Other',false,true)}"
+                                                        />
+                                                    </apex:outputpanel>
+                                                </div>
+                                            </div>   
+                                        </div>
+                                        
+                                        
+                                    </div>
+                                </div>
+                            </div>
+
+                        </apex:outputPanel>  
+                        
+                        <apex:outputPanel id="questionPanel">
+                            
+                            <apex:outputPanel rendered="{!surveyTaken.Purpose_of_Visit__c != null && surveyTaken.Purpose_of_Visit__c =='LOAMS'}">
+                                <div class="alert alert-success" role="alert">
+                                  <h4 class="alert-heading"><apex:outputText value="{!survey.Survey_Header__c}" escape="false" /></h4>
+                                  <hr />
+                                  <p class="mb-0"><apex:outputText value="{!survey.Description__c}" escape="false" /></p>
+                                </div>
+                                <div class="row">
+                                    <div class="panel panel-info col-md-6 col-md-offset-3">
+                                        <div class="panel-body">
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    Building Name
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <apex:inputField value="{!surveyTaken.Property__c}" styleclass="form-control" />
+                                                </div>
+                                            </div>
+                                            <br />
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    Unit
+                                                </div>
+                                                <div class="col-md-8">
+                                                    <apex:inputField value="{!surveyTaken.Booking_Unit__c}" styleclass="form-control"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <apex:repeat value="{!allQuestions}" var="qPreview" id="aQPreview">
+                                
+                                <div class="panel panel-success">
+    
+                                    <div class="panel-heading" style="font-weight: 700;">
+                                        <apex:outputText rendered="{! qPreview.required}" value="*" styleClass="requiredClass"/>
+                                        {!qPreview.orderNumber + ': ' + qPreview.question}
+                                        
+                                        
+                                        <br />
+                                    </div>
+    
+                                    <div class="panel-body">
+                                        <div style="color: #31708f;font-weight: 700;">
+                                            <apex:outputField value="{! qPreview.surveyQuestion.Additional_Description__c}"/>
+                                        </div>
+                                        <apex:outputPanel rendered="{!qPreview.renderSelectRadio}">
+                                            <apex:selectRadio styleClass="check" layout="pageDirection" rendered="{!qPreview.renderSelectRadio}"
+                                                value="{!qPreview.selectedOption}">
+                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                <apex:selectOptions value="{!qPreview.singleOptions}" />
+                                            </apex:selectRadio>
+                                        </apex:outputPanel>
+    
+                                        <apex:outputPanel rendered="{!qPreview.renderSelectCheckboxes}">
+                                            <apex:selectCheckboxes styleClass="check" layout="pageDirection" rendered="{!qPreview.renderSelectCheckboxes}"
+                                                value="{!qPreview.selectedOptions}">
+                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                <apex:selectOptions value="{!qPreview.multiOptions}" />
+                                            </apex:selectCheckboxes>
+                                        </apex:outputPanel>
+    
+                                        <apex:outputPanel rendered="{!qPreview.renderPicklist}">
+                                            <apex:selectList styleClass="form-control width40" rendered="{!qPreview.renderPicklist}"
+                                                value="{!qPreview.selectedOption}" size="1">
+                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                <apex:selectOptions value="{!qPreview.singleOptions}" />
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+    
+                                        <apex:outputPanel rendered="{!qPreview.renderFreeText}">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <apex:inputTextArea styleClass="form-control" cols="" rows="{!qPreview.noOfRowsForTextArea}"
+                                                        rendered="{!qPreview.renderFreeText}"
+                                                        value="{!qPreview.choices}" />
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+    
+                                        <apex:outputPanel rendered="{!qPreview.renderSelectRow}">
+                                            <apex:selectRadio styleClass="check" rendered="{!qPreview.renderSelectRow}" value="{!qPreview.selectedOption}">
+                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                <apex:selectOptions value="{!qPreview.rowOptions}" />
+                                            </apex:selectRadio>
+                                        </apex:outputPanel>
+    
+                                        <apex:outputPanel rendered="{!qPreview.choiceForAdditionalTextbox != '' && qPreview.selectedOption != '' && CONTAINS(qPreview.additionalTextboxNumber,qPreview.selectedOption)}">
+                                            <div class="slds-form-element">
+                                                <div class="slds-form-element__control">
+                                                    <br/>Please let us know the reason for your low rating
+                                                    <apex:inputTextArea styleClass="form-control" cols="" value="{!qPreview.additionalResponse}"
+                                                        rows="2" />
+                                                </div>
+                                            </div>
+                                        </apex:outputPanel>
+                                        <br />
+                                        <apex:outputPanel rendered="{!qPreview.isSubQuestion}">
+                                            <apex:repeat value="{!qPreview.subQuestions}" var="qPreviewSub">
+    
+                                                <div class="panel panel-warning">
+    
+                                                    <div class="panel-heading" style="font-weight: 700;">
+                                                        <apex:outputText rendered="{! qPreviewSub.required}" value="*" styleClass="requiredClass"/>
+                                                        {!qPreviewSub.orderNumber + ': ' + qPreviewSub.question}
+                                                        
+                                                    </div>
+    
+                                                    <div class="panel-body">
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.renderSelectRadio}">
+                                                            <apex:selectRadio styleClass="check" layout="pageDirection" rendered="{!qPreviewSub.renderSelectRadio}"
+                                                                value="{!qPreviewSub.selectedOption}">
+                                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                                <apex:selectOptions value="{!qPreviewSub.singleOptions}" />
+                                                            </apex:selectRadio>
+                                                        </apex:outputPanel>
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.renderSelectCheckboxes}">
+                                                            <apex:selectCheckboxes styleClass="check" layout="pageDirection" rendered="{!qPreviewSub.renderSelectCheckboxes}"
+                                                                value="{!qPreviewSub.selectedOptions}">
+                                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                                <apex:selectOptions value="{!qPreviewSub.multiOptions}" />
+                                                            </apex:selectCheckboxes>
+                                                        </apex:outputPanel>
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.renderPicklist}">
+                                                            <apex:selectList styleClass="form-control width40" rendered="{!qPreviewSub.renderPicklist}"
+                                                                value="{!qPreviewSub.selectedOption}"
+                                                                size="1">
+                                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                                <apex:selectOptions value="{!qPreviewSub.singleOptions}" />
+                                                            </apex:selectList>
+                                                        </apex:outputPanel>
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.renderFreeText}">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element__control">
+                                                                    <apex:inputTextArea styleClass="form-control" cols="" rows="{!qPreviewSub.noOfRowsForTextArea}"
+                                                                        rendered="{!qPreviewSub.renderFreeText}"
+                                                                        value="{!qPreviewSub.choices}"
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </apex:outputPanel>
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.renderSelectRow}">
+                                                            <apex:selectRadio styleClass="check" rendered="{!qPreviewSub.renderSelectRow}" value="{!qPreviewSub.selectedOption}">
+                                                                <apex:actionSupport event="onchange" action="{!NULL}" rerender="theForm" />
+                                                                <apex:selectOptions value="{!qPreviewSub.rowOptions}" />
+                                                            </apex:selectRadio>
+                                                        </apex:outputPanel>
+    
+                                                        <apex:outputPanel rendered="{!qPreviewSub.choiceForAdditionalTextbox != '' && qPreviewSub.selectedOption != '' && CONTAINS(qPreviewSub.additionalTextboxNumber,qPreviewSub.selectedOption)}">
+                                                            <div class="slds-form-element">
+                                                                <div class="slds-form-element__control">
+                                                                    <br/>Please let us know the reason for your low rating
+                                                                    <apex:inputTextArea styleClass="form-control" cols="" value="{!qPreviewSub.additionalResponse}" rows="2" />
+                                                                </div>
+                                                            </div>
+                                                        </apex:outputPanel>
+    
+                                                    </div>
+                                                </div>
+    
+                                            </apex:repeat>
+                                        </apex:outputPanel>
+    
+                                    </div>
+                                </div>
+                                
+                            </apex:repeat>
+    
+                            <div class="slds-box slds-theme--default">
+                                <center>
+                                    <apex:commandButton styleClass="btn btn-success" action="{!submitResults}" 
+                                    value="Submit Survey" rerender="theForm,seeSurvey" onComplete="reload();"/>
+                                </center>
+                            </div>
+                        </apex:outputPanel>
+                    </div>
+
+                </div>
+            </apex:outputPanel>
+
+
+<!--             <div class = "modal fade" id ="myModal" tabindex = "-1" role = "dialog" 
+               aria-labelledby = "myModalLabel" aria-hidden = "true">
+               <div class = "modal-dialog">
+                  <div class = "modal-content">
+                     <div class = "modal-header">
+                        <button type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                              &times;
+                        </button>
+
+                     </div>
+                     <div class = "modal-body" style="text-align:center;">
+                        Please fill out all required fields marked with asterisk
+                     </div>
+                     <div class = "modal-footer">
+                        <button type="button" class="btn btn-warning" data-dismiss="modal">Ok</button>                    
+                     </div>
+                  </div>
+               </div>
+            </div> -->
+
+
+<!--             <apex:outputPanel id="popup">
+                <apex:outputPanel rendered="{!isError}">
+                    <script>
+                        $('#myModal').modal('show');
+                    </script>
+                </apex:outputPanel>
+            </apex:outputPanel> -->
+
+            <script>
+                function changePurpose(){
+                    debugger;
+                    var selectedValue = $('.visitPurpose :selected').val();
+                    updateQuestions();
+
+                }
+                
+                function populateAccount(){
+                    if($('.customerValue').val() ==  '' || $('.propertyValue').val() ==  ''){
+                        populateCustomerDetails();
+                    }
+                }
+                function startProcess() {
+                    document.getElementById('{!$Component.loadingdetail}').style.display = 'block';
+                    document.getElementById('filter').style.display = 'block';
+                }
+
+                function endProcess() {
+                    document.getElementById('{!$Component.loadingdetail}').style.display = 'none';
+                    document.getElementById('filter').style.display = 'none';
+                }
+               function reload() {
+                debugger;
+                var isError = '{!isError}';
+                   if(  isError == 'false' ) {
+                        window.location.reload( true );
+                   }else {
+                        $(window).scrollTop(0);
+                   }
+               }                
+            </script>
+            <div id="filter"></div>
+            <apex:actionFunction name="renderSection" reRender="otherSection,otherSection1" />
+            <apex:actionFunction name="updateQuestions" action="{!checkLoamsQuestions}" reRender="questionPanel" status="blockUI"/>
+            <apex:actionFunction name="populateCustomerDetails" action="{!populateCustomerDetails}" status="blockUI" reRender="customerPanel" />
+            <apex:actionStatus id="blockUI" onStart="startProcess();" onStop="endProcess();" />
+            <apex:image url="{!URLFOR($Resource.Spinner,'')}" id="loadingdetail" style="width:50px;height:50px;display:none;position:fixed;top:50%;left:50%;z-index:10;" />
+        </div>
+    </apex:form>
+
+</apex:page>

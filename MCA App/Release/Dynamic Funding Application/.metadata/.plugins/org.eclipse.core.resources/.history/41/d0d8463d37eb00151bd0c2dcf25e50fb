@@ -1,0 +1,275 @@
+<apex:page Controller="DemoFundingApplicationController" sidebar="false" showHeader="false"> 
+   
+   <style>
+        .fundApp table
+        {
+            border-collapse:collapse; 
+            width:100%;   
+            border-bottom-style: hidden !important;
+        }
+        .fundApp table,th,td
+        {
+            border-collapse:collapse;
+            //border : 1px solid silver;
+            border-left: none;
+            border-right: none;
+        }
+        
+        .fundApp th{
+            border-bottom: 0px;
+            padding-top: 0.5em;
+            padding-bottom: 0.5em;
+        }
+        .fundApp td{
+            border-top: 0px;
+            width:15%;
+        }
+        .fundApp tr.spaceUnder > td
+        {
+          padding-bottom: 0.5em;
+        }
+        
+        .fundApp .btnCss{
+            color: #fff !important;
+            background: none repeat scroll 0 0 #26a5e0 !important;
+        }
+         .fundApp .submitbtnCss{
+            color: #fff !important;
+            background: none repeat scroll 0 0 #66CD00 !important;
+        }
+        .fundApp .headerCss{
+            color: #fff;
+            background-color: #26a5e0;
+        }
+        .fundApp .set{
+            width:60%;
+            height: 25px;
+        }
+        
+       .fundApp .set1{
+            width:100%;
+            height: 25px
+        }
+        .fundApp .set2{
+            width:45%;
+            height: 25px
+        }
+        .fundApp .topLine{
+            border-bottom-style: solid !important;
+        }
+        .fundApp .myClass {text-align:center}
+        
+        .fundApp .messageTable td{width:auto; border:solid 1px #ffc;}
+        .fundApp .message{width:100%}  
+      
+      .fundApp .messageTable td:first-child {
+        width: 40px;
+     }
+        #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+    </style>
+    <script Language="JavaScript">
+        function openConga() {  
+            window.open('{!URLFOR($Action.Opportunity.McaApp__Create_PDF, opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes'); 
+        }// End openConga()
+        function sendCongaPDF() {
+            window.open('{!URLFOR($Action.Opportunity.Email_Funding_App, opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes');
+        }//end sendCongaPDF()
+        
+        
+        function submissionWizard() {
+            window.open('/apex/McaApp__SubmissionWizard?id={!opportunity.Id}&accId={!opportunity.AccountId}');
+        }// End submissionWizard()
+                      
+        function docuSign() { 
+            window.open('https://composer.congamerge.com?TemplateID={!$Label.McaApp__FundingApplicationTemplateId}&DocuSignVisible=1&DocuSignR1Type=Signer&DocuSignR1Role=Signer+1&FlattenPDFForms=1&DS7=7&DocuSignEmailSubject=Funding+Application');
+        }// end docuSign()
+    </script>
+    
+    <apex:form title="Funding Application" id="frm" styleClass="fundApp">
+    
+        <apex:actionStatus id="theActionStatus" layout="block">
+            <apex:facet name="start">
+                <div id="assign-action-spinner-main">
+                    <div id="assign-action-spinner-content">
+                        <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                        <p>Processing...</p>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+        <div style="margin-right:60px; margin-left:60px">
+            <a href="" target="_blank" class="newTabLink" style="display:none;"></a>
+            <apex:pageMessages id="fundingPageMessageId" />
+            <div >
+                <br/>
+                <div align="center">
+                    <script>
+                    function closeMe()
+                    {
+                        window.opener = self;
+                        window.close();
+                    }
+                    
+                    </script>
+                    <apex:commandButton value="Quick Save" action="{!quickSave}" styleClass="btnCss" rerender="frm,fundingPageMessageId"
+                                    status="theActionStatus"/>&nbsp;  
+                    <apex:commandButton value="Save" action="{!save}" styleClass="btnCss"/>&nbsp;
+                    <apex:commandButton value="Cancel" action="{!cancel}" styleClass="btnCss" immediate="true"/>   
+                    <apex:commandButton value="Create PDF " action="{!saveRecordBeforeBtnAction}" 
+                                    styleClass="btnCss" onclick="openConga()" rendered="{!createPDF.Active__c}" />
+                    <apex:commandButton value="Email PDF " action="{!saveRecordBeforeBtnAction}"
+                                    styleClass="btnCss" onclick="sendCongaPDF()" rendered="{!emailPDF.Active__c}"/>
+                    <apex:commandButton value="Fax PDF" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                    <apex:commandButton value="DocuSign" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                    <apex:commandButton action="{!saveRecordBeforeBtnAction}" rerender="frm,fundingPageMessageId" 
+                                    value="Submit to Banks" styleClass="submitbtnCss" onclick="submissionWizard()"/>
+                </div>
+                <div align="right">
+                    <apex:commandLink value="<< Back to Opportunity" action="{!cancel}" immediate="true" 
+                       rendered="{!showBackOpp}" style="color: #26a5e0;" />
+                </div>
+            </div>
+
+
+            <br/> 
+
+            <apex:pageBlock id="pagblock">
+
+                <apex:repeat value="{!listofPageData}" var="sectionData">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th COLSPAN="{!IF(sectionData.colSpan == 0,3,sectionData.colSpan)}" class="headerCss">
+                                    {!sectionData.columnName}
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <thead style="display:{!IF(sectionData.isContactSection,'grid','none')}">
+                            <tr>
+                                <th >
+                                    <apex:outputLabel value="Select Contact" styleClass="set"/> 
+                                </th> 
+                                <th>
+                                    <apex:outputLabel value="{!$ObjectType.Contact.Fields.FirstName.Label}" styleClass="set"/> 
+                                </th>
+                                <th>
+                                    <apex:outputLabel value="{!$ObjectType.Contact.Fields.LastName.Label}" styleClass="set"/> 
+                                </th>
+                            
+                            <apex:repeat value="{!sectionData.listFieldMember}" var="rowval">
+                                <td style="border:none; font-weight: bold;"> 
+                                    <apex:outputLabel value="{!rowval.Label}"/>
+                                </td>
+                            </apex:repeat>
+                            </tr>
+                        </thead>
+
+                        <tbody style="display:{!IF(sectionData.isContactSection,'grid','none')}">
+                            <tr>
+                                <td>
+                                    <apex:selectList value="{!sectionData.selectedContact}" multiselect="false" size="1">
+                                        <apex:selectOptions value="{!conatactOptions}"/>
+                                            <apex:actionSupport event="onchange" action="{!changeOwner}" status="theActionStatus" 
+                                                rerender="pagblock">
+                                            <apex:param name="perfId" value="{!sectionData.indexVal}" assignTo="{!paramValue}"/>
+                                        </apex:actionSupport>
+                                    </apex:selectList>
+                                </td>
+                                <td>
+                                    <apex:inputText value="{!sectionData.ownerValue.FirstName}" label="Name" styleClass="set"/> 
+                                </td>
+                                <td> 
+                                    <apex:inputText value="{!sectionData.ownerValue.LastName}" label="Name" styleClass="set"/> 
+                                </td>
+                                <apex:repeat value="{!sectionData.listFieldMember}" var="rowval">
+                                    <td> 
+                                        <apex:inputField value="{!sectionData.oppFieldValue[rowval]}" 
+                                            />
+                                    </td>
+                                </apex:repeat>
+                            </tr>
+                        </tbody>
+
+                        <apex:repeat value="{!sectionData.mapFieldMember}" var="fieldName">
+                            <thead>
+                                <tr>
+                                    <apex:repeat value="{!sectionData.mapFieldMember[fieldName]}" var="rowval">
+                                        <th>
+                                            <apex:outputLabel value="{!rowval.Label}"/>
+                                        </th>
+                                    </apex:repeat>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr class="spaceUnder">
+                                    <apex:repeat value="{!sectionData.mapFieldMember[fieldName]}" var="rowval">
+                                        <td>
+                                            <apex:inputField value="{!sectionData.oppFieldValue[rowval.fieldPath]}" 
+                                            />
+                                        </td>
+                                    </apex:repeat>
+                                </tr>
+                            </tbody>
+                        </apex:repeat>
+                    </table>
+                </apex:repeat>
+
+            </apex:pageBlock>
+
+        </div>
+        <div align="center"> 
+            <br/>
+            <apex:commandButton value="Quick Save" action="{!quickSave}" styleClass="btnCss" rerender="frm,fundingPageMessageId"
+                                    status="theActionStatus"/>&nbsp;  
+                    <apex:commandButton value="Save" action="{!save}" styleClass="btnCss"/>&nbsp;
+                     
+                    <apex:commandButton value="Cancel" action="{!cancel}" styleClass="btnCss" immediate="true"/>   
+                    <apex:commandButton value="Create PDF " action="{!saveRecordBeforeBtnAction}" 
+                                    styleClass="btnCss" onclick="openConga()" rendered="{!createPDF.Active__c}" />
+                    <apex:commandButton value="Email PDF " action="{!saveRecordBeforeBtnAction}"
+                                    styleClass="btnCss" onclick="sendCongaPDF()" rendered="{!emailPDF.Active__c}"/>
+                    <apex:commandButton value="Fax PDF" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                    <apex:commandButton value="DocuSign" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                    <apex:commandButton action="{!saveRecordBeforeBtnAction}" rerender="frm,fundingPageMessageId" 
+                                    value="Submit to Banks" styleClass="submitbtnCss" onclick="submissionWizard()"/>
+            <br/>
+        </div>
+    </apex:form>
+</apex:page>

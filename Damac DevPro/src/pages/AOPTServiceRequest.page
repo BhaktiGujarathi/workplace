@@ -1,0 +1,114 @@
+<apex:page controller="AOPTServiceRequestController" showHeader="true" sidebar="false">
+  <apex:form id="aoptForm">
+    
+    <apex:pageBlock title="Select Customer Account">
+      <apex:pageBlockSection columns="1">
+        <apex:inputField id="AccountId" value="{!objBooking.Account__c}"/>
+      </apex:pageBlockSection>
+      <apex:pageBlockButtons location="bottom">
+        <apex:commandButton id="getPortfolio" value="Get Customer Portfolio" action="{!getCustomerPortfolio}" reRender="panel"/>
+      </apex:pageBlockButtons>
+    </apex:pageBlock>
+
+    <apex:outputPanel id="panel">
+      <apex:pageBlock title="Customer Portfolio" id="CustomerPortfolio" rendered="{!blnShowPortfolio}">
+        <apex:pageBlockSection columns="1" title="Customer Units">
+          <apex:pageBlockTable var="portfolio" value="{!lstCustomerPortfolio}" >
+            <apex:column headerValue="UNIT NAME" value="{!portfolio.strUnitName}"/>
+            <apex:column headerValue="PROJECT NAME" value="{!portfolio.strProjectName}"/>
+            <apex:column headerValue="NO OF BEDROOMS" value="{!portfolio.strNoOfBedRooms}"/>
+            <apex:column headerValue="VALUE" value="{!portfolio.strValue}"/>
+            <apex:column headerValue="CURRENT PRIC/SQF" value="{!portfolio.strCurrentPricePerSqFts}"/>
+            <apex:column headerValue="STATUS"  value="{!portfolio.strStatus}"/>
+            <apex:column headerValue="ANTICIPATED" value="{!portfolio.strAnticipatedDate}"/>
+            <apex:column headerValue="TOTAL OVERDUE" value="{!portfolio.strTotalOverDue}"/>
+            <apex:column headerValue="NEXT PAYMENT" value="{!portfolio.strNextPayment}"/>
+          </apex:pageBlockTable>
+        </apex:pageBlockSection>
+        <apex:pageBlockSection columns="2" title="Customer Information">
+          <apex:outputField value="{!objAccount.Name}"/>
+          <apex:outputField value="{!objAccount.PersonTitle}"/>
+          <apex:outputField value="{!objAccount.PersonMobilePhone}"/>
+          <apex:outputField value="{!objAccount.PersonEmail}"/>
+          <apex:outputField value="{!objAccount.FirstName}"/>
+          <apex:outputField value="{!objAccount.LastName}"/>
+          <apex:outputField value="{!objAccount.MiddleName}"/>
+          <apex:outputField value="{!objAccount.Party_ID__c}"/>
+        </apex:pageBlockSection>
+      </apex:pageBlock>
+
+      <apex:pageBlock id="SelectProject" title="Select Project" rendered="{!blnShowProjectSelection}">
+        <apex:selectList value="{!strSelectedProject}" size="1"> 
+          <apex:actionSupport event="onchange" action="{!getBookingUnitsRelatedToProject}" reRender="BookingUnit"/>
+          <apex:selectOptions value="{!lstProjectSelectOption}" /> 
+        </apex:selectList>
+        <br/><br/><br/>
+
+        <apex:pageBlock id="BookingUnit" rendered="{!blnShowProjectSelection}" title="Booking Units">
+          <apex:pageBlockTable var="bookingUnit" value="{!lstBookingUnitWrapper}">
+            <apex:column headerValue="Select">
+              <apex:inputCheckbox value="{!bookingUnit.blnIsChecked}"/>
+            </apex:column>
+            <apex:column headerValue="UNIT NAME" value="{!bookingUnit.objBookingUnit.Inventory__r.Unit__c}"/>
+          </apex:pageBlockTable>
+          <apex:pageBlockButtons location="bottom">
+            <apex:commandButton value="Get Current Payment Plan" action="{!getCurrentPaymemtTerm}"
+            reRender="paymentTermPanel"/>
+          </apex:pageBlockButtons>
+        </apex:pageBlock>
+
+          <!-- Payment Terms and Payment Plans for selected and validated bookign units -->
+          <apex:outputPanel id="paymentTermPanel">
+            
+            <apex:pageBlock id="PaymentTerm" title="Existing PaymentTerms" rendered="{!mapPaymentTermToPlan != null}">
+              <apex:repeat value="{!mapPaymentTermToPlan}" var="paymentPlan">
+                <apex:pageBlockSection title="{!paymentPlan}" columns="1">
+                  <apex:pageBlockTable var="paymentTerm" value="{!mapPaymentTermToPlan[paymentPlan]}">
+                    <apex:column headerValue="Description" value="{!paymentTerm.Description__c}"/>
+                    <apex:column headerValue="Percent Value" value="{!paymentTerm.Percent_Value__c}"/>
+                    <apex:column headerValue="MileStone Event" value="{!paymentTerm.Milestone_Event__c}"/>
+                    <apex:column headerValue="MileStone Event" value="{!paymentTerm.Milestone_Event_Arabic__c}"/>
+                    <apex:column headerValue="Installment" value="{!paymentTerm.Installment__c}"/>
+                    <apex:column headerValue="Payment Date" value="{!paymentTerm.Payment_Date__c}"/>
+                  </apex:pageBlockTable>
+                </apex:pageBlockSection>
+              </apex:repeat>
+              <apex:pageBlockButtons location="bottom">
+                <apex:commandButton value="Get Applicable Payment Plans" action="{!validateBookingUnits}" 
+                reRender="NewPaymentPlanPanel"/>
+                <apex:commandButton value="Check AOPT Eligibility" action="{!checkAOPTEligibility}"/>
+                <br/>
+                <apex:commandButton value="ViewCRF" />
+                <apex:commandButton value="DownloadCRF" />
+              </apex:pageBlockButtons>
+            </apex:pageBlock>
+
+            <!-- section to upload CRF form -->
+            <apex:pageblock >
+              <apex:pageblocksection columns="1">
+                <apex:inputfile value="{!myfile.body}" filename="{!myfile.Name}" />
+                <apex:commandbutton value="Save" action="{!Savedoc}"/>
+              </apex:pageblocksection>
+            </apex:pageblock> 
+            <!-- display new payment plan fetched from IPMS -->
+            <apex:outputPanel id="NewPaymentPlanPanel">
+              <apex:pageBlock id="NewPaymentPlan" title="New Payment Plans" rendered="{!blnShowNewPP}">
+                <apex:selectList value="{!strSelectedNewPP}" size="1"> 
+                  <apex:actionSupport event="onchange" action="{!getNewPaymentPlanByName}" reRender="NewPaymentPlanDetails"/>
+                  <apex:selectOptions value="{!lstNewPaymentTermSelectOption}" /> 
+                </apex:selectList>
+                <br/><br/><br/>
+                <apex:pageBlockTable var="newPaymentTerm" value="{!lstNewPaymentTermsDisplay}" id="NewPaymentPlanDetails">
+                  <apex:column headerValue="Installment" value="{!newPaymentTerm.installment}"/>
+                  <apex:column headerValue="Description" value="{!newPaymentTerm.description}"/>
+                  <apex:column headerValue="MileStone Event" value="{!newPaymentTerm.mileStoneEvent}"/>
+                  <apex:column headerValue="Percent Value" value="{!newPaymentTerm.percentValue}"/>
+                  <apex:column headerValue="Payment Date" value="{!newPaymentTerm.paymentDate}"/>
+               </apex:pageBlockTable>
+              </apex:pageBlock>
+            </apex:outputPanel>
+          </apex:outputPanel>
+        </apex:pageBlock>
+    </apex:outputPanel>
+  </apex:form>
+</apex:page>

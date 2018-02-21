@@ -1,0 +1,554 @@
+<apex:component controller="CREBouncedChequeComponentController" allowDML="true">
+    <style>
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+        
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+        
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+        
+        .confirmM3 {
+            border-color: green!important;
+        }
+        
+        .warningM3 {
+            border-color: sandybrown!important;
+        }
+        
+        .required { 
+            color:red; 
+            font-weight: bolder;
+        }
+        
+        .error {
+            border: 2px solid #c00!important;
+        }
+    </style>
+    
+    <apex:inputHidden value="{!strBCAttachmentBody}" id="BCAttachBody"/>
+    <apex:inputHidden value="{!strBCAttachmentName}" id="BCAttachName"/>
+
+    <apex:outputPanel id="MainPanel">
+
+    <section>
+<!--        <div class="wrapper"> -->
+            <div class="row">
+                <div class="col-md-12">
+                    <section id="">
+                        <div class="well">
+                            <h4>
+                                Bounced Cheque
+                                <!-- <div class="pull-right">
+                                    <button class="btn btn-sm btn-success">Check for validity</button>
+                                </div> -->
+                            </h4>
+                            <apex:pagemessages id="PageMessages"/>
+                            <br/>
+                            
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="selectUnit">
+                                        <div class="selectUnitHeading">Units for which cheque bounced</div>
+                                        <div class="checkBoxContainer">
+<!--                                             <div class="checkbox checkbox-primary"> -->
+                                                <!-- <input id="checkbox1" type="checkbox">
+                                                <label for="checkbox1">
+                                                    Unit 1 - 2 BHK
+                                                </label> -->
+                                                <apex:repeat value="{!lstBU}" var="bu">
+                                                    <apex:outputLabel value="{!bu}"/>
+                                                </apex:repeat>
+<!--                                             </div> -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <br/><br/>
+                            
+                            <apex:outputPanel id="Units" >
+                                <div class="form-group">
+                                    <label>Booking Unit : </label>
+                                    <apex:selectList styleClass="form-control"  value="{!strSelectedBookingUnit}" size="1"  multiselect="false" >
+                                        <apex:actionSupport status="loadingStatus" event="onchange" action="{!getBookingUnitDetails}" reRender="UnitDetails"/>
+                                        <apex:selectOptions value="{!lstBookingUnit}"/>
+                                    </apex:selectList> 
+                                </div>
+                            </apex:outputPanel>
+                            
+                            <div class="tab-content">
+                                <apex:outputPanel id="UnitDetails">
+                                    <apex:outputPanel >
+                                        <div role="tabpanel" id="p1">
+                                            <div class="row">
+                                                <div class="col-lg-5 col-md-12 col-sm-12 filterDetails">
+                                                    
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <col width="40%"/>
+                                                        <col width="60%"/>
+                                                        <thead class="thead-inverse">
+                                                            <tr>
+                                                                <th colspan="2">                                                                            
+                                                                    <apex:selectList styleClass="form-control" style="HEIGHT: 35px!important;" size="1" value="{!strSelectedSection}" >
+                                                                        <apex:actionSupport status="loadingStatus" event="onchange" reRender="SelectedSection"/>
+                                                                        <apex:selectOption itemValue="Unit Details" itemLabel="Unit Details"/>
+                                                                        <apex:selectOption itemValue="Flags" itemLabel="Flags"/>
+                                                                        <apex:selectOption itemValue="Unit Status" itemLabel="Unit Status"/>
+                                                                        <apex:selectOption itemValue="Open SRs" itemLabel="Open SR's"/>
+                                                                    </apex:selectList> 
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                    </table>
+                                                    <apex:outputPanel id="SelectedSection">
+                                                        <apex:outputPanel rendered="{!IF(strSelectedSection == 'Unit Details',true,false)}">     
+                                                            <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                <col width="40%"/>
+                                                                <col width="60%"/>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td><b>Project</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strProject}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Project City</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strProjectCity }</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Bedroom Type</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strBedroomType}    </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                        <td>{!objWrapperBookingUnit.strUnitType }</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Permitted Use</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strPermittedUse }</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Ready/ Off plan</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strReady_OffPlan}</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Rental Pool</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strRentalPool }</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table> 
+                                                        </apex:outputPanel>
+                                                        
+                                                        <apex:outputPanel rendered="{!IF(strSelectedSection == 'Flags',true,false)}">     
+                                                            <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                <col width="40%"/>
+                                                                <col width="60%"/>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td><b>Dispute</b></td>
+                                                                        <td align="left" >
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnDispute == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnDispute == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Enforcement</b></td>
+                                                                        <td align="left" >
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEnforcement  == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEnforcement  == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Litigation</b></td>
+                                                                        <td align="left" >
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnLitigation == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnLitigation == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Mortgage</b></td>
+                                                                        <td align="left" >
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnMortage == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnMortage == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Court Case</b></td>
+                                                                        <td align="left" >
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnCourtCase == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnCourtCase == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    
+                                                                </tbody>
+                                                                
+                                                            </table> 
+                                                        </apex:outputPanel>
+                                                        
+                                                        <apex:outputPanel rendered="{!IF(strSelectedSection == 'Unit Status',true,false)}">     
+                                                            <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                <col width="40%"/>
+                                                                <col width="60%"/>
+                                                                <tbody>
+                                                                    <tr>
+                                                                        <td><b>OQOOD registered</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strOQOODregistered }</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Agreement Status</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strAgreementStatus }</td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>Under Termination</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strUnderTermination }
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>FTL Sent </b></td>
+                                                                        <td align="left" >  
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnFTLsent == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnFTLsent == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>EHO</b></td>
+                                                                        <td align="left" >  
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEHO == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnEHO == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>HO</b></td>
+                                                                        <td align="left" >  
+                                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnHO == false,true,false)}" />
+                                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(objWrapperBookingUnit.blnHO == true,true,false)}" />
+                                                                        </td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td><b>PCC</b></td>
+                                                                        <td>{!objWrapperBookingUnit.strPCC }</td>
+                                                                    </tr>
+                                                                </tbody>
+                                                            </table>
+                                                        </apex:outputPanel>
+                                                        
+                                                        <apex:outputPanel rendered="{!IF(strSelectedSection == 'Open SRs',true,false)}">     
+                                                            <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>                                                                                            
+                                                            <tbody>
+                                                                <apex:repeat value="{!lstOpenCasesBU}" var="l">
+                                                                    <tr>                                                                                                                                                 
+                                                                        <td><apex:outputLink value="/{!l.id}" target="_blank">{!l.CaseNumber}</apex:outputLink></td>
+                                                                        <td><b>{!l.SR_Type__c}</b></td>                                                                        
+                                                                    </tr>
+                                                                </apex:repeat>                                                                    
+                                                            </tbody>                                                            
+                                                            </table>                                                        
+                                                        </apex:outputPanel>       
+                                                    
+                                                    </apex:outputPanel>
+                                                </div>
+                                                <div class="details col-lg-7 col-md-12 col-sm-12">
+                                                    <div class="row detailHeading">
+                                                        <div class="col-lg-6 col-md-12">
+                                                            <h6 class="col-md-12">Area</h6>
+                                                            <h4 class="col-md-12">{!objWrapperBookingUnit.intArea} sq.ft</h4>
+                                                        </div>
+                                                        <div class="col-lg-6 col-md-12">
+                                                            <h6 class="col-md-12">Price</h6>
+                                                            <h4 class="col-md-12">AED {!objWrapperBookingUnit.decPrice }</h4>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">No of days from booking</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.intNoOfBookingDay }</h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">No of times customer defaulted</h6>
+                                                                <h5 class="col-md-12"><font color="red"> {!objWrapperBookingUnit.intNoOfDefaulted } </font></h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Paid %</h6>
+                                                                <!-- <h5 class="col-md-12">{!objWrapperBookingUnit.str_URC_SPA }</h5> -->
+                                                                <h5 class="col-md-12" >
+                                                                    {!objWrapperBookingUnit.decPaidPercentage}
+                                                                </h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Default %</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.decDefaultPercentage}</h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Overdue</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.intOverdue }</h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Current RERA Construction Status</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.intRERAstatus }%</h5>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Paid %</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.decPaidPercentage }</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Total Penalties (Customer)</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.intTotalPenaltyCustomer }</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Total Penalties (Unit)</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.intTotalPenaltyUnit }</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Original ACD</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.strOriginalACD}</h5>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                            <div class="infoBoxes">
+                                                                <h6 class="col-md-12">Current ACD</h6>
+                                                                <h5 class="col-md-12">{!objWrapperBookingUnit.strCurrentACD}</h5>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </apex:outputPanel>
+                                </apex:outputPanel> 
+                            </div>
+                        </div>
+                    </section>
+
+                    <section>
+                      <div class="well">
+                        <label>
+                          <h4>Unit Details </h4>
+                        </label>
+                        <table class="table" cellpadding="10" width="100%">
+                            <tr>
+                              <th> Unit No </th>
+                              <th>Reg ID </th>
+                              <th>Price </th>
+                              <th>Paid % </th>
+                              <th>Default %</th>
+                              <th>ACD</th>
+                              <th>Handed Over</th>
+                              <th>Under Construction</th>
+                            </tr>
+                            <apex:repeat value="{!mapWrapperBookingUnit}" var="key">
+                                <tr>
+                                    <td>{!mapWrapperBookingUnit[key].strUnit}</td>
+                                    <td>{!mapWrapperBookingUnit[key].strRegID} </td>
+                                    <td>{!mapWrapperBookingUnit[key].decPrice} </td>
+                                    <td>{!mapWrapperBookingUnit[key].decPaidPercentage} </td>
+                                    <td>{!mapWrapperBookingUnit[key].decDefaultPercentage} </td>
+                                    <td>{!mapWrapperBookingUnit[key].strOriginalACD} </td>
+                                    <td>
+                                      <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(mapWrapperBookingUnit[key].blnHO  == false,true,false)}" />
+                                      <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(mapWrapperBookingUnit[key].blnHO  == true,true,false)}" />
+                                    </td>
+                                    <td>{!mapWrapperBookingUnit[key].strConstructionStatus} </td>
+                                </tr>
+                            </apex:repeat> 
+                        </table>
+                      </div>
+                    </section>
+
+                    <section>
+                        <div class="well">
+                            <label>
+                              <h4>Details of Bounced Cheque </h4>
+                            </label>
+                            <br/>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Cheque Number</label>
+                                        <apex:outputText styleClass="form-control" value="{!objCase.Cheque_Number__c}" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Cheque Date</label>
+                                        <apex:outputText value="{0,date,MM/dd/yy}" styleClass="form-control"> 
+                                            <apex:param value="{!objCase.Bounced_Cheque_Date_of_Expiry__c}" /> 
+                                        </apex:outputText>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Cheque Amount</label>
+                                        <apex:outputText styleClass="form-control" value="{!objCase.Cheque_Amount__c}" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Actual Reason for Bouncing</label>
+                                        <apex:outputText styleClass="form-control" value="{!objCase.Bounced_Reason__c}" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Bank Name</label>
+                                        <apex:outputText styleClass="form-control" value="{!objCase.Cheque_Bank_Name__c}" />
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-group">
+                                        <label>Details</label>
+                                        <apex:outputText styleClass="form-control" value="{!objCase.Bounced_Cheque_Details__c}" />
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- <div class="row">
+                              <div class="col-lg-6">
+                                <div style="text-align: right;">
+                                    <apex:commandButton value="Generate SOA" styleClass="btn btn-sm btn-success" status="loadingStatus" reRender="PageMessages" action="{!genarateSOA}"
+                                    oncomplete="generateSOA()">
+                                    </apex:commandButton>
+                                </div>
+                              </div>
+                              <div class="col-lg-6">
+                                <div style="text-align: left;">
+                                    <apex:commandButton value="Generate Penalty Statement" styleClass="btn btn-sm btn-success" status="loadingStatus" reRender="PageMessages" 
+                                    action="{!genaratePenaltyStat}" oncomplete="generatePenaltyStat()">
+                                    </apex:commandButton>
+                                </div>
+                              </div>
+                            </div> -->
+                            <!-- 
+                            <br/>
+                            <div class="row">
+                              <div class="col-md-12 text-center" >
+                                <apex:outputPanel id="BCUploadPanel" rendered="{!NOT(blnIsShowBCAttachment)}">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload" style="display:{!IF(lstSRAttachments == null || lstSRAttachments.size == 0, '','none')};">
+                                        <span class="btn btn-primary btn-file">
+                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Bounced Cheque</span>
+                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                            <input type="file" id="BCAttach" onchange="attachBCFile();"/>
+                                        </span>
+                                        <div>
+                                            <span class="fileupload-preview"></span>
+                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                        </div>
+                                    </div>
+                                  </apex:outputPanel>
+                                  <div>
+                                    <apex:outputPanel rendered="{!blnIsShowBCAttachment}" id="BCAttachmentPanel">
+                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                            <tr style="display:{!IF(lstSRAttachments !=null && lstSRAttachments.size > 0,'table-row','none')};">
+                                              <th> Remove </th>
+                                              <th>Attachment Name </th>
+                                              <th>Type </th>
+                                              <th> Is Valid </th>
+                                              <th>View </th>
+                                            </tr>
+                                            <apex:repeat value="{!lstSRAttachments}" var="l">
+                                                <tr style="display:{!IF(l.Type__c == 'Bounced Cheque', 'table-row','none')};">
+                                                    <td>
+                                                        <apex:commandLink title="Remove Attachment" style="width:80px;" action="{!removeAttachment}" reRender="PageMessages,MainPanel" status="loadingStatus" >
+                                                            <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!RemoveSelected}" /> 
+                                                            <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                        </apex:commandLink>
+                                                    </td>
+                                                    <td>{!l.name} </td>
+                                                    <td>{!l.type__c } </td>
+                                                    <td align="left" >
+                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" /> 
+                                                    </td>
+                                                    <td>
+                                                    <a href="/servlet/servlet.FileDownload?file={!l.Attachment__c}" target="_blank">VIEW</a> 
+                                                    </td> 
+                                                </tr>
+                                            </apex:repeat> 
+                                        </table>
+                                    </apex:outputPanel>
+                                  </div>
+                              </div>
+                            </div>
+                            <div class="row">
+                              <div class="col-lg-12">
+                                <div style="text-align: center;">
+                                    <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" status="loadingStatus" action="{!submitSR}" reRender="PageMessages,MainPanel,BCAttachmentPanel,BCUploadPanel" 
+                                        disabled="{!IF(objCase.Status != 'Submitted' && objCase.Status != 'Closed',false,true)}">
+                                    </apex:commandButton>
+                                </div>
+                              </div>
+                            </div>
+                             -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+<!--         </div> -->
+    </section>
+    </apex:outputPanel>
+    <script type="text/javascript">
+      function attachBCFile() 
+      {
+        console.log( document.getElementById("BCAttach").files[0] );
+        var filename = document.getElementById("BCAttach").value;
+        if( filename != '' ) {
+            $('[id$=BCAttachName]').val(filename);
+            var fbody = document.getElementById("BCAttach").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                $('[id$=BCAttachBody]').val(blobfile);
+            }
+        }
+      }
+
+      function generateSOA()
+      {
+        alert('Statement Of Account generated');
+      }
+
+      function generatePenaltyStat()
+      {
+        alert('Statement Of Penalty generated');
+      }
+    </script>
+</apex:component>

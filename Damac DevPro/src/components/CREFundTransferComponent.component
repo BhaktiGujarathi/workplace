@@ -1,0 +1,761 @@
+<apex:component controller="CREFundTransferComponentController" allowDML="true">
+<!--     <apex:attribute name="accId" type="Id" assignTo="{!accountId}" description="Account ID"/> -->
+
+    <style>
+        .overlayStatus {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            vertical-align: middle;
+            background-color: #fff;
+            opacity: 0.6;
+            filter: alpha(opacity = 60);
+            z-index: 1100;
+        }
+        .loadIMG {
+            display: block;
+/*             margin-top: 25%; */
+/*             margin-left: auto; */
+/*             margin-right: auto; */
+            text-align: center;
+            vertical-align: middle;
+            width: 50px;
+            height: 50px;
+            position:fixed;
+            top: 50%;
+            left: 50%;
+        }
+
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #d74c3b!important;
+        }
+
+        .errorStyle, .errorMsg, .importantWarning, .pbBody .errorStyle a, .pbBody .errorMsg a {
+            color: #c00!important;
+        }
+
+        .message {
+            background-color: #ffc!important;
+            border-style: solid!important;
+            border-width: 1px!important;
+            color: #000!important;
+            padding: 6px 8px 6px 6px!important;
+            border-radius: 4px!important;
+        }
+
+        .errorM6, .errorM4, .errorM3, .errorM2, .errorS1 {
+            border-color: #c00!important;
+        }
+
+        .confirmM3 {
+            border-color: green!important;
+        }
+
+        .warningM3 {
+            border-color: sandybrown!important;
+        }
+
+        .required {
+            color:red;
+            font-weight: bolder;
+        }
+
+        .error {
+            border: 2px solid #c00!important;
+        }
+
+        .selectCustom {
+            width: 100%;
+            border: 0;
+            border-radius: 0;
+            background-color: #dddddd;
+            color: #656565;
+            box-shadow: none;
+            font-weight: 400;
+            padding: 0 6px;
+            height: 35px !important;
+        }
+    </style>
+
+    <apex:actionStatus id="processStatus" layout="block">
+        <apex:facet name="start">
+            <apex:outputPanel styleClass="overlayStatus">
+                <apex:image value="{!$Resource.Spinner}" styleClass="loadIMG" />
+            </apex:outputPanel>
+        </apex:facet>
+        <apex:facet name="stop" />
+    </apex:actionstatus>
+
+    <!-- <apex:actionFunction name="saveDetailsAsDraft" action="{!saveDetailsAsDraft}"
+        reRender="mainPanel" status="processStatus"/> -->
+
+    <!---------------------- Main content ------------------------>
+    <section>
+<!--         <apex:outputPanel layout="block" styleClass="wrapper" > -->
+            <apex:outputPanel layout="block" styleClass="row">
+                <apex:outputPanel layout="block" styleClass="col-md-12" id="mainPanel">
+                    <apex:inputHidden value="{!strCRFAttachmentBody}" id="CRFAttachBody"/>
+                    <apex:inputHidden value="{!strCRFAttachmentName}" id="CRFAttachName"/>
+                    <apex:inputHidden value="{!strPOAAttachmentBody}" id="POAAttachBody"/>
+                    <apex:inputHidden value="{!strPOAAttachmentName}" id="POAAttachName"/>
+                    <section>
+                        <apex:outputPanel styleClass="well" layout="block" id="fundTransferPanel">
+                            <h4>
+                                Funds Transfer
+                                <!-- <apex:outputPanel layout="block" styleClass="pull-right">
+                                    <button class="btn btn-sm btn-success">Generate Statement of Account</button>
+                                </apex:outputPanel> -->
+                            </h4>
+                            <apex:pagemessages id="PageMessages"/>
+                            <apex:variable value="{!0}" var="rowNum"/>
+                            <apex:repeat value="{!lstTransferWrapper}" var="tw">
+                                <apex:outputPanel layout="block" styleClass="row">
+                                    <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                        <h5>Unit 1</h5>
+                                        <apex:outputPanel layout="block" styleClass="form-group">
+                                            <label><span class="required">*</span>Select unit from which funds to be transferred</label>
+                                            <apex:selectList styleClass="form-control requiredField" value="{!tw.strSelectedSourceUnit}" size="1">
+                                                <apex:selectOptions value="{!tw.lstSourceUnits}"/>
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                    <apex:outputPanel layout="block" styleClass="col-lg-5 col-lg-offset-1">
+                                        <h5>Unit 2</h5>
+                                        <apex:outputPanel layout="block" styleClass="form-group">
+                                            <label><span class="required">*</span>Select unit to which funds to be transferred</label>
+                                            <apex:selectList styleClass="form-control requiredField" value="{!tw.strSelectedTargetUnit}" size="1">
+                                                <apex:selectOptions value="{!tw.lstTargetUnits}"/>
+                                            </apex:selectList>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+
+                                <div class="form-group">
+                                    <apex:commandButton action="{!getUnitDetails}" styleClass="btn btn-sm btn-success"
+                                        value="Get Unit Details" reRender="mainPanel" status="blockUI" oncomplete="bindEvents();">
+                                        <apex:param name="rowNumber" value="{!rowNum}" assignTo="{!intTransferUnit}"/>
+                                        <apex:param name="isExistingTransfer" value="false" assignTo="{!blnIsExistingTransfer}"/>
+                                    </apex:commandButton>
+                                </div>
+
+                                <apex:outputPanel rendered="{!tw.isShowUnitDetails}">
+
+                                    <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label>Amount Collected/Available</label>
+                                                <apex:outputText value="{!tw.decSourceUnitAmount}" styleClass="form-control"/>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5 col-lg-offset-1">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label><span class="required">*</span>Amount to be transferred to</label>
+                                                <apex:inputText value="{!tw.decTargetUnitAmount}" html-placeholder="Enter amount"
+                                                    styleClass="form-control requiredField" />
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label>Credit Note Available for Customer</label>
+                                                <apex:outputText value="{!tw.strCreditNote}" styleClass="form-control"/>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5 col-lg-offset-1">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label><span class="required">*</span>Amount to be allocated against</label>
+                                                <apex:selectList styleClass="form-control" value="{!tw.strSelectedAllocation}" size="1">
+                                                    <apex:selectOptions value="{!tw.lstAllocations}"/>
+                                                </apex:selectList>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label>Amount Collected as EOI</label>
+                                                <apex:outputText value="{!tw.decEOIAmount}" styleClass="form-control"/>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                    <ul class="nav nav-pills">
+                                        <li role="presentation" class="{!IF(tw.strCurrentUnit == tw.strSelectedSourceUnit, 'active', '')}">
+                                            <apex:commandLink value="{!mapUnitNames[tw.strSelectedSourceUnit]}" action="{!setCurrentUnit}"
+                                                reRender="fundTransferPanel" status="blockUI" oncomplete="bindEvents();">
+                                                <apex:param name="rowNumber" value="{!rowNum}" assignTo="{!intTransferUnit}"/>
+                                                <apex:param name="" value="{!tw.strSelectedSourceUnit}" assignTo="{!tw.strCurrentUnit}"/>
+                                            </apex:commandLink>
+                                        </li>
+                                        <li role="presentation" class="{!IF(tw.strCurrentUnit == tw.strSelectedTargetUnit, 'active', '')}">
+                                            <apex:commandLink value="{!mapUnitNames[tw.strSelectedTargetUnit]}" action="{!setCurrentUnit}"
+                                                reRender="fundTransferPanel" status="blockUI" oncomplete="bindEvents();">
+                                                <apex:param name="rowNumber" value="{!rowNum}" assignTo="{!intTransferUnit}"/>
+                                                <apex:param name="" value="{!tw.strSelectedTargetUnit}" assignTo="{!tw.strCurrentUnit}"/>
+                                            </apex:commandLink>
+                                        </li>
+                                    </ul>
+
+                                    <div class="tab-content">
+                                        <div class="tab-pane fade active in" role="tabpanel">
+                                            <div class="row">
+                                                <div class="col-lg-5 col-md-12 col-sm-12 filterDetails">
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <col width="40%"/>
+                                                        <col width="60%"/>
+                                                        <thead styleClass="thead-inverse">
+                                                            <tr>
+                                                                <th colspan="2">
+                                                                    <apex:selectList styleClass="nav nav-tabs form-control" value="{!tw.strSelectedUnitDetail}" size="1">
+                                                                        <apex:selectOptions value="{!tw.lstUnitDetails}"/>
+                                                                        <apex:actionSupport event="onchange" reRender="fundTransferPanel" status="blockUI" oncomplete="bindEvents();"/>
+                                                                    </apex:selectList>
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                    </table>
+                                                    <apex:outputPanel rendered="{!IF(tw.strSelectedUnitDetail == 'Unit Details',true,false)}">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <tbody>
+
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strProject}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strProjectCity }</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strBedroomType}    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!tw.objCurrentWBU.strUnitType }</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strPermittedUse }</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/Off Plan</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strReady_OffPlan}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strRentalPool }</td>
+                                                                </tr>
+
+                                                            </tbody>
+                                                        </table>
+                                                    </apex:outputPanel>
+
+                                                    <apex:outputPanel rendered="{!IF(tw.strSelectedUnitDetail == 'Flags',true,false)}">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <tbody>
+
+                                                                <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnDispute == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnDispute == true,true,false)}" />
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnEnforcement  == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnEnforcement  == true,true,false)}" />
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnLitigation == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnLitigation == true,true,false)}" />
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortage</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnMortage == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnMortage == true,true,false)}" />
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Court Case</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnCourtCase == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnCourtCase == true,true,false)}" />
+
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </apex:outputPanel>
+
+                                                    <apex:outputPanel rendered="{!IF(tw.strSelectedUnitDetail == 'Unit Status',true,false)}">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <tbody>
+
+                                                                <tr>
+                                                                    <td><b>OQOOD registered</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strOQOODregistered}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strAgreementStatus}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strUnderTermination}    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL Sent </b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnFTLsent == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnFTLsent == true,true,false)}" />
+
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnEHO == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnEHO == true,true,false)}" />
+
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO</b></td>
+                                                                    <td align="left" >
+                                                                        <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnHO == false,true,false)}" />
+                                                                        <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(tw.objCurrentWBU.blnHO == true,true,false)}" />
+
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>{!tw.objCurrentWBU.strPCC}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+
+                                                    </apex:outputPanel>
+                                                </div>
+                                                <div class="details col-lg-7 col-md-12 col-sm-12">
+                                                    <apex:outputPanel layout="block" styleClass="row detailHeading">
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-6 col-md-12">
+                                                            <h6 class="col-md-12">Price</h6>
+                                                            <h4 class="col-md-12">AED {!tw.objCurrentWBU.decPrice}</h4>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-6 col-md-12">
+                                                            <h6 class="col-md-12">Price per sq ft</h6>
+                                                            <h4 class="col-md-12">AED {!tw.objCurrentWBU.intPricePerSqFt}</h4>
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                    <apex:outputPanel layout="block" styleClass="row">
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">Penalties Accrued</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.intPenaltyAmount}</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">PC/Agent Name</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.strPC_AgentName}</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">Conservation Status</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.intConversationStatus}</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">Overdues</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.intOverdue}</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">Current RERA Construction Status</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.intRERAstatus}%</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                        <apex:outputPanel layout="block" styleClass="col-lg-4 col-sm-6 col-xs-6">
+                                                            <apex:outputPanel layout="block" styleClass="infoBoxes">
+                                                                <h6 class="col-md-12">Docs Status</h6>
+                                                                <h5 class="col-md-12">{!tw.objCurrentWBU.strDocsStatus}</h5>
+                                                            </apex:outputPanel>
+                                                        </apex:outputPanel>
+                                                    </apex:outputPanel>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <apex:commandButton action="{!addTransferWrapperElement}" styleClass="btn btn-sm btn-success"
+                                                value="Add Transfer" reRender="mainPanel" status="blockUI" oncomplete="bindEvents();"/>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <apex:commandButton styleClass="btn btn-sm btn-success" value="Generate Statement of Account"
+                                                onclick="alert('Statement of Account has been generated'); return false;"/>
+                                        </div>
+                                    </div>
+                                </apex:outputPanel>
+                                <apex:variable value="{!rowNum + 1}" var="rowNum"/>
+                            </apex:repeat>
+                        </apex:outputPanel>
+                    </section>
+
+                    <apex:outputPanel id="POAPanel">
+                        <apex:outputPanel rendered="{!blnIsShowPOA}">
+                            <section>
+                                <apex:outputPanel layout="block" styleClass="well">
+                                    <h4>
+                                        Enter Power of Attorney Details
+                                        <!-- <apex:outputPanel layout="block" styleClass="pull-right">
+                                        <button class="btn btn-sm btn-success"><i class="fa fa-download"></i> CRF</button>
+                                        </apex:outputPanel> -->
+                                    </h4>
+
+                                    <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                            <apex:outputPanel layout="block" styleClass="form-group">
+                                                <label><span class="required">*</span>Select Power of Attorney</label>
+                                                <apex:inputField value="{!objCase.Power_of_Attorney__c}" styleClass="form-control requiredField">
+                                                    <apex:actionSupport action="{!computePOADetails}" event="onchange" reRender="POAPanel,pageMessages" status="blockUI" oncomplete="bindEvents();"/>
+                                                </apex:inputField>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                    <apex:outputPanel rendered="{!objCase.Power_of_Attorney__c == 'Yes'}">
+                                        <h5>Power of Attorney Details</h5>
+                                        <apex:outputPanel layout="block" styleClass="row">
+                                            <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                                <apex:outputPanel layout="block" styleClass="form-group">
+                                                    <label><span class="required">*</span>Name</label>
+                                                    <apex:inputField value="{!objCase.POA_Name__c}" styleClass="form-control requiredField" html-placeholder="Enter name"/>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel layout="block" styleClass="col-lg-5 col-lg-offset-1">
+                                                <apex:outputPanel layout="block" styleClass="form-group">
+                                                    <label><span class="required">*</span>Relationship with Owner</label>
+                                                    <apex:inputField value="{!objCase.POA_Relationship_with_Buyer__c}" styleClass="form-control requiredField"/>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                        <apex:outputPanel layout="block" styleClass="row">
+                                            <apex:outputPanel layout="block" styleClass="col-lg-5">
+                                                <apex:outputPanel layout="block" styleClass="form-group">
+                                                    <label><span class="required">*</span>Date of Expiry</label>
+                                                    <apex:inputText value="{!strPOAExpiryDate}" styleClass="form-control POAExpiryDate requiredField" html-placeholder="dd/mm/yyyy"/>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                            <apex:outputPanel layout="block" styleClass="col-lg-5 col-lg-offset-1">
+                                                <apex:outputPanel layout="block" styleClass="form-group">
+                                                    <label><span class="required">*</span>Issued By</label>
+                                                    <apex:inputField value="{!objCase.POA_Issued_By__c}" styleClass="form-control requiredField" html-placeholder="Enter name"/>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+
+                                        <!-- <apex:outputPanel layout="block" styleClass="row">
+                                            <apex:outputPanel layout="block" styleClass="col-lg-10 col-md-6 col-xs-12 text-center">
+                                                <apex:commandLink value="Upload Power of Attorney" styleClass="btn" action="{!goToAttachmentPage}" reRender="mainPanel">
+                                                    <span style="font-size:18px; color:#cc0000;">*</span>
+                                                    <apex:param value="PowerOfAttorney" assignTo="{!strDocType}"/>
+                                                </apex:commandLink>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel> -->
+
+                                        <apex:outputPanel layout="block" styleClass="row">
+                                            <apex:outputPanel layout="block" styleClass="col-lg-12 col-md-12 col-xs-12 text-center">
+                                                <apex:outputPanel rendered="{!NOT(blnIsShowPOAAttachment)}">
+                                                    <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                        <span class="btn btn-primary btn-file">
+                                                            <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload POA</span>
+                                                            <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                            <input type="file" id="POAAttach" onchange="attachPOAFile();"/>
+                                                        </span>
+                                                        <div>
+                                                            <span class="fileupload-preview"></span>
+                                                            <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                        </div>
+                                                    </div>
+            <!--                                         <apex:inputHidden value="{!strPOAAttachmentName}" id="CRFAttachName"/>   -->
+            <!--                                         <apex:inputHidden value="{!strPOAAttachmentBody}" id="CRFAttachBody"/> -->
+                                                </apex:outputPanel>
+
+                                                <apex:outputPanel rendered="{!blnIsShowPOAAttachment}">
+                                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                                        <tr>
+                                                            <th>Remove</th>
+                                                            <th>Attachment Name</th>
+                                                            <th>Type</th>
+                                                            <th>Is Valid</th>
+                                                            <th>View</th>
+                                                        </tr>
+
+                                                        <apex:repeat value="{!lstSRAttachments}" var="l">
+                                                            <tr style="display:{!IF(l.Type__c == 'Power Of Attorney', 'table-row','none')};">
+                                                                <td align="left">
+                                                                    <apex:commandLink title="Remove Attachment" style="width:80px;" type="image/png"
+                                                                        action="{!removeAttachment}" reRender="mainPanel" status="blockUI"
+                                                                        onclick="if(!confirm('Are you sure?')) return false;" oncomplete="bindEvents();">
+                                                                        <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!SRAttachmentToRemove}" />
+                                                                        <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                                    </apex:commandLink>
+                                                                </td>
+                                                                <td align="left"><apex:outputField value="{!l.Name}"/></td>
+                                                                <td align="left"><apex:outputField value="{!l.Type__c}"/></td>
+                                                                <!--  <td align="left">
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                                    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" />
+                                                                </td>-->
+                                                                <td align="left"><apex:outputField value="{!l.isValid__c}"/></td>
+                                                                <td align="left"><apex:outputField value="{!l.View__c}"/></td>
+                                                            </tr>
+                                                        </apex:repeat>
+                                                    </table>
+                                                </apex:outputPanel>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+                                </apex:outputPanel>
+                            </section>
+
+                            <section>
+                                <apex:outputPanel layout="block" styleClass="well">
+                                    <h4>
+                                        Upload CRF
+                                        <span class="pull-right">
+                                        <apex:commandButton id="viewCRFButton" styleClass="btn btn-sm btn-success"
+                                            value="View CRF" reRender="viewCRFButton"
+                                            disabled="{!If(objCase.Id==null, true, false)}"
+                                            onclick="window.open('/apex/CRF?Id={!objCase.Id}&recTypeName=Fund+Transfer', '_blank'); return false;"/>
+<!--                                         <apex:commandButton id="downCRFButton" class="btn btn-sm btn-success" title="Download CRF" onclick="return false;"><i class="fa fa-download"></i> CRF</button> -->
+                                        </span>
+                                    </h4>
+                                    <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-12 col-md-12 col-xs-12 text-center">
+                                            <apex:outputPanel rendered="{!NOT(blnIsShowCRFAttachment)}">
+                                                <div class="fileupload fileupload-new" data-provides="fileupload">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Signed CRF</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="CRFAttach" onchange="attachCRFFile();"/>
+                                                    </span>
+                                                    <div>
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+        <!--                                         <apex:inputHidden value="{!strCRFAttachmentName}" id="CRFAttachName"/>   -->
+        <!--                                         <apex:inputHidden value="{!strCRFAttachmentBody}" id="CRFAttachBody"/> -->
+                                            </apex:outputPanel>
+
+                                            <apex:outputPanel rendered="{!blnIsShowCRFAttachment}">
+                                                <table class="paymentDue table" cellpadding="10" width="100%">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Remove</th>
+                                                            <th>Attachment Name</th>
+                                                            <th>Type</th>
+                                                            <th>Is Valid</th>
+                                                            <th>View</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <apex:repeat value="{!lstSRAttachments}" var="l">
+                                                            <tr style="display:{!IF(l.Type__c == 'CRF Form', 'table-row','none')};">
+                                                                <td align="left">
+                                                                    <apex:commandLink title="Remove Attachment" style="width:80px;" type="image/png"
+                                                                        onclick="if(!confirm('Are you sure?')) return false;" action="{!removeAttachment}"
+                                                                        reRender="mainPanel" status="blockUI" oncomplete="bindEvents();">
+                                                                        <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!SRAttachmentToRemove}" />
+                                                                        <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                                    </apex:commandLink>
+                                                                </td>
+                                                                <td align="left"><apex:outputField value="{!l.Name}"/></td>
+                                                                <td align="left"><apex:outputField value="{!l.Type__c}"/></td>
+                                                                <!-- <td align="left" >
+                                                                    <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                                    <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" />
+                                                                </td> -->
+                                                                <td align="left"><apex:outputField value="{!l.isValid__c}"/></td>
+                                                                <td align="left"><apex:outputField value="{!l.View__c}"/></td>
+                                                            </tr>
+                                                        </apex:repeat>
+                                                    </tbody>
+                                                </table>
+                                            </apex:outputPanel>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel>
+
+                                    <!-- <apex:outputPanel layout="block" styleClass="row">
+                                        <apex:outputPanel layout="block" styleClass="col-lg-10 col-md-6 col-xs-12 text-center">
+                                            <apex:commandLink value="Upload Signed CRF" styleClass="btn" action="{!goToAttachmentPage}" reRender="mainPanel">
+                                                <span class="required">*</span>
+                                                <apex:param value="CRF" assignTo="{!strDocType}"/>
+                                            </apex:commandLink>
+                                        </apex:outputPanel>
+                                    </apex:outputPanel> -->
+                                </apex:outputPanel>
+                            </section>
+
+                            <section>
+                                <div class="well">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <apex:commandButton disabled="{!blnDisableSubmitSRBtn}" action="{!submitSR}" value="Submit SR"
+                                                onclick="if(validateRequiredInput()) return false;" styleClass="btn btn-sm btn-success"
+                                                reRender="mainPanel" status="blockUI" oncomplete="bindEvents();"
+                                                style="margin-left:40%;"/>
+                                            </div>
+                                        <div class="col-md-6">
+                                            <apex:commandButton value="Save as Draft" styleClass="btn btn-sm btn-success"
+                                                action="{!saveDetailsAsDraft}" reRender="mainPanel" status="blockUI"
+                                                onclick="if(validateRequiredInput()) return false;" oncomplete="bindEvents();"
+                                                style="margin-left:20%;"/>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        </apex:outputPanel>
+                    </apex:outputPanel>
+                </apex:outputPanel>
+            </apex:outputPanel>
+<!--         </apex:outputPanel> -->
+    </section>
+
+    <script>
+        function bindEvents() {
+            $('.POAExpiryDate').datepicker({
+                format: 'dd/mm/yyyy',
+                autoclose: true
+            });
+
+            var errorDiv = $(".errorM3").text();
+            if(errorDiv != undefined && errorDiv != '') {
+                console.log('--scroll top--');
+                window.scrollTo(0, 0);
+            }
+
+            disableInputs();
+        }
+
+        function disableInputs() {
+            var caseStatus = '{!objCase.Status}';
+            console.log('--case status--'+caseStatus);
+            if(caseStatus == 'Submitted') {
+                $("input").prop('disabled', true);
+                $("button").prop('disabled', true);
+                $("select").prop('disabled', 'disabled');
+            }
+        }
+
+        $(function() {
+            bindEvents();
+        });
+
+        // Method called when the details need to be saved as draft
+        function saveDraft() {
+            if(validateRequiredInput() == false) {
+                saveDetailsAsDraft();
+            }
+        }
+
+        // Method to validate the required input
+        function validateRequiredInput() {
+            var isError = false;
+            // Check if value is present or not for all required field, If not highlight the field.
+            $('.requiredField').each(function() {
+                if($(this).is("select") && $(this).attr("multiple") == 'multiple' &&
+                    $(this).attr("id").indexOf("_selected") != -1) {
+                    if($(this).find("option").length == 0) {
+                        $(this).addClass("error");
+                        isError = true;
+                    }
+                    else {
+                        $(this).removeClass("error");
+                    }
+                }
+                else if(($(this).is("select") && $(this).attr("multiple") != 'multiple') ||
+                         $(this).is("input") || $(this).is("textarea")) {
+                    if($(this).val() == '') {
+                        $(this).addClass("error");
+                        isError = true;
+                    }
+                    else {
+                        $(this).removeClass("error");
+                    }
+                }
+                else if($(this).is("select")) {
+                    if($(this).val() == 'None') {
+                        $(this).addClass("error");
+                        isError = true;
+                    }
+                    else {
+                        $(this).removeClass("error");
+                    }
+                }
+            });
+
+            if(isError) {
+                alert('Please provide value for all the required inputs');
+            }
+            return isError;
+        }
+
+        function attachCRFFile() {
+            console.log( document.getElementById("CRFAttach").files[0] );
+            var filename = document.getElementById("CRFAttach").value;
+            if( filename != '' ) {
+                $('[id$=CRFAttachName]').val(filename);
+                var fbody = document.getElementById("CRFAttach").files[0];
+                var reader = new FileReader();
+                reader.readAsDataURL(fbody);
+                reader.onload = function(e) {
+                    var blobfile = window.btoa(this.result);
+                    $('[id$=CRFAttachBody]').val(blobfile);
+                }
+            }
+        }
+
+        function attachPOAFile(){
+            console.log( document.getElementById("POAAttach").files[0] );
+            var filename = document.getElementById("POAAttach").value;
+            if( filename != '' ) {
+                $('[id$=POAAttachName]').val(filename);
+                var fbody = document.getElementById("POAAttach").files[0];
+                var reader = new FileReader();
+                reader.readAsDataURL(fbody);
+                reader.onload = function(e) {
+                    var blobfile = window.btoa(this.result);
+                    $('[id$=POAAttachBody]').val(blobfile);
+                }
+            }
+        }
+    </script>
+</apex:component>

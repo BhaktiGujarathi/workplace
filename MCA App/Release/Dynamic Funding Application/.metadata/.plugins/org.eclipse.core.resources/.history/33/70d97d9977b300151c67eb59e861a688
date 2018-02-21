@@ -1,0 +1,1026 @@
+<apex:page standardController="Account" extensions="FundingApplicationController" action="{!init}" sidebar="false" showHeader="false"> 
+<!--      <apex:includeScript value="/support/console/22.0/integration.js"/>  -->
+      <apex:includeScript value="/soap/ajax/22.0/connection.js"/>      
+      <apex:includeScript value="/soap/ajax/22.0/apex.js"/>
+<!--      <apex:includeScript value="/support/console/26.0/integration.js"/> -->
+   <apex:includeScript value="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"  />
+   
+   <style>
+        table
+        {
+            border-collapse:collapse; 
+            width:100%;   
+            border-bottom-style: hidden !important;
+            //margin:35px; 
+            //margin-right:35px;
+        }
+        table,th,td
+        {
+            border-collapse:collapse;
+            border : 1px solid silver;
+            border-left: none;
+            border-right: none;
+        }
+        
+        th{
+            border-bottom: 0px;
+            padding-top: 0.5em;
+            padding-bottom: 0.5em;
+        }
+        td{
+            border-top: 0px;
+            width:25%;
+        }
+        tr.spaceUnder > td
+        {
+          padding-bottom: 0.5em;
+        }
+        
+        .btnCss{
+            color: #fff !important;
+            background: none repeat scroll 0 0 #26a5e0 !important;
+        }
+         .submitbtnCss{
+            color: #fff !important;
+            background: none repeat scroll 0 0 #66CD00 !important;
+        }
+        .headerCss{
+            color: #fff;
+            background-color: #26a5e0;
+        }
+        .set{
+            width:60%;
+            height: 25px;
+        }
+        
+        .set1{
+            width:100%;
+            height: 25px
+        }
+        .set2{
+            width:45%;
+            height: 25px
+        }
+        .topLine{
+            border-bottom-style: solid !important;
+        }
+        .myClass {text-align:center}
+        
+        .messageTable td{width:auto; border:solid 1px #ffc;}
+        ..message{width:100%}  
+      
+      .messageTable td:first-child {
+        width: 40px;
+     }
+        #assign-action-spinner-main {
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color:rgba(0,0,0,.6);
+            height: 100%;
+            width: 100%;
+            z-index: 999;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content {
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            z-index: 1000;
+            background-color: #F5FCFF;
+            width: 204;
+            height: 94; 
+            border-radius: 1em;
+            border: 1px solid #CEECFF;
+            padding: 20px 40px 20px 40px;
+            margin-left: -116px;
+            margin-top: -36px;
+        }
+        #assign-action-spinner-content img {
+            width: 32;
+            height: 32;
+            align: center;
+            vertical-align: middle;
+        }
+        #assign-action-spinner-content p {
+            display: inline;
+            font-size: 135%;
+            font-weight: bold;
+        }
+    </style>
+    <script Language="JavaScript">
+        function demo() {
+            $( ".inner" ).append( "<p>Test</p>" );
+        }
+        function openConga()  
+        {  
+            window.open('{!URLFOR($Action.Opportunity.McaApp__Create_PDF,Opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes'); 
+        }   
+        function SendCongaPDF() 
+        {  
+            //FundingApplicationController.SendCongaPDF1(function(result, event){
+            //if(event.status) {
+                window.open('{!URLFOR($Action.Opportunity.Email_Funding_App,Opportunity.Id)}', '','scrollbars=yes,menubar=no,height=600,width=800,resizable=yes, toolbar=no,location=no,status=yes');
+             //} });
+        }
+        
+        
+        function submissionWizard()
+        {
+        window.open('/apex/McaApp__SubmissionWizard?id={!Opportunity.Id}&accId={!Opportunity.AccountId}');
+        } 
+                      
+        function docuSign()
+        { 
+            window.open('https://composer.congamerge.com?TemplateID={!$Label.McaApp__FundingApplicationTemplateId}&DocuSignVisible=1&DocuSignR1Type=Signer&DocuSignR1Role=Signer+1&FlattenPDFForms=1&DS7=7&DocuSignEmailSubject=Funding+Application');
+        } 
+        
+        function testOpenPrimaryTab() {
+             console.log('----primary tab----');
+             submissionWiz();
+             return false;         
+        }
+        
+        function oncompleteEvent()
+        {
+             window.open('/apex/SubmissionWizard?id={!Opportunity.Id}&accId={!Opportunity.AccountId}');
+             
+        }
+        
+        var openSuccess = function openSuccess(result) {
+             alert('**result**'+result);
+            //Report whether opening the new tab was successful
+            if (result.success == true) {
+                alert('Primary tab successfully opened');
+            } else {
+                alert('Primary tab cannot be opened');
+            }  
+            submissionWizard1();
+        }; 
+         
+    </script>
+    
+    <apex:form title="Funding Apllication" id="frm">
+    <apex:actionStatus id="theActionStatus" layout="block">
+            <apex:facet name="start">
+                <div id="assign-action-spinner-main">
+                    <div id="assign-action-spinner-content">
+                        <img src="/img/analytics/reportbuilder/icons/spinner32.gif" alt="Processing..." title="Processing..." /> 
+                        <p>Processing...</p>
+                    </div>
+                </div>
+            </apex:facet>
+        </apex:actionStatus>
+     <div style="margin-right:60px; margin-left:60px">
+        <apex:actionFunction name="submissionWiz" action="{!submissionWizard1}" />
+        <apex:actionFunction name="can" action="{!cancel1}"/>  
+    <a href="" target="_blank" class="newTabLink" style="display:none;"></a>
+    <apex:pageMessages id="pageMessageId" />
+        <div >
+            <br/>
+             <div align="center">
+                 
+                 <apex:commandButton action="{!QuickSave1}" value="Quick Save"  styleClass="btnCss" rerender="frm,pageMessageId"
+                                                                              status="theActionStatus"/>&nbsp;  
+                 <apex:commandButton action="{!save}" value="Save" styleClass="btnCss"/>&nbsp;
+                 <apex:commandButton action="{!cancel}" value="Cancel" styleClass="btnCss"/>   
+                                                                          
+                 <apex:actionFunction name="openConga1" action="{!openConga1}"/>  
+<!--                  <apex:commandButton value="Create PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"  -->
+<!--                                       styleClass="btnCss" onclick="openConga1(),openConga()" rendered="{!createPDF.Active__c}" /> -->
+
+                 <apex:commandButton value="Create PDF " action="{!openConga1}" 
+                                      styleClass="btnCss" onclick="openConga()" rendered="{!createPDF.Active__c}" />
+                                      
+                 <apex:actionFunction name="SendCongaPDF1" action="{!SendCongaPDF1}" />
+                 <apex:commandButton value="Email PDF " action="{!SendCongaPDF1}"
+                                      styleClass="btnCss" onclick="SendCongaPDF()" rendered="{!emailPDF.Active__c}"/>
+                                      
+                  <apex:commandButton value="Fax PDF" styleClass="btnCss" onclick="docuSign();" rerender=""/>                      
+                 <apex:commandButton value="DocuSign" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                <!-- <apex:commandButton value="Fax PDF" styleClass="btnCss" onclick="docuSign();" rerender="" rendered="{!faxPDF.Active__c}"/> -->                   
+               <!--  <apex:commandButton value="DocuSign" styleClass="btnCss" onclick="docuSign();" rerender="" rendered="{!docusign.Active__c}"/>-->
+                 
+                 <!--<apex:commandButton value="Submit to Banks" styleClass="btnCss" onclick="return testOpenPrimaryTab();"/>-->
+                 <apex:commandButton action="{!submissionWizard1}" rerender="frm,pageMessageId" value="Submit to Banks" styleClass="submitbtnCss" onclick="submissionWizard()"/>                          
+                 
+            </div>
+            <div align="right">
+                <apex:commandLink action="{!cancel}" value="<< Back to Opportunity" style="color: #26a5e0;"/>
+            </div>
+        </div>
+        
+        
+         <br/> 
+         <apex:pageBlock id="pagblock">
+         <table>    
+            <tr>
+                    <th>
+                        <apex:outputLabel value="Signed App"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Credit Card Statements"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Bank Statements"/>
+                    </th>
+            </tr>
+                
+             <tr>
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Application__c}" />
+                    </td>
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Credit_Card_Statements__c}"/> 
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Bank_Statements__c}" />
+                    </td>                   
+             </tr>
+        </table>  
+        <table >
+                
+             <tr>
+              <th COLSPAN="4" class="headerCss">
+                 BUSINESS INFORMATION
+              </th>
+             </tr>
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.McaApp__Legal_Name__c.Label}"/>
+                    </th>
+                    <th></th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.Name.Label}"/>
+                    </th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <td >
+                        <apex:inputField value="{!objAccount.McaApp__Legal_Name__c}" styleClass="set1" />
+                    </td>
+                    <td></td>
+                    <td>
+                        <apex:inputField value="{!objAccount.Name}" styleClass="set1"/>
+                    </td>
+                    <td></td>
+                    
+                </tr>
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.McaApp__Type_of_Entity__c.Label}"/>
+                    </th>
+                    
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.McaApp__Federal_Tax_ID_No__c.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.Industry.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.Website.Label}" /> 
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                        <apex:inputField value="{!objAccount.McaApp__Type_of_Entity__c}" styleClass="set"/>
+                    </td>
+                    
+                    <td>
+                        <!--<apex:inputField value="{!objAccount.McaApp__Federal_Tax_ID_No__c}" styleClass="set"/> -->
+                        <apex:inputText value="{!FedralTaxId}" styleClass="set"/>
+                        <!-- <br>
+                         <apex:outputText value="{!errorMessage}" styleClass="errorMsg"/>
+                         </br> -->
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.Industry}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.Website}" styleClass="set"/>
+                    </td>
+                </tr>
+                
+<!--             </table> -->
+            
+<!--             <table> -->
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.BillingStreet.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.BillingCity.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.BillingState.Label}"/>
+                    </th>
+                    
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.billingcountry.Label}"/>
+                       
+                    </th>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:inputField value="{!objAccount.BillingStreet}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.BillingCity}" styleClass="set"/>
+                    </td>
+                   
+                    
+                    <td>
+                        <apex:inputField value="{!objAccount.BillingState}" styleClass="set"/>
+                    </td>
+                    
+                     <td>
+                        <apex:inputField value="{!objAccount.billingcountry}" styleClass="set"/>
+                    </td>
+                   
+                </tr>
+                     
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.BillingPostalCode.Label}"/>    
+                    </th>
+                </tr>
+                    
+                     <td>
+                        <apex:inputField value="{!objAccount.BillingPostalCode}" styleClass="set"/>        
+                    </td>
+                <tr>
+                
+                </tr>
+               <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.ShippingStreet.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.ShippingCity.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.ShippingState.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Country"/>
+                    </th>
+                   
+                </tr>
+                <tr>
+                    <td>
+                        <apex:inputField value="{!objAccount.ShippingStreet}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.ShippingCity}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.ShippingState}" styleClass="set"/>
+                    </td>
+                     <td>
+                        <apex:inputField value="{!objAccount.Shippingcountry}" styleClass="set"/>
+                    </td>
+                    
+                </tr>
+ <!--             </table> -->
+            
+<!--             <table> -->
+
+                <tr>
+                     <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.ShippingPostalCode.Label}"/>
+                    </th>
+                    <th>
+                         <apex:outputLabel value="{!$ObjectType.Account.Fields.Phone.Label}" />
+                    </th>
+                   
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.Fax.Label}" />
+                    </th>
+                 
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:inputField value="{!objAccount.ShippingPostalCode}" styleClass="set"/>
+                    </td>
+                     <td>
+                        <apex:inputField value="{!objAccount.Phone}" styleClass="set"/>
+                    </td>
+                    
+                    <td>
+                        <apex:inputField value="{!objAccount.Fax}" styleClass="set"/>
+                    </td>  
+                    
+                                 
+                </tr>
+                <tr>
+                    <th>
+<!--                         <apex:outputLabel value="Date Business Established" />  -->
+                             <apex:outputLabel value="{!$ObjectType.Account.fields.McaApp__Date_Business_Established__c.Label}" />
+
+                    </th>
+                     <th>
+                        <apex:outputLabel value="{!$ObjectType.Account.Fields.McaApp__Years_in_Business__c.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.McaApp__Amount_Requested__c.Label}" />
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.McaApp__Use_of_Proceeds__c.Label}" />
+                    </th>
+                </tr>
+                
+                <tr>
+                <td>
+                        <apex:inputField value="{!objAccount.McaApp__Date_Business_Established__c}" styleClass="set" style="width:8em"/> 
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.McaApp__Years_in_Business__c}" styleClass="set"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Amount_Requested__c}" styleClass="set"/>
+                    </td> 
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Use_of_Proceeds__c}" styleClass="set"/>  
+                    </td>                   
+                </tr>
+                <tr>
+                  <!--  <th>
+                        <apex:outputLabel value="Industry Type" /> 
+                    </th> -->
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.McaApp__Gross_monthly_Sales__c.Label}"/>
+                    </th>
+                    <th></th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Opportunity.Fields.McaApp__Credit_Card_Sales__c.Label}" />
+                    </th>
+                    <th>
+                        
+                    </th>
+                </tr>
+                <tr class="spaceUnder">
+                  <!--  <td>
+                        <apex:inputField value="{!objAccount.Industry}" styleClass="set"/>
+                    </td> -->
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Gross_monthly_Sales__c}" styleClass="set"/>
+                    </td>
+                    <td></td>
+                    <td>
+                        <apex:inputField value="{!opportunity.McaApp__Credit_Card_Sales__c}" label="Credit Card Sales - Monthly Average" styleClass="set"/>
+                    </td>  
+                    <td> </td> 
+                </tr>
+<!--             </table> -->
+            
+<!--             <table> -->
+                
+            </table>
+<!--                 <div style="float:left; border:solid 1px #f00; width:100%;"> -->
+                <apex:pageBlockSection columns="4" collapsible="false">
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+            
+            
+                    <apex:repeat value="{!fieldsBusiInfo}" var="f"> 
+                    
+                                            
+                          <apex:inputField label="{!f.label}" value="{!oppListToUpdateBusiInfo[f.fieldPath]}"/> 
+                            
+                     </apex:repeat>
+
+                      
+                  </apex:pageBlockSection>
+<!--           </div>  -->
+             <table >
+                 <tr>
+              <th COLSPAN="4" class="headerCss">
+                 OWNER/OFFICER INFORMATION
+              </th>
+             </tr>
+                <tr>
+                    <th>
+                        <apex:outputLabel value="Select Contact" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.FirstName.Label}" />
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.LastName.Label}" />
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Title.Label}"/>
+                    </th>      
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:selectList value="{!selectedContactOwner1}" multiselect="false" size="1">
+                            <apex:selectOptions value="{!conatactOptions}"/>
+                            <apex:actionSupport event="onchange" action="{!changeOwner1}" status="theActionStatus" 
+                                rerender="frm,pageMessageId"/>
+                        </apex:selectList>
+                    </td>
+                    <td>
+                       <apex:inputText value="{!conForOwner1.FirstName}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputText value="{!conForOwner1.LastName}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.Title}" styleClass="set"/>
+                    </td>   
+                </tr>
+
+                <tr>
+                    
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingStreet.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingCity.Label}"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingState.Label}"/>
+                    </th>  
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingPostalCode.Label}"/>
+                    </th>
+                </tr>
+                
+                <tr>
+                    
+                    <td>
+                        <apex:inputField value="{!conForOwner1.MailingStreet}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.MailingCity}" styleClass="set"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!conForOwner1.MailingState}" styleClass="set"/>
+                    </td>    
+                    <td>
+                        <apex:inputField value="{!conForOwner1.MailingPostalCode}" styleClass="set"/>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Of_Ownership__c.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Birthdate.Label}"/>
+                    </th> 
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Social_Security_Number1__c.Label}"/>
+                    </th>
+                    
+                     <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Drivers_License__c.Label}"/>
+                    </th>
+                      
+                </tr>
+                
+                <tr class="spaceUnder">
+                    <td>
+                        <apex:inputField value="{!conForOwner1.McaApp__Of_Ownership__c}" styleClass="set"/>
+                        
+                    </td> 
+                    <td>
+                        <apex:inputField value="{!conForOwner1.Birthdate}" styleClass="set" style="width:8em"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!conForOwner1.McaApp__Social_Security_Number1__c}" styleClass="set"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!conForOwner1.McaApp__Drivers_License__c}" styleClass="set"/>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Email.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Phone.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MobilePhone.Label}" />
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.HomePhone.Label}" /> 
+                    </th>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.Email}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.Phone}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.MobilePhone}" styleClass="set"/> 
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner1.HomePhone}" styleClass="set"/>
+                    </td>
+                </tr>
+            </table>
+            
+            <apex:pageBlockSection columns="4" collapsible="false" >
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+                   
+                    <apex:repeat value="{!fieldsOwnerOfficerInfo}" var="f">
+                 
+                          <apex:inputField value="{!oppListToUpdateOwnerOfficerInfo[f.fieldPath]}" /> 
+                      
+                     </apex:repeat>
+                      
+                  </apex:pageBlockSection>
+            
+            <table>
+                 <tr>
+              <th COLSPAN="4" class="headerCss">
+                2nd OWNER/OFFICER INFORMATION (if applicable)   
+              </th>
+             </tr>
+                <tr>
+                    <th>
+                        <apex:outputLabel value="Select Contact" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.FirstName.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.LastName.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Title.Label}"/>
+                    </th>   
+                       
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:selectList value="{!selectedContactOwner2}" multiselect="false" size="1">
+                            <apex:selectOptions value="{!conatactOptions}"/>
+                            <apex:actionSupport event="onchange" action="{!changeOwner2}" status="theActionStatus" 
+                                rerender="frm,pageMessageId"/>
+                        </apex:selectList>
+                    </td>
+                    <td>
+                    <apex:inputText value="{!conForOwner2.FirstName}" Label="Name" styleClass="set"/> 
+                   </td>
+                    <td> 
+                        <apex:inputText value="{!conForOwner2.LastName}" Label="Name" styleClass="set"/> 
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner2.Title}" label="Title" styleClass="set"/>
+                    </td>
+                </tr>
+                <tr>
+                    
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingStreet.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingCity.Label}"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingState.Label}"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MailingPostalCode.Label}"/>
+                    </th>
+                </tr>
+                
+                <tr>
+                    
+                    <td>
+                        <apex:inputField value="{!conForOwner2.MailingStreet}" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner2.MailingCity}" styleClass="set"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!conForOwner2.MailingState}" styleClass="set"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!conForOwner2.MailingPostalCode}" styleClass="set"/>
+                    </td>
+                </tr>
+                 
+                 <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Of_Ownership__c.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Birthdate.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Social_Security_Number1__c.Label}"/>
+                    </th>
+                    
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.McaApp__Drivers_License__c.Label}"/>
+                    </th>
+                       
+                    
+                </tr>
+                
+                <tr class="spaceUnder">
+                    <td>
+                        <apex:inputField value="{!conForOwner2.McaApp__Of_Ownership__c}" label="% of Ownership" styleClass="set"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner2.Birthdate}" styleClass="set" style="width:8em"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!conForOwner2.McaApp__Social_Security_Number1__c}" styleClass="set"/>
+                    </td> 
+                    <td>
+                        <apex:inputField value="{!conForOwner2.McaApp__Drivers_License__c}" styleClass="set"/> 
+                    </td>  
+                     
+                </tr>
+                <tr>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Email.Label}"/>
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.Phone.Label}" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.MobilePhone.Label}" />
+                    </th>
+                    <th>
+                        <apex:outputLabel value="{!$ObjectType.Contact.Fields.HomePhone.Label}" /> 
+                    </th>
+                </tr>
+                
+                <tr>
+                    <td>
+                        <apex:inputField value="{!conForOwner2.Email}" styleClass="set"/>
+                    </td>
+                    <td>                   
+                        <apex:inputField value="{!conForOwner2.Phone}" styleClass="set"/> 
+                    </td> 
+                    <td>
+                        <apex:inputField value="{!conForOwner2.MobilePhone}" styleClass="set"/> 
+                    </td> 
+                     <td>
+                        <apex:inputField value="{!conForOwner2.HomePhone}" styleClass="set"/>
+                    </td>
+                    
+                    
+                    
+                </tr>
+                
+                
+            </table>
+             <apex:pageBlockSection columns="4" collapsible="false">
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+                    <apex:repeat value="{!fields2ndOwnerOfficerInfo}" var="f">
+                          <apex:inputField value="{!oppListToUpdate2ndOwnerOfficerInfo[f.fieldPath]}"/> 
+                     </apex:repeat>
+                  </apex:pageBlockSection>
+           
+            <table>
+                 <tr>
+              <th COLSPAN="3" class="headerCss">
+                BANK/TRADE INFORMATION 
+              </th>
+             </tr>  
+             
+             <tr>
+                <th>
+                        <apex:outputLabel value="Bank Name (Business)" /> 
+                    </th> 
+                    <th>
+                        <apex:outputLabel value="Contact Name"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="Phone"/>
+                    </th>   
+             </tr>  
+             
+             <tr>
+                <td>
+                        <apex:inputField value="{!objAccount.McaApp__Bank_Name__c}" styleClass="set2"/>
+                    </td>
+                    <td>
+                        <apex:inputField value="{!objAccount.McaApp__Bank_Contact__c}" styleClass="set2"/>
+                    </td>   
+                    <td>
+                        <apex:inputField value="{!objAccount.McaApp__Bank_Phone__c}" styleClass="set2"/>
+                    </td>   
+             </tr>
+<!--                  <tr> -->
+<!--               <th COLSPAN="3" class="headerCss"> -->
+<!--                 BUSINESS/TRADE REFERENCES -->
+<!--               </th> -->
+<!--              </tr>   -->
+             
+             <tr>
+                <th>
+                        <apex:outputLabel value="Trade Reference Name" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Contact Name/ Account #"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="Phone #"/>
+                    </th>   
+             </tr>  
+             
+             <tr class="spaceUnder"> 
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Business_Name__c}" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Business_Contact_Account__c}" label="Contact Name/Account #" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Business_Phone__c}" styleClass="set2"/>    
+                </td>
+             </tr>
+            </table>
+            
+            <apex:pageBlockSection columns="4" collapsible="false">
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+                    <apex:repeat value="{!fieldsBankTradeInfo}" var="f">
+                          <apex:inputField value="{!oppListToUpdateBankTradeInfo[f.fieldPath]}"/> 
+                     </apex:repeat>
+                  </apex:pageBlockSection>
+            
+             <table>
+                <tr>
+              <th COLSPAN="3" class="headerCss">
+                PROPERTY INFORMATION
+              </th>
+             </tr>  
+             
+              <tr>
+                <th>
+                        <apex:outputLabel value="Landlord/Mortgagee Name" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Contact Name"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="Phone #"/>
+                    </th>   
+             </tr>  
+             
+             <tr>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Landlord_Mortgagee__c}" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Landlord_Contact_Name__c}" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Landlord_Phone__c}" styleClass="set2"/>
+                </td>   
+             </tr>
+<!--             </table> -->
+<!--             <table> -->
+              <tr>
+                    <th>
+                        <apex:outputLabel value="Lease Start Date" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Time Remaining"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="Monthly Payment"/>
+                    </th>   
+                     
+             </tr>  
+             <tr>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Lease_start_date__c}" styleClass="set2" style="width:8em"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Time_Left_On_Lease__c}" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!objAccount.McaApp__Monthly_Payment__c}" styleClass="set2" />
+                </td>
+                
+             </tr>
+<!--             </table> -->
+<!--             <table> -->
+              <tr>
+                    <th>
+                        <apex:outputLabel value="Square Footage (Approx)" /> 
+                    </th>
+               </tr>     
+               <tr class="spaceUnder">
+                  <td>
+                     <apex:inputField value="{!objAccount.McaApp__Square_Footage__c}" styleClass="set2" />
+                  </td> 
+               </tr>
+             </table>
+             
+             <apex:pageBlockSection columns="4" collapsible="false">
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+                    <apex:repeat value="{!fieldsPropertyInfo}" var="f">
+                          <apex:inputField value="{!oppListToUpdatePropertyInfo[f.fieldPath]}"/> 
+                     </apex:repeat>
+                  </apex:pageBlockSection>        
+            
+            <table class="topLine">
+            <tr>
+              <th COLSPAN="3" class="headerCss">
+                OTHER INFORMATION
+              </th>
+             </tr>  
+             
+            <tr>
+                <th>
+                        <apex:outputLabel value="Have you ever used a Business Cash Advance?" /> 
+                    </th>
+                    <th>
+                        <apex:outputLabel value="Prior Cash Advance Company"/>
+                    </th>   
+                    <th>
+                        <apex:outputLabel value="Balance"/>
+                    </th>   
+             </tr>  
+             
+             <tr>
+                <td>
+                    <apex:inputField value="{!opportunity.McaApp__Ever_used_a_Business_Cash_Advance__c}"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!opportunity.McaApp__Cash_Advance_Company__c}" label="Prior Cash Advance Company" styleClass="set2"/>
+                </td>
+                <td>
+                    <apex:inputField value="{!opportunity.McaApp__Balance__c}" styleClass="set2"/>   
+                </td>
+             </tr>  
+        </table>
+        
+        <apex:pageBlockSection columns="4" collapsible="false">
+
+<!--                         <apex:repeat value="{!$ObjectType.Account.FieldSets.BUSINESS_INFORMATION_FieldSet}" -->
+<!--                             var="f"> -->
+<!--                             <apex:outputLabel value="{!objAcc[f]}" />  --> 
+<!--                             <apex:inputField value="{!objAccount[f]}" />                            -->
+<!--                         </apex:repeat> -->
+                    <apex:repeat value="{!fieldsOtherInfo}" var="f">
+                          <apex:inputField value="{!oppListToUpdateOtherInfo[f.fieldPath]}"/> 
+                     </apex:repeat>
+                  </apex:pageBlockSection>
+        </apex:pageBlock>
+        </div>
+        <div align="center"> 
+            <br/>
+                 <apex:commandButton action="{!QuickSave1}" value="Quick Save" styleClass="btnCss" rerender="frm,pageMessageId"
+                                                                              status="theActionStatus"/>&nbsp;  
+                 <apex:commandButton action="{!save}" value="Save" styleClass="btnCss"/>&nbsp;
+                 <apex:commandButton action="{!cancel}" value="Cancel" styleClass="btnCss"/>                                                            
+                 <apex:actionFunction name="openConga1" action="{!openConga1}" rerender="out" status="myStatus"/>  
+                 <apex:commandButton value="Create PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}" 
+                                      styleClass="btnCss" onclick="openConga1(),openConga()" rendered="{!createPDF.Active__c}" />
+                                      
+                 <apex:actionFunction name="SendCongaPDF1" action="{!SendCongaPDF1}" rerender="out" status="myStatus"/>
+                 <apex:commandButton value="Email PDF " action="{!URLFOR($Action.Opportunity.View,Opportunity.Id)}"
+                                      styleClass="btnCss" onclick="SendCongaPDF1(),SendCongaPDF()" rendered="{!emailPDF.Active__c}"/>
+                 <apex:commandButton value="Fax PDF" styleClass="btnCss" onclick="docuSign();" rerender=""/>                      
+                 <apex:commandButton value="DocuSign" styleClass="btnCss" onclick="docuSign();" rerender=""/>
+                 
+                 <apex:commandButton action="{!submissionWizard1}" value="Submit to Banks" styleClass="submitbtnCss" onclick="submissionWizard()"/>  
+            <br/>
+        </div>
+    </apex:form>
+</apex:page>

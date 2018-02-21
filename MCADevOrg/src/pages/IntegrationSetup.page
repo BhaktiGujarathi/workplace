@@ -1,0 +1,93 @@
+<apex:page controller="IntegrationSetupController">
+    
+    <apex:sectionHeader title="Integration Setup" subtitle="{!subtitle}" />
+    
+    <apex:outputPanel rendered="{!NOT(mode == 'list')}">
+	    <div class="ptBreadcrumb">
+	        &nbsp;«&nbsp;<a href="{!baseUrlOrg}/apex/IntegrationSetup">Back to List: Integration Setup</a>
+	    </div>
+	    <br />
+    </apex:outputPanel>
+    
+    <apex:form >
+
+        <apex:pageBlock rendered="{!mode == 'list'}">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="New" action="{!newSetup}" />
+            </apex:pageBlockButtons>
+            
+            <apex:pageBlockTable value="{!credentials}" var="cred">
+            
+                <apex:column headerValue="" width="30px" style="text-align: center;">
+                    <apex:commandLink value="Edit" action="{!edit}" >
+                        <apex:param name="bank" value="{!cred.Name}" />
+                    </apex:commandLink>
+                </apex:column>
+                
+                <apex:column headerValue="" width="30px" style="text-align: center;">
+                    <apex:commandLink value="Del" action="{!deleteIntegration}" onclick="return confirm('Are you sure?');">
+                        <apex:param name="bank" value="{!cred.Name}" />
+                    </apex:commandLink>
+                </apex:column>
+
+                <apex:column headerValue="Name">{!cred.Name}</apex:column>
+                <apex:column headerValue="Company">{!cred.company__c}</apex:column>
+                <apex:column headerValue="Active"><apex:inputCheckbox value="{!cred.Active__c}" disabled="true" /></apex:column>
+            </apex:pageBlockTable>
+    
+        </apex:pageBlock>
+        
+        
+        <apex:pageBlock rendered="{!mode == 'new'}">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Save" action="{!save}" />
+                <apex:commandButton value="Cancel" action="{!cancel}" immediate="true" onclick="return confirm('Are you sure?');" />
+            </apex:pageBlockButtons>
+        
+            <apex:pageBlockSection columns="2">
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Name" />
+                    <apex:inputField value="{!credential.Name}" required="true" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="sss" />
+                    <apex:inputField value="{!credential.sss__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Company" />
+                    <apex:inputField value="{!credential.company__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Loc ID" />
+                    <apex:inputSecret value="{!credential.LocID__c}" maxlength="4" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Company key" />
+                    <apex:inputSecret value="{!credential.companyKey__c}" />
+                </apex:pageBlockSectionItem>
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Is Active" />
+                    <apex:inputCheckbox value="{!credential.Active__c}" />
+                </apex:pageBlockSectionItem>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <apex:pageBlock rendered="{!mode == 'view'}">
+            <apex:pageBlockButtons >
+                <apex:commandButton value="Edit" action="{!edit}" />
+            </apex:pageBlockButtons>
+        
+            <apex:pageBlockSection columns="2">
+                <apex:outputField value="{!credential.company__c}" />
+                
+                <apex:pageBlockSectionItem >
+                    <apex:outputLabel value="Password" />
+                    <apex:outputText value="{!credential.companyKey__c}" />
+                </apex:pageBlockSectionItem>
+                
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    
+    </apex:form>
+
+</apex:page>

@@ -1,0 +1,100 @@
+<apex:component controller="McaApp.MCATasksTabController" allowDML="true">
+
+  <apex:form id="records" styleClass="records">
+
+    <c:MCAJQTabComponent />
+
+    <apex:pageBlock >
+      <script>
+        var taskTabLabelOriginal;
+        function runSaveAllTasks() {
+
+          setTimeout(function() {
+            saveAllTasks();
+          }, 500);
+        }
+        
+        t$(function () {
+            taskTabLabelOriginal = t$("[id*='tasktab_lbl']").text();
+            computeCalculations();
+        });
+        function computeCalculations() {
+                var taskTabLabel = 'Tasks' ; // + ' (' + {!containers.size} +')';
+                t$("[id*='tasktab_lbl']").text(taskTabLabel);               
+                t$("[id*='tasktab_lbl']").append(' (' + {!containers.size} +')');
+                
+        }
+        
+      </script>
+      <apex:actionFunction action="{!saveAllTasks}" name="saveAllTasks" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeCalculations()"/>
+
+      <apex:pageBlockButtons >
+
+        <apex:CommandButton action="{!newTask}" value="New Task" rerender="records,refreshComponent" immediate="true" oncomplete="computeCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!save}" onclick="runSaveAll1()" value="Save" oncomplete="computeCalculations()" rerender="records,refreshComponent"></apex:CommandButton>
+<!--         <input type="button" onclick="runSaveAll1()" class="btn" value="Save"/> -->
+
+        <apex:CommandButton action="{!editAll}" value="Edit All" rerender="records,refreshComponent" status="loadingPanel" oncomplete="computeCalculations()"></apex:CommandButton>
+
+        <apex:CommandButton action="{!refresh}" value="Refresh" rerender="records,refreshComponent" immediate="true" status="loadingPanel" oncomplete="computeCalculations()"></apex:CommandButton>
+        <apex:CommandButton action="{!refresh}" value="Cancel" rerender="records,refreshComponent" immediate="true" status="loadingPanel" oncomplete="computeCalculations()"></apex:CommandButton>
+
+      </apex:pageBlockButtons>
+
+      <apex:pageBlockSection columns="1" title="Tasks ({!containers.size})" collapsible="false">
+        <apex:pageBlockTable value="{!containers}" var="container" styleClass="tablesorting tablesorter" headerClass="header">
+          <apex:inlineEditSupport event="ondblclick" />
+
+          <apex:column >
+
+            <apex:outputLink value="/{!container.task.Id}" target="blank" rendered="{!NOT(ISBLANK(container.task.Id))}"> View </apex:outputLink>
+            <apex:outputLabel value="| " rendered="{!NOT(ISBLANK(container.task.Id))}"/>
+            <apex:commandLink action="{!deleteTask}" value="Del" rerender="records,refreshComponent" rendered="{!NOT(ISBLANK(container.task.Id))}" status="loadingPanel" immediate="true" oncomplete="computeCalculations()">
+              <apex:param name="recordToDelete" value="{!container.task.Id}" assignTo="{!recordToDelete}" ></apex:param>
+            </apex:commandLink>
+
+            <apex:commandLink action="{!removeTask}" value="Remove" rerender="records,refreshComponent" rendered="{!(ISBLANK(container.task.Id))}" status="loadingPanel" immediate="true" oncomplete="computeCalculations()">
+              <apex:param name="indexToRemove" value="{!container.index}" assignTo="{!indexToRemove}"></apex:param>
+            </apex:commandLink>
+
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Task.Fields.Subject.Label}">
+            <apex:outputField value="{!container.task.Subject}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.Subject}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+            <apex:column headerValue="Due Date">
+            <apex:outputField value="{!container.task.ActivityDate}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.ActivityDate}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Task.Fields.Priority.Label}">
+            <apex:outputField value="{!container.task.Priority}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.Priority}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Task.Fields.Status.Label}">
+            <apex:outputField value="{!container.task.Status}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.Status}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+          <apex:column headerValue="{!$ObjectType.Task.Fields.Description.Label}">
+            <apex:outputField value="{!container.task.Description}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.Description}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+            <apex:column headerValue="Assigned To">
+            <apex:outputField value="{!container.task.OwnerId}" rendered="{!AND(NOT(ISBLANK(container.task.Id)), NOT(editAll))}"/>
+            <apex:inputField value="{!container.task.OwnerId}" rendered="{!OR((ISBLANK(container.task.Id)), editAll)}"/>
+          </apex:column>
+
+
+        </apex:pageBlockTable>
+      </apex:pageBlockSection>
+
+    </apex:pageBlock>
+
+  </apex:form>
+
+</apex:component>

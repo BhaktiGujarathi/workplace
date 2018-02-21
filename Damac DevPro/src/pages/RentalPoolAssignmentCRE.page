@@ -1,0 +1,1010 @@
+<apex:page sidebar="false" controller="RentalPoolAssignmentProcess" showHeader="false" standardstylesheets="false" applyBodytag="false">
+<html lang="en">
+    <head>
+        <title>Dashboard</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+        <link rel='shortcut icon' href='favicon.ico' type='image/x-icon'/ >
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/style.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-datepicker.min.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/bootstrap-multiselect.css')}"/>
+        <apex:stylesheet value="{!URLFOR($Resource.assets, 'assets/css/diff-theme.css')}"/>
+
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Raleway"/>
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Roboto:100,200,300,400,500,600,700,800"/>
+
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+
+    </head>
+    <apex:form id="form">
+    <body>
+
+        <!---------------------- Top Navbar ------------------------>        
+        <nav class="navbar navbar-default navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span> 
+                    </button>
+                    <a class="navbar-brand" href="#">Demac</a>
+                </div>
+                <div class="collapse navbar-collapse" id="myNavbar">
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle active" data-toggle="dropdown">
+                                <i class="fa fa-bell" aria-hidden="true"></i>
+                                <span class="label notification">10</span>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-notification-box">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <i class="fa fa-calendar" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                        <li class="top-profile-box dropdown">
+                            <a class="dropdown-trigger dropdown-toggle" data-toggle="dropdown">
+                                <img src="assets/img/user.png" class="top-user-image" />
+                                <span class="top-user-name">Jane Doe</span>
+                            </a>
+                            <ul class="dropdown-menu site-dropdown user-dropdown">
+                                <li><a href="#" class="wave-button"> View Profile</a></li>
+                                <li><a href="#" class="wave-button">Settings</a></li>
+                                <li><a href="#" class="wave-button">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Sidebar Menu -->
+        <div class="nav-side-menu">
+            <div class="brand">Brand Logo</div>
+            <i class="fa fa-bars fa-2x toggle-btn" data-toggle="collapse" data-target="#menu-content"></i>
+
+            <div class="menu-list">
+                <ul id="menu-content" class="menu-content collapse out">
+                    <li><a href="CRE-additional-parking.html"><i class="fa fa-dashboard fa-lg"></i> Home</a></li>
+                    <li  data-toggle="collapse" data-target="#cre" class="active collapsed" >
+                        <a><i class="fa fa-delicious" aria-hidden="true"></i> CRE SR's <span class="arrow"></span></a>
+                    </li>
+                    <ul class="sub-menu collapse in" id="cre">
+                        <li><a href="CRE-additional-parking.html">Additional Parking</a></li>
+                        <li><a href="CRE-aopt.html">AOPT</a></li>
+                        <li><a href="CRE-bounced-cheque.html">Bounced Cheque</a></li>
+                        <li><a href="CRE-funds-transfer.html">Fund Transfer</a></li>
+                        <li><a href="CRE-furniture-package.html">Furniture Package</a></li>
+                        <li><a href="CRE-mortgage.html">Mortgage</a></li>
+                        <li><a href="CRE-penalty-waiver.html">Penalty Waiver</a></li>
+                        <li><a href="CRE-proof-of-payment.html">Proof of Payment</a></li>
+                        <li><a href="CRE-refunds.html">Refunds</a></li>
+                        <li><a href="CRE-cocd.html">COCD</a></li>
+                        <li class="active"><a href="CRE-early-handover.html">Early Handover</a></li>
+                    </ul>
+                </ul>
+            </div>
+        </div>
+
+        <!---------------------- Main content ------------------------>
+        <section class="main-content-section">
+
+            <div class="wrapper">
+
+                <div class="row">
+
+                    <div class="col-md-8">
+                         <section id="">
+                            <div class="well">
+                                <div class="error">
+                                    <apex:pageMessages id="pageM"/>
+                                </div>
+                                <h4>
+                                    Title Deed
+                                    <div class="pull-right">
+                                        <!--  <apex:commandButton styleClass="btn btn-sm btn-success" action="{!createTitleDeedSR}" value="Next" id="nextButton"/> -->
+                                    </div>
+                                </h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Select Unit for Title Deed</label>
+                                            <apex:selectList styleClass="form-control" value="{!strSelectedUnit}" multiselect="false" size="1" id="selectUnit">
+                                               <apex:actionSupport event="onchange" action="{!autoPopulateBUDetails}"/>
+                                               <apex:selectOptions value="{!lstUnits}"/>
+                                            </apex:selectList>
+                                        </div>
+                                    </div>
+                                </div>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-lg-8">
+                                        <ul class="nav nav-pills">
+                                            <li role="presentation" class="active"><a href="#plan1" data-toggle="tab" data-original-title="Plan 1" aria-expanded="true">Unit Details</a></li>
+                                            <li role="presentation"><a href="#plan2" data-toggle="tab" data-original-title="Plan 2" aria-expanded="true">Flags</a></li>
+                                            <li role="presentation"><a href="#plan3" data-toggle="tab" data-original-title="Plan 3" aria-expanded="true">Unit Status</a></li>
+                                            <li role="presentation"><a href="#plan4" data-toggle="tab" data-original-title="Plan 4" aria-expanded="true">Open SRs</a></li>
+                                        </ul>
+
+
+
+                                        <div class="tab-content">
+                                            <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>Project</b></td>
+                                                                    <td>The Trump Estates Park Residences</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Project City</b></td>
+                                                                    <td>Dubailand, Dubai, UAE</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Bedroom Type</b></td>
+                                                                    <td>{!objBookingUnit.Bedroom_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                    <td>{!objBookingUnit.Booking_Unit_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Permitted Use</b></td>
+                                                                    <td>{!objBookingUnit.Permitted_Use__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Ready/ Off plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool_Status__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Price</b></td>
+                                                                    <td>{!objBookingUnit.Unit_Selling_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Area</b></td>
+                                                                    <td>{!objBookingUnit.Area__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Promotion/Scheme/Option/Campaign</b></td>
+                                                                    <td>{!objBookingUnit.Related_Promotion_Title__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Invoices raised</b></td>
+                                                                    <td>{!objBookingUnit.Final_Invoice__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Amount paid</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Penalties</b></td>
+                                                                    <td>{!objBookingUnit.Penalty_Amount__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Overdue</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Deal Team</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Type</b></td>
+                                                                    <td>{!objBookingUnit.Booking_Type__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Built Up Price</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Plot Price</b></td>
+                                                                    <td>{!objBookingUnit.Plot_Price__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Payment Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Statement of Account</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Booking Date</b></td>
+                                                                    <td>{!objBookingUnit.CreatedDate}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Date</b></td>
+                                                                    <td>{!objBookingUnit.Agreement_Date__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Unit Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Floor Plan</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>JOPD Area</b></td>
+                                                                    <td>{!objBookingUnit.JOPD_Area__c}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan2">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>Dispute</b></td>
+                                                                    <td>{!objBookingUnit.Dispute_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Enforcement</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Litigation</b></td>
+                                                                    <td>{!objBookingUnit.DSR_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Mortgage</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Court Case</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DP OK</b></td>
+                                                                    <td>{!objBookingUnit.DP_OK__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>DOC OK</b></td>
+                                                                    <td>{!objBookingUnit.Doc_OK__c}</td>
+                                                                </tr>
+                                                            </tbody>
+
+
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade in" role="tabpanel" id="plan3">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td><b>OQOOD Registered</b></td>
+                                                                    <td>{!objBookingUnit.OQOOD_Reg_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Agreement Status</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Under Termination</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>FTL sent</b></td>
+                                                                    <td></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>EHO flag</b></td>
+                                                                    <td>{!objBookingUnit.Early_Handover__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>HO flag</b></td>
+                                                                    <td>{!objBookingUnit.Handover_Flag__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>PCC</b></td>
+                                                                    <td>{!objBookingUnit.PCC_Generate__c}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td><b>Rental Pool</b></td>
+                                                                    <td>{!objBookingUnit.Rental_Pool__c}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade  in" role="tabpanel" id="plan4">
+                                                <div class="row">
+                                                    <div class="col-lg-12 col-md-12 col-sm-12 filterDetails">
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+
+                                                            <tbody>
+                                                            <apex:repeat value="{!lstOpenCase}" var="openCase" id="openCaseID">
+                                                                <tr>
+                                                                    <td><b>{!openCase.CaseNumber}</b></td>
+                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!openCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                            </tbody>
+                                                        </table>
+
+                                                        <br />
+                                                        <table class="paymentDue table" cellpadding="10" width="100%">
+                                                            <col width="40%"/>
+                                                            <col width="60%"/>
+                                                            <thead>
+                                                                <th colspan="2">Closed SRs</th>
+                                                            </thead>
+                                                            <tbody>
+                                                                <apex:repeat value="{!lstCloseCase}" var="closeCase" id="closeCaseID">
+                                                                <tr>
+                                                                    <td><b>{!closeCase.CaseNumber}</b></td>
+                                                                    <td><apex:outputLink value="{!$Site.BaseUrl}/{!closeCase.Id}" id="theLink" target="_blank">View SR</apex:outputLink></td>
+                                                                </tr>
+                                                            </apex:repeat>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                </div>
+                                  
+                                  <div class="col-lg-4">
+                                        <h5>Additional Information</h5>
+                                        <div class="details">
+                                            <div class="row detailHeading">
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>Unit Price (AED)</h6>
+                                                    <h4>1500000</h4>
+                                                </div>
+                                                <div class="col-lg-6 col-md-12">
+                                                    <h6>% Received</h6>
+                                                    <h4>24%</h4>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Under Assignment?</h6>
+                                                        <h5>500000</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>AR PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>FM PCC</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>BCC available</h6>
+                                                        <h5>Yes</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties</h6>
+                                                        <h5>100</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Outstanding</h6>
+                                                        <h5>200</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdue</h6>
+                                                        <h5>30</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Default?</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Overdues/dues towards Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-lg-6 col-sm-6 col-xs-6">
+                                                    <div class="infoBoxes">
+                                                        <h6>Penalties/ Late payment fee on Service Charges</h6>
+                                                        <h5></h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>Enter Details<div class="pull-right">
+                                    <apex:commandButton styleclass="btn btn-sm btn-success" onclick="viewSOA();" action="{!SOAtobeGenerated}" value="Account Statement"/>
+                                    </div></h4>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Buyer Type</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCaseCreate.Buyer_Type__c}"/>
+                                        </div>
+
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Relationship with Seller</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCaseCreate.POA_Relationship_with_Seller__c}"/>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <!--<div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>Case Type</label>
+                                            <select class="form-control" id="sel1">
+                                                <option>Select type</option>
+                                            </select>
+                                        </div>
+
+                                    </div>-->
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label>No. of Joint Buyers</label>
+                                            <select class="form-control" id="sel1">
+                                                <option>1</option>
+                                                <option>2</option>
+                                                <option>3</option>
+                                            </select>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="row">
+
+                                    <div class="col-lg-12">
+                                        <table class="paymentDue" width="100%" cellpadding="10">
+                                            <thead>
+                                                <tr>
+                                                    <th>Payment Type</th>
+                                                    <th>Amount Due</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Invoices which are due in 30 days</td>
+                                                    <td>{!strInvoices}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Overdues towards instalments</td>
+                                                    <td>{!strOverDuesInstall}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Penalties</td>
+                                                    <td>{!strPenalties}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Overdues/dues towards Service Charges</td>
+                                                    <td>{!strOverDues}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Penalties/ Late payment fee on Service Charges</td>
+                                                    <td>{!strServiceCharges}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Admin Fee for Assignment</td>
+                                                    <td>{!strAdminFee}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Other dues</td>
+                                                    <td>{!strOtherDues}</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+
+
+                        <section id="">
+
+                            <div class="well">
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h4>
+                                            Enter Seller POA Details
+                                        </h4>
+                                        <div class="form-group">
+                                            <label>Power of Attorney(Seller)</label>
+                                            <apex:inputCheckbox value="{!blnPoASellValue}" style="margin-left: 30px;" id="POACheck" onchange="hasAttorney()"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Relationship with Seller</label>
+                                            <select class="form-control">
+                                                <option>Father</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Date of Expiry</label>
+                                            <input type="text" placeholder="01/01/1999" class="form-control datepicker"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Issued By</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h4>
+                                            Enter Buyer POA Details
+                                        </h4>
+                                        <div class="form-group">
+                                            <label>Power of Attorney(Buyer)</label>
+                                            <apex:inputField styleClass="form-control" value="{!objCaseCreate.Buyer_POA__c}"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Relationship with Buyer</label>
+                                            <select class="form-control">
+                                                <option>Father</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Date of Expiry</label>
+                                            <input type="text" placeholder="01/01/1999" class="form-control datepicker"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Issued By</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Upload Power of Attorney</label>
+                                    </div>
+                                </div>
+
+
+
+                            </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Upload Documents<div class="pull-right">
+                                    <button class="btn btn-sm btn-success">Submit CRF</button>
+                                    </div>
+                                </h4>
+
+
+                                <div class="row">
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Passport Copy of Buyer</label>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Passport copy of Joint Buyer</label>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Court Order And Succession Certificate</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Buyer's Details <button class="btn btn-xs btn-default">Add Joint Buyers</button>
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm btn-success"><i class="fa fa-download" aria-hidden="true"></i> View CRF</button>
+                                    </div>
+
+                                </h4>
+
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <h5>Enter Buyer Details <small>(in english)</small></h5>
+                                        <div class="form-group">
+                                            <label>Title</label>
+                                            <select class="form-control">
+                                                <option>Mr</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>First Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Last Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nationality</label>
+                                            <input type="text" class="form-control" placeholder="Enter nationality"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Passport No.</label>
+                                            <input type="text" class="form-control" placeholder="Enter passport no."/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Place of Issue</label>
+                                            <input type="text" class="form-control" placeholder="Enter place of issue"/>
+                                        </div>
+                                        <div class="form-group input_fields_wrap">
+                                            <label>Address</label>
+                                            <input type="text" class="form-control formText" name="mytext[]" placeholder="Enter address"/>
+                                            <button class="btn btn-xs btn-info add_field_button"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Country</label>    
+                                            <select class="form-control">
+                                                <option>Select Country</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>City</label>
+                                            <select class="form-control">
+                                                <option>Select City</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <h5>Enter Buyer Details <small>(in arabic)</small></h5>
+                                        <div class="form-group">
+                                            <label>Title</label>
+                                            <select class="form-control">
+                                                <option>Mr</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>First Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Last Name</label>
+                                            <input type="text" class="form-control" placeholder="Enter name"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Nationality</label>
+                                            <input type="text" class="form-control" placeholder="Enter nationality"/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Passport No.</label>
+                                            <input type="text" class="form-control" placeholder="Enter passport no."/>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Place of Issue</label>
+                                            <input type="text" class="form-control" placeholder="Enter place of issue"/>
+                                        </div>
+                                        <div class="form-group input_fields_wrap">
+                                            <label>Address</label>
+                                            <input type="text" class="form-control formText" name="mytext[]" placeholder="Enter address"/>
+                                            <button class="btn btn-xs btn-info add_field_button"><i class="fa fa-plus" aria-hidden="true"></i></button>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Country</label>
+                                            <select class="form-control">
+                                                <option>Select Country</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>City</label>
+                                            <select class="form-control">
+                                                <option>Select City</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <h5>Contact Details</h5>
+                                        <div class="form-group">
+                                            <div class="row">
+                                                <div class="col-lg-6">
+                                                    <label>Phone No.</label><div class="input-group">
+                                                    <div class="input-group-btn">
+                                                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Code <span class="caret"></span></button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a href="#">+971(UAE)</a></li>
+                                                            <li role="separator" class="divider"></li>
+                                                            <li><a href="#">+91(IND)</a></li>
+                                                        </ul>
+                                                    </div><!-- /btn-group -->
+                                                    <input type="text" class="form-control" aria-label="..."/>
+                                                    </div><!-- /input-group -->
+                                                </div><!-- /.col-lg-6 -->
+                                                <div class="col-lg-6">
+                                                    <div class="form-group">
+                                                        <label>Email</label>
+                                                        <input type="text" class="form-control" placeholder="Enter email"/>
+                                                    </div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Upload CRF 
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm">Generate Documents</button><button class="btn btn-sm btn-success">Submit SR</button>
+                                    </div>
+                                </h4>
+
+
+                                <div class="row">
+                                    <div class="col-lg-12 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Upload Signed CRF</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="">
+                            <div class="well">
+                                <h4>
+                                    Upload Documents 
+                                    <div class="pull-right">
+                                        <button class="btn btn-sm btn-success">Print NOC</button>
+                                    </div>
+                                </h4>
+
+
+                                <div class="row">
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Signed LOA</label>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>Signed Undertaking Letter</label>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-xs-12 text-center">
+                                        <div class="fileupload fileupload-new" data-provides="fileupload"><input type="hidden"/>
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Select file</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span><input type="file"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                        <label>RP Agreement</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        <section id="">
+                        <div class="well">
+                            <div class="row">
+                                <apex:commandButton value="Save Draft" styleClass="btn btn-sm" style="margin-left: 197px;" action="{!createRPAssignmentSR}" reRender="pageM" oncomplete="complete();" status="processStatus"/>
+                                <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" style="margin-left: 100px; " action="{!submitCase}" reRender="pageM" oncomplete="complete();" status="processStatus"/>
+                                <!--<button class="btn btn-sm" style="margin-left: 197px;" >Save Draft</button><button class="btn btn-sm btn-success" style="margin-left: 100px; ">Submit SR</button> -->
+                            </div>
+                        </div>
+                    </section>
+
+                    </div>
+                    <!----------------------------------Sidebar Fixed---------------------------------------->
+                    <div class="col-md-4">
+                        <div class="well sideBarFixed profileDisplay">
+                            <img src="{!URLFOR($Resource.PortalAssets, 'assets/img/customer1.jpg')}" />
+                            <h6>#CD - 3214DSA</h6>
+                            <h4>Mr. Robert Downey Jr. </h4>
+                            <span>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>
+                                <i class="fa fa-star" aria-hidden="true"></i>                               
+                            </span>
+                            <label><a href="">View Portfolio</a></label>
+                            <h6>Organization Name</h6>
+                            <label>Damac</label>
+
+                            <h6>Contact Details</h6>
+                            <label>+971-2313-242-425</label>
+
+                            <h6>Email</h6>
+                            <label>robert.d@gmail.com</label>
+
+                            <h6>POA</h6>
+                            <label>Bob Woolmer</label>
+
+                            <h6>Nationality</h6>
+                            <label>American</label>
+
+                            <h6>Party Type</h6>
+                            <label>Value</label>
+
+                            <h6>Customer Classification</h6>
+                            <label>A++</label>
+
+                            <h6>Bulk</h6>
+                            <label>Value</label>
+
+                            <h6>Joint Buyer</h6>
+                            <label><a href="" class="btn btn-sm">Raymond Wejes</a></label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/jquery.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-datepicker.min.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/main.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/button.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/checkbox.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/bootstrap-multiselect.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/upload.js')}"/>
+        <apex:includeScript value="{!URLFOR($Resource.assets, 'assets/js/ease.js')}"/>
+ 
+        <script>
+            $('.well input.datepicker').datepicker({
+            });
+            $(document).ready(function() {
+                $('#multi-select-demo').multiselect();
+            });
+            
+            function viewSOA() {
+                    window.open("/apex/StatementOfAccountPage");
+                    return false;
+            }
+            
+            function hasAttorney() {
+                   if( $('[id$=POACheck]').is(":checked") ) {
+                       $('[id$=POAInfoBlock]').show();
+                   }
+                   else {
+                       $('[id$=POAInfoBlock]').hide(); 
+                   }
+            }
+        </script>
+    </body>
+    </apex:form>
+</html>
+</apex:page>

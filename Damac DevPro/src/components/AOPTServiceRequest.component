@@ -1,0 +1,1240 @@
+<apex:component controller="AOPTServiceRequestControllerLDS" id="AOPTComponent" allowDML="true">
+
+  <!---------------------- Main content ------------------------>
+  <apex:pageMessages id="showmsg"  escape="false"></apex:pageMessages>
+  <br/>
+  <apex:inputHidden value="{!strCRFAttachmentBody}" id="CRFAttachBody"/>
+  <apex:inputHidden value="{!strCRFAttachmentName}" id="CRFAttachName"/>
+
+  <apex:inputHidden value="{!strPOAAttachmentBody}" id="POAAttachBody"/>
+  <apex:inputHidden value="{!strPOAAttachmentName}" id="POAAttachName"/>
+
+  <apex:inputHidden value="{!strOfferAttachmentBody}" id="offerAttachBody"/>
+  <apex:inputHidden value="{!strOfferAttachmentName}" id="offerAttachName"/>
+
+  <apex:inputHidden value="{!strPDCAttachmentBody}" id="PDCAttachBody"/>
+  <apex:inputHidden value="{!strPDCAttachmentName}" id="PDCAttachName"/>
+
+  <section>
+      <!-- <div class="wrapper">-->
+          <div class="row">
+              <div class="col-md-12">
+                  <section id="">
+                      <div class="well">
+                          <h4>
+                              Amendment of Payment Terms
+                          </h4>
+
+                          <div class="row">
+                              <div class="col-lg-8">
+                                  <div class="form-group">
+                                      <label>Select Project for AOPT</label>
+                                      <apex:selectList value="{!strSelectedProject}" size="1" styleClass="form-control"> 
+                                        <apex:actionSupport event="onchange" action="{!getBookingUnitsRelatedToProject}" reRender="bookingUnitPanel,selectBookingUnit,SelectedUnitPanel,currentPPPanel" status="loadingStatus"/>
+                                        <apex:selectOptions value="{!lstProjectSelectOption}" /> 
+                                      </apex:selectList>
+                                  </div>
+                              </div>
+                          </div>
+                          <apex:outputPanel id="selectBookingUnit">
+                            <div class="row">
+                                <div class="col-lg-8">
+                                    <div class="form-group">
+                                        <label>Select Booking Unit </label>
+                                        <apex:selectList size="1" styleClass="form-control" 
+                                          value="{!strSelectedBookingUnit}">
+                                          <apex:actionSupport event="onchange" status="loadingStatus" reRender="bookingUnitPanel,SelectedUnitPanel,currentPPPanel" action="{!getBookingUnitsRelatedToProject}"/>
+                                          <apex:selectOptions value="{!lstAllBookingUnitsSelectOption}" /> 
+                                        </apex:selectList>
+                                    </div>
+                                </div>
+                            </div>
+                          </apex:outputPanel> 
+                          <div class="row">
+                              <div class="col-lg-8">
+                                  <apex:outputPanel id="bookingUnitPanel">
+                                      <div class="selectUnit">
+                                          <div class="selectUnitHeading">Booking Units With Same Payment Plans</div>
+                                          <div class="checkBoxContainer">
+                                             <apex:repeat var="bookingUnit" value="{!lstBookingUnitWrapper}">
+                                                  <apex:outputPanel rendered="{!IF(bookingUnit.strMatch == 'Yes',true,false)}">
+                                                    <div class="checkbox-primary"  
+                                                    style="border-radius:2px;margin:2px;padding:2px;">
+                                                        <apex:inputCheckbox value="{!bookingUnit.blnIsChecked}"/>
+                                                        <label for="checkbox1">
+                                                            {!bookingUnit.objBookingUnit.Name} - {!bookingUnit.objBookingUnit.Unit_Details__c}
+                                                        </label>
+                                                    </div>
+                                                  </apex:outputPanel>
+                                              </apex:repeat>
+                                          </div>
+                                      </div>
+                                  </apex:outputPanel>
+                              </div>
+                          </div>
+                          <br/><br/>
+                          <div>
+                          <apex:commandButton value="Get Booking Units Details" styleClass="btn btn-sm btn-success" action="{!checkValidity}" reRender="SelectedUnitPanel,showmsg,buttonPanel,currentPPPanel" status="loadingStatus"/>
+                          </div>
+                          <br />
+                          <apex:outputPanel id="SelectedUnitPanel" >
+                            <apex:outputPanel rendered="{!if((blnShowSelectedUnits && !blnAOPTExists) && (!blnFlagPresent),true,false)}">
+                              <div id="contentToToggle">
+                                  <h4>Selected Units</h4>
+                                  <div class="form-group">
+                                      <apex:selectList value="{!strBookingUnit}" size="1" styleClass="form-control"> 
+                                          <apex:actionSupport event="onchange" action="{!getBookingUnitDetails}" reRender="unitDetailsPanel,currentPPPanel" status="loadingStatus"/>
+                                          <apex:selectOptions value="{!lstBookingUnitSelectOption}" /> 
+                                      </apex:selectList>
+                                  </div>
+                                  <apex:outputPanel id="unitDetailsPanel">
+                                    <apex:outputPanel rendered="{!if(objWrapperBookingUnit.objBookingUnit != null,true,false)}">
+                                      <div class="tab-content">
+                                          <div class="tab-pane fade active in" role="tabpanel" id="plan1">
+                                              <div class="row">
+                                                  <div class="col-lg-5 col-md-12 col-sm-12">
+                                                      <table class="paymentDue table" cellpadding="10" width="100%">
+                                                          <col width="40%"/>
+                                                          <col width="60%"/>
+                                                          <thead class="thead-inverse">
+                                                              <tr>
+                                                                  <th colspan="2">
+                                                                      <apex:selectList id="unitDetail"  size="1" styleClass="form-control" style="height: 34px" value="{!strUnitDetailType}" >
+                                                                        <apex:actionSupport event="onchange"  rerender="unitDetailsPanel" status="loadingStatus"/>
+                                                                        <apex:selectOption itemValue="" itemLabel="--None--"/>
+                                                                        <apex:selectOption itemValue="Unit Details" itemLabel="Unit Details"/>
+                                                                        <apex:selectOption itemValue="Flags" itemLabel="Flags"/>
+                                                                        <apex:selectOption itemValue="Unit Status" itemLabel="Unit Status"/>
+                                                                        <apex:selectOption itemValue="Open SRs" itemLabel="Open SRs"/>
+                                                                        <apex:selectOption itemValue="Closed SRs" itemLabel="Closed SRs"/>
+                                                                    </apex:selectList>
+                                                                  </th>
+                                                              </tr>
+                                                          </thead>
+                                                          <tbody>
+                                                              <!--for Unit Type Detail= Unit Details starts-->
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Booking Unit</b></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Name}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Project</b></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Property__r.Name}
+                                                                  </td>
+                                                              </tr>
+
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Project City</b></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Property_City__c}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Bedroom Type</b></td>
+                                                                  <td> {!objWrapperBookingUnit.objBookingUnit.Inventory__r.IPMS_Bedrooms__c} BHK </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Unit Type </b><small>(Villa/High-rise)</small></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Unit_Type__c}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Permitted Use</b></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Permitted_Use__c}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Ready/ Off plan</b></td>
+                                                                  <td>{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Property_Status__c}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Rental Pool</b></td>
+                                                                  <td>
+                                                                    {!objWrapperBookingUnit.objBookingUnit.Rental_Pool_Agreement__c}
+                                                                   </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Price</b></td>
+                                                                  <td>{!objWrapperBookingUnit.decPrice}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Promotion/Scheme/ Option/ Campaign</b></td>
+                                                                  <td>{!objWrapperBookingUnit.strPromotionScheme}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Invoices raised</b></td>
+                                                                  <td>{!objBUDetailWrapper.strInvoicesRaised}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Amount paid</b></td>
+                                                                  <td>{!objBUDetailWrapper.strAmountPaid}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Penalties</b></td>
+                                                                  <td>{!objBUDetailWrapper.strPenaltyRemaining}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Overdue</b></td>
+                                                                  <td>{!objBUDetailWrapper.strOverdue}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Deal Team</b></td>
+                                                                  <td>{!objWrapperBookingUnit.strDealTeam}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Booking Type</b></td>
+                                                                  <td>{!objWrapperBookingUnit.strBookingType}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Built Up Price</b></td>
+                                                                  <td>{!objBUDetailWrapper.strBuiltUpPrice}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Plot Price</b></td>
+                                                                  <td>{!objWrapperBookingUnit.decPlotPrice}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Payment Plan</b></td>
+                                                                  <td>{!objWrapperBookingUnit.strPaymentPlan}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Booking Date</b></td>
+                                                                  <td>
+                                                                      <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                                                        <apex:param value="{!objWrapperBookingUnit.dateBookingDate}" /> 
+                                                                      </apex:outputText>
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Agreement Date</b></td>
+                                                                  <td>
+                                                                      <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                                                        <apex:param value="{!objWrapperBookingUnit.dateAgreementDate}" /> 
+                                                                      </apex:outputText>
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Unit Plan</b></td>
+                                                                  <td>
+                                                                    <apex:outputLink value="{!objWrapperBookingUnit.strUnitPlan}" 
+                                                                    target="_blank" >Unit Plan</apex:outputLink>
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>Floor Plan</b></td>
+                                                                  <td>
+                                                                      <apex:outputLink value="{!objWrapperBookingUnit.strFloorPlan}" 
+                                                                    target="_blank" >Floor Plan</apex:outputLink>
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Details',"contents","none")};">
+                                                                  <td><b>JOPD Area</b></td>
+                                                                  <td>{!objWrapperBookingUnit.strFJOPDArea}</td>
+                                                              </tr>
+                                                              <!--for Unit Type Detail = Unit Details  ends-->
+                                                              <!-- for Unit Type Detail = Flags  starts-->
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>Dispute</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strDispute}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>Enforcement</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strEnforcement}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>Litigation</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strLitigation}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>Mortgage</b></td>
+                                                                  <td>
+                                                                   {!objWrapperBookingUnit.objBookingUnit.Mortgage__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>Counter Case</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strCounterCase}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>DP OK</b></td>
+                                                                  <td>
+                                                                      {!objWrapperBookingUnit.objBookingUnit.DP_OK__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Flags',"contents","none")};">
+                                                                  <td><b>DOC OK</b></td>
+                                                                  <td>
+                                                                    {!objWrapperBookingUnit.objBookingUnit.Doc_OK__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <!-- for Unit Type Detail = Flags  ends-->
+
+                                                              <!--for Unit Type Detail=Unit Status  starts-->
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>OQOOD Registered</b></td>
+                                                                  <td>
+                                                                    {!objWrapperBookingUnit.objBookingUnit.OQOOD_Reg_Flag__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>Agreement Status</b></td>
+                                                                  <td>{!objBUDetailWrapper.strAgreementStatus}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>Under Termination</b></td>
+                                                                  <td>{!objBUDetailWrapper.strUnderTermination}</td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>FTL sent</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strFTLSent}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>EHO flag</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strEHOFlag}
+                                                                   </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>HO flag</b></td>
+                                                                  <td>
+                                                                  {!objBUDetailWrapper.strHOFlag}
+                                                                   </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>PCC</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strPCC}
+                                                                   </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>Registration Fee Paid</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strRegistrationFeePaid}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>PRC Status</b></td>
+                                                                  <td>
+                                                                    {!objBUDetailWrapper.strPRCStatus}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>Title Deed Status</b></td>
+                                                                  <td>
+                                                                    {!objWrapperBookingUnit.objBookingUnit.Title_Deed__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <tr style="display:{!if(strUnitDetailType == 'Unit Status',"contents","none")};">
+                                                                  <td><b>Under Assignment</b></td>
+                                                                  <td>
+                                                                    {!objWrapperBookingUnit.objBookingUnit.Under_Assignment__c}
+                                                                  </td>
+                                                              </tr>
+                                                              <!--for Unit Type Detail=Unit Status  ends-->
+
+                                                              <!--for Unit Type Detail=Open SRs  starts-->
+                                                              <apex:repeat value="{!lstOpenSRs}" var="openSR" rendered="{!lstOpenSRs != null && lstOpenSRs.size >0 && strUnitDetailType == 'Open SRs'}">
+                                                                  <tr style="display:{!if(strUnitDetailType == 'Open SRs',"contents","none")};">
+                                                                      <td><b>{!openSR.SR_Type__c}</b></td>
+                                                                      <td><apex:outputLink value="/{!openSR.Id}" target="_blank">View</apex:outputLink></td>
+                                                                  </tr>
+                                                              </apex:repeat>
+                                                              
+                                                              <!--for Unit Type Detail=Closed SRs  ends-->
+
+                                                              <!--for Unit Type Detail=Closed SRs  starts-->
+                                                              <apex:repeat value="{!lstClosedSRs}" var="closeSR" rendered="{!lstClosedSRs != null && lstClosedSRs.size >0 && strUnitDetailType == 'Closed SRs'}">
+                                                                  <tr style="display:{!if(strUnitDetailType == 'Open SRs',"contents","none")};">
+                                                                      <td><b>{!closeSR.SR_Type__c}</b></td>
+                                                                      <td><apex:outputLink value="/{!closeSR.Id}" target="_blank">View</apex:outputLink></td>
+                                                                  </tr>
+                                                              </apex:repeat>
+                                                              <!--for Unit Type Detail=Closed SRs  ends-->
+                                                          </tbody>
+                                                      </table>
+                                                  </div>
+                                                  <div class="details col-lg-7 col-md-12 col-sm-12">
+                                                      <div class="row detailHeading">
+                                                          <div class="col-lg-6 col-md-12">
+                                                              <h6 class="col-md-12">Area</h6>
+                                                              <h4 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Area_Sqft_2__c} sq.ft</h4>
+                                                          </div>
+                                                          <div class="col-lg-6 col-md-12">
+                                                              <h6 class="col-md-12">Price</h6>
+                                                              <h4 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Selling_Price__c} </h4>
+                                                          </div>
+                                                      </div>
+                                                      <div class="row">
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Current Construction Status</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Construction_Status__c}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Overdue</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.DP_Overdue__c}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Total Penalties (Customer)</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strPenalties}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Area Variation (sq. ft.)</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Revised_Price_Area_Variation__c}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Any Rebates</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Rebate_Given__c}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Price/Sq Ft</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.objBookingUnit.Inventory__r.Price_Per_Sqft__c}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Paid %</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strPaidPercent}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Original ACD</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strOriginalACD}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">No. of times customer defaulted on instalments</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strNoOfTimesCustomerDefaultedOnInstalments}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Original Payment Plan Type</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.strPaymentPlan}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Current RERA Construction Status</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strCurrentRERAConstructionStatusOfBuilding}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">PDC coverage</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strPercentPDCCoverage}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Previous Waivers (Customer)</h6>
+                                                                  <h5 class="col-md-12">0</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Prior AoPT</h6>
+                                                                  <h5 class="col-md-12">{!objWrapperBookingUnit.strPriorAOPT}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Current ACD</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strCurrentACD}</h5>
+                                                              </div>
+                                                          </div>
+                                                          <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Other charges (Parking,etc)</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strOtherCharges} </h5>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">%Overdue</h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strPercentOverdue}
+                                                                  </h5>
+                                                              </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Total Outstanding </h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strTotalOutstanding}
+                                                                  </h5>
+                                                              </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Default </h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strDefault} 
+                                                                  </h5>
+                                                              </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">Penalty/ Over dues (Portfolio level) </h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strPenaltyWaivers_PortfolioLevel}</h5>
+                                                              </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">BTP </h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strBTP} 
+                                                                  </h5>
+                                                              </div>
+                                                      </div>
+                                                      <div class="col-lg-4 col-sm-6 col-xs-6">
+                                                              <div class="infoBoxes">
+                                                                  <h6 class="col-md-12">BTP/ sq.ft. </h6>
+                                                                  <h5 class="col-md-12">{!objBUDetailWrapper.strBTP_sqft}
+                                                                  </h5>
+                                                              </div>
+                                                      </div>
+                                                  </div>
+                                                  
+                                              </div>
+                                          </div>
+                                      </div>
+                                    </apex:outputPanel>
+                                  </apex:outputPanel>
+                              </div>
+                              <div>
+                                  <apex:commandButton value="Get Current PaymentPlan" styleClass="btn btn-sm btn-success" action="{!getCurrentPaymentTerm}" reRender="currentPPPanel,buttonPanel" status="loadingStatus" rendered="{!blnShowSelectedUnits && !blnAOPTExists}" oncomplete="applyDatePicker();"/>
+                              </div>
+                              <br/>
+                              <div>
+                                  <div class="form-group">
+                                      <apex:commandButton value="Generate Satement Of Account" action="{!GenarateSOA}" styleClass="btn btn-success btn-sm" oncomplete="generateSOA()" status="loadingStatus" reRender="SOAPanel,showmsg"/>
+                                  </div>
+                              </div>
+                              <apex:outputPanel id="SOAPanel">
+                                <div class="row" style="display:{!if(lstSOAWrapper!= null && lstSOAWrapper.size > 0,"contents","none")};">
+                                  <div class="col-md-12 form-group">
+                                    <table class="paymentDue table" cellpadding="10" width="100%">
+                                        <thead class="thead-inverse">
+                                            <tr>
+                                                <th><b>Booking Unit</b></th>
+                                                <th><b>URL</b></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <apex:repeat value="{!lstSOAWrapper}" var="soaWrapper">
+                                                <tr>
+                                                  <td>{!soaWrapper.objBookingUnit.Name}</td>
+                                                  <td>
+                                                     <apex:outputLink value="{!soaWrapper.strSOAURL}" target="_blank">
+                                                      View SOA
+                                                     </apex:outputLink>
+                                                  </td>
+                                                </tr>
+                                            </apex:repeat>
+                                        </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </apex:outputPanel>
+                            </apex:outputPanel>
+                          </apex:outputPanel>
+                      </div>
+                  </section>
+                  <apex:outputPanel id="currentPPPanel">
+                    <apex:outputPanel rendered="{!if((blnShowSelectedUnits && !blnAOPTExists) && (!blnFlagPresent) && blnShowCurrentPP,true,false)}">
+                      <section>
+                          <div class="well">
+                              <h4>
+                                Current Payment Terms
+                              </h4>
+                              <br/>
+                              <span>
+                                Current Payment Plan Type - {!strPaymentPlanType}
+                              </span>
+                              <div class="row">
+                                <div class="col-md-12 form-group">
+                                  <table class="paymentDue table" cellpadding="10" width="100%">
+                                      <thead class="thead-inverse">
+                                          <tr>
+                                              <th><b>DESCRIPTION</b></th>
+                                              <th><b>INSTALLMENT</b></th>
+                                              <th><b>PERCENT</b></th>
+                                              <th><b>MILESTONE EVENT</b></th>
+                                              <th><b>MILESTONE ARABIC</b></th>
+                                              <th><b>DUE DATE</b></th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+                                          <apex:repeat value="{!lstPaymentTerms}" var="paymentTerm">
+                                              <tr>
+                                                <td>{!paymentTerm.Description__c}</td>
+                                                <td>{!paymentTerm.Installment__c}</td>
+                                                <td>{!paymentTerm.Percent_Value__c}</td>
+                                                <td>{!paymentTerm.Milestone_Event__c}</td>
+                                                <td>{!paymentTerm.Milestone_Event_Arabic__c}</td>
+                                                <td>
+                                                    <apex:outputText value="{0,date,MM/dd/yy}"> 
+                                                      <apex:param value="{!paymentTerm.Payment_Date__c}" /> 
+                                                    </apex:outputText>
+                                                </td>
+                                              </tr>
+                                          </apex:repeat>
+                                          <tr>
+                                            <td>Total Percent:</td>
+                                            <td colspan="5">{!percentValueTotalCurPP}</td>
+                                          </tr>
+                                      </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                          </div>
+                      </section>
+                    </apex:outputPanel>
+
+                    <apex:outputPanel id="NewPPPanel" rendered="{!if((blnShowSelectedUnits && !blnAOPTExists) && (!blnFlagPresent) && blnShowNewCurrentPP,true,false)}">
+                      <section>
+                            <div class="well">
+                                <h4>
+                                    New Payment Terms 
+                                </h4>
+                                <br />
+                                <span>
+                                    New Payment Plan Type - {!strNewPaymentPlan}
+                                </span>
+                                  <div class="row">
+                                    <div class="form-group col-md-12">
+                                      <table class="paymentDue table table-striped" cellpadding="10" width="100%">
+                                          <thead class="thead-inverse">
+                                              <tr>
+                                                  <th><b>DESCRIPTION</b></th>
+                                                  <th><b>INSTALLMENT</b></th>
+                                                  <th style="width:80px;"><b>PERCENT(%)</b></th>
+                                                  <th><b>MILESTONE EVENT</b></th>
+                                                  <th><b>MILESTONE ARABIC</b></th>
+                                                  <th><b>DUE DATE</b></th>
+                                                  <!--<th><b>RECEIPT REC.</b></th>-->
+                                                  <th>Action</th>
+                                              </tr>
+                                          </thead>
+                                          <tbody>
+                                              <apex:variable value="{!0}" var="rowNum"/>
+                                              <apex:variable value="{!0}" var="percentValueTotalNewPP"/>
+                                              <apex:repeat value="{!lstNewPaymentTermsDisplay}" var="paymentTerm">
+                                                  <apex:outputPanel rendered="{!paymentTerm.isReceiptPresent}" layout="none">
+                                                    <tr>
+                                                      <td>{!paymentTerm.strDescription}</td>
+                                                      <td>{!paymentTerm.strInstallment}</td>
+                                                      <td>{!paymentTerm.strMileStonePercentValue} (%)</td>
+                                                      <td>{!paymentTerm.strMileStoneEvent}</td>
+                                                      <td>{!paymentTerm.strMileStoneEventArabic}</td>
+                                                      <td>
+                                                        <apex:outputText value="{!paymentTerm.dtDueDate}"/>
+                                                      </td>
+                                                      <!--<td>{!paymentTerm.isReceiptPresent}</td>-->
+                                                      <td>--</td>
+                                                    </tr>
+                                                  </apex:outputPanel>
+                                                  <apex:outputPanel rendered="{!if(paymentTerm.isReceiptPresent == false,true,false)}" layout="none">
+                                                    <tr style="display:{!if(NOT(paymentTerm.isReceiptPresent),"contents","none")};">
+                                                       <td>{!paymentTerm.strDescription}</td>
+                                                       <td>{!paymentTerm.strInstallment}</td>
+                                                        <!--<td>{!paymentTerm.percentValue} (%)</td>-->
+
+                                                        <!-- for all PT types based percent starts -->
+                                                        <td>
+                                                          <apex:inputText value="{!paymentTerm.strMileStonePercentValue}" style="width:75%;" styleClass="form-control">
+                                                            <apex:actionSupport event="onblur" reRender="NewPPPanel,POAPanel" status="loadingStatus" oncomplete="applyDatePicker();"/>
+                                                          </apex:inputText>
+                                                        </td>
+                                                        <!-- for sall PT types percent based ends -->
+                                                        <!-- for all PT types based starts -->
+                                                        <td>
+                                                          <apex:selectList value="{!paymentTerm.strMileStoneEvent}" 
+                                                              size="1"  styleClass="form-control" multiselect="false">
+                                                            <apex:selectOptions value="{!paymentTerm.lstMileStoneEventPT}" /> 
+                                                            <apex:actionSupport event="onchange" reRender="NewPPPanel" status="loadingStatus" action="{!fetchArabicValue}" oncomplete="applyDatePicker();">
+                                                              <apex:param id="rowIndex" name="rowToFetchArabic" value="{!rowNum}" 
+                                                              assignTo="{!rowToFetchArabic}"/>
+                                                            </apex:actionSupport>
+                                                          </apex:selectList>
+                                                        </td>
+                                                        <!-- for all PT types based ends -->
+                                                        <td>
+                                                           <apex:outputText value="{!paymentTerm.strMileStoneEventArabic}" />
+                                                        </td>
+                                                        <td>
+                                                           <!--<apex:input type="date" value="{!paymentTerm.dtDueDate}" styleClass="form-control" style="width: 90%;"/>
+                                                           -->
+                                                           <apex:inputText value="{!paymentTerm.dtDueDate}"  
+                                                            styleClass="form-control POAExpiryDate" 
+                                                            id="dateExp" style="width: 90%;" html-placeholder="dd/mm/yyyy"/>
+                                                        </td>
+                                                        <!--<td>{!paymentTerm.isReceiptPresent}</td>-->
+                                                        <td>
+                                                          <apex:commandLink style="color:red" 
+                                                              action="{!removeInstallment}" rerender="NewPPPanel,POAPanel" immediate="true" value="Remove" status="loadingStatus" oncomplete="applyDatePicker();">
+                                                              <apex:param value="{!rowNum}" name="rowToRemove" assignTo="{!rowToRemove}"/>
+                                                          </apex:commandLink>
+                                                        </td>
+                                                    </tr>
+                                                  </apex:outputPanel>
+                                                  <apex:variable var="rowNum" value="{!rowNum + 1}"/>
+                                                  <apex:variable var="percentValueTotalNewPP" value="{!percentValueTotalNewPP + VALUE(paymentTerm.strMileStonePercentValue)}"/>
+                                              </apex:repeat>
+                                              <tr>
+                                                <td>Total Percent:</td>
+                                                <td colspan="6">{!percentValueTotalNewPP}</td>
+                                              </tr>
+                                              <tr>
+                                                <td style="font-color:blue;display:{!if(strNewPaymentPlan!='None',"contents","none")};">
+                                                <apex:commandButton value="Add Installment" action="{!addNewInstallment}" reRender="NewPPPanel,buttonPanel,POAPanel" status="loadingStatus" styleClass="btn btn-sm btn-default" oncomplete="applyDatePicker();">
+                                                  <i class="fa fa-plus"></i> 
+                                                </apex:commandButton>
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td colspan="6" style="display:{!if(percentValueTotalNewPP != percentValueTotalCurPP,"contents","none")};">
+                                                  <apex:outputText rendered="{!if(percentValueTotalNewPP != percentValueTotalCurPP,true,false)}" value="Total Percent Value of New Payment Plan does not match. It should be {!percentValueTotalCurPP}" style="color: red;">
+                                                  </apex:outputText>
+                                                </td>
+                                              </tr>
+                                          </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                  <apex:outputPanel id="UnitValidatePanel" layout="block">
+                                    <apex:outputPanel rendered="{!if(percentValueTotalNewPP != percentValueTotalCurPP,false,true)}">
+                                    <div class="row">
+                                        <div class="col-lg-4">
+                                            <div class="form-group">
+                                                <apex:commandButton styleClass="btn btn-success btn-sm" value="Check For AOPT Eligibility" action="{!aoptValidate}" status="loadingStatus" reRender="UnitValidatePanel,CRFPanel,POAPanel,buttonPanel"/>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-lg-4">
+                                            <div class="form-group">
+                                                <apex:image rendered="{!blnIsAOPTEligible}" value="{!$Resource.Right}"  style="height:30px;" />
+                                                <apex:image rendered="{!IF(blnIsAOPTNotEligible,true,false)}" value="{!$Resource.Wrong}"  style="height:30px;" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-8">
+                                            <div class="form-group">
+                                                <apex:outputText rendered="{!blnIsAOPTNotEligible}" value="Reason :{!strAOPTEligibilityErrors}" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <apex:outputPanel rendered="{!blnIsAOPTEligible}">
+                                      <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="form-group">
+                                                Will provide Post Dated Cheques? : &nbsp;&nbsp;
+                                                <apex:inputField value="{!objCase.AOPT_IsPDC_Provided__c}">
+                                                  <apex:actionSupport event="onchange" reRender="PDCPanel" status="loadingStatus"/>
+                                                </apex:inputField>
+                                            </div>
+                                        </div>
+                                      </div>
+                                      <div class="row">
+                                          <apex:outputPanel id="PDCPanel">
+                                              <apex:outputPanel rendered="{!if(blnIsAOPTEligible && percentValueTotalNewPP == percentValueTotalCurPP && objCase.AOPT_IsPDC_Provided__c,true,false)}">
+                                                <section>
+                                                  <div class="row">
+                                                    <div class="col-md-12">
+                                                      <apex:outputPanel >
+                                                          <div class="form-group">
+                                                              <div class="fileupload fileupload-new" data-provides="fileupload" style="display:{!IF(lstSPDCattachments == null || lstSPDCattachments.size == 0, '','none')};">
+                                                              <span class="btn btn-primary btn-file">
+                                                                  <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload PDC Receipt</span>
+                                                                  <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                                  <input type="file" id="PDCAttach" onchange="attachPDCFile();"/>
+                                                              </span>
+                                                              <div style="text-align: center;">
+                                                                  <span class="fileupload-preview"></span>
+                                                                  <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                              </div>
+                                                          </div>
+                                                        </div>
+                                                        </apex:outputPanel>
+                                                        <div>
+                                                          <apex:outputPanel id="PDCAttachmentPanel">
+                                                              <table class="paymentDue table" cellpadding="10" width="100%">
+                                                                  <tr style="display:{!IF(lstSPDCattachments !=null && lstSPDCattachments.size > 0,'table-row','none')};">
+                                                                    <th> Remove </th>
+                                                                    <th>Attachment Name </th>
+                                                                    <th>Type </th>
+                                                                    <th> Is Valid </th>
+                                                                    <th>View </th>
+                                                                  </tr>
+                                                                  <apex:repeat value="{!lstSPDCattachments}" var="l">
+                                                                      <tr style="display:{!IF(l.Type__c == 'PDC', 'table-row','none')};">
+                                                                          <td>
+                                                                              <apex:commandLink title="Remove Attachment" style="width:80px;" action="{!removeAttachment}" reRender="PDCPanel,showMsg" status="loadingStatus" >
+                                                                                  <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!RemoveSelected}" /> 
+                                                                                  <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                                                  <apex:param name="DocType" value="PDC" assignTo="{!strTypeOfDoc}" />
+                                                                              </apex:commandLink>
+                                                                          </td>
+                                                                          <td>{!l.name} </td>
+                                                                          <td>{!l.type__c } </td>
+                                                                          <td align="left" >
+                                                                              <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                                              <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" /> 
+                                                                          </td>
+                                                                          <td>
+                                                                          <a href="/servlet/servlet.FileDownload?file={!l.Attachment__c}" target="_blank">VIEW</a> 
+                                                                          </td> 
+                                                                      </tr>
+                                                                  </apex:repeat> 
+                                                              </table>
+                                                          </apex:outputPanel>
+                                                        </div>
+                                                    </div>
+                                                  </div>
+                                                </section>
+                                              </apex:outputPanel>
+                                          </apex:outputPanel>
+                                      </div>
+
+                                      <div class="row">
+                                          <div class="col-lg-12">
+                                              <div class="form-group">
+                                                  Case Summary : 
+                                                  <apex:inputField value="{!objCase.Case_Summary__c}" style="width:100%"/>
+                                              </div>
+                                          </div>
+                                      </div>
+                                    </apex:outputPanel>
+                                    </apex:outputPanel>
+                                  </apex:outputPanel>
+                            </div>
+                      </section>
+                      <!--
+                      <apex:outputPanel id="CRFPanel">
+                          <apex:outputPanel rendered="{!if(blnIsAOPTEligible && percentValueTotalNewPP == percentValueTotalCurPP,true,false)}">
+                            <section>
+                              <div class="well">
+                                <div class="row">
+                                  <div class="col-md-12">
+                                    <apex:outputPanel >
+                                        <h4>
+                                          <span class="pull-right">
+                                          <apex:commandButton id="ViewCRFButton" styleclass="btn btn-sm btn-success" title="Generate CRF" value="View CRF" action="{!viewAndDownloadCRF}"/>
+                                          </span>
+                                        </h4>
+                                        <br/><br/>
+                                        <div class="form-group">
+                                            <div class="fileupload fileupload-new" data-provides="fileupload" style="display:{!IF(lstSRCREattachments == null || lstSRCREattachments.size == 0, '','none')};">
+                                            <span class="btn btn-primary btn-file">
+                                                <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Signed CRF</span>
+                                                <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                <input type="file" id="CRFAttach" onchange="attachCRFFile();"/>
+                                            </span>
+                                            <div>
+                                                <span class="fileupload-preview"></span>
+                                                <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                            </div>
+                                        </div>
+                                         <!-- <apex:commandLink value="Upload CRF :" styleClass="btn" action="{!goToAttachmentPage}" status="loadingStatus" rendered="{!blnShowCRF}">
+                                            <span style="font-size:18px; color:#cc0000;">*</span>
+                                            <apex:param value="CRF" assignTo="{!strTypeOfDoc}"/>
+                                          </apex:commandLink>
+                                          --
+                                      </div>
+                                      </apex:outputPanel>
+                                      <div>
+                                        <apex:outputPanel rendered="{!blnShowCRF}" id="CRFAttachmentPanel">
+                                            <table class="paymentDue table" cellpadding="10" width="100%">
+                                                <tr style="display:{!IF(lstSRCREattachments !=null && lstSRCREattachments.size > 0,'table-row','none')};">
+                                                  <th> Remove </th>
+                                                  <th>Attachment Name </th>
+                                                  <th>Type </th>
+                                                  <th> Is Valid </th>
+                                                  <th>View </th>
+                                                </tr>
+                                                <apex:repeat value="{!lstSRCREattachments}" var="l">
+                                                    <tr style="display:{!IF(l.Type__c == 'CRF Form', 'table-row','none')};">
+                                                        <td>
+                                                            <apex:commandLink title="Remove Attachment" style="width:80px;" action="{!removeAttachment}" reRender="CRFPanel,showMsg" status="loadingStatus" >
+                                                                <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!RemoveSelected}" /> 
+                                                                <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                                <apex:param name="DocType" value="CRF" assignTo="{!strTypeOfDoc}" />
+                                                            </apex:commandLink>
+                                                        </td>
+                                                        <td>{!l.name} </td>
+                                                        <td>{!l.type__c } </td>
+                                                        <td align="left" >
+                                                            <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                            <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" /> 
+                                                        </td>
+                                                        <td>
+                                                        <a href="/servlet/servlet.FileDownload?file={!l.Attachment__c}" target="_blank">VIEW</a> 
+                                                        </td> 
+                                                    </tr>
+                                                </apex:repeat> 
+                                            </table>
+                                        </apex:outputPanel>
+                                      </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </section>
+                          </apex:outputPanel>
+                      </apex:outputPanel>
+                      -->
+                    </apex:outputPanel>
+
+                    <apex:outputPanel id="POAPanel">
+                      <apex:outputPanel rendered="{!if(blnIsAOPTEligible && percentValueTotalNewPP == percentValueTotalCurPP,true,false)}">
+                        <section id="POA">
+                            <div class="well">
+                              <div class="row">
+                                  <div class="col-lg-5">
+                                      <div class="form-group">
+                                          <label>Select Power of Attorney</label>
+                                          <apex:selectList value="{!strIsPOA}" styleClass="form-control" size="1" id="POASelected">
+                                            <apex:selectOption itemLabel="None" itemValue="None" />
+                                            <apex:selectOption itemLabel="Yes" itemValue="Yes" />
+                                            <apex:selectOption itemLabel="No" itemValue="No" />
+                                            <apex:actionSupport reRender="POADetailsPanel,showMsg" event="onchange" status="loadingStatus" oncomplete="applyDatePicker();"/>
+                                          </apex:selectList>
+                                      </div>
+                                  </div>
+                              </div>
+                              <apex:outputPanel id="POADetailsPanel">
+                                <apex:outputPanel rendered="{!if(strIsPOA == 'Yes',true,false)}">
+                                  <div>
+                                    <h5>Power of Attorney Details</h5>
+                                    <div class="row">
+                                        <div class="col-lg-5">
+                                            <div class="form-group">
+                                                <label>Name</label>
+                                                <apex:inputField value="{!objCase.POA_Name__c}" html-placeholder="Enter name" styleClass="form-control" id="POAName" />
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5">
+                                            <div class="form-group">
+                                                <label>Purpose of POA<span style="font-size:18px; color:#cc0000;">*</span></label>
+                                                <apex:inputField value="{!objCase.Purpose_of_POA__c }" html-placeholder="Enter Purpose Of POA" styleClass="form-control" id="POAPurpose"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-5">
+                                            <div class="form-group">
+                                                <label>Date of Issue</label>
+                                                <apex:inputText value="{!dtDateOfExpiry}" 
+                                                styleClass="form-control datepicker POAExpiryDate" 
+                                                id="dateExp" html-placeholder="dd/mm/yyyy"/>
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-5">
+                                            <div class="form-group">
+                                                <label>Issued by (Authority)</label>
+                                                <apex:inputField value="{!objCase.POA_Issued_By__c }" html-placeholder="Enter name" styleClass="form-control" id="IssuedByName"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-lg-12">
+                                            <div class="form-group">
+                                                  <div class="fileupload fileupload-new" data-provides="fileupload" style="display:{!IF(lstSPOAattachments == null || lstSPOAattachments.size == 0, '','none')};">
+                                                    <span class="btn btn-primary btn-file">
+                                                        <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload POA</span>
+                                                        <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                                        <input type="file" id="POAAttach" onchange="attachPOAFile();"/>
+                                                    </span>
+                                                    <div style="text-align: center;">
+                                                        <span class="fileupload-preview"></span>
+                                                        <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                                    </div>
+                                                </div>
+                                                <!--<apex:commandLink value="Upload POA :" styleClass="btn" 
+                                                action="{!goToAttachmentPage}" status="loadingStatus" 
+                                                rendered="!{blnShowPOA}">
+                                                  <span style="font-size:18px; color:#cc0000;">*</span>
+                                                  <apex:param value="CRF" assignTo="{!strTypeOfDoc}"/>
+                                                </apex:commandLink>
+                                                -->
+                                            </div>
+                                            <div>
+                                              <apex:outputPanel rendered="{!blnShowPOA}">
+                                                  <table class="paymentDue table" cellpadding="10" width="100%">
+                                                      <tr style="display:{!IF(lstSPOAattachments != null && lstSPOAattachments.size > 0, 'table-row','none')};">
+                                                        <th> Remove </th>
+                                                        <th>Attachment Name </th>
+                                                        <th>Type </th>
+                                                        <th> Is Valid </th>
+                                                        <th>View </th>
+                                                      </tr>
+                                                      <apex:repeat value="{!lstSPOAattachments}" var="l">
+                                                          <tr style="display:{!IF(l.Type__c == 'Power Of Attorney', 'table-row','none')};">
+                                                              <td>
+                                                                  <apex:commandLink title="Remove Attachment" style="width:80px;" action="{!removeAttachment}"  status="loadingStatus" >
+                                                                      <apex:param name="RemoveSelected" value="{!l.id}" assignTo="{!RemoveSelected}" /> 
+                                                                      <apex:image value="{!$Resource.Remove}"  style="height:20px;" />
+                                                                      <apex:param name="DocType" value="POA" assignTo="{!strTypeOfDoc}" /> 
+                                                                  </apex:commandLink>
+                                                              </td>
+                                                              <td>{!l.name} </td>
+                                                              <td>{!l.type__c } </td>
+                                                              <!-- <td>{!l.isValid__c} </td>  -->
+                                                              <td align="left" >
+                                                                  <apex:image value="{!$Resource.UnCheck_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == false,true,false)}" />
+                                                                  <apex:image value="{!$Resource.Check_Icon}"  style="height:20px;" rendered="{!IF(l.isValid__c == true,true,false)}" /> 
+                                                              </td>
+                                                              <td>
+                                                              <a href="/servlet/servlet.FileDownload?file={!l.Attachment__c}" target="_blank">VIEW</a> 
+                                                              </td> 
+                                                          </tr>
+                                                      </apex:repeat> 
+                                                  </table>
+                                              </apex:outputPanel>
+                                            </div>
+                                        </div>
+                                    </div>
+                                  </div>
+                                </apex:outputPanel>
+                              </apex:outputPanel>
+                            </div>
+                        </section>
+                      </apex:outputPanel>
+                    </apex:outputPanel>
+                  </apex:outputPanel>
+
+                  <div class="row">
+                    <apex:outputPanel id="buttonPanel">
+                    <div class="col-lg-5">
+                        <div class="form-group" style="float:right;">
+                          <apex:commandButton value="Submit SR" styleClass="btn btn-sm btn-success" 
+                          status="loadingStatus" action="{!createSR}" reRender="showmsg" 
+                          disabled="{!if((blnShowSelectedUnits) && (blnAOPTExists == false) && (blnFlagPresent == false) && blnShowCurrentPP && blnShowNewCurrentPP && blnIsAOPTEligible ,false,true)}"
+                          onclick="if(validateRequiredInput()) return false;">
+                            <apex:param name="caseStatus" value="Submitted" assignTo="{!strCaseStatusSubmitted}"/>
+                          </apex:commandButton>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <div class="form-group">
+                          <apex:commandButton value="Save As Draft" styleClass="btn btn-sm btn-success" status="loadingStatus" reRender="showmsg" action="{!createSR}" 
+                          disabled="{!if((blnShowSelectedUnits) && (blnAOPTExists == false) && (blnFlagPresent == false) && blnShowCurrentPP && blnShowNewCurrentPP && blnIsAOPTEligible ,false,true)}"
+                          onclick="if(validateRequiredInput()) return false;"/>
+                        </div>
+                    </div>
+                   </apex:outputPanel>
+                  </div>
+
+                  <apex:outputPanel id="OfferAcceptancePanel" rendered="{!blnOfferAccepted}">
+                    <div class="row">
+                      <div class="col-lg-12">
+                          <div class="form-group">
+                                <div class="fileupload fileupload-new" data-provides="fileupload" style="text-align: center;">
+                                  <span class="btn btn-primary btn-file">
+                                      <span class="fileupload-new"><i class="fa fa-address-card-o" aria-hidden="true"></i><br/>Upload Signed Offer-Acceptance Letter</span>
+                                      <span class="fileupload-exists"><i class="fa fa-file-pdf-o" aria-hidden="true"></i><br/>Change</span>
+                                      <input type="file" id="OfferAttach" onchange="attachOfferFile();"/>
+                                  </span>
+                                  <div>
+                                      <span class="fileupload-preview"></span>
+                                      <a href="#" class="close fileupload-exists" data-dismiss="fileupload" style="float: none">×</a>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-12" style="text-align: center;">
+                        <div class="form-group">
+                          <apex:commandButton value="Submit Final SR" styleClass="btn btn-sm btn-success" 
+                          status="loadingStatus" action="{!uploadOffer}" reRender="showmsg" id="btnOfferAccept">
+                          </apex:commandButton>
+                        </div>
+                    </div>
+                  </apex:outputPanel>
+
+              </div>
+          </div>
+      <!--</div> -->
+  </section>
+
+
+  <script>
+      $('.well input.datepicker').datepicker({
+      });
+      
+      $(document).ready(function() {
+          $('#multi-select-demo').multiselect();
+          $('.dateFormat').hide();
+          console.log('dateformat hide');
+          disableInputs();
+          applyDatePicker();
+      });
+
+      function applyDatePicker()
+      {
+        $('.POAExpiryDate').datepicker({ 
+              format: 'dd/mm/yyyy',
+              autoclose: true
+        });
+      }
+
+      function generateSOA()
+      {
+        alert('Statement Of Account generated');
+      }
+
+      function attachCRFFile() 
+      {
+        console.log( document.getElementById("CRFAttach").files[0] );
+        var filename = document.getElementById("CRFAttach").value;
+        if( filename != '' ) {
+            $('[id$=CRFAttachName]').val(filename);
+            var fbody = document.getElementById("CRFAttach").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                $('[id$=CRFAttachBody]').val(blobfile);
+            }
+        }
+      }
+
+      function attachPDCFile() 
+      {
+        console.log( document.getElementById("PDCAttach").files[0] );
+        var filename = document.getElementById("PDCAttach").value;
+        if( filename != '' ) {
+            $('[id$=PDCAttachName]').val(filename);
+            var fbody = document.getElementById("PDCAttach").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                $('[id$=PDCAttachBody]').val(blobfile);
+            }
+        }
+      }
+
+      function attachPOAFile()
+      {
+        console.log( document.getElementById("POAAttach").files[0] );
+        var filename = document.getElementById("POAAttach").value;
+        if( filename != '' ) {
+            $('[id$=POAAttachName]').val(filename);
+            var fbody = document.getElementById("POAAttach").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                $('[id$=POAAttachBody]').val(blobfile);
+            }
+        }
+      }
+
+      function attachOfferFile()
+      {
+        console.log( document.getElementById("OfferAttach").files[0] );
+        var filename = document.getElementById("OfferAttach").value;
+        if( filename != '' ) {
+            $('[id$=offerAttachName]').val(filename);
+            var fbody = document.getElementById("OfferAttach").files[0];
+            var reader = new FileReader();
+            reader.readAsDataURL(fbody);
+            reader.onload = function(e) {
+                var blobfile = window.btoa(this.result);
+                $('[id$=offerAttachBody]').val(blobfile);
+            }
+        }
+      }
+
+      function validateRequiredInput()
+      {
+        console.log('method called');
+        var isError = false;
+        var poaName = $('[id$=POAName]').val();
+        var dateExp = $('[id$=dateExp]').val();
+        var issuedByName = $('[id$=IssuedByName]').val();
+        var POASelected = $('[id$=POASelected]').val();
+        var POAPurpose = $('[id$=POAPurpose]').val();
+
+        console.log('poaName '+poaName);
+        console.log('dateExp '+dateExp);
+        console.log('issuedByName '+issuedByName);
+        if(POASelected != null && POASelected != 'None' && POASelected != 'No')
+        {
+          /*if(poaName == '' || poaName == undefined || poaName == null)
+          {
+            alert('Please enter value for POAName');
+            isError = true;
+            return isError;
+          }
+          */
+          /*if(dateExp == '' || dateExp == undefined || dateExp == null)
+          {
+            alert('Please enter value for Date Of Expiry');
+            isError = true;
+            return isError;
+          }
+          */
+          /*if(issuedByName == '' || issuedByName == undefined || issuedByName == null)
+          {
+            alert('Please enter value for Issued By Name');
+            isError = true;
+            return isError;
+          }*/
+          
+          if(POAPurpose == '' || POAPurpose == undefined || POAPurpose == null)
+          {
+            alert('Please enter value for POA Purpose');
+            isError = true;
+            return isError;
+          }
+          var POAAttachmentSize = '{!lstSPOAattachments.size}';
+          console.log('POAAttachmentSize '+POAAttachmentSize);
+          if(POAAttachmentSize == null || POAAttachmentSize <=0)
+          {
+            var filename = document.getElementById("POAAttach").value;
+            if(filename == '' || filename == undefined || filename == null)
+            {
+              alert('Please select document for POA.');
+              isError = true;
+              return isError;
+            }
+          }
+        }
+        return isError;
+        console.log('isError '+isError);
+      }
+
+      function disableInputs() 
+      {
+        var caseStatus = '{!objCase.Status}';
+        console.log('--case status--'+caseStatus);
+        if(caseStatus == 'Submitted' || caseStatus == 'Approved') {
+            $("input").prop('disabled', true);
+            $("button").prop('disabled', true);
+            $("select").prop('disabled', 'disabled');
+            $("textarea").prop('disabled', 'disabled');
+            $("#OfferAttach").prop('disabled', false);
+            $('[id$=btnOfferAccept]').prop('disabled', false);
+        }
+      }
+  </script>
+</apex:component>
